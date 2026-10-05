@@ -1,0 +1,42 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/sdlc/hooks/guard-approved.mjs\"",
+            "timeout": 10,
+            "statusMessage": "Kiểm tra spec đã duyệt..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/sdlc/hooks/check-spec-file.mjs\"",
+            "timeout": 15,
+            "statusMessage": "Kiểm hình thức spec..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/sdlc/hooks/stop-check-spec.mjs\"",
+            "timeout": 20,
+            "statusMessage": "Kiểm toàn bộ spec..."
+          }
+        ]
+      }
+    ]
+  }
+}

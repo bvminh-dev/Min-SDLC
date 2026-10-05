@@ -1,0 +1,3 @@
+[submodule ".claude/sdlc/framework/spec-kit"]
+	path = .claude/sdlc/framework/spec-kit
+	url = https://github.com/github/spec-kit.git
