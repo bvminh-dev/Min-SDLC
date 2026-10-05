@@ -56,7 +56,9 @@ Ngoài ADR:
 - Khi vá file bằng script Node/heredoc, ký tự escape (`\n`, `\[`) dễ bị mất; dùng công cụ Edit và chạy `node --check` sau mỗi lần sửa.
 - Trên Windows + Git Bash, đường dẫn `/tmp/...` bị Node hiểu khác; khi test hook hãy dùng đường dẫn Windows (`cygpath -w`).
 
-## Không nằm trong repo này
+## Phiên học (teach-me)
 
-Skill học `teach-me` và ghi chép học (`.claude/skills/teach-me/`) chưa được đưa lên vì repo công khai; chờ quyết định.
-Nếu cần tiếp tục phiên học ở máy khác, copy thư mục đó sang tay hoặc chọn đưa lên một repo riêng tư.
+Skill `teach-me` và ghi chép học nằm trong `.claude/skills/teach-me/` (do bạn chọn đưa vào repo công khai này).
+Để xem lại tiến độ học: `/teach-me xây dựng 1 bộ kit cho sdlc --resume`. Trạng thái ở
+`.claude/skills/teach-me/records/sdlc-kit-claude-code/session.md`, ghi chú ôn tập ở `sdlc-kit-claude-code-notes.md`.
+Lưu ý: file `session.md` dừng ở thời điểm 9/9 khái niệm; phần xây dựng kit sau đó không được ghi vào đó mà ghi ở file này.
