@@ -21,7 +21,7 @@ Lý do chọn A: việc khách đến màn này làm là tìm lại một đơn 
 ```
 Thanh header:  ☰  Đơn hàng của tôi                                   🔔  (T)
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ [Tất cả] Chờ xử lý  Đã xác nhận  Đã thanh toán  Đang giao  Đã giao  ...  │  <- tab trạng thái (chọn một)
+│ [Tất cả] Chờ xử lý  Đã xác nhận  Đã thanh toán  Đang giao  Đã giao  Đã hoàn  ...  │  <- tab trạng thái (chọn một, tám trạng thái)
 ├──────────────────────────────────────────────────────────────────────────┤
 │ #7K3M9Q2XH4TB   06/10/2026 09:00   3 sản phẩm   (Đã thanh toán)  350.000 đ │  <- mỗi dòng bấm mở chi tiết
 │ #5FQ2H8B7C1ZD   03/10/2026 21:14   1 sản phẩm   (Đã hủy)         90.000 đ │
@@ -39,9 +39,9 @@ Dưới sm: tab thành nút "Trạng thái: Tất cả · 25" mở danh sách; m
 | đang tải | Khung chờ đúng hình 5 dòng (mã, ngày, badge, tổng); đổi tab hay trang thì giữ dữ liệu cũ | ORD-REQ-20261006-092320716 |
 | rỗng | "Bạn chưa có đơn hàng nào." một dòng chữ mờ, kèm liên kết "Tiếp tục mua sắm" (chưa có đơn nào, tổng 0) | ORD-REQ-20261006-092320716 |
 | rỗng do lọc | "Không có đơn nào ở trạng thái này." kèm nút "Xoá lọc"; cũng là trang trống khi đúng 20 đơn mà vào trang 2 | ORD-REQ-20261006-092320716 |
-| lỗi | Banner lỗi "Không tải được danh sách đơn." kèm nút "Thử lại"; lỗi bộ lọc không hợp lệ (400) cũng vào đây | ORD-REQ-20261006-092320716 |
+| lỗi | Banner lỗi "Không tải được danh sách đơn." kèm nút "Thử lại"; lỗi bộ lọc không hợp lệ (400) và quá giới hạn tần suất (429, nêu "thử lại sau ít giây") cũng vào đây | ORD-REQ-20261006-092320716 |
 | hết phiên | Phiên hết hạn (401): chuyển về đăng nhập, không hiện đơn nào | ORD-REQ-20261006-092320716 |
-| trạng thái đơn | Badge theo trạng thái hiện tại của đơn (chờ xử lý, đã xác nhận, đã thanh toán, đang giao, đã giao, đã hủy, hết hạn), nhãn đọc rõ không chỉ bằng màu | ORD-REQ-20261006-092320790 |
+| trạng thái đơn | Badge theo trạng thái hiện tại của đơn (chờ xử lý, đã xác nhận, đã thanh toán, đang giao, đã giao, đã hoàn, đã hủy, hết hạn), nhãn đọc rõ không chỉ bằng màu | ORD-REQ-20261006-092320790 |
 
 ## Phần tử
 | testid | Phần tử | Role | Hành động | Requirement |
@@ -70,5 +70,5 @@ Dưới sm: tab thành nút "Trạng thái: Tất cả · 25" mở danh sách; m
 - Sắp xếp mới nhất trước và 20 đơn mỗi trang cố định, không có ô chọn số dòng mỗi trang (ORD-REQ-20261006-092320716 BR2, BR3).
 - Màn customer không có ô tìm, không có cột email hay bộ lọc theo khách (chỉ đơn của mình).
 - Phân trang bấm vào dòng cuối thì không dựng thêm màn "vượt trang": trang quá cuối trả danh sách rỗng và hiện trạng thái rỗng do lọc.
-- Nhãn trạng thái mặc định: pending "Chờ xử lý", confirmed "Đã xác nhận", paid "Đã thanh toán", shipped "Đang giao", delivered "Đã giao", cancelled "Đã hủy", expired "Hết hạn". Màu badge theo bảng `M7` của evon.
+- Nhãn trạng thái mặc định: pending "Chờ xử lý", confirmed "Đã xác nhận", paid "Đã thanh toán", shipped "Đang giao", delivered "Đã giao", returned "Đã hoàn" (hàng giao thất bại rồi hoàn về, E-18), cancelled "Đã hủy", expired "Hết hạn". Màu badge theo bảng `M7` của evon.
 - Không viết code giao diện; dựng thật là việc của `implement`.

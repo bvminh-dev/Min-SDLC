@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 
 const claude = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const jobs = [{ name: 'check-adapter', file: join(claude, 'sdlc/scripts/check-adapter.mjs') }];
+const hooksDir = join(claude, 'sdlc/hooks');
+for (const f of readdirSync(hooksDir).filter((n) => n.endsWith('.test.mjs'))) jobs.push({ name: `hooks/${f}`, file: join(hooksDir, f) });
 for (const skill of readdirSync(join(claude, 'skills'))) {
   const dir = join(claude, 'skills', skill, 'scripts');
   if (!existsSync(dir)) continue;

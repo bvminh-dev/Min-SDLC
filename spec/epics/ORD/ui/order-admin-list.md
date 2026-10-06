@@ -21,7 +21,7 @@ Lý do chọn A: việc chính là tìm đơn theo mã hoặc trạng thái rồ
 ```
 Thanh header:  ☰  Đơn hàng                                                 🔔  (A)
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│ [Tất cả] Chờ xử lý  Đã xác nhận  Đã thanh toán  Đang giao  Đã giao  Đã hủy  ...  │
+│ [Tất cả] Chờ xử lý  Đã xác nhận  Đã thanh toán  Đang giao  Đã giao  Đã hoàn  Đã hủy  ...  │
 │ [ Tìm theo mã đơn                              ]                                 │
 ├──────────────────────────────────────────────────────────────────────────────────┤
 │ Mã đơn         Ngày tạo        Trạng thái    Thanh toán          Sản phẩm   Tổng │
@@ -40,9 +40,9 @@ Hàng bấm được mở chi tiết đơn. Không cột email, tên khách, đi
 | đang tải | Khung chờ đúng hình hàng bảng; đổi lọc, tìm hay trang thì giữ dữ liệu cũ | ORD-REQ-20261006-092320743 |
 | rỗng | "Chưa có đơn hàng nào." một dòng chữ mờ (hệ thống chưa có đơn) | ORD-REQ-20261006-092320743 |
 | rỗng do tìm hoặc lọc | "Không có đơn nào khớp." kèm nút "Xoá lọc"; tìm mã không khớp hoặc nhập email (không khớp theo email) đều vào đây; trang 2 khi đúng 20 đơn cũng rỗng | ORD-REQ-20261006-092320743 |
-| lỗi | Banner "Không tải được danh sách đơn." kèm "Thử lại"; lỗi bộ lọc không hợp lệ (400) cũng vào đây | ORD-REQ-20261006-092320743 |
+| lỗi | Banner "Không tải được danh sách đơn." kèm "Thử lại"; lỗi bộ lọc không hợp lệ (400) và quá giới hạn tần suất (429, bậc D) cũng vào đây | ORD-REQ-20261006-092320743 |
 | không có quyền | Customer mở màn này (403) thấy trang lỗi "Bạn không có quyền xem trang này" kèm nút về Đơn hàng của tôi; chưa đăng nhập (401) thì về đăng nhập | ORD-REQ-20261006-092320743 |
-| trạng thái đơn | Badge trạng thái hiện tại; nhãn đọc rõ không chỉ bằng màu | ORD-REQ-20261006-092320790 |
+| trạng thái đơn | Badge trạng thái hiện tại (tám trạng thái, gồm "Đã hoàn" cho `returned`); nhãn đọc rõ không chỉ bằng màu | ORD-REQ-20261006-092320790 |
 
 ## Phần tử
 | testid | Phần tử | Role | Hành động | Requirement |

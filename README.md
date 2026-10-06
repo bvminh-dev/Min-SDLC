@@ -97,6 +97,7 @@ Mỗi skill có `SKILL.md` (mỏng), `templates/`, `scripts/` và `evals/` (ca k
 - **Adapter**: skill không gọi thẳng framework ngoài. Đổi framework thì thêm submodule + viết mapping mới
   (xem `.claude/sdlc/adapter/active.md`), không sửa skill.
 - **Duyệt là việc của người**: hook chặn Claude sửa file `status: approved` và chặn việc tự đổi sang approved.
+- **Kiểm soát thay đổi nền**: ngoại lệ có ghi vết. Người khai một file đã duyệt vào `.claude/sdlc/change-control.json` (reason, solution, authorized_by) thì Claude được hạ nó về draft, sửa, rồi duyệt lại đúng một lần; mọi lần được ghi ở `.claude/sdlc/change-control.log` và mục `## Nhật ký thay đổi nền` của file. File không khai vẫn bị chặn.
 
 ## Kiểm tra nhanh
 

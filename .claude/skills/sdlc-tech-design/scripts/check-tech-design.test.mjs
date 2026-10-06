@@ -25,7 +25,7 @@ entities: [Order]
 |---|---|---|
 ${states.map((s) => `| Order | ${s} | enum |`).join('\n')}
 `;
-const API = ({ path = '/api/v1/orders', errs = '401, 403', dep = '[AUTH]', emits = '[OrderPaid]' } = {}) => `---
+const API = ({ path = '/api/v1/orders', errs = '401, 403', dep = '[AUTH]', emits = '[OrderPaid]', role = 'customer' } = {}) => `---
 id: ORD-API-20261006-110000002
 epic: ORD
 links: [${REQ}]
@@ -36,7 +36,7 @@ consumes: []
 ## Endpoint
 | Method | Path | Role | Requirement | Lỗi | Ghi chú |
 |---|---|---|---|---|---|
-| GET | ${path} | customer | ${REQ} | ${errs} | own |
+| GET | ${path} | ${role} | ${REQ} | ${errs} | own |
 `;
 const SEC = (sb = 'SB-06') => `---
 id: ORD-SEC-20261006-110000003
@@ -51,12 +51,12 @@ links: [${REQ}]
 
 function run({ db = DB(), api = API(), sec = SEC() } = {}) {
   const r = mkdtempSync(join(tmpdir(), 'design-'));
-  put(r, 'permissions-matrix.md', '| Hành động | Requirement | guest | customer | staff | admin |\n|---|---|---|---|---|---|\n');
+  put(r, 'permissions-matrix.md', '| Hành động | Requirement | guest | customer | staff | admin | system |\n|---|---|---|---|---|---|\n');
   put(r, 'domain/entities.md', '| Entity          | Epic | Khóa |\n|---|---|---|\n| Order | ORD | id |\n| StockItem | INV | id |\n| User | AUTH | id |\n\n| Entity        | Từ | Sang | Điều kiện |\n|---|---|---|---|\n| Order | pending | paid | x |\n');
   put(r, 'domain/events.md', '| Event | Entity | Producer | Consumers | Payload | Phát khi |\n|---|---|---|---|---|---|\n| OrderPaid | Order | ORD | SHP | id | Order:paid |\n');
   put(r, 'architecture.md', '| Epic | Module | Phụ thuộc |\n|---|---|---|\n| AUTH | auth | - |\n| ORD | order | AUTH |\n| INV | inventory | - |\n');
   put(r, 'security-baseline.md', '| Mã | Yêu cầu | Kiểm bằng | Epic |\n|---|---|---|---|\n| SB-06 | IDOR | test | ORD |\n');
-  put(r, `epics/ORD/requirements/${REQ}.md`, `---\nid: ${REQ}\nepic: ORD\nroles: [customer]\n---\n`);
+  put(r, `epics/ORD/requirements/${REQ}.md`, `---\nid: ${REQ}\nepic: ORD\nroles: [customer, system]\n---\n`);
   put(r, 'epics/ORD/design/ORD-DB-20261006-110000001.md', db);
   put(r, 'epics/ORD/design/ORD-API-20261006-110000002.md', api);
   put(r, 'epics/ORD/design/ORD-SEC-20261006-110000003.md', sec);
@@ -72,6 +72,7 @@ bad({ db: DB(['pending', 'paid'], 'FK stock_items') }, /FK stock_items thuộc e
 bad({ db: DB(['pending', 'paid'], 'item_id -> stock_items.id (RESTRICT)') }, /stock_items thuộc epic INV/);
 bad({ db: DB(['pending', 'paid'], 'item_id REFERENCES stock_items(id)') }, /stock_items thuộc epic INV/);
 bad({ api: API({ errs: '401' }) }, /401 và 403/);
+assert.equal(run({ api: API({ role: 'system', errs: '-' }) }).status, 0, 'endpoint role system không bắt buộc 401/403');
 bad({ api: API({ dep: '[PAY]' }) }, /depends_on PAY/);
 bad({ api: API({ emits: '[StockReleased]' }) }, /emits StockReleased/);
 bad({ sec: SEC('SB-99') }, /SB-99/);

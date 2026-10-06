@@ -1,0 +1,80 @@
+# Câu hỏi còn mở của epic SHP (sdlc-research, tech-design, ui-ux, test-design)
+
+Chạy tự động nên không hỏi trực tiếp. Mọi mặc định dưới đây theo `DECISIONS-ecommerce.md` và roadmap; chỗ không có quyết định nền thì chọn phương án khuyến nghị và đánh [OPEN]. Mọi file spec của SHP vẫn `draft`; requirement `draft` được dùng làm đầu vào cho các phase sau (đã được phép).
+Phạm vi: SHP làm sáu mục con của roadmap (Shipping method, Shipping fee, Create shipment, Tracking number, Shipping status, Shipping history) thành 10 requirement (xem `requirements/`). Hai requirement do event kích hoạt (tạo vận đơn, hủy vận đơn) không có endpoint và không có màn.
+
+## A. Cần người quyết ở phạm vi SHP (mặc định đã áp)
+1. [RESOLVED] E-15 (nền định nghĩa `rule` gồm `free_over`, `surcharge`, `surcharge_cities`, thêm `is_active`; SHP-REQ-755 BR2 giữ miền giá trị và công thức). Còn [OPEN] phần mặc định: `free_over` (miễn phí khi tạm tính từ ngưỡng), `surcharge` và `surcharge_cities` (phụ thu theo thành phố, tối đa 63 tên); miễn phí thắng phụ thu; so tên thành phố không phân biệt hoa thường và dấu. Phí theo cân nặng, theo vùng, thời gian giao dự kiến (ETA) chưa có. (SHP-REQ-20261006-101103755 BR2, SHP-REQ-20261006-101103806 BR2)
+2. [OPEN] Tối đa 20 phương thức (kể cả đã tắt), không có xóa, chỉ tắt; không seed phương thức mặc định (admin tạo trước đơn đầu tiên, nếu không CHK không có phương thức để chọn). (SHP-REQ-20261006-101103755 BR3, BR4)
+3. [RESOLVED] E-24 (xác nhận không có `failed -> shipped` và `shipped -> cancelled` ở v1, giao lại để SAU kèm sdlc-impact trên ORD, INV); quy tắc một vận đơn còn hiệu lực mỗi đơn đã vào `entities.md` (E-15). Áp dụng: giữ vòng đời như SHP-REQ-903 BR2, BR6. (SHP-REQ-20261006-101103903 BR6)
+4. [OPEN] Mã vận đơn: 8 đến 30 ký tự chữ hoa, số, gạch nối, duy nhất toàn hệ thống; không có trường hãng vận chuyển; nhân viên nhập tay, chưa có tích hợp tự động với hãng (GHN, GHTK...) và chưa có ADR. Mẫu cho phép mã chỉ gồm gạch nối (8 dấu `-`); có thể siết thành "ít nhất một chữ hoặc số". (SHP-REQ-20261006-101103855 BR3, BR4, BR10)
+5. [RESOLVED] S-04, K-13 (SB-08 ngoại lệ (b): staff thấy người nhận khi Shipment `pending`, `shipped`, `failed`, mỗi lần xem có audit; ORD giữ ngoại lệ (c) staff không thấy). Áp dụng: SHP-REQ-927 BR5 thêm audit `shipment.view_recipient` (đóng kín nếu audit lỗi), khối `recipient` gồm `line1`, `ward`, `city` (E-06, E-12), bỏ `district`; test TC-102133988, TC-102134063 thêm kiểm audit. (SHP-REQ-20261006-101103927 BR5)
+6. [RESOLVED] V-06 (nền chuẩn hóa `reason` của ShipmentFailed thành mã cố định) và V-01 (ShipmentFailed mang `order_code`, `user_id`). Áp dụng: giữ danh sách mã, payload thêm `order_code`, `user_id`. Còn [OPEN] phần ghi chú: lý do giao thất bại dùng mã cố định (`customer_unreachable`, `refused`, `wrong_address`, `damaged`, `other`) kèm ghi chú tối đa 300 ký tự; ShipmentFailed chỉ mang mã (không mang ghi chú) vì NTF có thể gửi cho khách; customer không thấy lý do hay ghi chú. (SHP-REQ-20261006-101103903 BR3)
+7. [RESOLVED] V-09, K-09 (event ShipmentTrackingChanged, SHP phát, ORD nhận) và SB-30 (khóa lạc quan). Áp dụng: SHP-REQ-880 BR5, BR8 phát event; TC-102133722, TC-102133770 kiểm event. (SHP-REQ-20261006-101103880 BR8)
+8. [OPEN] Thứ tự danh sách vận đơn mặc định mới nhất trước (tham số `sort=oldest` cho hàng đợi); lịch sử cũ nhất trước (khớp ORD) dù mẫu `timeline.md` của evon đặt mới nhất trên: màn theo requirement. (SHP-REQ-20261006-101103927 BR7, SHP-REQ-20261006-101103972 BR5)
+9. [OPEN] (nền chưa quyết; E-18 vẫn cho hủy `paid`, `confirmed` đến khi ORD nhận ShipmentShipped) Cửa sổ ngắn giữa SHP bàn giao và ORD nhận ShipmentShipped: khách vẫn hủy được đơn, hàng đã đi mà đơn hủy. Mặc định: log error `shipment-order-cancelled-mismatch` để đối soát thủ công; cần quy trình vận hành và có thể một báo cáo đối soát. (SHP-REQ-20261006-101103950 BR5)
+10. [RESOLVED] E-15 (thuộc tính `cod_amount` nằm ở Shipment). Áp dụng: giữ cách chụp lúc tạo vận đơn từ `ORD.findForShipment` (tổng tiền đơn), SHP không tính lại; COD do PAY thu khi nhận OrderDelivered (V-10).
+11. [RESOLVED] S-01, ADR-014, SB-14 (bậc C: báo phí, tra cứu theo mã đơn 120 mỗi phút mỗi người dùng; bậc D: danh sách của staff 30 mỗi phút mỗi người). Áp dụng: bỏ giá trị 60 riêng, test TC-102133383 đổi thành 121 lần, TC-102134039 thêm ca 31 lần. Thử lại xử lý event giờ do relay outbox (ADR-011, SB-34); còn [OPEN] số lần 5 và khoảng 1, 2, 4, 8, 16 giây là mặc định đề nghị của SHP, do PRJ chốt cho relay.
+12. [RESOLVED] CRT-REQ-20261006-103226537 BR3 và CHK-REQ-20261006-105051242 BR2 (tạm tính trước giảm giá coupon; K-07 tiền là dẫn xuất). SHP vẫn chỉ nhận `subtotal` do bên gọi đưa.
+13. [OPEN] Nếu danh sách phương thức rỗng thì CHK xử lý thế nào (mặc định đề nghị: chặn đặt hàng, thông báo "Chưa có phương thức vận chuyển"); CHK-REQ-20261006-105051242 là nơi xử lý nhưng chưa xác nhận hành vi này. (SHP-REQ-20261006-101103782 BR5)
+
+## B. Phụ thuộc epic khác
+14. [RESOLVED] A-02, E-12 (bảng Giao diện module: CHK, CRT gọi `ShippingService.listActiveMethods`, `quote`; `Order.shipping_method_id` do CHK ghi). `links` của SHP-REQ-755, 782, 806 đã trỏ tới CHK-REQ-20261006-105051242, CRT-REQ-20261006-103226537 (và CHK-REQ-20261006-105051825).
+15. [RESOLVED] CRT: tính phí giỏ bằng `quote` theo CRT-REQ-20261006-103226537; tiền không lưu ở Cart (K-07, E-09).
+16. [RESOLVED] A-03 (SHP bỏ USR khỏi cột Phụ thuộc; người nhận lấy từ bản chụp địa chỉ của Order). Còn [OPEN] `city` của Address chuẩn hóa hay nhập tự do (ảnh hưởng độ khớp `surcharge_cities`): nền (E-06) chưa quyết.
+17. [RESOLVED] V-10, K-09 (PAY nhận OrderDelivered để thu COD, không thêm ShipmentDelivered).
+18. [RESOLVED] V-08, E-20, K-05 (ShipmentReturned mang `restockable`; INV lấy dòng hàng theo `order_id`, ghi StockMovement `return`, reservation giữ `committed`). R-11 (đợt 2): `restockable` = false thì INV không đổi `on_hand`, không ghi StockMovement, chỉ log và audit. Còn [OPEN] `restockable` suy ra từ `reason_code` (khác `damaged`), xem SHP-REQ-903 Xung đột.
+19. [RESOLVED] V-01, V-06 (ShipmentFailed mang `order_code`, `user_id`, `reason` mã cố định, không mang ghi chú nhân viên). ShipmentShipped, ShipmentDelivered đến NTF qua OrderShipped, OrderDelivered của ORD.
+20. ORD: (a) [RESOLVED] A-02 (`findForShipment`, `findByCode`, `findOwned`, `getRecipient`); (b) [RESOLVED] E-12 (`shipping_method_id`); (c) [RESOLVED] K-03 c, E-18 (ShipmentFailed chỉ ghi lịch sử, ShipmentReturned: `shipped -> returned`); (d) [RESOLVED] ORD-REQ-20261006-092320768 BR và màn `order-detail` đã có liên kết "Theo dõi vận chuyển" (testid `ord-order-detail-tracking-link`, chỉ customer, khi có mã vận đơn) trỏ tới màn `shipment-tracking`; (e) [RESOLVED] K-13, S-04 (staff không thấy địa chỉ ở ORD, thấy ở SHP).
+21. [RESOLVED] A-01, ADR-012, ADR-023, K-15 (guard phiên, `audit.record(tx, ...)`, giới hạn tần suất, outbox là mối quan tâm cắt ngang của `platform`; `type` lỗi là `urn:ecom:error:<mã>`); SHP không khai AUTH, PRJ, USR.
+
+## C. Giao diện và E2E
+- Có 4 màn: `shipping-method-admin` (admin), `shipment-admin-list` và `shipment-admin-detail` (staff, admin), `shipment-tracking` (customer). Không có màn cho SHP-REQ-20261006-101103782 và SHP-REQ-20261006-101103806 (phương thức khả dụng và phí): dữ liệu hiện ở màn chọn vận chuyển của CHK và giỏ của CRT, hai epic chưa có spec. Không có màn cho SHP-REQ-20261006-101103829 và SHP-REQ-20261006-101103950 (event hệ thống, không có tác nhân đăng nhập).
+- Các trạng thái "không có quyền" ghi role của màn (check-ui chỉ nhận role của màn), dù người thấy chúng là role khác (customer mở màn quản trị): xem mục F (lỗi của kit).
+- 6 luồng E2E (3 cho staff và admin, 2 cho customer, 1 cho admin quản lý phương thức). Bước đăng nhập mô tả bằng lời, không có testid, vì testid đăng nhập của AUTH chỉ dành cho role `guest`.
+
+## D. Chỗ yếu của requirement (checklist chất lượng) và việc test chưa phủ
+- SHP-REQ-20261006-101103806: "chênh lệch trung vị dưới 30% trên 30 lần đo" ở test 404 đồng nhất (cùng cách của AUTH, chưa có ngưỡng chốt).
+- SHP-REQ-20261006-101103806 BR7 (giới hạn 60 yêu cầu mỗi phút) chỉ có ở quy tắc, không có kịch bản Given/When/Then riêng; test TC giới hạn tần suất phải ghép vào mục "Ca biên".
+- Mã vận đơn chỉ gồm gạch nối vẫn hợp lệ (câu 4); mã sai chỉ phát hiện khi khách khiếu nại vì không có tích hợp hãng.
+- Mối đe dọa SEC không có TC: T11 (giả event qua bus, chỉ `review`). T19 đã có TC-110000001 (SB-27, giết tiến trình). T9 kiểm bằng test và review.
+- Biện pháp đã có SB sau khi sửa nền: T16 (SB-14 bậc C, D), T19 (SB-27), T24 (SB-30), T13 (SB-32). Khóa advisory cho trần 20 phương thức vẫn là biện pháp riêng của SHP.
+- Test đua (TC song song) cần PostgreSQL thật, mock không bắt được; test log cần bộ lọc che dữ liệu của PRJ (SB-18).
+
+## E. Quyết định không hỏi được ở các cổng của kit (đã chọn mặc định)
+- Danh sách màn (cổng xác nhận): 4 màn như mục C; mỗi màn chọn phương án A (khuyến nghị) trong ba phương án wireframe, không có người chọn.
+- Brief, wireframe: không dựng HTML, không chạy probe (việc của implement).
+
+## F. Lỗi và hạn chế của kit/script gặp khi chạy
+- `check-ui.mjs`: phần tử chỉ được khai role nằm trong `roles` của màn, nên trạng thái "không có quyền" (người thấy là customer ở màn quản trị) phải ghi role của màn; E2E của customer không dùng được testid này. Đề xuất: cho phép role `*` hoặc `any` ở phần tử của trạng thái không có quyền (liên quan L3 trong `spec/lessons/2026-10-06-ORD.md`).
+- `check-tests.mjs`: E2E của role khác `guest` không đăng nhập được bằng testid vì testid của màn đăng nhập chỉ dành cho `guest`; phải mô tả đăng nhập bằng lời.
+- [RESOLVED] KT-02, R-01 (role `system`): SHP-REQ-829, 950 dùng `roles: [system]`; ma trận quyền sẽ có cột `system` (người duyệt thêm), nên lỗi role `system` thiếu trong ma trận nếu có thì bỏ qua. `links` của 782, 806 đã trỏ tới requirement thật của CRT, CHK; bảng `shipment_status_history` dùng entity `ShipmentStatusHistory` (E-15).
+
+## Nền còn thiếu sau lần sửa 2026-10-06
+Các mục "Nền cần sửa" trước đây đã được nền mới áp dụng (E-15 cho ShippingMethod, Shipment, ShipmentStatusHistory, `rule`; E-12 cho `Order.shipping_method_id`, `tracking_number`; E-24 xác nhận vòng đời; V-09 ShipmentTrackingChanged; V-10 PAY nhận OrderDelivered; V-06, V-01 payload ShipmentFailed; S-04 SB-08; SB-06, SB-07, SB-12, SB-14, SB-19, SB-30, SB-32 thêm SHP; ADR-011 outbox; ADR-012 guard cắt ngang; R-02 staff cập nhật vận đơn). Còn thiếu:
+- `spec/architecture.md`: ADR về cơ chế tích hợp hãng vận chuyển (GHN, GHTK hay nhập tay) nếu sau này cần theo dõi tự động (câu 4); chưa có ADR.
+- `spec/domain/events.md` hoặc ORD: cửa sổ giữa SHP bàn giao và ORD nhận ShipmentShipped mà đơn vẫn hủy được (câu 9); cần quy trình vận hành, hoặc ORD khóa đơn khi SHP bắt đầu bàn giao (đổi phụ thuộc, sdlc-impact).
+- `spec/domain/entities.md` Address: `city` chuẩn hóa (danh mục thành phố) hay nhập tự do (câu 16), ảnh hưởng `surcharge_cities`.
+- [RESOLVED] ORD (`ORD-REQ-20261006-092320768`, màn `order-detail`): liên kết "Theo dõi vận chuyển" tới màn `shipment-tracking` đã có (câu 20d).
+- Ý muốn đồng nhất audit khi xem người nhận (SB-19 "gộp mỗi phút, lỗi audit không chặn đọc" chỉ nêu ví dụ dashboard, SB-08 (b) đòi mỗi lần xem có audit): [OPEN], xem SHP-REQ-20261006-101103927 Xung đột.
+- `restockable` của ShipmentReturned hiện suy ra từ lý do thất bại; nếu muốn nhân viên chọn khi xác nhận hoàn hàng thì đổi `SHP-REQ-903`, màn `shipment-admin-detail` và test.
+- Số lần thử lại và khoảng chờ của relay outbox (câu 11) do PRJ chốt.
+
+## Nhật ký đồng bộ nền 2026-10-06
+- `design/SHP-DB-*`: sửa theo E-01, E-15, A-03, ADR-011, ADR-021, SB-27, SB-30, SB-32, SB-35: thêm entity `ShipmentStatusHistory` (hết lỗi check-tech-design), bỏ [OPEN] thuộc tính đã có ở nền, bảng chuyển trạng thái thêm sửa mã (ShipmentTrackingChanged), ghi outbox và `processed_events` cùng giao dịch, audit actor `system` và audit xem người nhận, `restockable` suy từ `reason_code`.
+- `design/SHP-API-*`: sửa theo V-01, V-08, V-09, V-10, A-02, ADR-011, ADR-023, SB-08, SB-14, SB-19: `emits` thêm ShipmentTrackingChanged, `type` lỗi thành `urn:ecom:error:`, `recipient` gồm `line1`, `ward`, `city`, bỏ `district`, bậc C và D của SB-14 (120 và 30 mỗi phút) thay 60, audit khi trả `recipient`, mục Giao tiếp viết lại theo bảng Giao diện module.
+- `design/SHP-SEC-*`: sửa theo SB-08, SB-14, SB-27, SB-30, SB-32, SB-19: T9 (ngoại lệ (b) và audit), T16 (SB-14), T19 (SB-27, kiểm bằng test), T24 (SB-30), T13 (SB-32), T11, T12, rủi ro còn lại.
+- `requirements/SHP-REQ-829, 950`: role `admin` giữ chỗ thành `system` (R-01); thêm chống trùng theo `event_id` (ADR-011), audit `system`, payload OrderCancelled đủ `order_code`, `user_id`, `reason` mã (V-01, V-06).
+- `requirements/SHP-REQ-880` (V-09): phát ShipmentTrackingChanged, ORD cập nhật bản sao. `SHP-REQ-903` (K-03, E-18, E-24, V-08, V-10): hậu quả ở ORD, PAY, INV, `restockable`. `SHP-REQ-927` (S-04, K-13, K-16, E-06): audit xem người nhận, bỏ `district`, bậc C, D. `SHP-REQ-855`, `972`: outbox, SB-32, entity ShipmentStatusHistory. `SHP-REQ-755, 782, 806` (E-15, A-02, SB-14): `links` tới CHK, CRT, bậc C 120 mỗi phút, `subtotal` trước giảm giá.
+- `flows/SHP-FLOW-*`: thêm chống trùng event, audit xem người nhận, ShipmentTrackingChanged, `restockable`, chú thích epic khác theo nền mới.
+- `ui/shipment-admin-detail.md`: ghi chú SB-08 (b) và audit, địa chỉ không còn `district`, ghi chú hoàn hàng nhập lại kho trừ Hàng hỏng.
+- `tests/`: sửa TC-102133383 (121 lần, bậc C), TC-102133407, 431, 455, 480, 505 (outbox, `processed_events`, audit `system`, relay giao lại), TC-102133529, 553, 650, 868, 941, 795 (outbox thay bus), TC-102133722, 770 (ShipmentTrackingChanged), TC-102133819 (payload `order_code`, `user_id`), TC-102133844 (`restockable`), TC-102133988, 102134063 (audit xem người nhận, bỏ `district`), TC-102134039 (bậc D 30 mỗi phút), TC-102147270, 299, 445 (OrderCancelled mã `reason`, `event_id`); thêm TC-110000001 (T19, SB-27).
+- Mã quyết định ảnh hưởng nhiều nhất: K-03 (vòng đời Order theo ShipmentFailed, ShipmentReturned), K-08 và V-01, V-06 (payload), K-13 và S-04 (SB-08), K-09 và V-10 (consumer), K-16 và S-03 (audit), ADR-011 (outbox).
+
+### Đợt 2
+- `requirements/SHP-REQ-20261006-101103950` (M-04, R-02): BR1 `reason` của OrderCancelled thêm `stock_commit_failed` (cờ `was_paid` tách riêng), thêm BR9 (đơn `paid` bị hệ thống hủy xử lý như mọi lý do khác), thêm kịch bản `ORD-5`, Xung đột [RESOLVED]; thêm `tests/SHP-TC-20261006-120000001` (vận đơn `pending` của đơn `paid` bị hủy do `stock_commit_failed`, giao lại event, trường hợp `shipped`).
+- `requirements/SHP-REQ-20261006-101103903` (M-03, R-15, R-11): BR5, BR10, "Epic khác bị chạm", Xung đột: ORD phát OrderReturned (PAY đóng Payment COD `pending`, NTF báo khách), INV với `restockable` = false không đổi `on_hand`, không ghi StockMovement; `tests/SHP-TC-20261006-102133844` ghi ranh giới kiểm.
+- `requirements/SHP-REQ-20261006-101103927`, `806`, `design/SHP-API-*`, `design/SHP-SEC-*` (T16, T17, T20), `tests/SHP-TC-20261006-102134039`, `102133383` (M-09, R-31, ADR-014): bậc C đếm trong bộ nhớ từng instance, bậc D (danh sách staff) ở PostgreSQL của platform; TC-102134039 thêm ca hai instance dùng chung bộ đếm; SHP không có bảng đếm riêng.
+- `requirements/SHP-REQ-20261006-101103927` BR5 (M-10, R-43): giữ audit từng lần xem người nhận, đóng kín khi audit lỗi (SB-08 (b)); thêm [OPEN] hỏi người quyết có áp ngoại lệ "gộp mỗi phút, lỗi audit không chặn đọc" của SB-19 cho trường hợp này không.
+- `design/SHP-API-*` mục Giao tiếp, `design/SHP-DB-*`, `flows/SHP-FLOW-*`: khớp OrderReturned, `restockable` = false (R-11), OrderCancelled `stock_commit_failed` (M-04); tên giao diện module `listActiveMethods`, `quote` (SHP gọi ORD: `findForShipment`, `findByCode`, `findOwned`, `getRecipient`) đã khớp bảng Giao diện module, không đổi; cột Phụ thuộc của SHP (chỉ ORD) khớp architecture.md.
+- `questions.md` (R-11, ORD-REQ-768): câu 20d và bullet ORD ở "Nền còn thiếu" thành [RESOLVED] (ORD đã có liên kết theo dõi vận chuyển); câu 18 ghi R-11. Còn mở và không thuộc đợt 2: câu 9 (R-04), câu 16 (R-12), câu 11 (R-35, số lần thử relay).

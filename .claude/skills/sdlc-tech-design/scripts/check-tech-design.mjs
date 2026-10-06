@@ -121,7 +121,8 @@ for (const { f, text, fm } of docs) {
         if (!matrixRoles.includes(r)) err(f, `${key}: role "${r}" không có trong ma trận quyền`);
         else if (!roleOf(req).includes(r)) err(f, `${key}: role "${r}" không nằm trong roles của ${req}`);
       }
-      if (roles.some((r) => r !== 'guest') && !(/\b401\b/.test(errs) && /\b403\b/.test(errs))) err(f, `${key}: endpoint cần đăng nhập phải khai lỗi 401 và 403`);
+      // `guest` (công khai) và `system` (webhook, tác nhân hệ thống xác thực bằng chữ ký, không có phiên) không bắt buộc 401/403
+      if (roles.some((r) => r !== 'guest' && r !== 'system') && !(/\b401\b/.test(errs) && /\b403\b/.test(errs))) err(f, `${key}: endpoint cần đăng nhập phải khai lỗi 401 và 403`);
     }
     for (const dep of fm.depends_on ?? []) if (!(modDeps.get(fm.epic) ?? []).includes(dep)) err(f, `depends_on ${dep} không có trong Phụ thuộc của ${fm.epic} ở architecture.md (cần ADR mới)`);
     for (const ev of fm.emits ?? []) if (events.get(ev)?.producer !== fm.epic) err(f, `emits ${ev}: ${events.has(ev) ? `bên phát là ${events.get(ev).producer}` : 'không có trong events.md'}`);
