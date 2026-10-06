@@ -1,0 +1,22 @@
+// Điểm vào công khai DUY NHẤT của module platform (PRJ-REQ-20261006-095422475 BR4, BR5): module khác chỉ import từ đây.
+export { PlatformModule } from './platform.module';
+export { Clock } from './common/clock';
+export { currentCorrelationId, runWithCorrelation, newCorrelationId } from './common/context';
+export { ConfigService, registerConfigSchema, cfg, loadConfig, loadConfigFromProcess, ConfigError, type CoreConfig, type ConfigFragment } from './config/config';
+export { AppLogger } from './logging/logger';
+export { redactDeep, REDACTED } from './logging/redact';
+export { DomainError, registerProblem, errorRegistry, ErrorRegistry, type ProblemDef } from './errors/registry';
+export { PrismaService } from './db/prisma.service';
+export { TransactionService, type Tx } from './db/transaction.service';
+export { AuditService, type AuditEntry } from './audit/audit.service';
+export { EventsService, ProgrammingError, type DomainEventInput, type EventEnvelope, type EventHandler } from './events/events.service';
+export { OutboxRelay } from './events/outbox-relay';
+export { JobRunner, type JobDef } from './jobs/job-runner';
+export { RetentionService } from './jobs/retention.service';
+export { IdempotencyService, Idempotent, DbTx } from './http/idempotency';
+export { RateLimit, RateLimitService, SkipRateLimit, type RateLimitOptions, type Tier } from './http/rate-limit';
+export { paginate, toPage, paginationQuery, type PaginationQuery } from './http/pagination';
+export { Validate, ValidBody, ValidParams, ValidQuery } from './http/validation';
+export { Public, Roles, SystemEndpoint, CurrentSession, SESSION_RESOLVER, type SessionContext, type SessionResolver } from './http/session';
+export { auditRoutes, routeIds } from './http/route-audit';
+export { configureApp, nestLogger } from './http/app-setup';

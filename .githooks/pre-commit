@@ -1,0 +1,4 @@
+#!/bin/sh
+# Chặn commit chứa chuỗi giống bí mật (SB-15). Bỏ qua bằng --no-verify thì CI vẫn quét (job secrets).
+root="$(cd "$(dirname "$0")/.." && pwd)"
+exec node "$root/scripts/scan-secrets.mjs" --staged

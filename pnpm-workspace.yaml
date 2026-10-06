@@ -1,0 +1,15 @@
+packages:
+  - apps/*
+  - packages/*
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - prisma
+  - esbuild
+  - sharp
+  - unrs-resolver
+# SB-17: vá phụ thuộc bắc cầu có lỗ hổng mức high (cổng quét lỗ hổng làm CI đỏ). Bỏ khi next/prisma nâng bản phụ thuộc.
+overrides:
+  postcss: '>=8.5.23'
+  deepmerge-ts: '>=8.0.0'

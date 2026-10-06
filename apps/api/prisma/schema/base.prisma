@@ -1,0 +1,9 @@
+// Khối generator và datasource dùng chung; mỗi module một file .prisma riêng (PRJ-DB, ADR-003).
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

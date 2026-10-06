@@ -1,1 +1,14 @@
 .eval-runs/
+node_modules/
+dist/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+# bí mật: chỉ .env.example được commit (PRJ-REQ-20261006-095422475 BR8)
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log

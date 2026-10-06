@@ -1,0 +1,45 @@
+import { resolve } from 'node:path';
+import { API_DIR } from '../support/db';
+import { runScript } from '../support/sh';
+
+const F = resolve(API_DIR, 'test/fixtures/boundaries');
+const check = (dir: string) => runScript('scripts/check-boundaries.mjs', ['--modules', `${F}/${dir}/modules`, '--schemas', `${F}/schemas`]);
+
+describe('Kiểm ranh giới module (PRJ-REQ-20261006-095422475 BR5, BR11; SB-35)', () => {
+  it('PRJ-TC-20261006-100124114: chặn import trái cột Phụ thuộc và import vào tệp bên trong module, nêu tệp, module nguồn, module đích và quy tắc', () => {
+    const r = check('f114');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/catalog\/uses-order\.ts:1: \[catalog -> order\] order không nằm trong cột Phụ thuộc của catalog/);
+    expect(r.stderr).toMatch(/catalog\/uses-order\.ts:1: \[catalog -> order\] import file bên trong order \(internal\/helper\)/);
+    expect(r.stderr).toMatch(/order\/uses-payment\.ts:1: \[order -> payment\] payment không nằm trong cột Phụ thuộc của order/);
+    expect(r.stderr).not.toContain('[order -> auth]'); // order phụ thuộc AUTH nên hợp lệ
+  });
+
+  it('PRJ-TC-20261006-100124207: payment import điểm vào công khai của order (xuôi) qua; order import payment (ngược) thất bại, nêu liên lạc ngược chiều chỉ bằng domain event', () => {
+    const r = check('f207');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/order\/backward\.ts:1: \[order -> payment\].*liên lạc ngược chiều chỉ bằng domain event/);
+    expect(r.stderr).not.toMatch(/payment\/forward\.ts/);
+  });
+
+  it('PRJ-TC-20261006-110200114: module không đọc bảng của module khác, báo lỗi nêu tệp, dòng và module sở hữu; truy cập bảng của chính nó qua', () => {
+    const r = check('f114t');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/catalog\/reads-orders\.ts:2: \[catalog -> order\] đọc\/ghi model Prisma order thuộc module order/);
+    expect(r.stderr).toMatch(/catalog\/reads-orders\.ts:3: \[catalog -> order\] SQL thô đọc\/ghi bảng orders thuộc module order/);
+    expect(r.stderr).not.toContain('reads-own.ts'); // order đọc bảng của chính nó
+    expect(r.stderr).not.toContain('reads-orders.ts:4'); // catalog đọc bảng products của chính nó
+  });
+
+  it('PRJ-TC-20261006-110200115: platform là mối quan tâm cắt ngang, import điểm vào công khai không cần khai; import tệp nội bộ của platform thất bại', () => {
+    expect(check('okmods').status).toBe(0);
+    const r = check('f115');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/uses-platform\.ts:2: \[catalog -> platform\] import file nội bộ của platform/);
+    expect(r.stderr).not.toMatch(/uses-platform\.ts:1:/);
+  });
+
+  it('mã thật của repo sạch', () => {
+    expect(runScript('scripts/check-boundaries.mjs').status).toBe(0);
+  });
+});

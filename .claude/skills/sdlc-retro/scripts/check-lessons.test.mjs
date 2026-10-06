@@ -26,4 +26,6 @@ bad(good.replace('spec/epics/ORD/review.md', 'spec/none.md'), /không tồn tạ
 bad(good.replace('script', 'khác'), /Loại phải là/);
 bad(good, /tên file phải dạng/, 'bai-hoc.md');
 bad(good.replace('| rule |', '|  |'), /thiếu Quan sát hoặc Đề xuất/);
+assert.equal(run(good, '2026-10-06-ORD-code.md').status, 0, 'hậu tố nhãn được phép');
+assert.equal(run(good, '2026-10-06-ORD-Code_X.md').status, 1, 'hậu tố sai định dạng phải lỗi');
 console.log('OK: check-lessons.mjs');

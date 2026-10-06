@@ -1,0 +1,80 @@
+# CI của PRJ (PRJ-REQ-20261006-095422475 BR3, BR5, BR6, BR11; PRJ-REQ-20261006-095422563 BR3).
+# Chạy bốn lệnh chuẩn trên MỌI pull request (kể cả PR chỉ sửa spec/): không lọc theo đường dẫn, không dùng bí mật runtime (BR9).
+# Cần bật "Require status checks" ở nhánh chính để PR đỏ không merge được (cấu hình repo, kiểm bằng review).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ecom
+          POSTGRES_PASSWORD: ecom
+          POSTGRES_DB: ecom_ci
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U ecom -d ecom_ci" --health-interval 2s --health-timeout 3s --health-retries 20
+    env:
+      TEST_DB_BASE: postgresql://ecom:ecom@localhost:5433
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v4 # phiên bản lấy từ packageManager
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Vai trò CSDL của ứng dụng (ecom_app, ecom_retention; cùng tệp với docker compose)
+        run: PGPASSWORD=ecom psql -h localhost -p 5433 -U ecom -d ecom_ci -v ON_ERROR_STOP=1 -f docker/initdb/01-app-roles.sql
+      - name: Quét bí mật (SB-15)
+        run: pnpm scan:secrets
+      - name: Ranh giới module và truy cập bảng chéo module (SB-35)
+        run: pnpm check:boundaries
+      - name: Migration tương thích ngược, không sửa migration đã merge
+        if: github.event_name == 'pull_request'
+        run: node apps/api/scripts/check-migration-compat.mjs --base origin/${{ github.base_ref }}
+      - name: Schema khớp migration và migration chạy được trên CSDL trống
+        env:
+          DATABASE_URL: postgresql://ecom:ecom@localhost:5433/ecom_ci
+          SHADOW_DATABASE_URL: postgresql://ecom:ecom@localhost:5433/ecom_shadow
+        run: |
+          PGPASSWORD=ecom psql -h localhost -p 5433 -U ecom -d ecom_ci -c 'CREATE DATABASE ecom_shadow'
+          pnpm --filter @ecom/api exec prisma migrate deploy
+          pnpm --filter @ecom/api db:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  smoke:
+    needs: verify
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ecom
+          POSTGRES_PASSWORD: ecom
+          POSTGRES_DB: ecom_dev
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U ecom -d ecom_dev" --health-interval 2s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Vai trò CSDL của ứng dụng (DATABASE_URL của .env.example dùng ecom_app)
+        run: PGPASSWORD=ecom psql -h localhost -p 5433 -U ecom -d ecom_dev -v ON_ERROR_STOP=1 -f docker/initdb/01-app-roles.sql
+      - name: Dựng từ máy sạch, chạy pnpm dev và gọi health (PRJ-TC-20261006-100124068)
+        run: pnpm smoke

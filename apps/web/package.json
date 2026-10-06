@@ -1,0 +1,23 @@
+{
+  "name": "@ecom/web",
+  "private": true,
+  "version": "0.0.0",
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "dev": "next dev -p ${WEB_PORT:-3000}",
+    "start": "next start -p ${WEB_PORT:-3000}",
+    "build": "node scripts/check-public-env.mjs && next build",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^15.5.27",
+    "react": "^19.1.9",
+    "react-dom": "^19.1.9"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "~5.9.3"
+  }
+}

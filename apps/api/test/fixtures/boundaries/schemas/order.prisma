@@ -1,0 +1,4 @@
+model Order {
+  id String @id
+  @@map("orders")
+}

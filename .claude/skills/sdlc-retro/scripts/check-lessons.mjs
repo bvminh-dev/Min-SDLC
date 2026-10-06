@@ -22,8 +22,8 @@ const errors = [];
 for (const n of files) {
   const f = join(dir, n);
   const err = (m) => errors.push(`${f}: ${m}`);
-  const m = n.match(/^(\d{4}-\d{2}-\d{2})-([A-Z]{2,4})\.md$/);
-  if (!m) err('tên file phải dạng <YYYY-MM-DD>-<EPIC>.md');
+  const m = n.match(/^(\d{4}-\d{2}-\d{2})-([A-Z]{2,4})(?:-[a-z0-9]+)?\.md$/);
+  if (!m) err('tên file phải dạng <YYYY-MM-DD>-<EPIC>.md (hoặc <YYYY-MM-DD>-<EPIC>-<nhãn>.md khi một epic có nhiều đợt bài học)');
   else if (epics.size && !epics.has(m[2])) err(`epic ${m[2]} không có trong roadmap`);
   const text = readFileSync(f, 'utf8');
   const fm = text.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';

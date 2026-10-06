@@ -1,0 +1,4 @@
+model Product {
+  id String @id
+  @@map("products")
+}

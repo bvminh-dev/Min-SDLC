@@ -108,3 +108,20 @@ ls .claude/skills/sdlc-ui-ux/references/evon-ui-ux/skills/ui-ux/SKILL.md   # ph�
 node .claude/skills/sdlc-research/scripts/check-spec.mjs .claude/skills/sdlc-research/evals/checkout/fixture/spec
 node .claude/skills/sdlc-research/scripts/merge-matrix.mjs spec/              # gộp spec/epics/*/permission-rows.md vào ma trận quyền (idempotent); collect-foundation-requests.mjs gom mục "Nền cần sửa"
 ```
+
+## Chạy ứng dụng (code của epic PRJ)
+
+Yêu cầu: Node 24 LTS (`.nvmrc`; `.npmrc` có `engine-strict=true` nên Node sai thì `pnpm install` thất bại), pnpm 10 (`packageManager` ở `package.json` gốc), Docker. Bí mật không nằm trong repo; `.env` bị `.gitignore` chặn.
+
+```bash
+nvm use                                  # Node 24
+pnpm install --frozen-lockfile           # cũng bật hook quét bí mật trước commit (core.hooksPath=.githooks)
+cp .env.example .env                     # giá trị giả, chỉ dùng local
+docker compose up -d db                  # PostgreSQL 16 ở cổng 5433
+pnpm --filter @ecom/api db:migrate:deploy
+pnpm dev                                 # api http://localhost:3001/api/v1/health, web http://localhost:3000
+```
+
+Vai trò CSDL: ứng dụng chạy bằng `ecom_app` (`DATABASE_URL`), chỉ INSERT và SELECT trên `audit_logs`; migration chạy bằng superuser (`MIGRATE_DATABASE_URL`, dùng bởi `db:migrate:*`); job dọn audit dùng `ecom_retention` (`RETENTION_DATABASE_URL`). `docker compose` tạo các vai trò khi dựng CSDL mới. Volume CSDL dựng từ trước thì chạy một lần: `docker compose exec -T db psql -U ecom -d ecom_dev -f - < docker/initdb/01-app-roles.sql`. Prod: đặt mật khẩu riêng ở kho bí mật của host (xem `docs/runbook-prod.md`).
+
+Bốn lệnh chuẩn ở gốc (CI chạy cả bốn trên mỗi pull request): `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`. Test tích hợp chạy trên PostgreSQL thật của `docker compose` (cổng 5433, CSDL `ecom_test` do Jest dựng lại từ migration). Kiểm ranh giới module: `pnpm check:boundaries`; quét bí mật: `pnpm scan:secrets`; quét lỗ hổng: `pnpm audit:deps`; smoke từ `.env.example`: `pnpm smoke`. Xong việc: `docker compose down`.

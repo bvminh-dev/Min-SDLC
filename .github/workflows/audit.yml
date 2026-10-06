@@ -1,0 +1,21 @@
+# Quét lỗ hổng phụ thuộc (SB-17, PRJ-REQ-20261006-095422475 BR6): mỗi PR và mỗi tuần; mức high trở lên làm job đỏ.
+name: audit
+
+on:
+  pull_request:
+  schedule:
+    - cron: '17 3 * * 1' # thứ Hai hàng tuần, kể cả khi không có PR mới
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit:deps
