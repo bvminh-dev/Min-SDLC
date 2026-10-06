@@ -13,6 +13,36 @@ export const CHECK_FOUNDATION = resolve(
   '../../skills/sdlc-foundation/scripts/check-foundation.mjs',
 );
 
+export const CHECK_UI = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../skills/sdlc-ui-ux/scripts/check-ui.mjs',
+);
+
+export const CHECK_IMPACT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../skills/sdlc-impact/scripts/check-impact.mjs',
+);
+
+export const CHECK_TESTS = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../skills/sdlc-test-design/scripts/check-tests.mjs',
+);
+
+export const CHECK_REPORT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../skills/sdlc-implement/scripts/check-report.mjs',
+);
+
+export const CHECK_REVIEW = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../skills/sdlc-review/scripts/check-review.mjs',
+);
+
+export const CHECK_TECH_DESIGN = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../skills/sdlc-tech-design/scripts/check-tech-design.mjs',
+);
+
 const FOUNDATION_FILES = [
   'roadmap.md',
   'permissions-matrix.md',

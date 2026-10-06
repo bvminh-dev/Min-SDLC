@@ -4,9 +4,13 @@ mapping: mapping.spec-kit.md
 root: .claude/sdlc/framework/spec-kit
 pinned_tag: v1.1.0
 pinned_commit: f1d3a4f8
+ui_reference: .claude/skills/sdlc-ui-ux/references/evon-ui-ux
+ui_reference_tag: v0.3.18
 ---
 
 # Framework đang dùng làm reference
+
+`ui_reference` là tham chiếu **phụ**, ngoài framework SDLC: luật thiết kế giao diện (submodule evondevKit) cho skill `sdlc-ui-ux`. `check-adapter.mjs` kiểm nó đứng đúng tag như framework chính.
 
 Các skill `sdlc-*` đọc file này đầu tiên để biết framework nào đang active, rồi đọc file `mapping` để biết phase của mình tương ứng với tài liệu nào trong framework.
 

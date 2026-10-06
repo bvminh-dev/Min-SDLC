@@ -18,11 +18,16 @@ description: Phân tích tác động khi một requirement, flow hoặc quyền
    - `cần xem lại`: có thể đúng, cần người xác nhận.
    - `không đổi`: có liên kết nhưng không bị tác động (nói rõ vì sao).
 4. **Nêu rõ điều không chắc.** Chưa có spec của epic bị chạm thì ghi là "chưa có spec, rủi ro", không đoán.
-5. **Ghi báo cáo** vào `spec/changes/<ID-thay-đổi>.md` theo bảng dưới và trả lại danh sách việc cho người duyệt.
+5. **Ghi báo cáo** vào `spec/changes/<ID>.md` (`<ID>` là ID của tài liệu bị đổi) theo bảng dưới, rồi chạy `node .claude/skills/sdlc-impact/scripts/check-impact.mjs spec/` (hook cũng tự chạy). Script kiểm khuôn bảng, tên file, giá trị Loại/Mức, và **mọi tài liệu có `links`/`covers` tới ID đều phải có dòng** (không bị tác động thì ghi `không đổi` kèm lý do). Trả lại danh sách việc cho người duyệt.
 
 ## Mẫu báo cáo
 | ID bị ảnh hưởng | Loại | Mức | Lý do | Việc cần làm |
 |---|---|---|---|---|
+
+- **ID bị ảnh hưởng**: ID tài liệu trong `spec/`, hoặc đường dẫn file `spec/...` (ma trận quyền, domain).
+- **Loại**: đúng một trong `phải dựng lại`, `cần xem lại`, `không đổi`.
+- **Mức**: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` theo cách xếp của framework tham chiếu, hoặc `-` khi `không đổi`.
+- **Việc cần làm**: bắt buộc trừ khi `không đổi`.
 
 ## Quy tắc
 - Không sửa file `approved`. Đề xuất thay đổi, chờ người duyệt.

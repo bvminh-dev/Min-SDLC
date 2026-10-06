@@ -2,7 +2,7 @@
 // Kiểm adapter còn khớp framework sau khi update/đổi:
 //  1. root tồn tại; 2. version submodule khớp pinned_tag; 3. mọi đường dẫn trong mapping còn tồn tại.
 // Dùng: node check-adapter.mjs   (chạy ở thư mục gốc repo)
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 
@@ -59,6 +59,42 @@ if (fm.mapping && fm.root) {
       if (!existsSync(join(fm.root, p))) errors.push(`mapping trỏ tới file không còn: ${p}`);
     }
     console.log(`Đã kiểm ${paths.size} đường dẫn trong ${fm.mapping}.`);
+  }
+}
+
+// tham chiếu phụ (luật giao diện): thư mục tồn tại và đứng đúng tag đã ghim
+if (fm.ui_reference) {
+  if (!existsSync(join(fm.ui_reference, 'skills/ui-ux/SKILL.md'))) {
+    errors.push(`ui_reference không tồn tại hoặc thiếu skills/ui-ux/SKILL.md: ${fm.ui_reference} (đã chạy git submodule update --init?)`);
+  } else if (fm.ui_reference_tag) {
+    try {
+      const tag = execFileSync('git', ['-C', fm.ui_reference, 'describe', '--tags', '--exact-match'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      if (tag !== fm.ui_reference_tag) errors.push(`ui_reference đang ở ${tag}, active.md ghi ${fm.ui_reference_tag}`);
+    } catch {
+      errors.push(`ui_reference không đứng đúng trên một tag (ui_reference_tag: ${fm.ui_reference_tag})`);
+    }
+  }
+}
+
+// cột Skill của mapping khớp các skill sdlc-* có thật, cả hai chiều
+if (fm.mapping) {
+  const mappingPath = join(adapterDir, fm.mapping);
+  if (existsSync(mappingPath)) {
+    const mapped = [];
+    for (const line of readFileSync(mappingPath, 'utf8').split(/\r?\n/)) {
+      if (!line.startsWith('|') || /^\|\s*(Phase của kit|-)/.test(line)) continue;
+      const cells = line.split('|').slice(1, -1).map((c) => c.trim());
+      if (cells.length >= 5) mapped.push(cells.at(-1));
+    }
+    const skillsDir = '.claude/skills';
+    for (const s of mapped) if (!existsSync(join(skillsDir, s, 'SKILL.md'))) errors.push(`mapping: cột Skill "${s}" không có ${skillsDir}/${s}/SKILL.md`);
+    const dup = mapped.filter((s, i) => mapped.indexOf(s) !== i);
+    if (dup.length) errors.push(`mapping: skill xuất hiện nhiều lần ở cột Skill: ${[...new Set(dup)].join(', ')}`);
+    if (existsSync(skillsDir)) {
+      for (const d of readdirSync(skillsDir)) {
+        if (d.startsWith('sdlc-') && !mapped.includes(d)) errors.push(`skill ${d} chưa có dòng nào trong ${fm.mapping}`);
+      }
+    }
   }
 }
 

@@ -1,3 +1,6 @@
 [submodule ".claude/sdlc/framework/spec-kit"]
 	path = .claude/sdlc/framework/spec-kit
 	url = https://github.com/github/spec-kit.git
+[submodule ".claude/skills/sdlc-ui-ux/references/evon-ui-ux"]
+	path = .claude/skills/sdlc-ui-ux/references/evon-ui-ux
+	url = https://github.com/evondev/evondevKit.git

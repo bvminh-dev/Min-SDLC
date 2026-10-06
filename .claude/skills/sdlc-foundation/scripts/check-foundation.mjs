@@ -40,7 +40,8 @@ for (const [k, rel] of Object.entries(REL)) {
   doc[k] = existsSync(path) ? { path, text: readFileSync(path, 'utf8') } : { path, text: null };
 }
 
-const cells = (l) => l.replace(/^\||\|$/g, '').split('|').map((c) => c.trim().replace(/`/g, ''));
+// trình định dạng markdown (Prettier...) escape ký tự đặc biệt (`*` thành `\*`): bỏ escape sau khi tách cột
+const cells = (l) => l.replace(/^\||\|$/g, '').split('|').map((c) => c.trim().replace(/`/g, '').replace(/\\([*_#<>\[\]~])/g, '$1'));
 
 // Mọi bảng có ô đầu của hàng tiêu đề là `first`. Trả về [{header, rows}].
 function tables(text, first) {
