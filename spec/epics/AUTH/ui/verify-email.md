@@ -1,7 +1,7 @@
 ---
 screen: verify-email
 epic: AUTH
-status: draft
+status: approved
 covers: [AUTH-REQ-20261006-095515665, AUTH-REQ-20261006-095515702]
 roles: [guest, customer]
 ---
@@ -53,6 +53,6 @@ Phương án đã chọn: **A** (một cột giữa màn, một trạng thái l�
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Brief, audit và danh sách màn xem ở `register.md`.
 - Trang xác minh gọi API bằng POST khi tải, không dùng GET, để bộ quét link của hộp thư không tiêu thụ token (BR1 của yêu cầu xác minh).
-- **Lệch cần ghi:** staff và admin cũng là role hợp lệ của yêu cầu xác minh (bấm link), nhưng màn này chỉ liệt kê guest và customer vì staff/admin thường đã có email xác minh; nếu staff/admin bấm link thì thấy cùng trạng thái như customer. [OPEN] nếu cần thêm role vào màn.
+- **Lệch cần ghi:** staff và admin cũng là role hợp lệ của yêu cầu xác minh (bấm link), nhưng màn này chỉ liệt kê guest và customer vì staff/admin thường đã có email xác minh; nếu staff/admin bấm link thì thấy cùng trạng thái như customer. Đã chốt (mặc định, người dùng ủy quyền 2026-10-06): không thêm role vào màn.
 - Banner nhắc "Email chưa xác minh" ở các trang khác (giỏ, thanh toán) là việc của app shell và CHK, không dựng ở đây.
 - Không viết code giao diện; dựng thật là việc của `implement`.

@@ -1,7 +1,7 @@
 ---
 screen: cart-summary
 epic: CRT
-status: draft
+status: approved
 covers: [CRT-REQ-20261006-103226486, CRT-REQ-20261006-103226511, CRT-REQ-20261006-103226537, CRT-REQ-20261006-103226562, CRT-REQ-20261006-103226588]
 roles: [customer]
 ---

@@ -7,3 +7,4 @@
 | F3 | **Ba nơi cùng "Validate stock"** (INV Prevent overselling, CRT Validate stock, CHK Validate stock) và hai nơi "Apply discount/coupon" (CRT, PRM, CHK) | Nêu epic sở hữu quy tắc (INV cho tồn kho, PRM cho giảm giá), các epic khác gọi chứ không tự cài lại |
 | F4 | **Role ngầm**: roadmap không ghi staff/admin nhưng nhiều mục con cần | roles.md có staff, admin kèm mô tả; không bỏ sót |
 | F5 | **Quyết định công nghệ không có trong roadmap** (stack, DB, cổng thanh toán) | ADR proposed + [OPEN], không tự chốt |
+| F6 | **Nền mỏng ở mối quan tâm cắt ngang** (L17): event chỉ có id, consumer không có handler, thiếu ADR outbox, job nền, rate limit, CSRF... | Checklist ADR và mục Giao diện module trong SKILL | Mỗi mục có ADR hoặc `proposed` + `[OPEN]`; bảng Giao diện module có mặt |

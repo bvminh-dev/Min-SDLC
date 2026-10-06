@@ -416,6 +416,7 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | inv-inventory-detail-threshold | inventory-detail | INV | Ngưỡng tồn thấp hiện tại | staff, admin | INV-REQ-20261006-101122611 |
 | inv-inventory-detail-threshold-error | inventory-detail | INV | Vùng lỗi của hộp thoại ngưỡng | staff, admin | INV-REQ-20261006-101122611 |
 | inv-inventory-detail-threshold-input | inventory-detail | INV | Ô ngưỡng mới | staff, admin | INV-REQ-20261006-101122611 |
+| inv-inventory-detail-threshold-reload | inventory-detail | INV | Nút Tải lại số liệu (khi đổi ngưỡng bị xung đột phiên bản) | staff, admin | INV-REQ-20261006-101122611 |
 | inv-inventory-detail-threshold-submit | inventory-detail | INV | Nút Lưu ngưỡng | staff, admin | INV-REQ-20261006-101122611 |
 | inv-inventory-detail-toast | inventory-detail | INV | Thông báo thành công sau thao tác | staff, admin | INV-REQ-20261006-101122463 |
 | inv-inventory-history-actor | inventory-history | INV | Người thao tác (hoặc Hệ thống) | staff, admin | INV-REQ-20261006-101122637 |

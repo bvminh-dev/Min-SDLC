@@ -11,6 +11,7 @@
 - G8. Security baseline có dòng cho: hash mật khẩu và khóa tài khoản, quản lý phiên/token, kiểm quyền phía server (không tin client), xác thực chữ ký webhook thanh toán, idempotency khi thanh toán, không lưu dữ liệu thẻ, kiểm tra loại và kích thước file upload (avatar, ảnh review), log sự kiện bảo mật không chứa bí mật.
 - G9. Mỗi dòng SB-nn có cách kiểm chạy được.
 - G10. Constitution có nguyên tắc về spec-trước-code và thay đổi spec đi qua impact.
+- G13. (L17) Có ADR (hoặc `proposed` + `[OPEN]`) cho outbox, job nền, rate limit, băm mật khẩu, CSRF, idempotency, storage, audit, tìm kiếm, tổng hợp, retention; có bảng Giao diện module; event có payload và consumer có handler.
 
 ## SHOULD
 - G11. Nêu rõ quyết định về tiền (kiểu dữ liệu, làm tròn) và múi giờ/thời gian.

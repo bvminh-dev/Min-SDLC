@@ -1,7 +1,7 @@
 ---
 screen: order-admin-list
 epic: ORD
-status: draft
+status: approved
 covers: [ORD-REQ-20261006-092320743, ORD-REQ-20261006-092320790]
 roles: [staff, admin]
 ---
@@ -67,7 +67,7 @@ Hàng bấm được mở chi tiết đơn. Không cột email, tên khách, đi
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Màn này **không có** nút hủy, nút đánh dấu giao hay bất kỳ thao tác đổi đơn nào: staff chỉ xem (ORD-REQ-20261006-092320743 BR9); đánh dấu giao thuộc epic SHP. Admin hủy từ trang chi tiết (xem `order-detail`), không hủy ngay trên danh sách.
-- Sắp xếp mới nhất trước là mặc định chưa được người dùng xác nhận (ORD-REQ-20261006-092320743 BR6, [NEEDS CLARIFICATION]); cột Ngày tạo không có sắp xếp tự chọn vì requirement không có. Ô tìm so khớp chính xác mã đơn (BR7, mặc định).
+- Sắp xếp mới nhất trước là quyết định đã chốt (ORD-REQ-20261006-092320743 BR6, [RESOLVED] mặc định, người dùng ủy quyền 2026-10-06); cột Ngày tạo không có sắp xếp tự chọn vì requirement không có. Ô tìm so khớp chính xác mã đơn (BR7, [RESOLVED] mặc định).
 - Hai role dùng chung màn vì cùng quyền xem trong ma trận; không phần tử nào chỉ dành cho một role.
 - Số cột là 6: Mã đơn, Ngày tạo, Trạng thái, Thanh toán, Sản phẩm, Tổng; dưới `@4xl` ẩn cột Sản phẩm và Ngày tạo, dưới `sm` thành danh sách dòng theo `list-row.md`.
 - Cột tiền dùng `tabular-nums`, giá trị trống là `—` theo evon.

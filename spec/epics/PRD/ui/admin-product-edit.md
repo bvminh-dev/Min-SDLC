@@ -1,7 +1,7 @@
 ---
 screen: admin-product-edit
 epic: PRD
-status: draft
+status: approved
 covers: [PRD-REQ-20261006-095502550, PRD-REQ-20261006-095502571, PRD-REQ-20261006-095502592, PRD-REQ-20261006-095502613, PRD-REQ-20261006-095502634, PRD-REQ-20261006-095502655]
 roles: [staff, admin]
 ---
@@ -83,7 +83,7 @@ Biểu mẫu và nút ghi chỉ cho admin; staff chỉ thấy các phần tử c
 | prd-admin-product-edit-retry | Nút Thử lại | staff, admin | Tải lại | PRD-REQ-20261006-095502655 |
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
-- **Audit (câu 2 của evon):** chưa có codebase; theo mặc định evon (flat, Tailwind, `references/tokens.css`), thư viện UI chưa chốt (questions.md câu 10). Bố cục theo mẫu biểu mẫu của evon (`layouts/form.md`) và tải tệp (`components/file-upload.md`).
+- **Audit (câu 2 của evon):** chưa có codebase; theo mặc định evon (flat, Tailwind, `references/tokens.css`), thư viện UI và CSS đã chốt Tailwind và `references/tokens.css` (questions.md câu 10; nền chưa có ADR, áp dụng ở epic). Bố cục theo mẫu biểu mẫu của evon (`layouts/form.md`) và tải tệp (`components/file-upload.md`).
 - **Việc nguy hiểm:** Ngừng bán không hoàn tác được (trạng thái cuối) nên theo luật chủ dự án số 1 và 3 là nút đỏ nền mờ và hộp xác nhận đỏ, nói rõ "Không thể khôi phục".
 - Nhãn: nháp "Nháp", active "Đang bán", archived "Đã lưu trữ". Màu badge theo bảng `M7` của evon.
 - Nút Công bố vô hiệu kèm khối điều kiện khi thiếu; vẫn gọi server khi bấm vì server mới là nơi kiểm (nhận 422 thì hiện khối lỗi).

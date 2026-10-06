@@ -1,7 +1,7 @@
 ---
 screen: analytics-revenue
 epic: DSH
-status: draft
+status: approved
 covers: [DSH-REQ-20261006-105126271, DSH-REQ-20261006-105126549]
 roles: [admin]
 ---
@@ -88,8 +88,8 @@ Dòng ghi chú: "Tiền theo PAY: thu thành công trừ hoàn tiền thành cô
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Biểu đồ chính của trang báo cáo có lưới ngang và nhãn mức (ngoại lệ "Bỏ bớt đi" của evon), số kèm mốc ở điểm đang xem, Tab vào thì hiện số của mốc. Mốc có thể âm nên trục có mức 0 và điểm nằm dưới trục. Hơn 12 mốc dùng đường, 12 mốc trở xuống (tháng) dùng cột (bảng "Cột hay đường" của evon). Không hiệu ứng vào trang, một màu.
-- Không có kỳ so sánh và không xuất tệp: ngoài requirement (DSH-REQ-20261006-105126271, [OPEN]).
-- Khoảng một ngày chỉ có một mốc: vẫn có bảng và hàng số, không vẽ biểu đồ một điểm (evon muốn theo giờ, requirement chưa có, [OPEN]).
+- Không có kỳ so sánh và không xuất tệp: ngoài requirement (DSH-REQ-20261006-105126271, đã chốt không làm ở v1).
+- Khoảng một ngày chỉ có một mốc: vẫn có bảng và hàng số, không vẽ biểu đồ một điểm (evon muốn theo giờ, requirement đã chốt chưa làm ở v1).
 - Tiền `1.234.567 đ`, `tabular-nums`, số âm có dấu trừ. Ghi chú nói rõ hoàn tiền tính vào ngày hoàn (DSH-REQ-20261006-105126271 BR7), nên mốc thu và mốc hoàn khác ngày là đúng, không phải lỗi.
 - Tên màn `analytics-revenue` là trang "Báo cáo doanh thu" của roadmap (cùng cách đặt tên cho `analytics-orders`, `analytics-products`).
 - Hết phiên dùng hộp thoại của AUTH; 403 dùng `access-denied` của AUTH.

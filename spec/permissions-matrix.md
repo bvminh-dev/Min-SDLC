@@ -168,6 +168,10 @@ Mỗi epic thêm dòng khi chạy sdlc-research của epic đó.
 | Xem còn hàng hay hết hàng theo lô (công khai, không lộ số tồn) | INV-REQ-20261006-120036236 | Y | Y | Y | Y | - |
 | Giao diện nội bộ cho CHK - tạo đơn, xác nhận COD, đếm đơn mở, tóm tắt đơn | ORD-REQ-20261006-120227589 | - | - | - | - | Y |
 | Giao diện đọc nội bộ cho PAY, SHP, REV và DSH | ORD-REQ-20261006-120227681 | - | - | - | - | Y |
+| Nhận thông báo đơn quá hạn thanh toán (do event OrderExpired, không có endpoint; chỉ trong ứng dụng) | NTF-REQ-20261006-103208992 | - | own | - | - | Y |
+| Khóa hủy đơn khi SHP bắt đầu bàn giao (giao diện nội bộ cho SHP, không có endpoint) | ORD-REQ-20261006-150000100 | - | - | - | - | Y |
+| Bỏ ẩn đánh giá (hidden về published) | REV-REQ-20261006-103135835 | - | - | - | Y | - |
+| Dọn ảnh mồ côi và ảnh của đánh giá đã xóa (job nền `rev.sweep-orphan-images`, không có endpoint) | REV-REQ-20261006-103135207 | - | - | - | - | Y |
 
 ## Thay đổi
 | Ngày | Dòng | Từ | Thành | Lý do | Người duyệt |
@@ -187,3 +191,6 @@ Mỗi epic thêm dòng khi chạy sdlc-research của epic đó.
 | 2026-10-06 | 16 dòng PAY | (chưa có) | (dòng mới) | Gộp dòng ma trận của epic PAY (các epic chạy song song nên gộp một lần) | chưa duyệt |
 | 2026-10-06 | 13 dòng REV | (chưa có) | (dòng mới) | Gộp dòng ma trận của epic REV (các epic chạy song song nên gộp một lần) | chưa duyệt |
 | 2026-10-06 | cột system, 34 dòng đặt Y, 3 dòng mới | (chưa có) | Y theo roles của requirement | Role `system` thêm vào nền (R-01); thêm hàng cho requirement tạo sau lần gộp đầu (ORD giao diện CHK/đọc, INV availability). Dòng mới chỉ ghi `Y` ở role khai trong requirement, cần người rà `own` | chưa duyệt |
+| 2026-10-06 | 1 dòng NTF (thông báo đơn hết hạn) | (chưa có) | (dòng mới) | R-19: NTF nhận OrderExpired (nền đợt 3), BR8 của NTF-REQ-20261006-103208992; người nhận là chủ đơn, tác nhân `system` | chưa duyệt |
+| 2026-10-06 | 1 dòng ORD (khóa hủy đơn khi bàn giao) | (chưa có) | (dòng mới) | R-04: cơ chế đóng cửa sổ giữa SHP bàn giao và ORD nhận ShipmentShipped; chỉ role `system` (SHP) | chưa duyệt |
+| 2026-10-06 | 2 dòng REV (bỏ ẩn, job dọn ảnh) | (chưa có) | (dòng mới) | Endpoint `POST /api/v1/admin/reviews/{id}/unhide` (E-22) và job dọn ảnh của REV (ADR-013, ADR-018) chưa có dòng ma trận; staff không có quyền kiểm duyệt (R-02, R-03) | chưa duyệt |

@@ -1,7 +1,7 @@
 ---
 screen: login
 epic: AUTH
-status: draft
+status: approved
 covers: [AUTH-REQ-20261006-095515738, AUTH-REQ-20261006-095515918]
 roles: [guest]
 ---

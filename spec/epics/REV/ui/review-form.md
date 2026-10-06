@@ -1,7 +1,7 @@
 ---
 screen: review-form
 epic: REV
-status: draft
+status: approved
 covers: [REV-REQ-20261006-103134939, REV-REQ-20261006-103135029, REV-REQ-20261006-103135117, REV-REQ-20261006-103135207, REV-REQ-20261006-103135296, REV-REQ-20261006-103135385]
 roles: [customer]
 ---
@@ -10,7 +10,7 @@ roles: [customer]
 Một form dùng cho hai chế độ: **viết mới** (`/products/{id}/reviews/new`, từ nút Viết đánh giá) và **sửa** (`/me/reviews/{id}/edit`, từ "Đánh giá của tôi"). Hai chế độ khác nhau ở nút gửi, tiêu đề và dữ liệu đổ sẵn. **Báo trước theo skill evon:** phần cửa hàng phía người mua chưa được dạy; form theo mẫu `layouts/form` của skill. Các cổng hỏi của `U1` đến `U3` được trả lời bằng phương án khuyến nghị (mặc định). Chỉ wireframe ASCII, không dựng HTML.
 
 ## Wireframe
-Phương án đã chọn: **A** (một cột, form dài trong thẻ giữa trang). **Đây là lựa chọn mặc định**, chưa có người dùng chọn.
+Phương án đã chọn: **A** (một cột, form dài trong thẻ giữa trang). Chọn theo khuyến nghị (mặc định, người dùng ủy quyền 2026-10-06).
 
 | Phương án | Việc chính thấy ở đâu | Đổi gì | Đánh đổi |
 |---|---|---|---|
@@ -104,6 +104,6 @@ Sao chọn bằng nhóm radio có nhãn "1 sao" đến "5 sao" (bàn phím và t
 - Ảnh tải từng tệp qua `POST /api/v1/review-images` rồi gửi các `image_id` cùng form; bỏ một ảnh khỏi form chỉ bỏ khỏi danh sách `image_ids` (ảnh mồ côi do server dọn).
 - Dòng "Đánh giá sẽ hiện sau khi được duyệt" chỉ hiện khi cấu hình bật duyệt trước; giao diện biết qua `status` của phản hồi tạo, nên dòng này hiện sau khi gửi (khối thành công) chứ không đoán trước. Phần tử `rev-review-form-moderation-notice` nằm trong khối thành công chờ duyệt.
 - Sửa đánh giá `published` khi bật kiểm duyệt trước đưa đánh giá về `pending` (E-22, REV-REQ-20261006-103135385 BR6): giao diện báo trước bằng `rev-review-form-edit-notice` (theo `edit_requires_review` của `GET /api/v1/me/reviews/{id}`) và nhắc lại sau khi lưu. Khi tắt kiểm duyệt trước thì không có cảnh báo.
-- Mỗi lần mở form viết sinh một `Idempotency-Key` mới và giữ nguyên khi gửi lại sau lỗi mạng (ADR-017), nên bấm đúp hay thử lại không tạo hai đánh giá.
+- Mỗi lần mở form viết sinh một `Idempotency-Key` mới (uuid v4, 36 ký tự nằm trong khoảng 8 đến 64 ký tự `[A-Za-z0-9_-]` của ADR-017) và giữ nguyên khi gửi lại sau lỗi mạng (ADR-017, SB-40), nên bấm đúp hay thử lại không tạo hai đánh giá.
 - Nhận xét là văn bản thường; không có định dạng, không xem trước HTML.
 - Không viết code giao diện; dựng thật là việc của `implement`.

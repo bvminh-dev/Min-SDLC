@@ -93,6 +93,12 @@ if (fm.mapping) {
     if (existsSync(skillsDir)) {
       for (const d of readdirSync(skillsDir)) {
         if (d.startsWith('sdlc-') && !mapped.includes(d)) errors.push(`skill ${d} chưa có dòng nào trong ${fm.mapping}`);
+        // mỗi skill sdlc-* phải đủ thành phần: SKILL.md, templates/, scripts/ (có ít nhất một script), evals/ (có README.md)
+        if (d.startsWith('sdlc-')) {
+          const base = join(skillsDir, d);
+          for (const need of ['SKILL.md', 'templates', 'scripts', 'evals/README.md']) if (!existsSync(join(base, need))) errors.push(`skill ${d} thiếu ${need}`);
+          if (existsSync(join(base, 'scripts')) && !readdirSync(join(base, 'scripts')).some((f) => f.endsWith('.mjs') && !f.endsWith('.test.mjs'))) errors.push(`skill ${d}: scripts/ chưa có script kiểm nào`);
+        }
       }
     }
   }

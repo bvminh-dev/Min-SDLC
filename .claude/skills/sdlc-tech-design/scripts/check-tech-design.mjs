@@ -54,10 +54,10 @@ const modDeps = new Map(tableAfter(read('architecture.md'), '| Epic | Module').m
 const events = new Map(tableAfter(read('domain/events.md'), '| Event | Entity').map((r) => [r[0], { producer: r[2], consumers: list(r[3]) }]));
 const sbIds = new Set([...read('security-baseline.md').matchAll(/^\| (SB-\d+) \|/gm)].map((m) => m[1]));
 const matrixRoles = read('permissions-matrix.md').split(/\r?\n/).find((l) => l.startsWith('| Hành động'))?.split('|').map((s) => s.trim()).slice(3).filter(Boolean) ?? [];
-const reqs = new Map();
+const reqs = new Map(), reqStatus = new Map();
 for (const f of walk(specDir)) {
   const fm = fmOf(readFileSync(f, 'utf8'));
-  if (fm.id?.includes('-REQ-')) reqs.set(fm.id, fm.roles ?? []);
+  if (fm.id?.includes('-REQ-')) { reqs.set(fm.id, fm.roles ?? []); reqStatus.set(fm.id, fm.status); }
 }
 
 // bảng -> epic sở hữu: từ các tài liệu DB (cột Bảng/Entity) và quy ước snake_case số nhiều của tên entity (User -> users)
@@ -80,11 +80,15 @@ for (const { f, text, fm } of docs) {
   if (fm.epic !== folderEpic) err(f, `epic phải trùng thư mục (${folderEpic})`);
   if (!(fm.links ?? []).length) err(f, 'thiếu links tới requirement mà thiết kế phục vụ');
   const roleOf = (id) => reqs.get(id) ?? [];
+  const drafts = (fm.links ?? []).filter((id) => reqStatus.get(id) === 'draft');
+  if (drafts.length) warnings.push(`${f}: thiết kế dựa trên requirement còn draft (P1 đòi approved): ${drafts.join(', ')}`);
 
   if (type === 'DB') {
     const ents = fm.entities ?? [];
     for (const e of ents) {
-      if (owner.get(e) !== fm.epic) err(f, `entity ${e} ${owner.has(e) ? `thuộc epic ${owner.get(e)}` : 'chưa có trong entities.md'}, không thuộc ${fm.epic}`);
+      // proposed_entities: entity mới chưa có trong entities.md, chỉ cảnh báo (thêm vào nền qua sdlc-foundation)
+      if ((fm.proposed_entities ?? []).includes(e) && !owner.has(e)) warnings.push(`${f}: entity ${e} là đề xuất (proposed_entities), cần thêm vào entities.md qua sdlc-foundation`);
+      else if (owner.get(e) !== fm.epic) err(f, `entity ${e} ${owner.has(e) ? `thuộc epic ${owner.get(e)}` : 'chưa có trong entities.md'}, không thuộc ${fm.epic}`);
       dbEntities.add(e);
     }
     for (const r of rows(section(text, 'Bảng'))) {

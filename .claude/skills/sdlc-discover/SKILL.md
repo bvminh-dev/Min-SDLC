@@ -21,9 +21,12 @@ description: Từ một ý tưởng sản phẩm, khảo sát sản phẩm tươ
    - Thứ tự theo phụ thuộc: nền, định danh, dữ liệu lõi, luồng nghiệp vụ chính, phần phụ (thông báo, báo cáo).
    - Mỗi epic 4-10 mục con, mỗi mục con là một khả năng người dùng hoặc hệ thống làm được (động từ + danh từ). Epic quá 10 mục con thì tách; dưới 3 thì gộp.
    - Mã epic: 2-4 chữ in hoa dễ nhớ (AUTH, ORD...), không trùng.
-4. **Ghi `spec/roadmap.md`** theo `templates/roadmap.md`: bảng, rồi mục *Nguồn khảo sát* và *Giả định và câu hỏi mở*. Hook chạy `check-foundation.mjs` kiểm bảng (cột, mã epic, trùng mã); sửa theo thông báo.
+4. **Ghi `spec/roadmap.md`** theo `templates/roadmap.md`: bảng, rồi mục *Nguồn khảo sát* và *Giả định và câu hỏi mở*. Chạy `node .claude/skills/sdlc-discover/scripts/check-roadmap.mjs spec/roadmap.md` (STT liên tục, mã epic, epic 01 là PRJ, mỗi epic 3-12 mục con, hai mục cuối bắt buộc); hook chạy thêm `check-foundation.mjs` kiểm bảng với nền. Sửa theo thông báo.
 5. **Báo cáo**: số epic, epic nào ít chắc chắn nhất (dựa giả định), mục con suy ra thay vì có nguồn, câu hỏi cần người quyết trước khi duyệt.
 
+## Kiểm thử
+`evals/README.md`; ca `ecommerce`. Tự kiểm script: `node .claude/skills/sdlc-discover/scripts/check-roadmap.test.mjs`.
+
 ## Chưa làm
-- Chưa có script kiểm chất lượng nội dung roadmap (cỡ epic, mục con mơ hồ): cần người đọc. Phần hình thức do `check-foundation.mjs`.
-- Chưa có eval.
+- Chất lượng nội dung roadmap (mục con mơ hồ, thiếu nhóm tính năng) cần người đọc; script chỉ kiểm hình thức và cỡ epic.
+- Eval chưa chạy lần nào (chưa có RESULTS.md).

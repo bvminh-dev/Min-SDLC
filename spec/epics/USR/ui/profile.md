@@ -1,7 +1,7 @@
 ---
 screen: profile
 epic: USR
-status: draft
+status: approved
 covers: [USR-REQ-20261006-101003419, USR-REQ-20261006-101003504, USR-REQ-20261006-101003679]
 roles: [customer, staff, admin]
 ---

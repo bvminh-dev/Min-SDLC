@@ -1,7 +1,7 @@
 ---
 screen: address-form
 epic: USR
-status: draft
+status: approved
 covers: [USR-REQ-20261006-101003855, USR-REQ-20261006-101003941]
 roles: [customer]
 ---
@@ -75,7 +75,7 @@ Thêm địa chỉ                          (sửa: "Sửa địa chỉ")
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - **Báo trước theo skill evon:** phía người mua của cửa hàng online chưa được dạy; làm theo mẫu form và ô nhập (`components/input.md`, `components/choice-controls.md`).
 - **Audit (câu 2 của evon):** chưa có codebase; Tailwind, flat, tiếng Việt theo mặc định.
-- Ba ô phường, quận, thành phố là ô nhập tự do (chưa có danh mục hành chính; xem [OPEN] ở USR-REQ-20261006-101003855); quận, huyện không bắt buộc (E-06), phường và thành phố bắt buộc. Nếu sau này có danh mục thì đổi thành ô chọn mà testid giữ nguyên.
+- Ba ô phường, quận, thành phố là ô nhập tự do (đã chốt nhập tự do ở v1, chưa có danh mục hành chính; xem quyết định ở mục Xung đột của USR-REQ-20261006-101003855); quận, huyện không bắt buộc (E-06), phường và thành phố bắt buộc. Nếu sau này có danh mục thì đổi thành ô chọn mà testid giữ nguyên.
 - Điện thoại gợi ý ví dụ `0901234567`; nhập `+84 901 234 567` vẫn được (server chuẩn hóa).
 - Không có tự động điền từ vị trí hay bản đồ (ngoài roadmap).
 - Không viết code giao diện; dựng thật là việc của `implement`.

@@ -1,7 +1,7 @@
 ---
 screen: change-password
 epic: USR
-status: draft
+status: approved
 covers: [USR-REQ-20261006-101003591]
 roles: [customer, staff, admin]
 ---

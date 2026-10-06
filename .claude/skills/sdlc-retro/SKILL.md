@@ -25,5 +25,5 @@ description: Sau khi một epic chạy xong (đã review), rút bài học từ 
 Tên file `<YYYY-MM-DD>-<EPIC>.md` với epic có trong roadmap, `status` hợp lệ, bảng đúng cột, mã `L<n>` duy nhất, Loại hợp lệ, **Bằng chứng và Nơi sửa là đường dẫn có thật**. Không đánh giá bài học hay hay dở. Tự kiểm: `node .claude/skills/sdlc-retro/scripts/check-lessons.test.mjs`.
 
 ## Chưa làm
-- Chưa chạy trên dữ liệu thật (cần một epic đã qua review); chưa có eval.
+- Eval: `evals/README.md` (cần dữ liệu thật của một epic đã qua review); chưa chạy lần nào (chưa có RESULTS.md).
 - Hook chưa chạy `check-lessons.mjs`.

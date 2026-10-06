@@ -1,7 +1,7 @@
 ---
 screen: my-reviews
 epic: REV
-status: draft
+status: approved
 covers: [REV-REQ-20261006-103135655, REV-REQ-20261006-103135385, REV-REQ-20261006-103135477]
 roles: [customer]
 ---
@@ -10,7 +10,7 @@ roles: [customer]
 Trang `/me/reviews` trong khu tài khoản của customer: liệt kê mọi đánh giá của mình theo trạng thái, sửa và xóa. **Báo trước theo skill evon:** phần cửa hàng phía người mua chưa được dạy; trang theo mẫu danh sách có bộ lọc. Cổng hỏi `U1` đến `U3` được trả lời bằng phương án khuyến nghị (mặc định). Chỉ wireframe ASCII.
 
 ## Wireframe
-Phương án đã chọn: **A** (danh sách thẻ một cột, bộ lọc trạng thái dạng chip phía trên). **Đây là lựa chọn mặc định**, chưa có người dùng chọn.
+Phương án đã chọn: **A** (danh sách thẻ một cột, bộ lọc trạng thái dạng chip phía trên). Chọn theo khuyến nghị (mặc định, người dùng ủy quyền 2026-10-06).
 
 | Phương án | Việc chính thấy ở đâu | Đổi gì | Đánh đổi |
 |---|---|---|---|
@@ -95,7 +95,7 @@ Hộp thoại Xóa đánh giá:
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Nút Sửa, Xóa hiện theo `can_edit`, `can_delete` của API (REV-REQ-20261006-103135655 BR5); việc kiểm quyền thật ở server. Theo vòng đời nền (E-22) xóa được ở mọi trạng thái; đánh giá bị từ chối hoặc bị ẩn không sửa được, khách xóa rồi viết lại. Nội dung hộp thoại xóa nhắc "Bạn có thể viết đánh giá mới sau đó".
 - Chú thích "Sửa sẽ đưa đánh giá về chờ duyệt" hiện theo `edit_requires_review` (bật `REVIEW_PRE_MODERATION`), để khách biết đánh giá sẽ biến khỏi trang sản phẩm tới khi được duyệt lại (REV-REQ-20261006-103135385 BR6).
-- Lý do kiểm duyệt hiển thị cho chủ là mặc định ([OPEN] ở REV-REQ-20261006-103135655); là văn bản thường, escape (SB-12).
+- Lý do kiểm duyệt hiển thị cho chủ (đã chốt, REV-REQ-20261006-103135655 BR3: mặc định, người dùng ủy quyền 2026-10-06); là văn bản thường, escape (SB-12).
 - Hộp thoại xóa không có ô nhập nên bấm ra ngoài đóng được, nhưng thao tác xóa không hoàn tác nên vẫn có bước xác nhận.
 - Không dựng màn "Chờ đánh giá" (liệt kê sản phẩm đã mua chưa đánh giá): requirement chưa có endpoint liệt kê, chỉ có kiểm điều kiện theo từng sản phẩm.
 - Không viết code giao diện; dựng thật là việc của `implement`.

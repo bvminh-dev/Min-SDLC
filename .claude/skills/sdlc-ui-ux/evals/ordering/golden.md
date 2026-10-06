@@ -9,6 +9,8 @@
 | G4 | Mọi phần tử thao tác có testid đúng dạng; `spec/testids.md` do script sinh, không viết tay |
 | G5 | Ghi rõ phương án wireframe đã chọn và lý do (theo evon U3), hoặc nói rõ đã lấy mặc định khi không hỏi được |
 | G6 | INV-04 (giữ hàng) báo "không có UI", không dựng màn |
+| G7 | (L3, L12) Bảng Trạng thái có cột `testid`; trạng thái hết phiên, không có quyền có testid trỏ tới phần tử ở bảng Phần tử (script kiểm) |
+| G8 | (L4, L5, L19) Wireframe ASCII trong tài liệu màn, không dựng HTML hay probe; chỗ luật evon lệch requirement thì theo requirement và ghi chú lệch trong tài liệu màn |
 
 ## SHOULD
 | # | Điểm |

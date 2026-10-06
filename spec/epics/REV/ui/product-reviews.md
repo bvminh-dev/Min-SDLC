@@ -1,7 +1,7 @@
 ---
 screen: product-reviews
 epic: REV
-status: draft
+status: approved
 covers: [REV-REQ-20261006-103135566, REV-REQ-20261006-103135296]
 roles: [guest, customer, staff, admin]
 ---
@@ -10,7 +10,7 @@ roles: [guest, customer, staff, admin]
 Trang con của sản phẩm (`/products/{id}/reviews`), mở từ dòng "★ 4,5 (10 đánh giá)" ở chi tiết sản phẩm của PRD. **Báo trước theo skill evon:** skill giao diện chưa được dạy cho cửa hàng online phía người mua; trang này vẫn làm theo mẫu danh sách có bộ lọc và `timeline`, kết quả có thể chưa đẹp bằng màn trong app. Chạy tự động nên các cổng hỏi của `U1` đến `U3` (brief, chọn wireframe) được trả lời bằng phương án khuyến nghị và ghi là mặc định. Ở phase này chỉ có wireframe ASCII trong tài liệu, không dựng HTML hay chạy probe.
 
 ## Wireframe
-Phương án đã chọn: **A** (cột trái tóm tắt và bộ lọc dính, cột phải danh sách đánh giá). **Đây là lựa chọn mặc định** (khuyến nghị theo `U3`), chưa có người dùng chọn.
+Phương án đã chọn: **A** (cột trái tóm tắt và bộ lọc dính, cột phải danh sách đánh giá). **Chọn theo khuyến nghị** (theo `U3`; mặc định, người dùng ủy quyền 2026-10-06), không cần người dùng chọn.
 
 | Phương án | Việc chính thấy ở đâu | Đổi gì | Đánh đổi |
 |---|---|---|---|

@@ -1,7 +1,7 @@
 ---
 screen: product-list
 epic: PRD
-status: draft
+status: approved
 covers: [PRD-REQ-20261006-095502484, PRD-REQ-20261006-095502697, PRD-REQ-20261006-095502718, PRD-REQ-20261006-095502739]
 roles: [guest, customer, staff, admin]
 ---
@@ -85,7 +85,7 @@ Mỗi dòng: một trạng thái giao diện, lấy từ Given/When/Then của r
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - **Báo trước theo skill evon:** skill giao diện chưa được dạy cho cửa hàng online phía người mua (trang lướt chọn hàng); màn này vẫn làm theo mẫu danh sách có bộ lọc và danh sách rỗng của evon, kết quả có thể chưa đẹp bằng màn trong app.
-- **Audit (câu 2 của evon):** chưa có codebase hay `package.json`, không có token hay component sẵn; stack web theo ADR-002 (Next.js), thư viện UI và CSS chưa có ADR (questions.md câu 10). Mặc định theo evon: flat, Tailwind và `references/tokens.css`, copy tiếng Việt.
+- **Audit (câu 2 của evon):** chưa có codebase hay `package.json`, không có token hay component sẵn; stack web theo ADR-002 (Next.js), thư viện UI và CSS đã chốt Tailwind và `references/tokens.css` (questions.md câu 10; nền chưa có ADR, áp dụng ở epic). Mặc định theo evon: flat, Tailwind và `references/tokens.css`, copy tiếng Việt.
 - **Brief (U1, nguồn: đọc spec):** cửa hàng online; người dùng là khách chưa hoặc đã đăng nhập; việc chính: tìm đúng sản phẩm và biết giá; dùng nhiều trên điện thoại (375px).
 - **Danh sách màn (U2, mặc định đã xác nhận thay người dùng):** `product-list` (cả bốn role, PRD-REQ-20261006-095502484, PRD-REQ-20261006-095502697, PRD-REQ-20261006-095502718, PRD-REQ-20261006-095502739), `product-detail` (cả bốn role, PRD-REQ-20261006-095502676, PRD-REQ-20261006-095502739), `admin-product-list` (staff, admin, PRD-REQ-20261006-095502655, PRD-REQ-20261006-095502550), `admin-product-edit` (staff xem, admin sửa, PRD-REQ-20261006-095502550 tới PRD-REQ-20261006-095502655), `admin-category` (admin, PRD-REQ-20261006-095502484, PRD-REQ-20261006-095502507, PRD-REQ-20261006-095502529). Không có requirement nào thuần hệ thống thiếu màn: PRD-REQ-20261006-095502739 (event từ REV) chỉ có phần hiển thị điểm, đặt ở `product-list` và `product-detail`.
 - Kết quả tìm kiếm dùng lại màn này (ô tìm đặt ở header); khi có từ khóa, tiêu đề đổi thành "Kết quả cho ..." và sắp xếp mặc định là Liên quan. Tìm kiếm và duyệt là hai endpoint khác nhau nhưng một màn.

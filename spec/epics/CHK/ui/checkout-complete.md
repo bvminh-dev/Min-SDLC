@@ -1,7 +1,7 @@
 ---
 screen: checkout-complete
 epic: CHK
-status: draft
+status: approved
 covers: [CHK-REQ-20261006-105052127, CHK-REQ-20261006-105052272]
 roles: [customer]
 ---
@@ -61,6 +61,6 @@ VNPay (đơn pending)                               COD (đơn confirmed)
 - Đồng hồ đếm ngược dùng `payment_deadline` = `payment_expires_at` của Order (CHK tính một lần, K-01); vẫn chỉ là **gợi ý** vì INV chạy job hết hạn thật (mỗi phút, thực tế 15:00 đến 16:10, CHK-REQ-20261006-105052127 BR3, BR10); màn thanh toán của PAY có đồng hồ riêng nhỏ hơn hoặc bằng hạn đó (đường dẫn 10 phút, ADR-009).
 - Nút Thanh toán ngay chỉ chuyển sang màn `order-payment` của PAY; CHK không tạo Payment và không gọi cổng. Nếu PAY chưa tạo kịp Payment thì màn của PAY tự thử lại (PAY questions câu 27).
 - Mở lại phiên đã `completed` (nút quay lại của trình duyệt, bấm đôi) hiện đúng thẻ kết quả của đơn đã tạo, không có nút đặt lại (CHK-REQ-20261006-105051681 BR9, CHK-REQ-20261006-105052272 BR4).
-- Đơn đặt xong không còn sửa được ở đây; hủy đơn ở chi tiết đơn của ORD (ORD-REQ-20261006-092320834). Đơn VNPay hết hạn hay bị hủy thì giỏ đã mất hàng và khách phải thêm lại [OPEN] (xem questions.md).
+- Đơn đặt xong không còn sửa được ở đây; hủy đơn ở chi tiết đơn của ORD (ORD-REQ-20261006-092320834). Đơn VNPay hết hạn hay bị hủy thì giỏ đã mất hàng và khách phải thêm lại (đã chốt: không khôi phục giỏ ở v1, xem questions.md).
 - Mã đơn hiển thị dạng văn bản thường đã escape (SB-12); màn không hiện địa chỉ hay điện thoại (SB-08).
 - Không viết code giao diện; dựng thật là việc của `implement`.

@@ -1,7 +1,7 @@
 ---
 screen: checkout-blocked
 epic: CHK
-status: draft
+status: approved
 covers: [CHK-REQ-20261006-105050948, CHK-REQ-20261006-105052414]
 roles: [customer]
 ---
@@ -70,7 +70,7 @@ Lý do chọn A: các chặn này đều là "chưa vào được" và đều c�
 - **Báo trước theo skill evon:** skill chưa được dạy cho cửa hàng online phía người mua; màn theo mẫu trạng thái rỗng và lỗi trong app, kết quả có thể chưa đẹp bằng màn quản trị.
 - **Audit (câu 2 của evon):** chưa có codebase hay `package.json`, mặc định flat và copy tiếng Việt; chỉ wireframe ASCII, không dựng HTML hay probe (việc của implement).
 - Mỗi lần chỉ hiện **một** lý do (lý do đầu tiên theo thứ tự kiểm của server: email, giỏ trống, hàng ngừng bán). Nút Gửi lại email xác minh gọi endpoint của AUTH (AUTH-REQ-20261006-095515702); CHK không sở hữu việc gửi email.
-- Khách là guest, staff hay admin không có màn này (guest bị chuyển tới đăng nhập, staff và admin nhận 403 do trang lỗi chung của web, chưa epic nào sở hữu, cùng [OPEN] của PRJ, INV, CRT); vì vậy không có testid cho các trường hợp đó (hạn chế của `check-ui`: phần tử chỉ khai role nằm trong requirement phủ).
+- Khách là guest, staff hay admin không có màn này (guest bị chuyển tới đăng nhập, staff và admin nhận 403 do trang lỗi chung của web, chưa epic nào sở hữu, cùng ghi chú của PRJ, INV, CRT); vì vậy không có testid cho các trường hợp đó (hạn chế của `check-ui`: phần tử chỉ khai role nằm trong requirement phủ).
 - Phiên hết hạn **không** mất giỏ và không có hàng hay lượt mã nào đang bị giữ (CHK-REQ-20261006-105052414 BR9), nên thông báo nói rõ giỏ còn nguyên.
 - Tên sản phẩm trong danh sách ngừng bán hiển thị dạng văn bản thường đã escape (SB-12).
 - Không viết code giao diện; dựng thật là việc của `implement`.

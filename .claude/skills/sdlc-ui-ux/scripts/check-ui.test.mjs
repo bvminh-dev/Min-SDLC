@@ -43,4 +43,13 @@ assert.equal(run(screen('ord-order-list-row', '[staff]')).status, 1, 'role ngoà
 assert.equal(run(screen('ord-order-list-row', '[customer]', 'ORD-REQ-20261006-199999999')).status, 1, 'Trạng thái nhắc requirement ngoài covers phải lỗi');
 assert.equal(run(screen('ord-order-list-row', '[customer]', REQ, 'staff')).status, 1, 'role của phần tử ngoài roles của màn phải lỗi');
 assert.equal(run(screen('ord-order-list-row', '[customer]', REQ, '-')).status, 1, 'phần tử thiếu role phải lỗi');
+// L3/L12: cột testid ở bảng Trạng thái (tùy chọn): testid phải có trong bảng Phần tử; role guest ở màn role khác chỉ khi là testid của một trạng thái
+const withState = (stateTestid, extraEl = '') => screen().replace('| Requirement |\n|---|---|---|\n| lỗi | banner | ' + REQ + ' |', `| Requirement | testid |\n|---|---|---|---|\n| lỗi | banner | ${REQ} | ord-order-list-row |\n| chưa đăng nhập | chuyển về đăng nhập | ${REQ} | ${stateTestid} |`) + extraEl;
+const guestEl = `| ord-order-list-login | Chuyển đăng nhập | guest | - | ${REQ} |\n`;
+assert.equal(run(withState('ord-order-list-row')).status, 0, 'cột testid trỏ tới phần tử có thật phải qua');
+r = run(withState('ord-order-list-nope'));
+assert.equal(r.status, 1, 'testid của trạng thái không có trong bảng Phần tử phải lỗi');
+assert.match(r.stderr, /Trạng thái.*ord-order-list-nope.*Phần tử/);
+assert.equal(run(withState('ord-order-list-login', guestEl)).status, 0, 'phần tử guest là testid của một trạng thái: được ở màn role khác');
+assert.equal(run(withState('ord-order-list-row', guestEl)).status, 1, 'phần tử guest không gắn trạng thái nào vẫn phải lỗi role');
 console.log('OK: check-ui.mjs');

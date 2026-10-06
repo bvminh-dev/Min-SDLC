@@ -3,8 +3,9 @@ id: CHK-REQ-00000000-000000000
 title: <tiêu đề ngắn>
 epic: CHK
 status: draft            # draft | approved | superseded
-roles: [customer]        # role được thực hiện, phải khớp spec/permissions-matrix.md
-links: []                # ID requirement ở epic khác mà yêu cầu này đọc/ghi/kích hoạt
+roles: [customer]        # role được thực hiện, phải có trong spec/domain/roles.md và spec/permissions-matrix.md
+links: []                # ID requirement ở epic khác mà yêu cầu này đọc/ghi/kích hoạt (ID phải tồn tại)
+depends_epics: []        # tùy chọn: mã epic (có trong roadmap) mà yêu cầu phụ thuộc nhưng chưa có spec/ID để link, ví dụ [CHK, PAY]
 ---
 
 ## User story

@@ -30,5 +30,5 @@ Skill này **không quyết định lại** thiết kế. Code làm đúng spec;
 Báo cáo có `test_command`, `test_result`, bảng task (Nguồn có thật trong spec, Phụ thuộc là số task, Trạng thái hợp lệ), bảng kết quả test phủ **mọi** TC/E2E của epic, mỗi file test **tồn tại và chứa ID**, `skip` có lý do, có mục *Lệch spec*. Script **không chạy test** và không biết test có thật sự pass: đó là việc của người chạy lệnh và của `review`. Tự kiểm: `node .claude/skills/sdlc-implement/scripts/check-report.test.mjs`.
 
 ## Chưa làm
-- Chưa chạy trên code thật; chưa có eval.
+- Eval: `evals/README.md`, ca `prj` (cần code thật); chưa chạy lần nào (chưa có RESULTS.md).
 - Hook chưa tự chạy lệnh test (chưa có khung dự án để biết lệnh).

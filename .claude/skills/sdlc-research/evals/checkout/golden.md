@@ -8,6 +8,9 @@
 - G5. Ma trận quyền có dòng **Đặt hàng** gắn với ID requirement; role khớp với bẫy T2 (không tự đổi quyền guest).
 - G6. `links` trỏ tới requirement của **Cart, Promotion, Inventory** (đã có) và ghi **Payment, Shipping, Order** là epic bị chạm nhưng chưa có spec.
 - G7. Nêu domain event phát ra (ví dụ `OrderCreated`) để Notification dùng sau này.
+- G12. (L2, L9) Phụ thuộc vào epic chưa có spec khai bằng `depends_epics: [...]` (mã epic trong roadmap) ở requirement, không để trống rồi chỉ ghi văn xuôi; `links` chỉ chứa ID có thật.
+- G13. (L15) Khi chạy song song, dòng ma trận của epic nằm ở `permission-rows.md` và gộp bằng `merge-matrix.mjs` (chạy lại không sinh dòng trùng); không sửa tay chung một file.
+- G14. (L16) Mục `## Nền cần sửa` ở `questions.md` mỗi dòng đủ bốn trường `file; thay đổi; ưu tiên; epic` để `collect-foundation-requests.mjs` gom được.
 
 ## SHOULD
 - G8. Xử lý bấm "Đặt hàng" hai lần (idempotency).

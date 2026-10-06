@@ -1,7 +1,7 @@
 ---
 screen: admin-refund-queue
 epic: PAY
-status: draft
+status: approved
 covers: [PAY-REQ-20261006-103111211, PAY-REQ-20261006-103111034]
 roles: [staff, admin]
 ---

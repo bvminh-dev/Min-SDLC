@@ -11,8 +11,10 @@ Quy ước chung (áp cho mọi entity, không liệt kê lại từng dòng):
 - Mọi entity có `id`, `created_at`, `updated_at`. Entity **chỉ thêm** (AuditLog, StockMovement, OrderStatusHistory, ShipmentStatusHistory, PaymentWebhookLog) không có `updated_at`.
 - `deleted_at` chỉ có ở entity xóa mềm, được ghi tường minh ở cột Thuộc tính.
 - `version` (số nguyên, khóa lạc quan, ghi lệch trả 409) có ở entity admin sửa: Product, Coupon, ShippingMethod, StockItem, Cart, Payment, Shipment.
+- Entity chỉ thêm cần thứ tự ghi (OrderStatusHistory, ShipmentStatusHistory) có thêm cột kỹ thuật `seq` (identity, tăng dần) là khóa thứ tự ghi; không sắp theo `created_at` vì nhiều dòng cùng giao dịch có thể trùng thời điểm.
 - Entity có vòng đời mặc định có thuộc tính `status` (trạng thái hiện tại), không liệt kê lại ở cột Thuộc tính.
 
+Bảng hạ tầng tạm của platform (ví dụ `rate_limit_counters` UNLOGGED của ADR-014) không phải entity, không có dòng ở bảng dưới.
 Epic DSH không sở hữu entity: DSH chỉ đọc qua giao diện đọc của module chủ (ADR-020). Epic PRJ sở hữu entity nền tảng dùng chung: AuditLog, OutboxEvent, ProcessedEvent, IdempotencyKey.
 `Order.payment_status` là bản sao chỉ-đọc của **trạng thái Payment mới nhất**; ORD cập nhật khi nhận event của PAY (PaymentSucceeded, PaymentFailed, PaymentExpired, PaymentRefunded); khi ORD hủy đơn thì ORD tự đặt `payment_status` (không có event PaymentCancelled); ORD không gọi PAY.
 Hồ sơ người dùng (profile, avatar) là thuộc tính của User; AUTH sở hữu User, USR sở hữu thao tác sửa hồ sơ và Address (USR đặt `phone`, `avatar_url` qua giao diện nội bộ của AUTH).
@@ -31,7 +33,7 @@ Hồ sơ người dùng (profile, avatar) là thuộc tính của User; AUTH s�
 | ProductImage | PRD | id | product_id, storage_key, position (1..8), width, height, bytes | N-1 Product | - |
 | ProductReviewRating | PRD | id | review_id, product_id, rating, counted (bản chiếu để cập nhật rating_count, rating_sum idempotent) | N-1 Product | - |
 | StockItem | INV | id | product_id, on_hand, reserved, low_stock_threshold, low_stock_notified, archived_at | 1-1 Product; 1-N StockMovement; 1-N StockReservation | - |
-| StockMovement | INV | id | stock_item_id, type (in, out, adjust, sale, restock, return), quantity (có dấu), on_hand_after, reason, note, ref_type, ref_id, actor_id (cho phép rỗng) | N-1 StockItem | - |
+| StockMovement | INV | id | stock_item_id, type (in, out, adjust, sale, restock, return), quantity (có dấu), on_hand_after, reason, note, ref_type, ref_id, actor_id (cho phép rỗng), actor_name (bản chụp tên người thao tác lúc ghi, rỗng nếu `actor_id` rỗng) | N-1 StockItem | - |
 | StockReservation | INV | id | stock_item_id, order_id, quantity, expires_at (rỗng nếu COD) | N-1 StockItem; N-1 Order | held -> committed |
 | Cart | CRT | id | user_id, coupon_code, shipping_method_id, shipping_city, last_activity_at, converted_order_id | N-1 User; 1-N CartItem; N-1 ShippingMethod | active -> converted |
 | CartItem | CRT | id | cart_id, product_id, quantity, unit_price (chỉ để báo giá đổi, không dùng tính tiền), unavailable_reason | N-1 Cart; N-1 Product | - |
@@ -49,7 +51,7 @@ Hồ sơ người dùng (profile, avatar) là thuộc tính của User; AUTH s�
 | Shipment | SHP | id | order_id, shipping_method_id, tracking_number, cod_amount, shipped_at, delivered_at | N-1 Order; N-1 ShippingMethod; 1-N ShipmentStatusHistory | pending -> shipped -> delivered |
 | ShipmentStatusHistory | SHP | id | shipment_id, event, status, tracking_number, reason_code, note | N-1 Shipment | - |
 | Notification | NTF | id | user_id, channel (chỉ in_app), type, title, body, link, data, event_id, dedupe_key, read_at | N-1 User | unread -> read |
-| EmailDelivery | NTF | id | user_id, type, delivery_status (pending, sent, failed, skipped), delivery_reason, attempts, next_attempt_at, sent_at | N-1 User | - |
+| EmailDelivery | NTF | id | user_id, type, event_id, dedupe_key, data (dữ liệu dựng thư, không lưu nội dung thư), delivery_status (pending, sent, failed, skipped), delivery_reason, attempts, next_attempt_at, sent_at | N-1 User | - |
 | Review | REV | id | user_id, product_id, order_item_id, rating, comment, moderation_reason, moderated_by, moderated_at, published_at, edited_at, deleted_at, deleted_by_role | N-1 User; N-1 Product; N-1 OrderItem; 1-N ReviewImage | pending -> published |
 | ReviewImage | REV | id | review_id, user_id, storage_key, position (1..5), width, height, bytes, orphaned_at | N-1 Review; N-1 User | - |
 | AuditLog | PRJ | id | actor_id (rỗng nếu hệ thống), actor_role (gồm system), action, target_type, target_id, before, after, reason, correlation_id | - | - |
@@ -63,7 +65,8 @@ Hồ sơ người dùng (profile, avatar) là thuộc tính của User; AUTH s�
 - `StockReservation` duy nhất theo `(stock_item_id, order_id)`: một đơn một lượt giữ, event của INV khóa theo `order_id` (không có `reservation_id`). `0 <= reserved <= on_hand` (SB-25).
 - `CouponRedemption.order_id` duy nhất: một đơn một lượt dùng coupon. `Coupon.per_user_limit` đếm theo `CouponRedemption.user_id` ở trạng thái `reserved` và `consumed` (`released` không tính); kiểm và giữ lượt trong cùng giao dịch khóa dòng Coupon (SB-25, SB-33).
 - Một vận đơn còn hiệu lực mỗi đơn (Shipment không `cancelled` hoặc `returned`).
-- `Notification` duy nhất theo `(user_id, dedupe_key)`.
+- `Notification` duy nhất theo `(user_id, dedupe_key)`. `EmailDelivery` duy nhất theo `(user_id, type, dedupe_key)`.
+- Order có `grand_total > 0` ở v1: CHK chặn đơn 0 đồng (ví dụ coupon 100% cộng miễn phí vận chuyển), PAY không tạo Payment 0 đồng, nên không có chuyển `pending -> paid` cho đơn 0 đồng.
 - Bảng chỉ thêm (AuditLog, StockMovement, OrderStatusHistory, ShipmentStatusHistory, PaymentWebhookLog) có trigger chặn UPDATE, DELETE. AuditLog, PaymentWebhookLog giữ 12 tháng (ADR-008); OutboxEvent đã phát giữ 14 ngày; IdempotencyKey 24 giờ.
 - Địa chỉ: đúng một địa chỉ mặc định mỗi người. `Order.shipping_address`, `CheckoutSession.address_snapshot` là bản chụp, không tham chiếu `Address`.
 
@@ -79,18 +82,18 @@ Quy tắc "một giao dịch thắng" (đua thanh toán và hết hạn): INV x�
 | --- | --- | --- | --- |
 | User | active | locked | Quá số lần đăng nhập sai hoặc admin khóa |
 | User | locked | active | Admin mở khóa hoặc hết thời gian khóa |
-| Session | active | revoked | Đăng xuất, đổi mật khẩu, thay bằng phiên mới hoặc admin thu hồi |
+| Session | active | revoked | Đăng xuất, đổi mật khẩu, thay bằng phiên mới (`replaced`), hoặc hệ thống khi admin khóa tài khoản (`admin_lock`) |
 | Session | active | expired | Quá hạn trượt hoặc hạn tuyệt đối |
 | PasswordResetToken | issued | used | Đặt lại mật khẩu thành công |
-| PasswordResetToken | issued | expired | Quá hạn token |
+| PasswordResetToken | issued | expired | Quá hạn token, hoặc có yêu cầu quên mật khẩu mới của cùng người (các token cũ hết hiệu lực) |
 | EmailVerificationToken | issued | used | Khách bấm link xác minh, ghi email_verified_at |
-| EmailVerificationToken | issued | expired | Quá hạn token, khách yêu cầu gửi lại |
+| EmailVerificationToken | issued | expired | Quá hạn token, khách yêu cầu gửi lại, hoặc xác minh thành công làm các token còn lại hết hiệu lực |
 | Product | draft | active | Admin công bố |
 | Product | active | archived | Admin ngừng bán (trạng thái cuối, chưa có khôi phục ở v1) |
 | Product | draft | archived | Admin hủy bản nháp |
 | StockReservation | held | committed | Thanh toán online thành công (PaymentSucceeded, theo quy tắc một giao dịch thắng) hoặc đơn COD được xác nhận (OrderConfirmed), trừ kho thật |
 | StockReservation | held | released | Đơn bị hủy trước khi thanh toán (gồm khi thanh toán thất bại hết lượt thử: ORD hủy đơn rồi phát OrderCancelled) |
-| StockReservation | committed | released | Đơn đã trừ kho (paid hoặc confirmed) bị hủy trước khi giao: hoàn lại on_hand. Chỉ trước khi giao; ShipmentReturned không đổi trạng thái (INV ghi StockMovement return) |
+| StockReservation | committed | released | Đơn đã trừ kho (paid hoặc confirmed) bị hủy trước khi giao: hoàn lại on_hand. Chỉ trước khi giao; ShipmentReturned không đổi trạng thái (INV ghi StockMovement return chỉ khi `restockable = true`; `restockable = false` thì INV không đổi `on_hand`, không ghi StockMovement, chỉ log và audit) |
 | StockReservation | held | expired | Quá hạn giữ hàng mà chưa thanh toán (INV là bên duy nhất giữ đồng hồ và chạy job, xem ADR-009) |
 | Cart | active | converted | CheckoutCompleted (checkout tạo đơn thành công, cả vnpay và COD) |
 | Cart | active | abandoned | 30 ngày không có thao tác sửa của khách (xem giỏ không tính) |
@@ -114,13 +117,13 @@ Quy tắc "một giao dịch thắng" (đua thanh toán và hết hạn): INV x�
 | Order | pending | confirmed | Đơn COD: CHK gọi ORD.confirmCod trong giao dịch đặt hàng (INV đã giữ hàng bằng lời gọi reserve), không chờ thanh toán |
 | Order | pending | cancelled | Khách hoặc admin hủy trước khi thanh toán; hoặc ORD nhận PaymentFailed có is_final = true (hết lượt thử); hoặc hệ thống: ORD nhận StockCommitFailed khi đơn còn `pending` (event đến trước PaymentSucceeded, vì hai event đi độc lập qua outbox: `cancelled_by_role` = `system`, `cancel_reason` = `stock_commit_failed`). PaymentSucceeded đến sau cho đơn đã `cancelled` thì Payment đóng và PAY tạo Refund `late_payment` (một giao dịch thắng) |
 | Order | pending | expired | ORD nhận StockReservationExpired (hạn giữ hàng 15 phút, thanh toán online) |
-| Order | paid | cancelled | Khách hoặc admin hủy trước khi giao, kích hoạt hoàn tiền tự động |
+| Order | paid | cancelled | Khách hoặc admin hủy trước khi giao, chỉ khi Shipment của đơn còn `pending` (đã `shipped` thì không hủy; ORD, SHP chốt cơ chế kiểm ở tech-design, cửa sổ giữa lúc SHP bàn giao và lúc ORD nhận ShipmentShipped phải đóng), kích hoạt hoàn tiền tự động |
 | Order | paid | cancelled | Hệ thống: ORD nhận StockCommitFailed khi đơn đã `paid` (`cancelled_by_role` = `system`, `cancel_reason` = `stock_commit_failed`); PAY đã hoàn `late_payment` nên PAY không tạo thêm Refund khi nhận OrderCancelled của đơn này; INV không có gì để trả (reservation đã `expired` hoặc `released`) |
-| Order | confirmed | cancelled | Khách hoặc admin hủy đơn COD trước khi giao, không cần hoàn tiền |
+| Order | confirmed | cancelled | Khách hoặc admin hủy đơn COD trước khi giao, chỉ khi Shipment của đơn còn `pending` (như `paid -> cancelled`), không cần hoàn tiền |
 | Order | paid | shipped | Shipment shipped (SHP phát ShipmentShipped; nhân viên thao tác ở epic SHP, ORD không tự chuyển) |
 | Order | confirmed | shipped | Shipment shipped |
 | Order | shipped | delivered | Shipment delivered |
-| Order | shipped | returned | ORD nhận ShipmentReturned (trạng thái cuối), phát OrderReturned để PAY đóng Payment COD `pending` và NTF báo khách. ShipmentFailed không đổi trạng thái Order (chỉ ghi lịch sử). Đơn đã thu tiền rồi hoàn về: admin hoàn tiền thủ công (admin_manual) ở v1 |
+| Order | shipped | returned | ORD nhận ShipmentReturned (trạng thái cuối), phát OrderReturned để PAY đóng Payment COD `pending` và NTF báo khách. ShipmentFailed không đổi trạng thái Order, chỉ ghi một dòng OrderStatusHistory có `from_status = to_status = shipped` và `reason` là mã giao thất bại của ShipmentFailed (`from_status = to_status` chỉ hợp lệ trong trường hợp này). Đơn đã thu tiền rồi hoàn về: admin hoàn tiền thủ công (admin_manual) ở v1 |
 | Payment | pending | processing | Gửi yêu cầu tới cổng thanh toán |
 | Payment | processing | succeeded | Callback/webhook xác nhận thành công |
 | Payment | processing | failed | Callback/webhook báo lỗi hoặc timeout |
@@ -183,3 +186,11 @@ Quy tắc "một giao dịch thắng" (đua thanh toán và hết hạn): INV x�
 - 2026-10-06 | M-06, R-06 | Payment.attempt_no tối đa `PAY_MAX_ATTEMPTS` (mặc định 3); PaymentAttempt thêm create_date; Refund thêm gateway_request_id | lý do: nền ghi cố định "3 lượt" còn PAY dùng cấu hình; PAY cần dựng lại đường dẫn khi bấm lặp và khóa yêu cầu hoàn mỗi lần thử (PAY, ORD) | giải pháp: hằng số cấu hình ADR-007; gateway_request_id cấp mới mỗi lần vào `requested`; loại cố định 3
 - 2026-10-06 | M-07, R-01 | Coupon thêm per_user_limit; ràng buộc đếm CouponRedemption theo user_id ở reserved và consumed | lý do: SB-33 yêu cầu số lượt dùng mỗi người nhưng Coupon không có thuộc tính nên PRM không làm (PRM, CHK) | giải pháp: thêm cột (rỗng = không giới hạn), kiểm cùng giao dịch khóa dòng Coupon; loại bỏ phần coupon khỏi SB-33
 - 2026-10-06 | M-04, R-02 (làm rõ đợt 2b) | Order `pending -> cancelled` thêm điều kiện hệ thống khi nhận StockCommitFailed trước PaymentSucceeded | lý do: ORD tự phát hiện hai event đi độc lập qua outbox nên StockCommitFailed có thể tới khi đơn còn `pending`; nền chỉ có `paid -> cancelled` nên ORD no-op rồi đơn kẹt `paid` dù tiền đã hoàn | giải pháp: ORD hủy đơn ở cả `pending` và `paid` do hệ thống, PaymentSucceeded tới sau thì PAY hoàn `late_payment`; loại phương án bắt thứ tự phát event vì outbox không bảo đảm thứ tự giữa hai aggregate
+- 2026-10-06 | R-03 | Thêm ràng buộc Order có `grand_total > 0` ở v1 | lý do: CHK chặn đơn 0 đồng, PAY không tạo Payment 0 đồng nhưng nền không ghi nên ORD, PAY, PRM, CHK hiểu khác nhau | giải pháp: ghi ràng buộc ở mục Ràng buộc toàn vẹn (đợt 3); loại thêm `pending -> paid` cho đơn 0 đồng (v1 chưa cần)
+- 2026-10-06 | R-04 | Order `paid -> cancelled` và `confirmed -> cancelled` của khách, admin chỉ khi Shipment còn `pending` | lý do: cửa sổ giữa SHP bàn giao và ORD nhận ShipmentShipped vẫn hủy được đơn đã trao cho hãng (SHP, ORD) | giải pháp: ghi điều kiện ở vòng đời, cơ chế kiểm chốt ở tech-design ORD, SHP kèm sdlc-impact; loại phương án đổi ORD khóa đơn khi SHP bắt đầu bàn giao (đổi luồng liên module nhiều hơn)
+- 2026-10-06 | R-05 | Thêm cột kỹ thuật `seq` (identity) cho OrderStatusHistory, ShipmentStatusHistory; chốt "ShipmentFailed chỉ ghi lịch sử" là một dòng OrderStatusHistory `shipped -> shipped` có `reason` là mã giao thất bại | lý do: bảng chỉ thêm cần thứ tự ghi, ORD và SHP hiểu "chỉ ghi lịch sử" khác nhau (ORD, SHP) | giải pháp: quy ước chung về `seq` và nới CHECK `from_status = to_status` chỉ cho `shipped` kèm mã lỗi giao; loại chỉ ghi log (khách, admin không thấy lịch sử giao thất bại)
+- 2026-10-06 | R-07 | EmailDelivery thêm `event_id`, `dedupe_key`, `data`; unique `(user_id, type, dedupe_key)` | lý do: NTF cần chống gửi trùng email và dựng thư lại mà không lưu nội dung | giải pháp: thêm cột và ràng buộc theo NTF-DB; loại lưu cột nội dung thư (dữ liệu cá nhân, thừa)
+- 2026-10-06 | R-08 | Ghi điều kiện AUTH đang dùng thật: PasswordResetToken `issued -> expired` khi có yêu cầu quên mật khẩu mới; EmailVerificationToken `issued -> expired` khi xác minh thành công; Session `active -> revoked` lý do `admin_lock` | lý do: AUTH dùng các điều kiện này nhưng vòng đời chỉ ghi "quá hạn" (AUTH) | giải pháp: bổ sung điều kiện vào dòng có sẵn, không thêm chuyển mới
+- 2026-10-06 | R-09 | Ghi ngoại lệ: bảng hạ tầng tạm của platform (ví dụ `rate_limit_counters`) không phải entity | lý do: PRJ không biết bảng đếm giới hạn tần suất có cần dòng ở bảng entity hay không (PRJ) | giải pháp: một câu ngoại lệ ở đầu file; loại thêm entity RateLimitCounter (bảng tạm, UNLOGGED, mất khi khởi động lại cũng được)
+- 2026-10-06 | R-10 | StockMovement thêm `actor_name` (bản chụp tên người thao tác) | lý do: lịch sử kho cần tên người thao tác, INV tạm để `actor.name` rỗng (INV, AUTH) | giải pháp: chọn (a) cột bản chụp trong bảng chỉ thêm, không thêm phụ thuộc INV -> AUTH; loại (b) `AUTH.getDisplayNames` (thêm phụ thuộc, tên đổi theo thời gian làm sổ kho kém trung thực) và (c) chỉ hiện `actor.id` (khó đọc)
+- 2026-10-06 | R-11 | StockReservation `committed -> released` ghi rõ ShipmentReturned với `restockable = false`: INV không đổi `on_hand`, không ghi StockMovement, chỉ log và audit | lý do: INV cần biết hành vi khi hàng hoàn về không nhập lại được (INV, SHP) | giải pháp: mặc định của INV (nhân viên chọn `restockable` ở SHP); loại ghi StockMovement số lượng 0 (nhiễu sổ kho)

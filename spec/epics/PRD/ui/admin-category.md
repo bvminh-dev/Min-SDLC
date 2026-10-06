@@ -1,7 +1,7 @@
 ---
 screen: admin-category
 epic: PRD
-status: draft
+status: approved
 covers: [PRD-REQ-20261006-095502484, PRD-REQ-20261006-095502507, PRD-REQ-20261006-095502529]
 roles: [admin]
 ---
@@ -70,7 +70,7 @@ Hộp thoại Xóa:             "Xóa danh mục Phụ kiện? Không thể khô
 | prd-admin-category-retry | Nút Thử lại | admin | Tải lại | PRD-REQ-20261006-095502484 |
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
-- **Audit (câu 2 của evon):** chưa có codebase; theo mặc định evon (flat, Tailwind, `references/tokens.css`), thư viện UI chưa chốt (questions.md câu 10). Cây theo mẫu `components/tree.md`, hộp thoại theo `layouts/overlay.md`.
+- **Audit (câu 2 của evon):** chưa có codebase; theo mặc định evon (flat, Tailwind, `references/tokens.css`), thư viện UI và CSS đã chốt Tailwind và `references/tokens.css` (questions.md câu 10; nền chưa có ADR, áp dụng ở epic). Cây theo mẫu `components/tree.md`, hộp thoại theo `layouts/overlay.md`.
 - Xóa là việc nguy hiểm (mất dữ liệu, không khôi phục): nút và hộp xác nhận đỏ nền mờ theo luật chủ dự án số 1, 2, 3. Giao diện nêu lý do khi danh mục còn con hoặc sản phẩm; server vẫn kiểm lại.
 - Không có kéo thả (loại phương án C): chuyển nhánh làm bằng ô chọn danh mục cha trong hộp thoại Sửa; ô này loại trừ chính nó và hậu duệ, và loại cha khiến nhánh vượt 3 cấp (server vẫn kiểm).
 - Số "sản phẩm" cạnh tên là số sản phẩm đang bán (gồm nhánh con), khớp PRD-REQ-20261006-095502484 BR3; vì vậy một danh mục có thể hiện 0 sản phẩm mà vẫn không xóa được (còn sản phẩm nháp hoặc đã lưu trữ), hộp xóa nói rõ lý do.

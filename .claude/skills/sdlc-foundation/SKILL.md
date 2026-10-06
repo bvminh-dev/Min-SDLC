@@ -33,6 +33,10 @@ Chạy **một lần cho mỗi dự án** (và khi có quyết định nền m�
 - **Kiến trúc**: mỗi quyết định có phương án đã loại và hệ quả (đánh đổi), không chỉ kết luận. Epic 01 trong roadmap (cấu trúc API, lỗi, log, cấu hình, DB) thành mục cắt ngang, mỗi mục trỏ về một ADR.
 - **Security baseline**: bám các nhóm trong template; chú ý epic có tiền và định danh (Auth, Payment, Checkout) cần dòng riêng. "Kiểm bằng" phải là thứ chạy được (test, hook, script, config) hoặc review có người chịu trách nhiệm.
 
+- **Checklist ADR cho mối quan tâm cắt ngang** (mỗi mục một ADR hoặc một mục rõ trong ADR chung, có phương án đã loại và hệ quả; thiếu mục nào thì `proposed` + `[OPEN]`, đừng bỏ trống): phát event bền (outbox), job nền, giới hạn tần suất (rate limit), băm mật khẩu, chống CSRF, idempotency, lưu trữ tệp (storage), audit log, tìm kiếm, tổng hợp/đọc cho dashboard, thời hạn lưu dữ liệu (retention). Nền mỏng ở đây khiến mọi epic tự bịa lại.
+- **Giao diện module**: ngoài cột Phụ thuộc, thêm bảng "Giao diện module" (bên gọi, bên bị gọi, hàm/chữ ký, đồng bộ hay event) cho mọi lời gọi trực tiếp giữa module, và cách truyền giao dịch.
+- **Event**: mỗi event có payload (không chỉ id) và mỗi consumer khai có handler nêu rõ việc nó làm; consumer không có handler thì bỏ khỏi cột Consumers.
+
 ## Kiểm thử skill
 `evals/README.md`. Fixture là roadmap ecommerce thật (14 epic).
 

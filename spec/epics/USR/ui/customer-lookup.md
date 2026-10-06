@@ -1,7 +1,7 @@
 ---
 screen: customer-lookup
 epic: USR
-status: draft
+status: approved
 covers: [USR-REQ-20261006-101004117]
 roles: [staff, admin]
 ---

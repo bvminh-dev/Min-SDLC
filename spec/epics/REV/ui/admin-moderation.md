@@ -1,7 +1,7 @@
 ---
 screen: admin-moderation
 epic: REV
-status: draft
+status: approved
 covers: [REV-REQ-20261006-103135744, REV-REQ-20261006-103135835, REV-REQ-20261006-103135477]
 roles: [admin]
 ---
@@ -10,7 +10,7 @@ roles: [admin]
 Trang `/admin/reviews`: hàng đợi chờ duyệt và danh sách đánh giá theo trạng thái. Phía quản trị là màn trong app nên theo mẫu danh sách có bộ lọc của skill (không thuộc nhóm "chưa được dạy"). Chạy tự động nên các cổng hỏi của `U1` đến `U3` được trả lời bằng phương án khuyến nghị (mặc định). Chỉ wireframe ASCII.
 
 ## Wireframe
-Phương án đã chọn: **A** (bảng dữ liệu có tab trạng thái, nút thao tác ở cuối dòng). **Đây là lựa chọn mặc định**, chưa có người dùng chọn.
+Phương án đã chọn: **A** (bảng dữ liệu có tab trạng thái, nút thao tác ở cuối dòng). Chọn theo khuyến nghị (mặc định, người dùng ủy quyền 2026-10-06).
 
 | Phương án | Việc chính thấy ở đâu | Đổi gì | Đánh đổi |
 |---|---|---|---|
@@ -110,7 +110,7 @@ Hộp thoại Từ chối (tương tự hộp thoại Ẩn; có ô nhập nên k
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Màn chỉ dành cho admin: staff không có quyền kiểm duyệt (`roles.md`), nên menu không hiện mục này cho staff và vào thẳng bằng địa chỉ thì nhận "Không có quyền".
-- Ô lọc theo sản phẩm nhận mã (uuid); chưa có ô tìm theo tên vì requirement chỉ có `product_id` ([OPEN] cải thiện sau).
+- Ô lọc theo sản phẩm nhận mã (uuid); không dựng ô tìm theo tên sản phẩm hay người viết ở v1 (đã chốt, mặc định, người dùng ủy quyền 2026-10-06; requirement chỉ có `product_id`).
 - Nút theo trạng thái (E-22): Duyệt và Từ chối ở dòng chờ duyệt; Ẩn ở dòng đã đăng; Bỏ ẩn ở dòng bị ẩn; Xóa ở mọi dòng; dòng bị từ chối (trạng thái cuối) chỉ có Xóa.
 - Hộp thoại Từ chối và Ẩn có ô nhập nên bấm ra ngoài không đóng (luật `I20` của evon). Hộp thoại Xóa không có ô nhập nhưng không hoàn tác nên vẫn có bước xác nhận.
 - Lý do từ chối, ẩn hiển thị cho khách chủ đánh giá; ô lý do nhắc điều đó để admin viết cho người đọc.

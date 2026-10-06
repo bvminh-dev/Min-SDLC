@@ -1,7 +1,7 @@
 ---
 screen: admin-dashboard
 epic: DSH
-status: draft
+status: approved
 covers: [DSH-REQ-20261006-105125714, DSH-REQ-20261006-105125811, DSH-REQ-20261006-105125901, DSH-REQ-20261006-105125995, DSH-REQ-20261006-105126089, DSH-REQ-20261006-105126180, DSH-REQ-20261006-105126549]
 roles: [admin]
 ---
@@ -121,7 +121,7 @@ testid dạng `dsh-admin-dashboard-<phần-tử>`; mọi phần tử chỉ dành
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Hàng số liệu là **một khối chia kẻ, không bốn thẻ**, và một màu (luật `Dashboard A` của evon); cảnh báo hoàn tiền là chỗ duy nhất dùng màu trạng thái (amber).
-- Chỉ ba ô (Doanh thu, Tổng đơn, Khách hàng mới) theo khoảng ngày; hai ô còn lại và hai danh sách là số hiện tại. Khoảng ngày ghi một lần ở đầu hàng, không lặp trong từng ô. Không có kỳ so sánh (DSH-REQ-20261006-105126271, xung đột [OPEN]).
+- Chỉ ba ô (Doanh thu, Tổng đơn, Khách hàng mới) theo khoảng ngày; hai ô còn lại và hai danh sách là số hiện tại. Khoảng ngày ghi một lần ở đầu hàng, không lặp trong từng ô. Không có kỳ so sánh (DSH-REQ-20261006-105126271, đã chốt không làm ở v1).
 - Không biểu đồ trên màn này: bốn khối, không biểu đồ xu hướng, vì xu hướng thuộc các báo cáo (evon: "ba khối là mỏng, bốn tới năm vừa"; ở đây có hàng số, đơn gần đây, tồn thấp, và dải việc cần làm).
 - Tiền định dạng `1.234.567 đ`, số `tabular-nums`; giá trị rỗng là `—`; nhãn trạng thái đơn và thanh toán viết chữ, không chỉ màu. Dưới `sm` hàng số thành lưới 2x2 và hai danh sách xếp dọc.
 - Tiêu đề ô "Doanh thu thuần" kèm giải thích ngắn "Tiền thu thành công trừ hoàn tiền (theo PAY)"; cột "Tổng" của đơn gần đây đặt nhãn "Giá trị đơn", không "Doanh thu" (DSH-REQ-20261006-105126180 BR4).

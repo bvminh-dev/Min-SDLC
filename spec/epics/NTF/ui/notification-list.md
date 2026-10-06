@@ -1,7 +1,7 @@
 ---
 screen: notification-list
 epic: NTF
-status: draft
+status: approved
 covers: [NTF-REQ-20261006-103209345, NTF-REQ-20261006-103209256]
 roles: [customer, staff, admin]
 ---
@@ -77,7 +77,7 @@ Dưới sm: tab thành nút "Chưa đọc · 3" mở danh sách; nút Đánh d�
 - **Danh sách màn (U2, mặc định đã xác nhận thay người dùng):** `notification-list` (customer, staff, admin; NTF-REQ-20261006-103209345, NTF-REQ-20261006-103209256) và `notification-bell` (khung thả xuống ở thanh header; cùng hai requirement). Chín requirement còn lại là event hoặc job nội bộ do tác nhân `system`, không có màn (xem questions.md, mục C).
 - Mở một dòng: nếu `link` có giá trị thì điều hướng tới đó rồi đánh dấu đã đọc (gọi POST read trước, lỗi thì vẫn điều hướng và hiện toast); nếu `link` là null (ví dụ `welcome`) thì chỉ đánh dấu đã đọc, không điều hướng.
 - Tab "Chưa đọc (n)" dùng `unread_count` từ API (số toàn bộ, không theo bộ lọc `type`).
-- Nhãn loại (ô lọc): Đơn hàng, Thanh toán, Vận chuyển, Hoàn tiền, Tài khoản, Tồn kho (chỉ staff và admin), mỗi nhãn ánh xạ tới một hoặc nhiều giá trị `type` ("Vận chuyển" gồm `order_shipped`, `shipment_failed`, `order_delivered`, `order_returned`; `order_returned` thêm ở nền đợt 2, M-03); ô lọc customer không có "Tồn kho". [OPEN] gom nhóm hay lọc theo từng `type` của API.
+- Nhãn loại (ô lọc): [RESOLVED] quyết định (mặc định, người dùng ủy quyền 2026-10-06): lọc theo từng `type` của API (API nhận một `type` mỗi lần, gom nhóm cần đổi API và phân trang), mỗi giá trị một nhãn tiếng Việt riêng, không gom nhóm: Đơn đã tạo (`order_created`), Đơn đã xác nhận (`order_confirmed`), Thanh toán thành công (`payment_succeeded`), Thanh toán thất bại (`payment_failed`), Đơn bị hủy (`order_cancelled`), Đơn hết hạn (`order_expired`, nền đợt 3, R-19), Hoàn tiền (`refund_succeeded`), Đang giao (`order_shipped`), Giao thất bại (`shipment_failed`), Đã giao (`order_delivered`), Hoàn về (`order_returned`), Chào mừng (`welcome`), Đổi mật khẩu (`password_changed`), Tồn kho (`low_stock`, chỉ staff và admin), Hoàn tiền thất bại (`refund_failed`, chỉ admin); ô lọc customer chỉ có các nhãn customer nhận được. Rủi ro: danh sách nhãn dài (đã cuộn trong ô chọn).
 - Sắp mới nhất trước và 20 thông báo mỗi trang cố định, không có ô chọn số dòng.
 - Giờ hiển thị theo giờ Việt Nam; trong 24 giờ gần nhất có thể hiện "x giờ trước" kèm giờ đầy đủ ở thuộc tính title. Nội dung là văn bản thuần, giao diện escape (SB-12).
 - Không viết code giao diện; dựng thật là việc của `implement`.

@@ -1,7 +1,7 @@
 ---
 screen: shipment-tracking
 epic: SHP
-status: draft
+status: approved
 covers: [SHP-REQ-20261006-101103927, SHP-REQ-20261006-101103972]
 roles: [customer]
 ---
@@ -41,7 +41,7 @@ Thanh header:  ☰  Đơn hàng của tôi › #7K3M9Q2XH4TB › Vận chuyển 
 Giao thất bại: dòng báo "Giao hàng chưa thành công. Shop sẽ liên hệ với bạn." (không nêu lý do nội bộ)
 ```
 
-Thứ tự hành trình: cũ nhất trước theo SHP-REQ-20261006-101103972 BR5 (mặc định chưa được xác nhận). **Lưu ý khác biệt với evon:** mẫu `timeline.md` đặt mới nhất ở trên; màn này theo requirement (requirement thắng), nếu người dùng chọn mới nhất trước thì đổi cả requirement lẫn màn. Thanh tiến trình ba bước mượn khuôn các bước của `layouts/form.md`. Mã vận đơn `font-mono`; giờ `tabular-nums`.
+Thứ tự hành trình: cũ nhất trước theo SHP-REQ-20261006-101103972 BR5 (đã chốt, khớp ORD). **Lưu ý khác biệt với evon:** mẫu `timeline.md` đặt mới nhất ở trên; màn này theo requirement (requirement thắng), nếu người dùng chọn mới nhất trước thì đổi cả requirement lẫn màn. Thanh tiến trình ba bước mượn khuôn các bước của `layouts/form.md`. Mã vận đơn `font-mono`; giờ `tabular-nums`.
 
 ## Trạng thái
 | Trạng thái | Trông ra sao | Requirement |
@@ -94,6 +94,6 @@ Thứ tự hành trình: cũ nhất trước theo SHP-REQ-20261006-101103972 BR5
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Màn này chỉ có customer; staff và admin xem vận đơn ở `shipment-admin-detail` (nhiều dữ liệu và thao tác hơn). Customer không thấy lý do, ghi chú, số tiền thu hộ hay người nhận (SHP-REQ-20261006-101103927 BR4, SHP-REQ-20261006-101103972 BR4).
-- Màn thuộc luồng "đơn hàng của tôi" của ORD nhưng nội dung là của SHP. Liên kết "Theo dõi vận chuyển" ở trang chi tiết đơn thuộc màn `order-detail` của ORD (không sửa ở epic này): ghi ở questions.md để ORD thêm khi cần. [OPEN]
+- Màn thuộc luồng "đơn hàng của tôi" của ORD nhưng nội dung là của SHP. Liên kết "Theo dõi vận chuyển" ở trang chi tiết đơn thuộc màn `order-detail` của ORD (không sửa ở epic này): ORD đã có liên kết này (testid `ord-order-detail-tracking-link`, questions.md câu 20d, đã chốt).
 - Phần chọn phương thức vận chuyển và phí khi đặt hàng nằm ở màn của CHK và CRT (chưa có spec), SHP chỉ cung cấp dữ liệu qua SHP-REQ-20261006-101103782 và SHP-REQ-20261006-101103806 nên không có màn ở đây.
 - Nhãn lý do thất bại không hiển thị cho khách (chỉ lời trấn an chung), tránh lộ ghi chú nội bộ của nhân viên.

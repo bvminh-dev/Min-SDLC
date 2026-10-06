@@ -1,7 +1,7 @@
 ---
 screen: account-menu
 epic: AUTH
-status: draft
+status: approved
 covers: [AUTH-REQ-20261006-095515774, AUTH-REQ-20261006-095515808]
 roles: [customer, staff, admin]
 ---
@@ -56,7 +56,7 @@ Thanh header:  ☰  Cửa hàng                                   🔔  (A)
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Brief, audit và danh sách màn xem ở `register.md`.
 - Đăng xuất **không** có hộp thoại xác nhận: việc dễ hoàn tác (đăng nhập lại) nên không cần hỏi, theo evon (xác nhận chỉ cho việc không hoàn tác được).
-- Chip "Email chưa xác minh" chỉ hiện cho customer (staff, admin không có chip vì không có đường gửi lại, xem [OPEN] ở yêu cầu gửi lại email).
+- Chip "Email chưa xác minh" chỉ hiện cho customer (staff, admin không có chip vì không có đường gửi lại, đã chốt ở yêu cầu gửi lại email: giữ chỉ customer).
 - Hộp thoại phiên hết hạn do lớp gọi API của web bật khi thấy 401 `session_expired` (ở bất kỳ màn nào, không riêng menu); testid nằm ở đây vì đây là phần giao diện duy nhất của yêu cầu Phiên.
 - Chống CSRF theo ADR-016: web gọi API cùng site với `Content-Type: application/json`, trình duyệt tự gửi `Origin`; không có CSRF token và không có giao diện riêng.
 - Không viết code giao diện; dựng thật là việc của `implement`.

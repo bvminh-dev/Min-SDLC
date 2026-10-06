@@ -1,7 +1,7 @@
 ---
 screen: notification-bell
 epic: NTF
-status: draft
+status: approved
 covers: [NTF-REQ-20261006-103209256, NTF-REQ-20261006-103209345]
 roles: [customer, staff, admin]
 ---
@@ -64,7 +64,7 @@ Dưới sm: khung rộng gần kín chiều ngang màn hình, bám dưới thanh
 - **Báo trước theo skill evon:** chuông nằm trên thanh header của cả giao diện người mua (nhóm skill chưa được dạy) lẫn trang quản trị; khung thả xuống theo mẫu menu và popover của evon, kết quả có thể chưa đẹp bằng màn trong app.
 - **Audit (câu 2 của evon):** chưa có codebase hay `package.json`, nên không có token, component hay phong cách có sẵn; stack web theo ADR-002 (Next.js), thư viện UI chưa có ADR. Mặc định theo evon: flat, Tailwind và `references/tokens.css`.
 - **Brief (U1, nguồn: đọc spec):** mọi người dùng đã đăng nhập; việc chính: biết có tin mới và mở nhanh; hiện ở mọi trang có header.
-- Nguồn dữ liệu: huy hiệu lấy từ `GET /api/v1/notifications/unread-count`; khung lấy `GET /api/v1/notifications?limit=5` khi mở. Làm mới huy hiệu mỗi 60 giây khi tab đang mở (mặc định; chưa có kênh đẩy thời gian thực như WebSocket hay SSE, [OPEN] xem questions.md), tức 1 yêu cầu mỗi phút, xa dưới hạn mức 120 yêu cầu mỗi phút (SB-14).
+- Nguồn dữ liệu: huy hiệu lấy từ `GET /api/v1/notifications/unread-count`; khung lấy `GET /api/v1/notifications?limit=5` khi mở. Làm mới huy hiệu mỗi 60 giây khi tab đang mở (mặc định; chưa có kênh đẩy thời gian thực như WebSocket hay SSE, [RESOLVED] quyết định (mặc định, người dùng ủy quyền 2026-10-06): giữ polling 60 giây ở v1, xem questions.md câu 17), tức 1 yêu cầu mỗi phút, xa dưới hạn mức 120 yêu cầu mỗi phút (SB-14).
 - Mở một dòng như màn `notification-list`: có `link` thì điều hướng và đánh dấu đã đọc; không có thì chỉ đánh dấu.
 - Khung chỉ hiện thông báo mới nhất, không lọc; muốn lọc phải sang `notification-list`.
 - Không viết code giao diện; dựng thật là việc của `implement`.

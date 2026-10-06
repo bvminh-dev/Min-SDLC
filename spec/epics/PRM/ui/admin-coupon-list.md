@@ -1,7 +1,7 @@
 ---
 screen: admin-coupon-list
 epic: PRM
-status: draft
+status: approved
 covers: [PRM-REQ-20261006-101036299, PRM-REQ-20261006-101036275, PRM-REQ-20261006-101036252, PRM-REQ-20261006-101036201]
 roles: [admin]
 ---

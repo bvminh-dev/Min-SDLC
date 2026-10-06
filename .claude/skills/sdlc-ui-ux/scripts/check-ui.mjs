@@ -54,6 +54,7 @@ const screens = walk(specDir).filter((f) => dirname(f).endsWith('/ui') || dirnam
 const seen = new Map(); // testid -> file
 const covered = new Set();
 const out = [];
+let noStateTestid = 0;
 const TESTID = /^[a-z][a-z0-9]*(-[a-z0-9]+)+$/;
 
 for (const f of screens) {
@@ -80,7 +81,13 @@ for (const f of screens) {
   for (const s of ['Wireframe', 'Trạng thái', 'Phần tử']) if (section(text, s) == null) err(f, `thiếu mục "## ${s}"`);
   if (!rows(section(text, 'Trạng thái')).some((r) => r[0] === 'lỗi')) err(f, 'mục Trạng thái phải có dòng "lỗi"');
   for (const [, , req] of rows(section(text, 'Trạng thái'))) if (req && !covers.includes(req)) err(f, `Trạng thái nhắc ${req} ngoài covers`);
+  // cột testid của bảng Trạng thái (tùy chọn, bắt buộc có cho tài liệu mới): testid phải có trong bảng Phần tử
+  const stateSec = section(text, 'Trạng thái') ?? '';
+  const tIdx = (stateSec.split(/\r?\n/).find((l) => l.startsWith('|'))?.split('|').slice(1, -1).map((c) => c.trim()) ?? []).indexOf('testid');
+  const stateTestids = new Set(tIdx < 0 ? [] : rows(stateSec).flatMap((r) => (r[tIdx] ?? '').split(',').map((t) => t.trim()).filter((t) => t && t !== '-')));
+  if (tIdx < 0) noStateTestid++;
   const els = rows(section(text, 'Phần tử'));
+  for (const t of stateTestids) if (!els.some((e) => e[0] === t)) err(f, `Trạng thái nhắc testid ${t} không có trong bảng Phần tử`);
   if (!els.length) err(f, 'mục Phần tử trống');
   for (const [id, el, role, action, req] of els) {
     if (!TESTID.test(id)) err(f, `testid sai định dạng: ${id}`);
@@ -92,6 +99,7 @@ for (const f of screens) {
     const elRoles = role === '-' || !role ? [] : role.split(',').map((r) => r.trim());
     if (!elRoles.length) err(f, `phần tử ${id}: thiếu role (ghi các role thấy/dùng được phần tử, hoặc chọn từ roles của màn)`);
     for (const r of elRoles) {
+      if (r === 'guest' && stateTestids.has(id)) continue; // khách chưa đăng nhập ở màn của role khác: testid của một trạng thái
       if (!(fm.roles ?? []).includes(r)) err(f, `phần tử ${id}: role "${r}" không nằm trong roles của màn`);
       else if (reqs.has(req) && !reqs.get(req).roles.includes(r)) err(f, `phần tử ${id}: role "${r}" không nằm trong roles của ${req}`);
     }
@@ -113,4 +121,5 @@ if (!checkOnly) writeFileSync(join(specDir, 'testids.md'), [
   ...out.map((r) => `| ${r.join(' | ')} |`), '',
 ].join('\n'));
 console.log(`OK: ${screens.length} màn, ${out.length} testid${checkOnly ? '' : `, đã ghi ${join(specDir, 'testids.md')}`}.`);
+if (noStateTestid) warnings.push(`${noStateTestid} màn chưa có cột testid ở bảng Trạng thái (nên có cho màn mới, xem templates/screen.md)`);
 for (const w of warnings) console.log(`Lưu ý: ${w}`);

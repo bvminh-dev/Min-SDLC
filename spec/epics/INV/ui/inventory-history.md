@@ -1,7 +1,7 @@
 ---
 screen: inventory-history
 epic: INV
-status: draft
+status: approved
 covers: [INV-REQ-20261006-101122637]
 roles: [staff, admin]
 ---
@@ -74,8 +74,8 @@ Testid của vùng trạng thái nằm trong bảng Phần tử bên dưới (n�
 | inv-inventory-history-not-found | Khối không tìm thấy | staff, admin | - | INV-REQ-20261006-101122637 |
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
-- Màn chỉ đọc: không có nút sửa, xóa hay thêm dòng (INV-REQ-20261006-101122637 BR5); dòng `sale`, `restock`, `return` do hệ thống ghi (`actor.id` rỗng, `name` = `system`), hiển thị Người là "Hệ thống". Dòng do staff, admin thao tác hiện `actor.name`; khi `actor.name` rỗng (INV chưa có đường lấy tên hiển thị: `AUTH.getDisplayNames` của nền chỉ có cho REV, R-10 chờ người quyết; questions.md "Nền còn thiếu") hiện `actor.id` rút gọn. Hàng hoàn về không bán lại được (`restockable` = false) không tạo dòng lịch sử nên không hiện ở đây.
+- Màn chỉ đọc: không có nút sửa, xóa hay thêm dòng (INV-REQ-20261006-101122637 BR5); dòng `sale`, `restock`, `return` do hệ thống ghi (`actor.id` rỗng, `name` = `system`), hiển thị Người là "Hệ thống". Dòng do staff, admin thao tác hiện `actor.name`; khi `actor.name` rỗng (dòng cũ chưa có bản chụp tên `actor_name`; R-10 nền chốt cột bản chụp ở StockMovement, nguồn tên cần `SessionContext.full_name` còn thiếu ở nền, questions.md "Nền còn thiếu") hiện `actor.id` rút gọn; tên là bản chụp lúc ghi nên không đổi khi người đó đổi tên sau này. Hàng hoàn về không bán lại được (`restockable` = false) không tạo dòng lịch sử nên không hiện ở đây.
 - Tên nhãn loại: `in` Nhập kho, `out` Xuất kho, `adjust` Điều chỉnh, `sale` Bán, `restock` Hoàn nhả (đơn bị hủy sau khi trừ kho), `return` Hoàn về (hàng giao thất bại quay về kho).
 - **Lệch với mẫu evon:** mẫu `timeline.md` đặt mới nhất ở trên và cho phép dạng timeline; màn này dùng bảng vì cần so cột số, vẫn mới nhất ở trên nên không mâu thuẫn requirement.
 - Ngày lọc gửi lên theo giờ UTC, hiển thị theo múi giờ của trình duyệt; khoảng tối đa 366 ngày được kiểm cả ở giao diện lẫn server.
-- Cột Đơn hiện mã đơn khi có (đã rút gọn); không liên kết sang màn đơn vì INV không phụ thuộc ORD (liên kết ở màn là việc của khung web, [OPEN] ghi ở questions.md).
+- Cột Đơn hiện mã đơn khi có (đã rút gọn); không liên kết sang màn đơn vì INV không phụ thuộc ORD (liên kết ở màn là việc của khung web; đã chốt không liên kết ở màn này, mặc định, người dùng ủy quyền 2026-10-06, questions.md câu 15).

@@ -1,7 +1,7 @@
 ---
 screen: order-list
 epic: ORD
-status: draft
+status: approved
 covers: [ORD-REQ-20261006-092320716, ORD-REQ-20261006-092320790]
 roles: [customer]
 ---

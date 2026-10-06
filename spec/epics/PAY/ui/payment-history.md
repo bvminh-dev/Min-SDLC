@@ -1,7 +1,7 @@
 ---
 screen: payment-history
 epic: PAY
-status: draft
+status: approved
 covers: [PAY-REQ-20261006-103111122]
 roles: [customer]
 ---

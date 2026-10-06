@@ -1,7 +1,7 @@
 ---
 screen: inventory-detail
 epic: INV
-status: draft
+status: approved
 covers: [INV-REQ-20261006-101122435, INV-REQ-20261006-101122463, INV-REQ-20261006-101122487, INV-REQ-20261006-101122512, INV-REQ-20261006-101122611, INV-REQ-20261006-101122637]
 roles: [staff, admin]
 ---
@@ -39,7 +39,7 @@ Hộp thoại Nhập kho:                          Hộp thoại Điều chỉnh
 │                    [Hủy]  [Nhập kho]   │   │                     [Hủy]  [Xác nhận]    │
 └────────────────────────────────────────┘   └───────────────────────────────────────────┘
 Hộp thoại Xuất kho giống Nhập kho (lý do: Hỏng, Mất, Dùng nội bộ, Khác), có dòng "Tối đa xuất được: 40".
-Hộp thoại Đổi ngưỡng: một ô số (0-1000000) và nút Lưu.
+Hộp thoại Đổi ngưỡng: một ô số (0-1000000) và nút Lưu (gửi kèm `version` đã tải).
 ```
 
 ## Trạng thái
@@ -59,7 +59,7 @@ Testid của vùng trạng thái nằm trong bảng Phần tử bên dưới (n�
 | nhập kho lỗi | Trong hộp thoại, dưới ô lỗi: 400 chỉ rõ ô sai (số lượng ngoài 1 đến 100000, thiếu ghi chú khi lý do Khác); 409 "Sản phẩm đã ngừng bán" hoặc "Vượt giới hạn 10.000.000" (`inv-inventory-detail-stock-in-error`) | INV-REQ-20261006-101122463 |
 | xuất kho lỗi | Trong hộp thoại: 409 "Chỉ còn 40 có thể xuất" (dòng số `available` từ phản hồi), ô số lượng giữ nguyên giá trị; 400 như trên (`inv-inventory-detail-stock-out-error`) | INV-REQ-20261006-101122487 |
 | điều chỉnh xung đột | Trong hộp thoại: 409 `stock-version-conflict` thì hiện "Số liệu đã thay đổi, tải lại để tiếp tục" kèm nút "Tải lại số liệu"; 409 `below-reserved` thì "Số đếm không thể thấp hơn số đang giữ (4)" (`inv-inventory-detail-adjust-error`) | INV-REQ-20261006-101122512 |
-| đổi ngưỡng lỗi | Trong hộp thoại: 400 "Ngưỡng từ 0 đến 1.000.000" (`inv-inventory-detail-threshold-error`) | INV-REQ-20261006-101122611 |
+| đổi ngưỡng lỗi | Trong hộp thoại: 400 "Ngưỡng từ 0 đến 1.000.000"; 409 `stock-version-conflict` thì "Số liệu đã thay đổi, tải lại để tiếp tục" kèm nút "Tải lại số liệu" (SB-30, R-46) (`inv-inventory-detail-threshold-error`, nút `inv-inventory-detail-threshold-reload`) | INV-REQ-20261006-101122611 |
 
 ## Phần tử
 | testid | Phần tử | Role | Hành động | Requirement |
@@ -106,10 +106,11 @@ Testid của vùng trạng thái nằm trong bảng Phần tử bên dưới (n�
 | inv-inventory-detail-threshold-input | Ô ngưỡng mới | staff, admin | Nhập số nguyên 0 đến 1000000 | INV-REQ-20261006-101122611 |
 | inv-inventory-detail-threshold-submit | Nút Lưu ngưỡng | staff, admin | Gửi yêu cầu đổi ngưỡng | INV-REQ-20261006-101122611 |
 | inv-inventory-detail-threshold-error | Vùng lỗi của hộp thoại ngưỡng | staff, admin | - | INV-REQ-20261006-101122611 |
+| inv-inventory-detail-threshold-reload | Nút Tải lại số liệu (khi đổi ngưỡng bị xung đột phiên bản) | staff, admin | Lấy lại số liệu và version mới | INV-REQ-20261006-101122611 |
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
-- Mỗi lần mở hộp thoại nhập, xuất hoặc điều chỉnh, giao diện sinh một `Idempotency-Key` mới và giữ nguyên khi bấm gửi lại sau lỗi mạng; đóng rồi mở lại sinh key khác (INV-REQ-20261006-101122463 BR3; khóa giữ 24 giờ ở platform, ADR-017). Không hiện key cho người dùng. Nếu nhận 422 `idempotency-key-reused` (chỉ xảy ra khi client dùng lại key cho nội dung khác) thì hộp thoại hiện "Yêu cầu không hợp lệ, hãy mở lại hộp thoại" trong vùng lỗi của hộp thoại đó và sinh key mới ở lần mở sau.
-- Ô Chênh lệch của hộp thoại điều chỉnh chỉ để đọc (tính từ số đếm thực trừ Đang có) và không gửi lên; server tự tính (INV-REQ-20261006-101122512 BR6). Gửi kèm `version` đã tải; nếu xung đột thì không giữ số cũ lặng lẽ.
+- Mỗi lần mở hộp thoại nhập, xuất hoặc điều chỉnh, giao diện sinh một `Idempotency-Key` mới (uuid, đúng định dạng 8 đến 64 ký tự `[A-Za-z0-9_-]` của ADR-017 đợt 3) và giữ nguyên khi bấm gửi lại sau lỗi mạng; đóng rồi mở lại sinh key khác (INV-REQ-20261006-101122463 BR3; khóa giữ 24 giờ ở platform, ADR-017). Không hiện key cho người dùng. Nếu nhận 422 `idempotency-key-reused` (chỉ xảy ra khi client dùng lại key cho nội dung khác) thì hộp thoại hiện "Yêu cầu không hợp lệ, hãy mở lại hộp thoại" trong vùng lỗi của hộp thoại đó và sinh key mới ở lần mở sau.
+- Ô Chênh lệch của hộp thoại điều chỉnh chỉ để đọc (tính từ số đếm thực trừ Đang có) và không gửi lên; server tự tính (INV-REQ-20261006-101122512 BR6). Gửi kèm `version` đã tải; nếu xung đột thì không giữ số cũ lặng lẽ. Hộp thoại đổi ngưỡng cũng gửi kèm `version` đã tải (SB-30 đợt 3, R-46) và dùng `version` mới trong phản hồi cho lần mở sau; không cần `Idempotency-Key`.
 - Màn không có thao tác nào ngoài ba hành động kho và đổi ngưỡng; không có giữ hàng, nhả hàng thủ công (đó là việc của hệ thống, INV-REQ-20261006-101122538 và INV-REQ-20261006-101122562 không có UI).
-- Hai role dùng chung vì cùng quyền trong ma trận; không phần tử nào chỉ dành cho một role. Điều chỉnh cho cả staff lẫn admin là mặc định (INV-REQ-20261006-101122512 [OPEN]).
+- Hai role dùng chung vì cùng quyền trong ma trận; không phần tử nào chỉ dành cho một role. Điều chỉnh cho cả staff lẫn admin đã chốt (mặc định, người dùng ủy quyền 2026-10-06; INV-REQ-20261006-101122512 xung đột đã đóng).
 - Trang nhận `product_id` trên đường dẫn; id sai định dạng hiện cùng khối "không tìm thấy" (INV-REQ-20261006-101122435 BR5).

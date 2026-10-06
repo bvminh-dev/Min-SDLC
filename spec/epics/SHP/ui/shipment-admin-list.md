@@ -1,7 +1,7 @@
 ---
 screen: shipment-admin-list
 epic: SHP
-status: draft
+status: approved
 covers: [SHP-REQ-20261006-101103927]
 roles: [staff, admin]
 ---
@@ -74,6 +74,6 @@ Dưới `@4xl` ẩn cột Phương thức và Ngày tạo; dưới `sm` thành d
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Màn này không có nút đổi trạng thái: bàn giao, sửa mã, giao xong, thất bại, hoàn hàng đều ở `shipment-admin-detail`. Staff và admin dùng chung màn vì cùng quyền xem trong ma trận; không phần tử nào chỉ dành cho một role.
-- Mặc định tab "Tất cả" và sắp mới nhất trước theo API (SHP-REQ-20261006-101103927 BR6, BR7, [NEEDS CLARIFICATION] chưa được người dùng xác nhận). Gợi ý vận hành: mở sẵn tab "Chờ bàn giao" kèm "Cũ nhất", để chưa làm vì requirement không nói.
+- Mặc định tab "Tất cả" và sắp mới nhất trước theo API (SHP-REQ-20261006-101103927 BR6, BR7; đã chốt, người dùng ủy quyền 2026-10-06). Gợi ý vận hành: mở sẵn tab "Chờ bàn giao" kèm "Cũ nhất", để chưa làm vì requirement không nói.
 - "Không có quyền" ghi role `staff, admin` vì check-ui chỉ nhận role của màn; người thấy trạng thái này thật ra là customer (ghi ở questions.md, mục D).
 - Ô tìm khớp chính xác (không tìm theo email, điện thoại), nên placeholder nói rõ là mã đơn hoặc mã vận đơn.

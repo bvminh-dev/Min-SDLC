@@ -49,14 +49,19 @@ links: [${REQ}]
 | T1 | E | đơn | IDOR | kiểm sở hữu | ${sb} | test |
 `;
 
-function run({ db = DB(), api = API(), sec = SEC() } = {}) {
+// DB cho entity mới chưa có trong entities.md (L1/L11): proposed_entities khai hoặc không
+const DBP = (proposed) => DB()
+  .replace('entities: [Order]', `entities: [Order, OrderStatusHistory]${proposed ? '\nproposed_entities: [OrderStatusHistory]' : ''}`)
+  .replace('| orders | Order |', '| order_status_history | OrderStatusHistory | id | append-only |\n| orders | Order |');
+
+function run({ db = DB(), api = API(), sec = SEC(), reqStatus = 'approved' } = {}) {
   const r = mkdtempSync(join(tmpdir(), 'design-'));
   put(r, 'permissions-matrix.md', '| Hành động | Requirement | guest | customer | staff | admin | system |\n|---|---|---|---|---|---|\n');
   put(r, 'domain/entities.md', '| Entity          | Epic | Khóa |\n|---|---|---|\n| Order | ORD | id |\n| StockItem | INV | id |\n| User | AUTH | id |\n\n| Entity        | Từ | Sang | Điều kiện |\n|---|---|---|---|\n| Order | pending | paid | x |\n');
   put(r, 'domain/events.md', '| Event | Entity | Producer | Consumers | Payload | Phát khi |\n|---|---|---|---|---|---|\n| OrderPaid | Order | ORD | SHP | id | Order:paid |\n');
   put(r, 'architecture.md', '| Epic | Module | Phụ thuộc |\n|---|---|---|\n| AUTH | auth | - |\n| ORD | order | AUTH |\n| INV | inventory | - |\n');
   put(r, 'security-baseline.md', '| Mã | Yêu cầu | Kiểm bằng | Epic |\n|---|---|---|---|\n| SB-06 | IDOR | test | ORD |\n');
-  put(r, `epics/ORD/requirements/${REQ}.md`, `---\nid: ${REQ}\nepic: ORD\nroles: [customer, system]\n---\n`);
+  put(r, `epics/ORD/requirements/${REQ}.md`, `---\nid: ${REQ}\nepic: ORD\nstatus: ${reqStatus}\nroles: [customer, system]\n---\n`);
   put(r, 'epics/ORD/design/ORD-DB-20261006-110000001.md', db);
   put(r, 'epics/ORD/design/ORD-API-20261006-110000002.md', api);
   put(r, 'epics/ORD/design/ORD-SEC-20261006-110000003.md', sec);
@@ -76,4 +81,14 @@ assert.equal(run({ api: API({ role: 'system', errs: '-' }) }).status, 0, 'endpoi
 bad({ api: API({ dep: '[PAY]' }) }, /depends_on PAY/);
 bad({ api: API({ emits: '[StockReleased]' }) }, /emits StockReleased/);
 bad({ sec: SEC('SB-99') }, /SB-99/);
+// L1/L11: entity đề xuất chưa có trong entities.md: lỗi nếu không khai proposed_entities, chỉ cảnh báo nếu có khai
+bad({ db: DBP(false) }, /OrderStatusHistory chưa có trong entities\.md/);
+r = run({ db: DBP(true) });
+assert.equal(r.status, 0, r.stderr);
+assert.match(r.stdout, /OrderStatusHistory.*entities\.md.*sdlc-foundation/, 'proposed_entities phải cảnh báo cần thêm vào entities.md');
+// L7/L20: requirement trong links còn draft thì cảnh báo (không chặn); approved thì không cảnh báo
+r = run({ reqStatus: 'draft' });
+assert.equal(r.status, 0, r.stderr);
+assert.match(r.stdout, new RegExp(`Lưu ý.*draft.*${REQ}`), 'requirement draft phải có cảnh báo');
+assert.doesNotMatch(run().stdout, /draft/, 'requirement approved không cảnh báo draft');
 console.log('OK: check-tech-design.mjs');

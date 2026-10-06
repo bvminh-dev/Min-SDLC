@@ -21,9 +21,12 @@ description: Áp dụng các bài học đã được người duyệt (spec/les
    1. Viết ca hồi quy tái hiện lỗi (assert hoặc dòng golden/traps); xác nhận nó **fail** trên mã hiện tại (với `script`/`hook`).
    2. Sửa đúng `Nơi sửa`.
    3. Chạy lại: ca hồi quy qua; `selftest.mjs` qua hết.
-2. **Ghi nhật ký** vào `.claude/sdlc/improvements.md` (thêm cuối file): ngày, file bài học, mã bài học, file đã đổi, ca hồi quy đã thêm, kết quả `selftest`.
+2. **Ghi nhật ký** vào `.claude/sdlc/improvements.md` (thêm cuối file) theo `templates/improvement-entry.md`: ngày, file bài học, mã bài học, file đã đổi, ca hồi quy đã thêm, kết quả `selftest`. Kiểm: `node .claude/skills/sdlc-improve-kit/scripts/check-improvements.mjs .` (file bài học phải approved, mã có thật, file và ca hồi quy tồn tại, selftest `N/N qua`).
 3. **Báo cáo**: bài học đã áp dụng, bài học bỏ qua (kèm lý do), việc cần người (loại `spec`, hoặc cần chạy lại eval).
 
+## Kiểm thử
+`evals/README.md`; ca `case-lesson`. Tự kiểm script: `node .claude/skills/sdlc-improve-kit/scripts/check-improvements.test.mjs`.
+
 ## Chưa làm
-- Chưa chạy trên bài học thật (cần một epic đã qua `sdlc-retro` và được duyệt); chưa có eval.
+- Chưa chạy trên bài học thật (cần một epic đã qua `sdlc-retro` và được duyệt); eval chưa chạy.
 - Chưa có cơ chế tự chạy lại eval có đối chứng sau mỗi thay đổi skill (tốn nhiều lượt chạy agent): hiện báo người dùng để quyết định.

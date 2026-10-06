@@ -1,7 +1,7 @@
 ---
 screen: admin-product-list
 epic: PRD
-status: draft
+status: approved
 covers: [PRD-REQ-20261006-095502655, PRD-REQ-20261006-095502550]
 roles: [staff, admin]
 ---
@@ -68,7 +68,7 @@ Staff thấy cột Mở là "Xem" và không có nút Tạo. Dưới sm: tab th�
 | prd-admin-product-list-retry | Nút Thử lại | staff, admin | Tải lại danh sách | PRD-REQ-20261006-095502655 |
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
-- **Audit (câu 2 của evon):** chưa có codebase, nên theo mặc định evon (flat, Tailwind, `references/tokens.css`); thư viện UI chưa chốt (questions.md câu 10).
+- **Audit (câu 2 của evon):** chưa có codebase, nên theo mặc định evon (flat, Tailwind, `references/tokens.css`); thư viện UI và CSS đã chốt Tailwind và `references/tokens.css` (questions.md câu 10; nền chưa có ADR, áp dụng ở epic).
 - Mẫu theo evon "Bảng dữ liệu" có tab trạng thái; dưới `sm` thành nút dropdown có nhãn "Trạng thái:" (luật chủ dự án số 7).
 - Staff chỉ xem: không có nút Tạo, cột Mở ghi "Xem" (PRD-REQ-20261006-095502655 BR1). Quyền kiểm lại ở server, giao diện chỉ ẩn nút.
 - Ô tìm khớp tên và sku giống tìm kiếm công khai (PRD-REQ-20261006-095502718 BR3) nhưng ở đây thấy cả nháp và đã lưu trữ.

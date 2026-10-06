@@ -1,7 +1,7 @@
 ---
 screen: forgot-password
 epic: AUTH
-status: draft
+status: approved
 covers: [AUTH-REQ-20261006-095515843]
 roles: [guest]
 ---
@@ -48,5 +48,5 @@ Phương án đã chọn: **A** (một cột giữa màn, một ô email). **M�
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Brief, audit và danh sách màn xem ở `register.md`.
 - Thông điệp "đã gửi" phải **giống hệt** cho mọi trường hợp hợp lệ về định dạng (BR1): không đổi chữ, màu, thời gian chờ giả theo kết quả.
-- Không có nút "Gửi lại" sau khi đã gửi (giới hạn theo email do server, người dùng quay lại form nếu cần); [OPEN] nếu muốn có đếm ngược gửi lại.
+- Không có nút "Gửi lại" sau khi đã gửi (giới hạn theo email do server, người dùng quay lại form nếu cần); Đã chốt (mặc định, người dùng ủy quyền 2026-10-06): không có đếm ngược gửi lại ở v1.
 - Không viết code giao diện; dựng thật là việc của `implement`.

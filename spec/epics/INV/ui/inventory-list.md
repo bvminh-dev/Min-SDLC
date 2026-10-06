@@ -1,7 +1,7 @@
 ---
 screen: inventory-list
 epic: INV
-status: draft
+status: approved
 covers: [INV-REQ-20261006-101122435, INV-REQ-20261006-101122611]
 roles: [staff, admin]
 ---
@@ -81,5 +81,5 @@ Testid của vùng trạng thái nằm trong bảng Phần tử bên dưới (n�
 - Hai role dùng chung màn vì cùng quyền trong ma trận; không phần tử nào chỉ dành cho một role.
 - Số cột là 6 (Sản phẩm, Sku, Đang có, Đang giữ, Còn bán, Ngưỡng); dưới `@4xl` ẩn cột Đang giữ và Ngưỡng, dưới `sm` thành danh sách dòng theo `list-row.md`. Giá trị trống là `—`.
 - Tab Tồn thấp gọi endpoint riêng (INV-REQ-20261006-101122611 BR7), nên tìm kiếm và lọc ngừng bán chỉ có ở tab Tất cả.
-- Sắp xếp mặc định "Mới nhất" (cập nhật gần nhất trước) là mặc định chưa được người dùng xác nhận (INV-REQ-20261006-101122435 [OPEN]).
+- Sắp xếp mặc định "Mới nhất" (cập nhật gần nhất trước) đã chốt (mặc định, người dùng ủy quyền 2026-10-06; INV-REQ-20261006-101122435 xung đột đã đóng).
 - Số lượng chính xác chỉ hiện ở màn quản trị này; không dùng lại cho trang sản phẩm của khách (T10 trong INV-SEC).

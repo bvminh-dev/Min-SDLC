@@ -1,7 +1,7 @@
 ---
 screen: product-detail
 epic: PRD
-status: draft
+status: approved
 covers: [PRD-REQ-20261006-095502676, PRD-REQ-20261006-095502739]
 roles: [guest, customer, staff, admin]
 ---

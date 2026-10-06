@@ -1,7 +1,7 @@
 ---
 screen: admin-payment-detail
 epic: PAY
-status: draft
+status: approved
 covers: [PAY-REQ-20261006-103110597, PAY-REQ-20261006-103111034, PAY-REQ-20261006-103111211]
 roles: [staff, admin]
 ---

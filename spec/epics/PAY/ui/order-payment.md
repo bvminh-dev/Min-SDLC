@@ -1,7 +1,7 @@
 ---
 screen: order-payment
 epic: PAY
-status: draft
+status: approved
 covers: [PAY-REQ-20261006-103110422, PAY-REQ-20261006-103110771, PAY-REQ-20261006-103111122]
 roles: [customer]
 ---
@@ -105,4 +105,6 @@ Mỗi trạng thái có vùng testid ở bảng Phần tử.
 - Lý do thất bại hiển thị là câu từ mã cố định (`cancelled_by_user`, `declined`, `timeout`, `other`, đúng `PaymentFailed.reason` của `events.md`); không bao giờ hiện mã gốc của cổng hay mã giao dịch (PAY-REQ-20261006-103111122 BR4).
 - Đồng hồ đếm ngược lấy `expires_at` từ API (bản sao `payment_expires_at` của đơn, K-01); đây chỉ là gợi ý cho khách, hạn thật do INV quyết (15:00 đến 16:10) nên khi đồng hồ về 0 màn vẫn đọc lại trạng thái từ server, không tự báo hết hạn.
 - Thông báo hoàn tiền của ORD trong hộp thoại hủy đơn ("xử lý riêng") nay có chỗ hiển thị kết quả ở khối Hoàn tiền của màn này; đề nghị ORD thêm liên kết "Xem thanh toán" ở `order-detail` (xem questions.md).
+- Mỗi lần bấm Thanh toán hoặc Thử lại, giao diện sinh một `Idempotency-Key` mới (8 đến 64 ký tự `[A-Za-z0-9_-]`, ví dụ uuid bỏ gạch ngang không quá 64 ký tự; ADR-017, SB-40) và giữ nguyên khóa đó nếu gửi lại cùng lần bấm sau lỗi mạng; lỗi 400 `idempotency-key-required` hay 422 `idempotency-key-reused` là lỗi của giao diện, hiện thông báo chung "Có lỗi, vui lòng thử lại".
+- Đã chốt (mặc định, người dùng ủy quyền 2026-10-06): thăm dò trạng thái mỗi 3 giây tối đa 10 phút, đồng hồ đếm ngược chỉ là gợi ý (xem câu 25 ở questions.md).
 - Lệch với luật evon: không có; wireframe mặc định theo mẫu trang chi tiết. Không viết code giao diện; dựng thật là việc của `implement`.

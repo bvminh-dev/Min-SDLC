@@ -1,7 +1,7 @@
 ---
 screen: reset-password
 epic: AUTH
-status: draft
+status: approved
 covers: [AUTH-REQ-20261006-095515881]
 roles: [guest]
 ---
@@ -50,6 +50,6 @@ Trang mở từ liên kết `/reset-password#token=...`: token ở fragment đư
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - Brief, audit và danh sách màn xem ở `register.md`.
-- Thông báo "Đã đổi mật khẩu" hiện ở màn đăng nhập sau khi chuyển; để đơn giản dùng toast ở màn đăng nhập (không có testid riêng vì là phần của luồng chuyển, kiểm bằng việc có ở màn đăng nhập); [OPEN] nếu E2E cần testid cho toast thì thêm vào màn `login`.
+- Thông báo "Đã đổi mật khẩu" hiện ở màn đăng nhập sau khi chuyển; để đơn giản dùng toast ở màn đăng nhập (không có testid riêng vì là phần của luồng chuyển, kiểm bằng việc có ở màn đăng nhập); Đã chốt (mặc định, người dùng ủy quyền 2026-10-06): không thêm testid cho toast ở v1, E2E kiểm bằng việc chuyển sang `/login` sau đặt lại.
 - Token chỉ giữ trong bộ nhớ trang, không ghi `localStorage` hay cookie.
 - Không viết code giao diện; dựng thật là việc của `implement`.

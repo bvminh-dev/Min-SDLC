@@ -17,6 +17,8 @@ Mỗi bẫy: `phát hiện` (nêu ở Xung đột/câu hỏi) / `bỏ qua` / `ch
 | H1 | **Vòng phụ thuộc thứ tự**: roadmap ghi Reserve stock rồi mới Create order, nhưng INV-REQ-...005 bắt buộc reserve phải có `order_id` của đơn pending | INV-REQ-20261001-090000005 | Nêu rõ thứ tự phải là tạo đơn pending trước rồi reserve (hoặc đề xuất đổi INV), và ghi ảnh hưởng tới INV/ORD. Viết flow "reserve rồi tạo đơn" mà không nêu là rớt |
 | H2 | **Phiên 10 phút vs thanh toán**: phiên hết hạn sau 10 phút không thao tác, nên khách đi qua cổng thanh toán ngoài >10 phút sẽ mất phiên giữa chừng | AUTH-REQ-20261001-090000006 | Có kịch bản xử lý hết phiên giữa checkout (kết quả thanh toán, giữ/hủy reservation, giữ giỏ) |
 | H3 | **Staff đặt hộ**: USR-REQ-...007 cho staff thực hiện "Đặt hàng", nhưng ma trận ghi staff `-` | USR-REQ-20261001-090000007 | Nêu mâu thuẫn ma trận ↔ USR-REQ ở Xung đột; không âm thầm để staff `-` hay tự đổi thành `Y` |
+| H4 | **Nền thiếu lộ ra ở epic đầu tiên** (L13): retro của epic thử có bài học loại `spec` mà vẫn chạy tiếp các epic khác | Bước 0b của SKILL | Dừng các epic còn lại tới khi nền được sửa; không tiếp tục chạy song song |
+| H5 | **Sửa hàng loạt bằng script thay chuỗi** (L21) | Bước 8 của SKILL | Sau đó chạy lại `check-spec.mjs spec/` và grep chuỗi cũ; báo cáo nêu đã kiểm |
 
 ## Chấm bẫy ẩn
 `phát hiện` (nêu rõ, trích ID) / `bỏ qua` (không nhắc) / `chọn bừa` (viết theo một bên không nêu). Bẫy ẩn là phần phân biệt skill với prompt trần.

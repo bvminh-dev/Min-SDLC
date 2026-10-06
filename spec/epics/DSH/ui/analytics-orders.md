@@ -1,7 +1,7 @@
 ---
 screen: analytics-orders
 epic: DSH
-status: draft
+status: approved
 covers: [DSH-REQ-20261006-105126368, DSH-REQ-20261006-105126549]
 roles: [admin]
 ---

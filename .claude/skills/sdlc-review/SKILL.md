@@ -27,5 +27,5 @@ description: Review mã của một epic đã triển khai: đối chiếu code 
 Khuôn ba bảng (Đối chiếu spec, Quyền, Bảo mật) đúng 5 cột; Kết quả hợp lệ; `đạt`/`lệch` có bằng chứng `file:dòng` với file tồn tại và dòng nằm trong file; `lệch`/`chưa làm` có Việc cần làm; **phủ**: mọi endpoint ở tài liệu API của epic, mọi hành động của epic ở ma trận quyền, mọi `SB-nn` có epic liên quan là epic này (hoặc `*`) đều có dòng. Script không đánh giá code đúng hay sai. Tự kiểm: `node .claude/skills/sdlc-review/scripts/check-review.test.mjs`.
 
 ## Chưa làm
-- Chưa chạy trên code thật; chưa có eval.
+- Eval: `evals/README.md` (ca có lỗi gài `seeded/bugs.md`, cần code thật); chưa chạy lần nào (chưa có RESULTS.md).
 - Chưa bắt buộc review bởi một agent khác với agent đã triển khai (nên làm khi chạy thật để tránh tự chấm bài mình).

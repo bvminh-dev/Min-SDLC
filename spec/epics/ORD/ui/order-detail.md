@@ -1,7 +1,7 @@
 ---
 screen: order-detail
 epic: ORD
-status: draft
+status: approved
 covers: [ORD-REQ-20261006-092320768, ORD-REQ-20261006-092320790, ORD-REQ-20261006-092320812, ORD-REQ-20261006-092320834]
 roles: [customer, staff, admin]
 ---
@@ -74,7 +74,7 @@ Thứ tự lịch sử: cũ nhất trước theo ORD-REQ-20261006-092320812 BR7 
 | hộp thoại hủy | Hộp thoại có ô lý do tùy chọn, nút Giữ đơn và Xác nhận hủy; đơn paid có thêm dòng thông báo hoàn tiền tự động toàn phần (kết quả xem ở "Xem thanh toán") | ORD-REQ-20261006-092320834 |
 | đang hủy | Nút Xác nhận hủy khóa và có vòng xoay; ô lý do khóa | ORD-REQ-20261006-092320834 |
 | hủy thành công | Hộp thoại đóng, badge thành "Đã hủy", lịch sử có thêm dòng hủy, thông báo ngắn "Đã hủy đơn" | ORD-REQ-20261006-092320834 |
-| hủy không được | Báo lỗi trong hộp thoại: "Đơn không thể hủy ở trạng thái hiện tại" (409, ví dụ đơn vừa chuyển sang đang giao), có nút Tải lại đơn; lý do quá dài thì lỗi dưới ô nhập (400); staff, Origin lạ (CSRF) thì 403; hết phiên thì 401; quá giới hạn tần suất thì 429 "Thử lại sau ít giây" | ORD-REQ-20261006-092320834 |
+| hủy không được | Báo lỗi trong hộp thoại: "Đơn không thể hủy ở trạng thái hiện tại" (409, ví dụ đơn vừa chuyển sang đang giao, hoặc đơn đã được kho vận bắt đầu bàn giao, R-04; hai trường hợp cùng một thông báo), có nút Tải lại đơn; lý do quá dài thì lỗi dưới ô nhập (400); staff, Origin lạ (CSRF) thì 403; hết phiên thì 401; quá giới hạn tần suất thì 429 "Thử lại sau ít giây" | ORD-REQ-20261006-092320834 |
 
 ## Phần tử
 | testid | Phần tử | Role | Hành động | Requirement |
@@ -115,7 +115,7 @@ Thứ tự lịch sử: cũ nhất trước theo ORD-REQ-20261006-092320812 BR7 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - **Báo trước theo skill evon:** skill giao diện chưa được dạy cho cửa hàng online phía người mua; phần dành cho customer vẫn làm theo mẫu "Trang chi tiết bản ghi" và `timeline.md`, kết quả có thể chưa đẹp bằng màn trong app.
 - Màn dùng chung ba role nên phần tử chỉ dành cho một số role ghi đúng role đó: Hủy đơn chỉ customer và admin (không có cho staff, ORD-REQ-20261006-092320834 BR1); khối địa chỉ chỉ customer và admin, staff có dòng ẩn (SB-08 ngoại lệ (c), K-13; staff xem người nhận ở màn bàn giao của SHP). Hai liên kết Xem thanh toán và Theo dõi vận chuyển chỉ cho customer vì màn đích của PAY, SHP dành cho customer.
-- Nút Hủy đơn hiện theo `can_cancel` của API (ORD-API); việc kiểm quyền thật nằm ở server, giao diện chỉ phản ánh.
+- Nút Hủy đơn hiện theo `can_cancel` của API (ORD-API; `can_cancel` là false cả khi đơn đã được SHP khóa bàn giao, R-04); việc kiểm quyền thật nằm ở server, giao diện chỉ phản ánh.
 - Hộp thoại hủy có ô nhập nên bấm ra ngoài không đóng (luật `I20` của evon). Hủy là thao tác không hoàn tác nên có bước xác nhận.
 - Đơn paid bị hủy có thông báo "hoàn tiền tự động toàn phần" (K-03d, SB-24); **ORD không dựng màn hay trạng thái hoàn tiền**: kết quả hoàn tiền hiện ở khối Hoàn tiền của màn thanh toán của PAY (PAY-REQ-20261006-103111122), customer vào qua liên kết `ord-order-detail-payment-link`.
 - Mã vận đơn: bản sao ORD lưu từ ShipmentShipped và ShipmentTrackingChanged (ORD-REQ-20261006-092320768 BR5, E-12); phần tử chỉ hiện khi có giá trị. Liên kết "Theo dõi vận chuyển" dẫn sang màn `shipment-tracking` của SHP.

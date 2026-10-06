@@ -13,9 +13,10 @@ status: approved
 | P5  | Mọi thay đổi trạng thái entity tuân theo vòng đời trong spec/domain/entities.md                  | test      |
 | P6  | Mỗi yêu cầu trong security-baseline có cách kiểm chạy được và được chạy trong CI                 | script    |
 | P7  | Mỗi event có đúng một bên phát; module chỉ giao tiếp qua phụ thuộc đã khai trong architecture.md. Phụ thuộc cắt ngang của `platform` (guard, audit, outbox, job nền...) không cần khai; bảng giao diện module trong architecture.md là hợp đồng gọi đồng bộ; event khai Consumer thì consumer phải có handler | review |
-| P8  | Epic không được `approved` khi còn mục câu hỏi mở (OPEN) trỏ vào nền chưa sửa | script |
+| P8  | Epic không được `approved` khi còn mục câu hỏi mở (OPEN) trỏ vào nền chưa sửa. Nhãn để script đếm: `[OPEN-NỀN]` cho câu hỏi trỏ vào nền chưa sửa (ghi kèm mã R hoặc file nền), nhãn OPEN thường (không hậu tố) cho quyết định nghiệp vụ; cả hai đều chặn `approved` | script |
 
 ## Nhật ký thay đổi nền
 
 - 2026-10-06 | C-01, K-15 | Bổ sung P7: phụ thuộc cắt ngang của `platform` không cần khai, bảng giao diện module (A-02) là hợp đồng, event khai Consumer phải có handler | lý do: epic khai thừa hoặc thiếu phụ thuộc (PRM khai PRD, NTF khai USR, guard AUTH và platform không khai được), consumer khai không có handler | giải pháp: mở rộng một nguyên tắc có sẵn thay vì thêm mới; loại phương án bắt mọi epic khai PRJ, AUTH vì check-tech-design báo lỗi và vô nghĩa
 - 2026-10-06 | C-02, KT-06 | Thêm P8: epic không được `approved` khi còn mục câu hỏi mở (OPEN) trỏ vào nền chưa sửa (kiểm bằng script) | lý do: 14 epic cùng ghi mục câu hỏi mở (OPEN) giống nhau về nền mà không có cổng chặn | giải pháp: nguyên tắc kiểm bằng script đếm OPEN (KT-10, việc của kit, chưa có script thực hiện); loại chỉ nhắc ở review vì không chặn được
+- 2026-10-06 | R-51 | P8 định nghĩa hai nhãn: `[OPEN-NỀN]` (trỏ vào nền chưa sửa, kèm mã R hoặc file nền) và nhãn OPEN thường (quyết định nghiệp vụ); cả hai chặn `approved` | lý do: P8 ghi "kiểm bằng script" nhưng `questions.md` của 14 epic trộn hai loại OPEN nên không đếm riêng được (tất cả) | giải pháp: chọn `[OPEN-NỀN]` làm nhãn riêng; script đếm cả hai (script hiện chỉ nhận nhãn thường, cần mở rộng ở kit, ngoài phạm vi nền); loại chỉ một nhãn cho mọi loại (không tách được việc chờ nền với việc chờ người)

@@ -106,4 +106,5 @@ node .claude/sdlc/scripts/selftest.mjs     # chạy check-adapter và toàn bộ
 node .claude/sdlc/scripts/check-adapter.mjs
 ls .claude/skills/sdlc-ui-ux/references/evon-ui-ux/skills/ui-ux/SKILL.md   # phải tồn tại (submodule evon đã nạp)
 node .claude/skills/sdlc-research/scripts/check-spec.mjs .claude/skills/sdlc-research/evals/checkout/fixture/spec
+node .claude/skills/sdlc-research/scripts/merge-matrix.mjs spec/              # gộp spec/epics/*/permission-rows.md vào ma trận quyền (idempotent); collect-foundation-requests.mjs gom mục "Nền cần sửa"
 ```

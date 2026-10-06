@@ -57,6 +57,20 @@ function matrixRoles() {
   return header.split('|').map((s) => s.trim()).slice(3).filter(Boolean);
 }
 
+// Role hợp lệ lấy từ spec/domain/roles.md (cột Role); không có file (nền chưa dựng) thì không đối chiếu
+function foundationRoles() {
+  const f = join(specDir, 'domain/roles.md');
+  if (!existsSync(f)) return null;
+  const rows = readFileSync(f, 'utf8').split(/\r?\n/).filter((l) => l.startsWith('|')).map((l) => l.split('|')[1].trim());
+  return rows.slice(rows.findIndex((c) => c === 'Role') + 2);
+}
+// Mã epic hợp lệ lấy từ spec/roadmap.md (cột Mã)
+function roadmapCodes() {
+  const f = join(specDir, 'roadmap.md');
+  if (!existsSync(f)) return [];
+  return [...readFileSync(f, 'utf8').matchAll(/^\|\s*\d+\s*\|\s*([A-Z]{2,4})\s*\|/gm)].map((m) => m[1]);
+}
+
 const files = walk(specDir);
 const docs = [];
 const seen = new Map();
@@ -75,6 +89,12 @@ for (const file of files) {
 }
 
 const roles = matrixRoles();
+const baseRoles = foundationRoles();
+if (baseRoles && roles) {
+  const matrixFile = join(specDir, 'permissions-matrix.md');
+  for (const r of roles) if (!baseRoles.includes(r)) err(matrixFile, `cột role "${r}" không có trong roles.md`);
+}
+const epicCodes = roadmapCodes();
 for (const { file, fm, text } of docs) {
   for (const link of fm.links ?? []) {
     if (!seen.has(link)) err(file, `links trỏ tới ID không tồn tại: ${link}`);
@@ -83,7 +103,9 @@ for (const { file, fm, text } of docs) {
     if (!fm.roles || fm.roles.length === 0) err(file, 'thiếu roles');
     else if (roles) {
       for (const r of fm.roles) if (!roles.includes(r)) err(file, `role "${r}" không có trong ma trận quyền`);
+      if (baseRoles) for (const r of fm.roles) if (!baseRoles.includes(r)) err(file, `role "${r}" không có trong roles.md`);
     } else err(file, 'thiếu spec/permissions-matrix.md để đối chiếu role');
+    for (const c of fm.depends_epics ?? []) if (!epicCodes.includes(c)) err(file, `depends_epics ${c} không có trong roadmap.md`);
     for (const kw of ['Given', 'When', 'Then']) {
       if (!text.includes(`**${kw}**`)) err(file, `thiếu ${kw} trong kịch bản`);
     }
@@ -108,6 +130,11 @@ if (shown.length) {
   process.exit(1);
 }
 console.log(`OK: ${onlyFile ? '1 tài liệu' : docs.length + ' tài liệu'} hợp lệ.`);
+const openByEpic = {};
+for (const d of docs) if (OPEN_RE.test(d.text)) openByEpic[d.fm.epic ?? d.fm.id.split('-')[0]] = (openByEpic[d.fm.epic ?? d.fm.id.split('-')[0]] ?? 0) + 1;
+if (!onlyFile && Object.keys(openByEpic).length) {
+  console.log(`OPEN theo epic: ${Object.entries(openByEpic).sort().map(([e, n]) => `${e}=${n}`).join(', ')}`);
+}
 if (!onlyFile && openCount) {
   console.log(`Lưu ý: ${openCount} tài liệu draft còn [OPEN]/NEEDS CLARIFICATION (cần người quyết định).`);
 }

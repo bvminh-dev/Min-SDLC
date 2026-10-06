@@ -1,7 +1,7 @@
 ---
 screen: shipping-method-admin
 epic: SHP
-status: draft
+status: approved
 covers: [SHP-REQ-20261006-101103755]
 roles: [admin]
 ---
@@ -63,7 +63,7 @@ Bật lại không cần xác nhận (có thể tắt lại ngay). Dưới `sm`:
 | hộp thoại tắt | Hộp xác nhận nêu tên phương thức và hậu quả (khách không chọn được, đơn cũ không đổi) | SHP-REQ-20261006-101103755 |
 | tắt hoặc bật xong | Badge của dòng đổi, toast "Đã tắt phương thức" hoặc "Đã bật phương thức" | SHP-REQ-20261006-101103755 |
 | trạng thái không đổi | Toast lỗi "Phương thức đã ở trạng thái này" (409 `method-state-unchanged`) và làm mới dòng | SHP-REQ-20261006-101103755 |
-| bật tắt bị từ chối | Staff hay hết phiên khi đang thao tác: 403 hoặc 401, toast lỗi chung hoặc chuyển về đăng nhập | SHP-REQ-20261006-101103755 |
+| bật tắt bị từ chối | Staff hay hết phiên khi đang thao tác: 403 hoặc 401, toast lỗi chung hoặc chuyển về đăng nhập; vượt 30 yêu cầu mỗi phút (429 `rate-limited`): toast "Thao tác quá nhanh, thử lại sau vài giây" theo `Retry-After`, giữ nguyên dữ liệu đang nhập | SHP-REQ-20261006-101103755 |
 
 ## Phần tử
 | testid | Phần tử | Role | Hành động | Requirement |

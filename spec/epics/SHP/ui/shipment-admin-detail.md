@@ -1,7 +1,7 @@
 ---
 screen: shipment-admin-detail
 epic: SHP
-status: draft
+status: approved
 covers: [SHP-REQ-20261006-101103855, SHP-REQ-20261006-101103880, SHP-REQ-20261006-101103903, SHP-REQ-20261006-101103927, SHP-REQ-20261006-101103972]
 roles: [staff, admin]
 ---
@@ -54,7 +54,7 @@ Hộp xác nhận Giao xong: "Xác nhận đơn đã giao thành công? Không t
 Hộp xác nhận Hàng về kho: "Xác nhận hàng đã hoàn về kho? Không thể hoàn tác." [Hủy] [Xác nhận]   (hàng nhập lại kho trừ khi lý do thất bại là Hàng hỏng, V-08)
 ```
 
-Thứ tự lịch sử: cũ nhất trước theo SHP-REQ-20261006-101103972 BR5 (mặc định chưa được xác nhận). **Lưu ý khác biệt với evon:** mẫu `timeline.md` đặt mới nhất ở trên. Theo luật "requirement thắng" khi giao diện mâu thuẫn requirement, màn này theo requirement; nếu người dùng chọn mới nhất trước thì đổi cả requirement lẫn màn. Số tiền dùng `tabular-nums`; mã đơn và mã vận đơn `font-mono`.
+Thứ tự lịch sử: cũ nhất trước theo SHP-REQ-20261006-101103972 BR5 (đã chốt, khớp ORD, sắp theo `seq`). **Lưu ý khác biệt với evon:** mẫu `timeline.md` đặt mới nhất ở trên. Theo luật "requirement thắng" khi giao diện mâu thuẫn requirement, màn này theo requirement; nếu người dùng chọn mới nhất trước thì đổi cả requirement lẫn màn. Số tiền dùng `tabular-nums`; mã đơn và mã vận đơn `font-mono`.
 
 ## Trạng thái
 | Trạng thái | Trông ra sao | Requirement |
@@ -75,7 +75,7 @@ Thứ tự lịch sử: cũ nhất trước theo SHP-REQ-20261006-101103972 BR5 
 | bàn giao xong | Hộp thoại đóng, badge thành "Đang giao", mã vận đơn hiện, lịch sử có dòng mới, toast "Đã bàn giao" | SHP-REQ-20261006-101103855 |
 | mã vận đơn sai định dạng | Lỗi dưới ô: "Mã gồm 8 tới 30 ký tự chữ, số hoặc gạch nối" (400); ô tự đổi sang chữ hoa khi gõ | SHP-REQ-20261006-101103855 |
 | mã vận đơn trùng | Lỗi dưới ô: "Mã này đã được dùng cho vận đơn khác" (409 `tracking-number-taken`), không nêu vận đơn nào | SHP-REQ-20261006-101103855 |
-| không bàn giao được | Lỗi trong hộp thoại: "Đơn đã bị hủy hoặc không còn sẵn sàng giao" (409 `order-not-shippable`) hoặc "Vận đơn đã đổi trạng thái" (409 `shipment-invalid-transition`) kèm nút Tải lại vận đơn | SHP-REQ-20261006-101103855 |
+| không bàn giao được | Lỗi trong hộp thoại: "Đơn đã bị hủy hoặc không còn sẵn sàng giao" (409 `order-not-shippable`) hoặc "Vận đơn đã đổi trạng thái" (409 `shipment-invalid-transition`) kèm nút Tải lại vận đơn; vượt 30 yêu cầu mỗi phút (429 `rate-limited`): "Thao tác quá nhanh, thử lại sau vài giây" theo `Retry-After` | SHP-REQ-20261006-101103855 |
 | hộp thoại sửa mã | Hộp thoại cùng khuôn, ô điền sẵn mã hiện tại; nút Lưu mã khóa khi mã chưa đổi | SHP-REQ-20261006-101103880 |
 | sửa mã xong | Hộp thoại đóng, mã mới hiện, lịch sử có dòng "Đổi mã vận đơn", toast "Đã lưu mã vận đơn" | SHP-REQ-20261006-101103880 |
 | sửa mã bị từ chối | Lỗi trong hộp thoại: mã sai định dạng (400), "Mã này đã được dùng" (409 `tracking-number-taken`), "Mã không thay đổi" (409 `tracking-number-unchanged`), "Vận đơn đã được người khác cập nhật" (409 `version-conflict`) kèm nút Tải lại, hoặc vận đơn không còn ở trạng thái đang giao (409 `shipment-invalid-transition`) | SHP-REQ-20261006-101103880 |
@@ -84,7 +84,7 @@ Thứ tự lịch sử: cũ nhất trước theo SHP-REQ-20261006-101103972 BR5 
 | hộp xác nhận hàng về kho | Hộp xác nhận nêu không thể hoàn tác (chỉ hiện khi vận đơn thất bại) | SHP-REQ-20261006-101103903 |
 | đang cập nhật kết quả | Nút xác nhận khóa và có vòng xoay | SHP-REQ-20261006-101103903 |
 | cập nhật kết quả xong | Hộp thoại đóng, badge đổi sang trạng thái mới, nút hành động đổi theo, lịch sử có dòng mới, toast ngắn "Đã cập nhật vận đơn" | SHP-REQ-20261006-101103903 |
-| cập nhật kết quả bị từ chối | Lỗi trong hộp thoại: lý do thiếu hoặc ghi chú quá 300 ký tự (400), "Vận đơn đã đổi trạng thái" (409 `shipment-invalid-transition`, ví dụ người khác vừa báo giao xong) kèm nút Tải lại; customer 403 hay hết phiên 401 | SHP-REQ-20261006-101103903 |
+| cập nhật kết quả bị từ chối | Lỗi trong hộp thoại: lý do thiếu hoặc ghi chú quá 300 ký tự (400), "Vận đơn đã đổi trạng thái" (409 `shipment-invalid-transition`, ví dụ người khác vừa báo giao xong) kèm nút Tải lại; customer 403 hay hết phiên 401; vượt 30 yêu cầu mỗi phút (429 `rate-limited`): "Thao tác quá nhanh, thử lại sau vài giây" | SHP-REQ-20261006-101103903 |
 | lịch sử có dữ liệu | Một dòng mỗi lần chuyển trạng thái hoặc đổi mã, cũ nhất trước, có giờ; dòng thất bại kèm lý do và ghi chú (nhân viên thấy) | SHP-REQ-20261006-101103972 |
 | lịch sử một dòng | Vận đơn mới tạo chỉ có "Đã tạo vận đơn", không có đường nối | SHP-REQ-20261006-101103972 |
 | lịch sử rỗng | Khi chưa có vận đơn: "Chưa có lịch sử." | SHP-REQ-20261006-101103972 |

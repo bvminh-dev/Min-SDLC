@@ -1,7 +1,7 @@
 ---
 screen: address-list
 epic: USR
-status: draft
+status: approved
 covers: [USR-REQ-20261006-101003767, USR-REQ-20261006-101003855, USR-REQ-20261006-101003941, USR-REQ-20261006-101004028]
 roles: [customer]
 ---
@@ -84,5 +84,5 @@ Hộp thoại Xóa (xác nhận, vì không hoàn tác):
 - Hộp thoại xóa không có ô nhập nên đóng được khi bấm ra ngoài hoặc Esc (khác hộp thoại có ô nhập); nhãn "Mặc định" đọc rõ bằng chữ, không chỉ bằng màu. Xóa cần xác nhận vì không hoàn tác; hành động đặt mặc định không cần xác nhận vì đổi lại được.
 - Điện thoại hiển thị đúng dạng chuẩn hóa từ server; người dùng không phải nhập lại. Chưa có nhập hàng loạt hay kéo thả sắp xếp.
 - Màn chọn địa chỉ lúc đặt hàng thuộc CHK (CHK-REQ-20261006-105051095) dùng lại danh sách này; địa chỉ không có quận, huyện (`district` rỗng, E-06) thì dòng địa chỉ bỏ phần đó, không để dấu phẩy thừa.
-- Khi ghi sổ địa chỉ bị giới hạn tần suất (429, mặc định 30 lần mỗi phút), giao diện dùng lại banner lỗi chung `usr-address-list-error` hoặc toast lỗi của thao tác, kèm thời gian chờ từ `Retry-After`.
+- Khi ghi sổ địa chỉ bị giới hạn tần suất (429, 120 lần mỗi phút, SB-14 bậc B), giao diện dùng lại banner lỗi chung `usr-address-list-error` hoặc toast lỗi của thao tác, kèm thời gian chờ từ `Retry-After`.
 - Không viết code giao diện; dựng thật là việc của `implement`.

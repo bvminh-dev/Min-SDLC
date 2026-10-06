@@ -1,7 +1,7 @@
 ---
 screen: admin-user-list
 epic: AUTH
-status: draft
+status: approved
 covers: [AUTH-REQ-20261006-095515956, AUTH-REQ-20261006-095515994]
 roles: [admin]
 ---

@@ -22,3 +22,19 @@ Mỗi hàng là một epic. Cột Mã là tiền tố ID dùng khắp spec.
 | 12  | NTF  | Notification       | In-app notification; Email notification; Order created; Payment successful; Order shipped; Order delivered; Password reset; Read / Unread; Notification history                 |
 | 13  | REV  | Product Review     | Create review; Rating; Comment; Upload images; Edit review; Delete review; Verified purchase; Admin moderation                                                                  |
 | 14  | DSH  | Admin Dashboard    | Total revenue; Total orders; Total customers; Total products; Low stock products; Recent orders; Revenue report; Order report; Product report                                   |
+
+## Nguồn khảo sát
+
+- Yêu cầu của người dùng (ý tưởng sản phẩm ecommerce) và tài liệu `DECISIONS-ecommerce.md`.
+- Khảo sát sản phẩm tương tự **chưa kiểm chứng**: dựa trên kiến thức chung về cửa hàng trực tuyến, chưa đối chiếu sản phẩm cụ thể nào.
+
+## Giả định và câu hỏi mở
+
+Giả định:
+- Thị trường Việt Nam, tiền tệ VND.
+- Đội nhỏ.
+- Chỉ web; không có app di động.
+- Một cửa hàng; không có sàn nhiều người bán.
+- Thanh toán bằng VNPay và COD.
+
+Ghi chú A-07: trong roadmap "Reserve stock" đứng trước "Create order", nhưng theo ADR-009 thực tế tạo Order `pending` rồi mới giữ hàng. "Validate price" / "Validate stock" và "Reserve stock" là các bước trong giao dịch đặt hàng, không phải màn hình hay endpoint riêng.

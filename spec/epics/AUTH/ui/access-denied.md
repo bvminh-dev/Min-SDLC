@@ -1,7 +1,7 @@
 ---
 screen: access-denied
 epic: AUTH
-status: draft
+status: approved
 covers: [AUTH-REQ-20261006-095515918]
 roles: [customer, staff, admin]
 ---
