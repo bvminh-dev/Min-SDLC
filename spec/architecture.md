@@ -61,7 +61,7 @@ Các quyết định dưới đây lấy từ `DECISIONS-ecommerce.md`, đã đ�
 - Trạng thái: accepted
 - Bối cảnh: PRJ cần Environment configuration; có khóa cổng thanh toán, thông tin DB, khóa ký.
 - Phương án: A biến môi trường kiểm schema khi khởi động, bí mật từ kho bí mật của nền tảng host, B file cấu hình trong repo. Loại B vì lộ bí mật.
-- Quyết định: ba môi trường dev, staging, prod; biến môi trường kiểm schema (zod), dừng nếu thiếu; bí mật lấy từ kho bí mật của nền tảng host; `.env` local nằm trong `.gitignore`. Hằng số vận hành đi qua cấu hình này, gồm `RESERVATION_TTL` (15 phút, ADR-009), `REVIEW_PRE_MODERATION` (ADR-018) và `PAY_MAX_ATTEMPTS` (số lượt thanh toán tối đa mỗi đơn, mặc định 3, ADR-005). Biến cấu hình do epic khai và PRJ nạp vào schema: `DASHBOARD_CACHE_TTL_SECONDS` (mặc định 60, ADR-020), `DASHBOARD_SOURCE_TIMEOUT_MS` (mặc định 5000) và `DASHBOARD_RATE_LIMIT_PER_MINUTE` (mặc định 30) của DSH; `SES_REGION`, `MAIL_FROM` và `APP_BASE_URL` (gốc của liên kết trong email) của NTF; `OUTBOX_MAX_ATTEMPTS` của PRJ (ADR-011); `ARGON2_MEMORY_KIB` (mặc định 19456), `ARGON2_TIME_COST` (2), `ARGON2_PARALLELISM` (1, ADR-015) và `AUTH_MAX_ACTIVE_SESSIONS` (số phiên đang hoạt động tối đa mỗi người dùng, mặc định 10) của AUTH; `CHK_SESSION_TTL_MINUTES` (30), `CHK_MAX_OPEN_VNPAY_ORDERS` (3), `CHK_MAX_OPEN_COD_ORDERS` (5) và `CHK_DEPENDENCY_TIMEOUT_MS` (2000) của CHK. Epic khác thêm biến mới thì khai ở tech-design và đưa vào danh sách này khi chạy sdlc-foundation.
+- Quyết định: ba môi trường dev, staging, prod; biến môi trường kiểm schema (zod), dừng nếu thiếu; bí mật lấy từ kho bí mật của nền tảng host; `.env` local nằm trong `.gitignore`. Hằng số vận hành đi qua cấu hình này, gồm `RESERVATION_TTL` (15 phút, ADR-009), `REVIEW_PRE_MODERATION` (ADR-018) và `PAY_MAX_ATTEMPTS` (số lượt thanh toán tối đa mỗi đơn, mặc định 3, ADR-005). Biến cấu hình do epic khai và PRJ nạp vào schema: `DASHBOARD_CACHE_TTL_SECONDS` (mặc định 60, ADR-020), `DASHBOARD_SOURCE_TIMEOUT_MS` (mặc định 5000) và `DASHBOARD_RATE_LIMIT_PER_MINUTE` (mặc định 30) của DSH; `SES_REGION`, `MAIL_FROM` và `APP_BASE_URL` (gốc của liên kết trong email) của NTF; `OUTBOX_MAX_ATTEMPTS` của PRJ (ADR-011); `ARGON2_MEMORY_KIB` (mặc định 19456), `ARGON2_TIME_COST` (2), `ARGON2_PARALLELISM` (1, ADR-015) và `AUTH_MAX_ACTIVE_SESSIONS` (số phiên đang hoạt động tối đa mỗi người dùng, mặc định 10) của AUTH; `CHK_SESSION_TTL_MINUTES` (30), `CHK_MAX_OPEN_VNPAY_ORDERS` (3), `CHK_MAX_OPEN_COD_ORDERS` (5) và `CHK_DEPENDENCY_TIMEOUT_MS` (2000) của CHK; `APP_ENV` chỉ nhận ba giá trị `dev`, `staging`, `prod` (tập đóng, chạy test dùng `dev`), `PORT` (mặc định 3001, web giữ 3000), `DATABASE_URL`, `MIGRATE_DATABASE_URL` (vai trò chạy migration), `RETENTION_DATABASE_URL` (vai trò `app_retention` cho job dọn `audit_logs`; rỗng chỉ được ở dev, khi đó dùng `DATABASE_URL`; staging và prod bắt buộc đặt, thiếu thì dừng lúc khởi động), `DB_CONNECT_RETRY_SECONDS` (30), `DB_TRANSACTION_TIMEOUT_MS` (10000), `DB_TRANSACTION_RETRIES` (3) và `DB_STATEMENT_TIMEOUT_MS` (15000) của PRJ. Epic khác thêm biến mới thì khai ở tech-design và đưa vào danh sách này khi chạy sdlc-foundation.
 - Hệ quả: fail-fast khi thiếu cấu hình (SB-16); đánh đổi là cần quy trình cấp bí mật cho từng môi trường.
 
 ### ADR-008 Logging và quan sát
@@ -86,7 +86,7 @@ Các quyết định dưới đây lấy từ `DECISIONS-ecommerce.md`, đã đ�
 - Bối cảnh: USR upload avatar, REV upload ảnh, NTF gửi email (gồm email xác minh đăng ký).
 - Phương án: A object storage tương thích S3 và Amazon SES, B lưu đĩa cục bộ và SMTP tự chạy. Loại B vì khó mở rộng và dễ lọt thư rác.
 - Quyết định: A; avatar tối đa 2 MB, ảnh review tối đa 5 MB và 5 ảnh mỗi review; ảnh sản phẩm tối đa 5 MB và 8 ảnh mỗi sản phẩm; chỉ JPEG, PNG, WebP; kiểm magic bytes và xử lý lại ảnh trước khi lưu. Chi tiết xử lý ảnh, quyền truy cập và dọn ảnh mồ côi ở ADR-018.
-- Hệ quả: bền, mở rộng được; chi phí và phụ thuộc nhà cung cấp (SB-10 áp dụng); ảnh là nội dung công khai nên truy cập theo khóa ngẫu nhiên, không ký URL (ADR-018).
+- Hệ quả: bền, mở rộng được; chi phí và phụ thuộc nhà cung cấp (SB-10 áp dụng); ảnh là nội dung công khai nên truy cập theo khóa ngẫu nhiên, không ký URL (ADR-018). Ảnh phát với `Cache-Control: public, max-age=300` và `X-Content-Type-Options: nosniff` (ADR-018).
 
 ### ADR-011 Phát event bền (outbox) và phong bì event
 
@@ -133,8 +133,8 @@ Các quyết định dưới đây lấy từ `DECISIONS-ecommerce.md`, đã đ�
 - Trạng thái: accepted
 - Bối cảnh: SB-13 yêu cầu chống CSRF cho endpoint đổi trạng thái dùng cookie phiên nhưng chưa chọn cơ chế.
 - Phương án: A kiểm `Origin`/`Referer` theo danh sách cho phép cộng SameSite=Lax (ADR-004) và chỉ nhận `application/json`, B token đồng bộ (double-submit). Loại B ở v1 vì thêm trạng thái token cho cả web và API khi A đã đủ.
-- Quyết định: A; web (Next.js, ADR-002) và API phải cùng site để Lax có tác dụng, nếu khác site thì chuyển sang B bằng ADR mới; IPN của cổng thanh toán là ngoại lệ, xác thực bằng chữ ký (SB-22).
-- Hệ quả: không cần token CSRF ở client; phụ thuộc trình duyệt gửi `Origin` và triển khai cùng site; danh sách Origin cho phép nằm trong cấu hình (ADR-007).
+- Quyết định: A; web (Next.js, ADR-002) và API phải cùng site để Lax có tác dụng, nếu khác site thì chuyển sang B bằng ADR mới; IPN của cổng thanh toán là ngoại lệ, xác thực bằng chữ ký (SB-22). Phạm vi kiểm: POST, PUT, PATCH, DELETE mang cookie phiên HOẶC header `Origin` (kể cả khi chưa có cookie, để chặn đăng nhập CSRF ở endpoint công khai đặt cookie, SB-13); thiếu hoặc lạ trả 403 `csrf_failed`; request không cookie và không `Origin` (máy gọi máy) không bị kiểm. Thứ tự kiểm của nền: loại thân và kích thước (415, 413) rồi giới hạn tần suất (429) rồi CSRF (403) rồi xác thực (401) rồi role (403) rồi schema (400): kiểm `Origin` rẻ nên đứng trước tra phiên (request mang cookie phiên hết hạn mà thiếu `Origin` nhận 403, không phải 401).
+- Hệ quả: không cần token CSRF ở client; phụ thuộc trình duyệt gửi `Origin` và triển khai cùng site; danh sách Origin cho phép nằm trong cấu hình (ADR-007); `csrf_failed` tách khỏi `forbidden` (thiếu quyền theo role) để giao diện và client phân biệt.
 
 ### ADR-017 Idempotency-Key
 
@@ -151,6 +151,7 @@ Các quyết định dưới đây lấy từ `DECISIONS-ecommerce.md`, đã đ�
 - Phương án: truy cập A công khai theo khóa ngẫu nhiên qua CDN, B URL ký hạn ngắn. Loại B vì ảnh sản phẩm, avatar, ảnh review vốn công khai nên chữ ký chỉ thêm chi phí.
 - Quyết định: A; ảnh sản phẩm tối đa 5 MB và 8 ảnh mỗi sản phẩm; giới hạn đầu vào 25 megapixel (chặn bom giải nén); cạnh dài sau xử lý 1600 px (avatar 512 px); re-encode và bỏ EXIF; khóa tệp ngẫu nhiên; job dọn ảnh chưa gắn quá 24 giờ và ảnh của đánh giá đã xóa (ADR-013); `REVIEW_PRE_MODERATION` thêm vào danh sách cấu hình ADR-007.
 - Hệ quả: ai biết URL đều xem được ảnh nên không dùng cho nội dung riêng tư; cần job dọn; nội dung riêng tư sau này cần ADR mới dùng URL ký.
+- Phát ảnh (bổ sung sau review USR): đối tượng lưu với `Content-Type: image/webp` và `Cache-Control: public, max-age=300` (cache ngắn, không `immutable`; thời hạn tối đa phải phù hợp việc xóa theo yêu cầu: ảnh đã xóa hết phát trong 5 phút, USR-SEC T19). `X-Content-Type-Options: nosniff` khi phát do CDN hoặc bucket gắn (S3 không lưu lại header phản hồi này); ảnh sản phẩm và ảnh review theo cùng chính sách trừ khi epic đó ghi lệch. Việc cấu hình CDN hoặc bucket thuộc hạ tầng, kiểm bằng `config` hay `review`, không phải test của ứng dụng.
 
 ### ADR-019 Tìm kiếm sản phẩm
 
@@ -189,8 +190,8 @@ Các quyết định dưới đây lấy từ `DECISIONS-ecommerce.md`, đã đ�
 - Trạng thái: accepted
 - Bối cảnh: ADR-006 dùng `application/problem+json` nhưng chưa nói trường `type` có giá trị gì.
 - Phương án: A URN `urn:ecom:error:<code>`, B URL theo tên miền. Loại B vì phải có tên miền và trang tài liệu cho từng lỗi.
-- Quyết định: A; mỗi lỗi có mã ổn định `<code>` do module chủ khai ở tech-design; IPN của cổng thanh toán là ngoại lệ vì cổng đòi `RspCode` (ADR-006).
-- Hệ quả: client so khớp lỗi theo `type` mà không cần tên miền; đổi `code` là thay đổi phá vỡ hợp đồng.
+- Quyết định: A; mỗi lỗi có mã ổn định `<code>` do module chủ khai ở tech-design; `<code>` là chữ thường (a-z, 0-9) nối bằng `-` hoặc `_`: mã chung của nền dùng kebab-case (`validation-failed`, `rate-limited`), mã riêng của module theo tech-design của module đó (AUTH dùng snake_case như `invalid_credentials`, `csrf_failed`, `session_expired`); mã dùng chung giữa module chỉ có một dạng do nền đặt (ví dụ lỗi schema luôn là `validation-failed`); IPN của cổng thanh toán là ngoại lệ vì cổng đòi `RspCode` (ADR-006).
+- Hệ quả: client so khớp lỗi theo `type` mà không cần tên miền; đổi `code` là thay đổi phá vỡ hợp đồng; test quét sổ mã lỗi của platform kiểm hình dạng (bắt chữ hoa, khoảng trắng, nối đôi, dấu ở đầu cuối); hai kiểu đặt tên cùng nằm trong một sổ là chấp nhận có chủ đích (đổi tên mã AUTH đã chốt trong TC là thay đổi phá vỡ hợp đồng).
 
 ## Ánh xạ epic → module
 
@@ -271,6 +272,24 @@ Mỗi dòng trỏ về một ADR đã viết ở trên. Module không cần khai
 | Thời hạn lưu dữ liệu | ADR-022 |
 | Định danh lỗi | ADR-023 |
 
+## Phiên bản công nghệ
+
+Bảng này là nguồn duy nhất cho `package.json` (ADR-002). Các giá trị đã chạy thật ở epic PRJ (113 test qua); epic sau không chọn lại, muốn đổi thì qua `sdlc-foundation` hoặc `sdlc-impact`. Chính sách nâng: bản vá và minor trong cùng dòng chính được nâng tự do khi test qua; đổi dòng chính (major) chỉ khi có ADR mới.
+
+| Công nghệ | Phiên bản | Lý do ghim |
+| --- | --- | --- |
+| Node.js | 24 (`>=24 <25`, `.nvmrc`) | LTS, khớp `engines` của repo |
+| pnpm | 10.15.1 (`packageManager`) | workspace monorepo ADR-002 |
+| TypeScript | ~5.9 | NestJS 11 và Next.js 15 hỗ trợ |
+| NestJS | 11 | cấu trúc module khớp ADR-001 |
+| Prisma | 6.19 | migration và client cho PostgreSQL 16 (ADR-003) |
+| zod | 3.25 (dòng 3) | schema cấu hình (ADR-007); dòng 4 chưa dùng vì thay đổi API |
+| pino | 9 | log JSON có che bí mật (ADR-006) |
+| Jest | 30 với ts-jest 29 | test API chạy trên PostgreSQL thật |
+| Next.js | 15 | web (ADR-002); chưa dùng 16 vì chưa kiểm cùng React 19.1 |
+| React | 19.1 | yêu cầu của Next.js 15 |
+| ESLint | 9 (flat config) | lint toàn repo |
+
 ## Nhật ký thay đổi nền
 
 - 2026-10-06 | ADR-011, K-14, V-01 | Thêm ADR-011 phát event bền bằng outbox kèm phong bì event, hai event mang token thô ngoại lệ không qua outbox | lý do: 13 trong 14 epic (ORD, PAY, INV, CRT, CHK, REV, AUTH, NTF...) nêu bus in-process mất event khi tiến trình chết; AUTH, NTF phát hiện outbox sẽ vô tình lưu token thô | giải pháp: chọn A outbox cùng giao dịch, consumer chống trùng theo event_id; loại B phát đồng bộ trong giao dịch (consumer lỗi hỏng producer) và C đối soát từng cặp; token thô phát in-process best-effort
@@ -299,3 +318,7 @@ Mỗi dòng trỏ về một ADR đã viết ở trên. Module không cần khai
 - 2026-10-06 | D4-01 | ADR-007 liệt kê `ARGON2_MEMORY_KIB` (19456), `ARGON2_TIME_COST` (2), `ARGON2_PARALLELISM` (1), `AUTH_MAX_ACTIVE_SESSIONS` (10), `CHK_SESSION_TTL_MINUTES` (30), `CHK_MAX_OPEN_VNPAY_ORDERS` (3), `CHK_MAX_OPEN_COD_ORDERS` (5), `CHK_DEPENDENCY_TIMEOUT_MS` (2000) | lý do: AUTH-DB, CHK-API đã khai biến mà nền chưa liệt kê nên PRJ chưa đưa vào schema zod (AUTH, CHK) | giải pháp: ghi tên và mặc định đúng như epic đã chọn; loại để mỗi epic tự khai vì PRJ cần danh sách đầy đủ (đợt 4)
 - 2026-10-06 | D4-02 | ADR-022 thêm hàng hạn lưu: StockMovement không hạn chỉ thêm (INV), vận đơn và lịch sử vận đơn không hạn (SHP), phiên và token AUTH đã đóng giữ 30 ngày; ADR-013 thêm job dọn phiên và token của AUTH (mỗi giờ) | lý do: INV questions câu 9, SHP questions R-33, AUTH-DB ghi "áp dụng ở epic, nền chưa có" | giải pháp: ghi số epic đã chốt (loại tự đặt hạn cho sổ kho vì là bằng chứng đối soát); AUTH tự dọn bảng của mình (SB-35) (đợt 4)
 - 2026-10-06 | D4-03 | ADR-012 `SessionContext` thêm `display_name`, AUTH điền khi tạo phiên | lý do: INV cần nguồn tên để ghi `actor_name` (R-10) và audit | giải pháp: chỉ để hiển thị và ghi vết, không dùng phân quyền; giữ nguyên `user_id`, `role`, `email_verified`; loại để INV gọi AUTH (thêm phụ thuộc INV -> AUTH) (đợt 4)
+- 2026-10-06 | L32, L35, L37 | ADR-002 thêm mục `## Phiên bản công nghệ` (bảng Công nghệ, Phiên bản, Lý do ghim) với giá trị đã chạy ở PRJ; ADR-007 thêm `APP_ENV` (tập đóng dev, staging, prod), `PORT`, `MIGRATE_DATABASE_URL`, `RETENTION_DATABASE_URL`, `DB_CONNECT_RETRY_SECONDS`, `DB_TRANSACTION_TIMEOUT_MS`, `DB_TRANSACTION_RETRIES`, `DB_STATEMENT_TIMEOUT_MS` | lý do: implement PRJ phải tự chọn phiên bản và đặt tên biến, 13 epic sau sẽ chọn lại; REQ PRJ-563 nói "dev hoặc test" mâu thuẫn tập ba giá trị | giải pháp: ghi giá trị thật vào nền, không đổi quyết định nào; loại phương án để mỗi epic tự ghim phiên bản vì sẽ lệch nhau giữa các epic
+- 2026-10-06 | review PRJ | ADR-007 `RETENTION_DATABASE_URL`: rỗng chỉ ở dev, staging và prod bắt buộc | lý do: ADR cũ nói rỗng thì job dọn không chạy nhưng mã dùng DATABASE_URL (ecom_app, không có quyền DELETE audit_logs) nên job dọn lỗi mỗi ngày ở prod | giải pháp: fail-fast khi khởi động, mã config và test đã khớp; loại phương án job dọn tự tắt vì audit_logs sẽ phình mà không ai biết
+- 2026-10-06 | review AUTH, sdlc-impact | ADR-016 ghi rõ phạm vi kiểm CSRF (cookie HOẶC header `Origin`, kể cả không cookie), mã `csrf_failed` (403, khác `forbidden`) và thứ tự kiểm của nền (415, 429, CSRF, 401, role, schema); ADR-023 cho mã lỗi chữ thường nối bằng `-` hoặc `_` (mã chung kebab-case, mã riêng của module theo tech-design, lỗi schema luôn `validation-failed`) | lý do: review AUTH thấy PRJ-TC-20261006-100124603 ghi 403 `forbidden`, BR6 giới hạn kiểm Origin ở request có cookie, PRJ-REQ-20261006-095422820 BR2 ghi kebab-case, AUTH-API ghi `validation`, `csrf_failed` và thứ tự 429, 401, Origin, trong khi mã đã chạy và đã review khác | giải pháp: chốt theo mã đã chạy (kiểm Origin cả khi không cookie vì SB-13 và AUTH-SEC T8 đòi chặn đăng nhập CSRF; thứ tự hiện tại hợp lý vì kiểm Origin rẻ; `_` cho mã riêng vì TC AUTH đã chốt tên), sửa PRJ-TC-20261006-100124603, PRJ-REQ-20261006-095422650, PRJ-REQ-20261006-095422820, PRJ-API-20261006-095847320, AUTH-API-20261006-100006077, AUTH-SEC-20261006-100006117; loại phương án đổi mã AUTH sang kebab (phá vỡ TC đã duyệt, UI) và đổi mã về `forbidden` (mất khả năng phân biệt); bảng Giao diện module giữ nguyên, chữ ký đầy đủ nằm ở AUTH-API (đợt sdlc-impact AUTH)
+- 2026-10-06 | review USR, sdlc-impact | ADR-010, ADR-018 chốt chính sách phát ảnh: `Cache-Control: public, max-age=300` thay `immutable` một năm; `nosniff` khi phát do CDN hoặc bucket gắn (hạ tầng, kiểm bằng config) | lý do: review USR thấy ảnh đại diện cache một năm làm yếu T19 (ảnh đã xóa vẫn phát được) và S3 không lưu header `X-Content-Type-Options`; nền không có chính sách cache nên implement tự chọn (L58, L59) | giải pháp: cache ngắn 5 phút (loại 24 giờ vì quá dài so với yêu cầu xóa; loại quy trình xóa cache CDN vì thêm phụ thuộc nhà cung cấp)

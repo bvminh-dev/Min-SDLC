@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { ErrorRegistry, errorRegistry } from '../../src/modules/platform';
+import { buildProblem } from '../../src/modules/platform/errors/problem';
 import { FixtureController } from '../support/fixtures';
 import { createTestApp, type TestApp } from '../support/app';
 
@@ -87,6 +88,12 @@ describe('Lỗi chuẩn problem+json (PRJ-REQ-20261006-095422820)', () => {
     reg.register({ code: 'dup-code', status: 409, title: 'a' });
     reg.register({ code: 'dup-code', status: 400, title: 'a' });
     expect(reg.audit().join('\n')).toContain('dup-code');
+    // review AUTH: sổ mã nhận chữ thường nối bằng - hoặc _ (AUTH dùng snake_case), vẫn bắt chữ hoa, khoảng trắng, nối đôi hoặc dấu ở đầu cuối
+    const shape = new ErrorRegistry();
+    for (const code of ['Bad_Code', 'bad code', 'bad__code', '_bad', 'bad-']) shape.register({ code, status: 400, title: 'x' });
+    for (const code of ['invalid_credentials', 'rate-limited-x']) shape.register({ code, status: 400, title: 'x' });
+    const flagged = shape.audit().filter((m) => m.startsWith('mã lỗi không phải')).map((m) => m.split(': ').pop());
+    expect(flagged).toEqual(['Bad_Code', 'bad code', 'bad__code', '_bad', 'bad-']);
     expect(errorRegistry.audit()).toEqual([]); // sổ thật sạch (kèm fixture-teapot đã đăng ký)
     const domain = await http().get('/api/v1/fx/domain');
     expect(domain.body).toMatchObject({ type: 'urn:ecom:error:fixture-teapot', status: 409 });
@@ -101,6 +108,16 @@ describe('Lỗi chuẩn problem+json (PRJ-REQ-20261006-095422820)', () => {
       expect(r.body.type).toBe('urn:ecom:error:rate-limited');
       expect(/^[1-9]\d*$/.test(r.headers['retry-after'])).toBe(true);
     } finally { await lim.close(); }
+  });
+});
+
+describe('Trường phụ của problem+json (DomainError.options.extra, dùng bởi USR)', () => {
+  // review USR (đột biến lọt): bỏ RESERVED cho extra ghi đè được type, status, trace_id
+  it('PRJ-TC-20261006-100124603 (review USR): extra thêm trường vô hướng nhưng không đè khóa chuẩn', () => {
+    const b = buildProblem('conflict', 'trace-1', { extra: { reason: 'too_large', type: 'urn:evil', status: 200, trace_id: 'x', title: 'x', detail: 'x', errors: 'x', n: 1, ok: true } });
+    expect(b).toMatchObject({ type: 'urn:ecom:error:conflict', title: 'Request conflicts with the current state', status: 409, trace_id: 'trace-1', reason: 'too_large', n: 1, ok: true });
+    expect(b.detail).toBeUndefined();
+    expect(b.errors).toBeUndefined();
   });
 });
 

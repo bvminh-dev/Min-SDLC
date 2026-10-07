@@ -2,7 +2,7 @@
 // Kiểm tài liệu thiết kế `spec/epics/<EPIC>/design/*.md` (DB, API, SEC) với domain model, kiến trúc và baseline.
 // Hình thức chung (ID, links, status) do check-spec.mjs kiểm; file này kiểm phần nhất quán chéo.
 // Dùng: node check-tech-design.mjs [spec-dir, mặc định ./spec] [--epic <EPIC>] [--strict]
-//  --strict: entity chưa có DB / epic có API mà chưa có SEC cũng là lỗi (mặc định chỉ cảnh báo)
+//  --strict: entity chưa có DB / epic có API mà chưa có SEC / chữ ký decorator hay interface lệch giữa requirement, API, architecture.md cũng là lỗi (mặc định chỉ cảnh báo)
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -71,6 +71,7 @@ const errors = [], warnings = [];
 const docs = walk(specDir).filter((f) => /[\\/]design[\\/]/.test(f)).map((f) => ({ f, text: readFileSync(f, 'utf8') }))
   .map((d) => ({ ...d, fm: fmOf(d.text) })).filter((d) => !epicOnly || d.fm.epic === epicOnly);
 const err = (f, m) => errors.push(`${f}: ${m}`);
+const sigDiff = [];
 const endpoints = new Map(), dbEntities = new Set(), apiEpics = new Set(), secEpics = new Set();
 
 for (const { f, text, fm } of docs) {
@@ -150,6 +151,27 @@ for (const { f, text, fm } of docs) {
   }
 }
 
+// L30: chữ ký `@Tên({ a, b })` và `interface Tên { a, b }` trong backtick: cùng tên mà khác tập khóa giữa requirement, API của epic và architecture.md
+const SIG = /`(?:@(\w+)\(\{([^`{}]*)\}\)|interface\s+(\w+)\s*\{([^`{}]*)\})`/g;
+const sigsOf = (text, src, into) => {
+  for (const m of text.matchAll(SIG)) {
+    const keys = (m[2] ?? m[4]).split(/[,;]/).map((k) => k.trim().match(/^(\w+)/)?.[1]).filter(Boolean).sort().join(',');
+    const name = m[1] ?? m[3];
+    into.set(name, [...(into.get(name) ?? []), { src, keys }]);
+  }
+};
+for (const e of [...new Set(docs.map((d) => d.fm.epic))]) {
+  const into = new Map();
+  for (const f of walk(specDir)) {
+    const t = readFileSync(f, 'utf8'), fm = fmOf(t);
+    if (fm.epic === e && (fm.id?.includes('-REQ-') || fm.id?.includes('-API-'))) sigsOf(t, f, into);
+  }
+  sigsOf(read('architecture.md'), join(specDir, 'architecture.md'), into);
+  for (const [name, list_] of into) if (new Set(list_.map((x) => x.keys)).size > 1) {
+    sigDiff.push(`epic ${e}: chữ ký ${name} khác nhau giữa các nguồn, sửa một nguồn gốc trước khi duyệt thiết kế: ${list_.map((x) => `${x.src} {${x.keys}}`).join('; ')}`);
+  }
+}
+
 // phủ
 const epics = epicOnly ? [epicOnly] : [...new Set(docs.map((d) => d.fm.epic))];
 const lack = [];
@@ -158,7 +180,7 @@ for (const e of epics) {
   if (noDb.length) lack.push(`epic ${e}: entity chưa có thiết kế DB: ${noDb.join(', ')}`);
   if (apiEpics.has(e) && !secEpics.has(e)) lack.push(`epic ${e}: có API nhưng chưa có thiết kế SEC`);
 }
-(strict ? errors : warnings).push(...lack);
+(strict ? errors : warnings).push(...lack, ...sigDiff);
 
 if (errors.length) { console.error(errors.join('\n') + `\n\n${errors.length} lỗi.`); process.exit(1); }
 console.log(`OK: ${docs.length} tài liệu thiết kế hợp lệ.`);

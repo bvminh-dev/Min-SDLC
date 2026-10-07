@@ -8,8 +8,9 @@ import { SYSTEM_ENDPOINT } from './session';
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**
- * Chống CSRF (ADR-016, SB-13): với POST, PUT, PATCH, DELETE có kèm cookie, `Origin` (hoặc `Referer` nếu thiếu) phải thuộc danh sách
- * CORS_ALLOWED_ORIGINS; thiếu hoặc lạ trả 403. Không có cookie thì không kiểm. @SystemEndpoint miễn (xác thực bằng chữ ký).
+ * Chống CSRF (ADR-016, SB-13): với POST, PUT, PATCH, DELETE có kèm cookie hoặc có header `Origin`, `Origin` (hoặc `Referer` nếu thiếu)
+ * phải thuộc danh sách CORS_ALLOWED_ORIGINS; thiếu hoặc lạ trả 403 `csrf_failed`. Không cookie và không Origin (máy gọi máy) thì không kiểm;
+ * trình duyệt luôn gửi Origin cho POST chéo nguồn nên đăng nhập CSRF (AUTH-SEC T8) vẫn bị chặn. @SystemEndpoint miễn (xác thực bằng chữ ký).
  * Cookie SameSite=Lax do AUTH đặt khi cấp phiên; thân chỉ nhận application/json ở app-setup (415).
  */
 @Injectable()
@@ -22,13 +23,13 @@ export class CsrfGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {
     if (ctx.getType() !== 'http') return true;
     const req = ctx.switchToHttp().getRequest<Request>();
-    if (!UNSAFE.has(req.method) || !req.headers.cookie) return true;
+    if (!UNSAFE.has(req.method) || !(req.headers.cookie || req.headers.origin)) return true;
     if (this.reflector.getAllAndOverride(SYSTEM_ENDPOINT, [ctx.getHandler(), ctx.getClass()])) return true;
     let origin = req.headers.origin;
     if (!origin && typeof req.headers.referer === 'string') {
       try { origin = new URL(req.headers.referer).origin; } catch { origin = undefined; }
     }
-    if (!origin || !this.allowed.has(origin)) throw new DomainError('forbidden');
+    if (!origin || !this.allowed.has(origin)) throw new DomainError('csrf_failed');
     return true;
   }
 }

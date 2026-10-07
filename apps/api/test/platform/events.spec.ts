@@ -9,8 +9,9 @@ import { FakeClock, LogCapture, testConfig } from '../support/app';
 import { waitFor } from '../support/boot';
 import { API_DIR, testDbUrl, truncateAll } from '../support/db';
 
-const NOW = new Date('2026-10-06T10:00:00.000Z');
 const DAY = 86_400_000;
+// Mốc tương lai tương đối: `next_attempt_at` mặc định là now() của CSDL thật, nên mốc cố định trong quá khứ làm relay không nhặt được event (đã vỡ ngày 2026-10-06 sau 10:00 UTC).
+const NOW = new Date(Math.floor((Date.now() + DAY) / 1000) * 1000);
 
 function stack(env: Record<string, string> = {}) {
   const config: ConfigService = testConfig(env);
@@ -176,7 +177,7 @@ describe('Outbox, relay, consumer idempotent (PRJ-REQ-20261006-095422563 BR12, B
     } finally { await i1.runner.stop(); await i2.runner.stop(); }
   });
 
-  it('SB-34: job quá hạn bị hủy (AbortSignal) và khóa chỉ nhả SAU khi thân dừng; instance khác không chạy chồng; thân bỏ qua tín hiệu thì sau hạn chờ ngắt kết nối giữ khóa', async () => {
+  it('PRJ-TC-20261006-110200106: SB-34 job quá hạn bị hủy (AbortSignal) và khóa chỉ nhả SAU khi thân dừng; instance khác không chạy chồng; thân bỏ qua tín hiệu thì sau hạn chờ ngắt kết nối giữ khóa', async () => {
     let active = 0, maxActive = 0, sawAbort = false;
     const enter = () => { active++; maxActive = Math.max(maxActive, active); };
     const mk = (body: (signal: AbortSignal) => Promise<void>, over: { abortGraceMs?: number } = {}) => {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Patch, Post, Put } from '@nestjs/common';
 import { z } from 'zod';
 import {
   AuditService, CurrentSession, DbTx, DomainError, TransactionService, type SessionContext, Idempotent, Public, RateLimit, Roles, SystemEndpoint, Validate, ValidBody, ValidParams, ValidQuery,
@@ -71,8 +71,40 @@ export class FixtureController {
   @Post('state') @Roles('customer') @Validate({ body: strictBody })
   state(@ValidBody() b: { name: string }) { return { name: b.name }; }
 
+  @Put('state') @Roles('customer') @Validate({ body: strictBody })
+  putState(@ValidBody() b: { name: string }) { return { name: b.name }; }
+
+  @Patch('state') @Roles('customer') @Validate({ body: strictBody })
+  patchState(@ValidBody() b: { name: string }) { return { name: b.name }; }
+
+  @Delete('state') @Roles('customer') @Validate({})
+  deleteState() { return { ok: true }; }
+
   @Get('limited-b') @Roles('customer') @RateLimit({ tier: 'B', limit: 5, windowSeconds: 60 }) @Validate({})
   limitedB() { return { ok: true }; }
+
+  // review USR: RateLimit.group (cùng group chung một bộ đếm) và route không khai group (bộ đếm riêng mỗi route)
+  @Get('limited-g1') @Roles('customer') @RateLimit({ tier: 'B', limit: 3, windowSeconds: 60, group: 'fx:g' }) @Validate({})
+  limitedG1() { return { ok: true }; }
+  @Get('limited-g2') @Roles('customer') @RateLimit({ tier: 'B', limit: 3, windowSeconds: 60, group: 'fx:g' }) @Validate({})
+  limitedG2() { return { ok: true }; }
+  @Get('limited-h') @Roles('customer') @RateLimit({ tier: 'B', limit: 3, windowSeconds: 60 }) @Validate({})
+  limitedH() { return { ok: true }; }
+
+  @Get('limited-a') @Public() @RateLimit({ tier: 'A', limit: 3, windowSeconds: 60 }) @Validate({})
+  limitedA() { return { ok: true }; }
+
+  /** Thứ tự kiểm của nền (PRJ-TC-20261006-180338418): ghi, chỉ admin, schema đóng, bậc A một yêu cầu mỗi cửa sổ. */
+  @Post('ordered') @Roles('admin') @RateLimit({ tier: 'A', limit: 1, windowSeconds: 60 }) @Validate({ body: strictBody })
+  ordered(@ValidBody() b: { name: string }) { return { name: b.name }; }
+
+  @Get('limited-d') @Roles('admin') @RateLimit({ tier: 'D', limit: 2, windowSeconds: 10 }) @Validate({})
+  limitedD() { return { ok: true }; }
+
+  /** Khóa đếm theo tài khoản được thử (chống dò mật khẩu theo tài khoản), không theo người dùng hay IP. */
+  @Get('limited-key') @Public() @Validate({ query: z.object({ account: z.string() }).strict() })
+  @RateLimit({ tier: 'A', limit: 2, windowSeconds: 60, key: (req) => `acct:${String(req.query.account)}` })
+  limitedKey() { return { ok: true }; }
 
   @Get('limited-c') @Roles('customer') @Validate({})
   limitedC() { return { ok: true }; }

@@ -15,6 +15,8 @@ export interface RateLimitOptions {
   windowSeconds: number;
   /** Khóa đếm; mặc định: người dùng đã đăng nhập hoặc IP. */
   key?: (req: Request, session: SessionContext | null) => string;
+  /** Nhiều endpoint chung một bộ đếm (ví dụ ghi sổ địa chỉ, hai endpoint tra cứu khách): cùng `group` thì cùng bucket; mặc định mỗi route một bucket. */
+  group?: string;
 }
 export const RATE_LIMIT = 'platform:rate-limit';
 export const SKIP_RATE_LIMIT = 'platform:skip-rate-limit';
@@ -96,7 +98,7 @@ export class RateLimitGuard implements CanActivate {
     const session = system ? null : await this.sessions.get(req);
     const who = declared?.key?.(req, session) ?? (session ? `u:${session.user_id}` : `ip:${clientIp(req, this.config.get('TRUST_PROXY_HOPS'))}`);
     const route = req.route?.path ?? req.path;
-    const { count, retryAfter } = await this.limiter.hit(tier, `${tier}:${route}:${who}`, windowSeconds);
+    const { count, retryAfter } = await this.limiter.hit(tier, `${tier}:${declared?.group ?? route}:${who}`, windowSeconds);
     if (count > limit) throw new DomainError('rate-limited', { headers: { 'Retry-After': String(retryAfter) } });
     return true;
   }

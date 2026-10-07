@@ -90,7 +90,8 @@ Mỗi epic thêm dòng khi chạy sdlc-research của epic đó.
 | Thêm địa chỉ giao hàng | USR-REQ-20261006-101003855 | - | own | - | - | - |
 | Sửa địa chỉ và đặt địa chỉ mặc định | USR-REQ-20261006-101003941 | - | own | - | - | - |
 | Xóa địa chỉ giao hàng | USR-REQ-20261006-101004028 | - | own | - | - | - |
-| Tra cứu hồ sơ khách (staff: bản che; admin: đầy đủ kèm địa chỉ) | USR-REQ-20261006-101004117 | - | - | Y | Y | - |
+| Tra cứu hồ sơ khách theo email (staff: bản che; admin: đầy đủ kèm địa chỉ) | USR-REQ-20261006-101004117 | - | - | Y | Y | - |
+| Tra cứu hồ sơ khách theo id (chỉ admin: đầy đủ kèm địa chỉ) | USR-REQ-20261006-101004117 | - | - | - | Y | - |
 | Bắt đầu phiên checkout từ giỏ (cần email đã xác minh) | CHK-REQ-20261006-105050948 | - | own | - | - | - |
 | Chọn địa chỉ giao hàng cho phiên checkout | CHK-REQ-20261006-105051095 | - | own | - | - | - |
 | Chọn phương thức vận chuyển và xem phí theo địa chỉ | CHK-REQ-20261006-105051242 | - | own | - | - | - |

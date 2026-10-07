@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Kiểm tài liệu test `spec/epics/<EPIC>/tests/*.md` (TC, E2E) với requirement, SEC và testids.md.
 // Dùng: node check-tests.mjs [spec-dir, mặc định ./spec] [--epic <EPIC>] [--strict]
-//  --strict: requirement thiếu test case cho một mục kịch bản, và mối đe dọa SEC "Kiểm bằng test" chưa có test, cũng là lỗi (mặc định cảnh báo)
+//  --strict: requirement thiếu test case cho một mục kịch bản, mối đe dọa SEC "Kiểm bằng test" chưa có test, mối đe dọa kiểm bằng script/hook có ít hơn 2 TC
+//            (ít nhất một ca lỗi hoặc biên), và tài liệu approved có nhãn Given/When/Then lặp, cũng là lỗi (mặc định cảnh báo)
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -54,7 +55,7 @@ for (const { text } of all) {
 const errors = [], warnings = [];
 const err = (f, m) => errors.push(`${f}: ${m}`);
 const docs = all.filter(({ f }) => /[\\/]tests[\\/][^\\/]+\.md$/.test(f)).map((d) => ({ ...d, fm: fmOf(d.text) })).filter((d) => !epicOnly || d.fm.epic === epicOnly);
-const coveredKind = new Set(), coveredThreat = new Set();
+const coveredKind = new Set(), coveredThreat = new Set(), threatTcs = new Map(); // threatTcs: mối đe dọa -> các kind của TC trỏ tới nó
 
 for (const { f, text, fm } of docs) {
   const type = fm.id?.split('-')[1];
@@ -76,7 +77,16 @@ for (const { f, text, fm } of docs) {
     for (const t of fm.threats ?? []) {
       if (!threats.has(t)) err(f, `threats trỏ tới mối đe dọa không tồn tại: ${t}`);
       coveredThreat.add(t);
+      threatTcs.set(t, [...(threatTcs.get(t) ?? []), fm.kind]);
     }
+    // L33: nhãn lặp ("**Given** **Given**") hoặc không đứng đầu bước; lỗi với draft hoặc --strict, cảnh báo với tài liệu approved (không phá tài liệu đã duyệt)
+    const steps = text.replace(/^---[\s\S]*?---/, '').split(/\r?\n/).filter((l) => /\*\*(Given|When|Then)\*\*/.test(l));
+    const badStep = steps.find((l) => (l.match(/\*\*(?:Given|When|Then)\*\*/g) ?? []).length > 1 || !/^\s*(?:[-*]|\d+\.)\s*\*\*(Given|When|Then)\*\*/.test(l));
+    if (badStep) (fm.status === 'approved' && !strict ? warnings : errors).push(`${f}: nhãn lặp hoặc nhãn không đứng đầu bước (lặp nhãn Given/When/Then): ${badStep.trim().slice(0, 80)}`);
+    // cảnh báo: Given/When nêu phiên bản công cụ cụ thể mà mục Dữ liệu không nói cách dựng (container, .nvmrc)
+    const note = text.split(/^## /m).find((x) => x.startsWith('Dữ liệu')) ?? '';
+    const ver = steps.find((l) => /\*\*(Given|When)\*\*/.test(l) && /\b(?:Node(?:\.js)?|pnpm|npm|PostgreSQL|Postgres|Redis|Docker|TypeScript|NestJS|Prisma|Next\.js|React|Jest|Python|Java)\s+v?\d{1,2}\.\d{1,3}(?:\.\d+)?\b/ /* ponytail: danh sách công cụ cố định, thêm tên khi gặp công cụ mới */.test(l));
+    if (ver && !/container|\.nvmrc|image|docker|engines|corepack/i.test(note)) warnings.push(`${f}: Given/When nêu phiên bản công cụ cụ thể nhưng mục "Dữ liệu và ghi chú" không nói cách dựng (container, .nvmrc): ${ver.trim().slice(0, 80)}`);
   }
 
   if (type === 'E2E') {
@@ -101,7 +111,14 @@ for (const [t, v] of threats) {
   if ((epicOnly && v.epic !== epicOnly) || !/\btest\b/.test(v.check)) continue;
   if (!coveredThreat.has(t)) lack.push(`mối đe dọa ${t} (Kiểm bằng test) chưa có test case nào có threats chứa nó`);
 }
+// L25: cổng kiểm (script/hook) cần >= 2 TC, ít nhất một ca lỗi hoặc biên (cả hai chiều: dương tính và đầu vào hỏng)
+for (const [t, v] of threats) {
+  if ((epicOnly && v.epic !== epicOnly) || !/\b(script|hook)\b/.test(v.check)) continue;
+  const ks = threatTcs.get(t) ?? [];
+  if (ks.length < 2 || !ks.some((k) => k === 'lỗi' || k === 'biên')) lack.push(`mối đe dọa ${t} (Kiểm bằng script/hook: cổng kiểm) cần ít nhất 2 test case trỏ tới nó, một ca lỗi hoặc biên (công cụ kiểm hỏng thì phải đỏ; mỗi mẫu quét một ca dương tính); hiện có ${ks.length}`);
+}
 (strict ? errors : warnings).push(...lack.map((m) => `thiếu phủ: ${m}`));
+
 
 if (errors.length) { console.error(errors.join('\n') + `\n\n${errors.length} lỗi.`); process.exit(1); }
 console.log(`OK: ${docs.length} tài liệu test hợp lệ.`);

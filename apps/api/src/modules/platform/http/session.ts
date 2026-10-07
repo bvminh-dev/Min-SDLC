@@ -12,7 +12,7 @@ export interface SessionContext {
   display_name?: string;
 }
 export interface SessionResolver {
-  /** Trả null khi không có phiên hợp lệ (guest). Không ném lỗi cho phiên sai. */
+  /** Trả null khi không có phiên hợp lệ (guest). Không ném lỗi cho phiên sai; phiên quá hạn thì đặt `req.sessionExpired = true` để guard trả `session_expired`. */
   resolve(req: Request): Promise<SessionContext | null>;
 }
 export const SESSION_RESOLVER = Symbol('SESSION_RESOLVER');
@@ -33,6 +33,9 @@ export const ROLES = 'platform:roles';
 export const SYSTEM_ENDPOINT = 'platform:system';
 export const Public = () => SetMetadata(IS_PUBLIC, true);
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES, roles);
+export const ACTION = 'platform:action';
+/** Gắn endpoint với một hàng của spec/permissions-matrix.md (cột Hành động): kiểm lệch ma trận so role khai trong code với hàng đó (AUTH-REQ-...918 BR5). */
+export const Action = (label: string) => SetMetadata(ACTION, label);
 export const SystemEndpoint = (o: SystemEndpointOptions) => SetMetadata(SYSTEM_ENDPOINT, o);
 
 export const DEFAULT_REJECT: GatewayReply = { status: 200, body: { RspCode: '97', Message: 'Invalid signature' } };
@@ -40,11 +43,13 @@ export const DEFAULT_INTERNAL: GatewayReply = { status: 200, body: { RspCode: '9
 
 export class SystemSignatureError extends Error {}
 
-type Req = Request & { session?: SessionContext; systemEndpoint?: SystemEndpointOptions; sessionPromise?: Promise<SessionContext | null> };
+type Req = Request & { session?: SessionContext; systemEndpoint?: SystemEndpointOptions; sessionPromise?: Promise<SessionContext | null>; sessionExpired?: boolean };
 
 @Injectable()
 export class SessionService {
-  constructor(@Inject(SESSION_RESOLVER) private readonly resolver: SessionResolver) {}
+  constructor(@Inject(SESSION_RESOLVER) private resolver: SessionResolver) {}
+  /** AUTH thay triển khai thật lúc khởi tạo module (ADR-012, đảo phụ thuộc): platform không biết AUTH. */
+  use(resolver: SessionResolver): void { this.resolver = resolver; }
   /** Giải phiên một lần cho mỗi request (guard giới hạn tần suất và guard quyền cùng dùng). */
   get(req: Request): Promise<SessionContext | null> {
     const r = req as Req;
@@ -74,7 +79,7 @@ export class AuthGuard implements CanActivate {
     const roles = this.reflector.getAllAndOverride<Role[] | undefined>(ROLES, targets);
     if (!roles?.length) throw new DomainError('forbidden'); // endpoint chưa khai quyền: từ chối (test quét route cũng đỏ)
     const session = await this.sessions.get(req);
-    if (!session) throw new DomainError('unauthenticated');
+    if (!session) throw new DomainError(req.sessionExpired ? 'session_expired' : 'unauthenticated');
     if (!roles.includes(session.role)) throw new DomainError('forbidden');
     req.session = session;
     return true;

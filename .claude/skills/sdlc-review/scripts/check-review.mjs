@@ -1,11 +1,30 @@
 #!/usr/bin/env node
 // Kiểm `spec/epics/<EPIC>/review.md`: khuôn bảng, bằng chứng `file:dòng` có thật, và phủ endpoint/hành động/SB của epic.
-// Dùng: node check-review.mjs <spec-dir> <thư-mục-gốc-mã> --epic <EPIC>
+// Dùng: node check-review.mjs <spec-dir> <thư-mục-gốc-mã> --epic <EPIC> [--strict]
+//       node check-review.mjs --tree <thư-mục-gốc-mã>     (in giá trị `reviewed_tree` để ghi vào frontmatter)
+// Kiểm mới (L27 Kết quả chạy lại, L28 reviewed_tree, L38 khớp mục [chưa làm] của report) là LỖI với review có `kit_version: 2`
+// hoặc `--strict`; review cũ không có trường đó chỉ bị cảnh báo.
 // Không đánh giá code đúng hay sai; chỉ bảo đảm review không bỏ sót mục nào và mỗi kết luận có bằng chứng kiểm được trên đĩa.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 
 const argv = process.argv.slice(2);
+
+// băm SHA-1 danh sách và nội dung file mã (git ls-files -co --exclude-standard) ngoài spec/ và .claude/; null nếu không phải repo git
+const git = (root, ...a) => spawnSync('git', a, { cwd: root, encoding: 'utf8' });
+const treeHash = (root) => {
+  const ls = git(root, 'ls-files', '-co', '--exclude-standard', '-z');
+  if (ls.status !== 0) return null;
+  const h = createHash('sha1');
+  for (const f of ls.stdout.split('\0').filter((x) => x && !/^(spec|\.claude)\//.test(x)).sort()) {
+    h.update(f + '\0');
+    try { h.update(readFileSync(join(root, f))); } catch { h.update('<thiếu>'); }
+  }
+  return h.digest('hex');
+};
+if (argv[0] === '--tree') { console.log(treeHash(resolve(argv[1] ?? '.')) ?? ''); process.exit(0); }
 const epic = argv.includes('--epic') ? argv[argv.indexOf('--epic') + 1] : null;
 const [specDir, root] = argv.filter((a, i) => !a.startsWith('--') && argv[i - 1] !== '--epic');
 if (!specDir || !root || !epic) { console.error('Dùng: check-review.mjs <spec-dir> <code-root> --epic <EPIC>'); process.exit(2); }
@@ -25,12 +44,38 @@ const fmOf = (t) => {
 };
 
 const path = join(specDir, 'epics', epic, 'review.md');
-const errors = [];
+const errors = [], warnings = [];
 const err = (m) => errors.push(`${path}: ${m}`);
 if (!existsSync(path)) { console.error(`${path}: chưa có review`); process.exit(1); }
 const text = readFileSync(path, 'utf8');
-if (fmOf(text).epic !== epic) err(`epic trong frontmatter phải là ${epic}`);
-if (!fmOf(text).reviewed_commit) err('thiếu reviewed_commit (git rev-parse --short HEAD của mã đã review)');
+const fm = fmOf(text);
+const fresh = Number(fm.kit_version) >= 2 || argv.includes('--strict');
+const gate = (m) => (fresh ? err(m) : warnings.push(`${path}: ${m} (review không có kit_version: 2 nên chỉ cảnh báo)`));
+if (fm.epic !== epic) err(`epic trong frontmatter phải là ${epic}`);
+if (!fm.reviewed_commit) err('thiếu reviewed_commit (git rev-parse --short HEAD của mã đã review)');
+
+// L28: mã đổi sau review thì số dòng bằng chứng có thể sai
+const nowTree = treeHash(resolve(root));
+if (nowTree) {
+  const head = git(root, 'rev-parse', '--short', 'HEAD').stdout.trim();
+  const dirty = git(root, 'status', '--porcelain', '--', '.', ':!spec', ':!.claude').stdout.trim();
+  if (fm.reviewed_tree && fm.reviewed_tree !== nowTree) warnings.push(`${path}: mã đã đổi sau review (reviewed_tree khác hiện tại), số dòng bằng chứng có thể sai: review lại hoặc cập nhật bằng "check-review.mjs --tree <gốc mã>"`);
+  else if (!fm.reviewed_tree && head && fm.reviewed_commit && head.startsWith(fm.reviewed_commit) && dirty) gate('reviewed_commit là HEAD nhưng mã đang bẩn mà thiếu reviewed_tree: ghi `node check-review.mjs --tree <gốc mã>` vào frontmatter');
+}
+
+// L27: Kết quả chạy lại (độc lập với report.md)
+const rpPath = join(specDir, 'epics', epic, 'report.md'), rp = existsSync(rpPath) ? readFileSync(rpPath, 'utf8') : '';
+const rerun = section(text, 'Kết quả chạy lại');
+if (rerun == null) gate('thiếu mục "## Kết quả chạy lại" (| Lệnh | Kết quả thật | So với report.md |): reviewer phải chạy lại lệnh test và ghi kết quả thật');
+else if (rp) {
+  const { test_command: cmd, test_result: res } = fmOf(rp);
+  const rr = tableOf(rerun), line = rr.find((r) => cmd && r[0].includes(cmd));
+  if (cmd && !line) gate(`Kết quả chạy lại không có dòng chứa test_command của report.md (${cmd})`);
+  else if (line) {
+    const pass = (t) => t.match(/(\d+)\s+pass(?:ed)?\b/)?.[1];
+    if (pass(res ?? '') && pass(line[1] ?? '') && pass(res) !== pass(line[1]) && /^khớp/i.test(line[2] ?? '')) gate(`Kết quả chạy lại: ${pass(line[1])} pass không khớp test_result của report.md (${pass(res)} pass) mà cột So với report.md ghi "khớp"`);
+  }
+}
 
 const KQ = ['đạt', 'lệch', 'chưa làm', 'không áp dụng'];
 const TABLES = [['Đối chiếu spec', 'Mục'], ['Quyền', 'Hành động'], ['Bảo mật', 'Mục']];
@@ -83,5 +128,16 @@ for (const [name, items] of Object.entries(need)) {
   }
 }
 
+// L38: mục [chưa làm] của report.md phải có dòng lệch hoặc chưa làm tương ứng (khớp bằng ID spec, "mục N" hoặc tên in đậm)
+const lechRows = ['Đối chiếu spec', 'Quyền', 'Bảo mật'].flatMap((n) => tableOf(section(text, n))).filter((r) => ['lệch', 'chưa làm'].includes(r[2])).map((r) => r.join(' ').toLowerCase());
+for (const l of (section(rp, 'Lệch spec') ?? '').split(/\r?\n/)) {
+  const m = l.match(/^(\d+)\.\s*(?:\*\*)?\[chưa làm\]/);
+  if (!m) continue;
+  const keys = [...(l.match(/\b(?:[A-Z]{2,4}-(?:REQ|API|DB|SEC|TC|FLOW|E2E)-[\d-]+|SB-\d+|ADR-\d+)\b/g) ?? []), l.match(/\*\*([^*]+)\*\*/)?.[1]].filter(Boolean).map((k) => k.toLowerCase());
+  const byNum = new RegExp(`mục\\s*${m[1]}\\b`);
+  if (!lechRows.some((r) => byNum.test(r) || keys.some((k) => r.includes(k)))) gate(`Lệch spec mục ${m[1]} của report.md là [chưa làm] nhưng review không có dòng lệch hoặc chưa làm tương ứng (ghi ID spec của mục đó hoặc "mục ${m[1]}" ở dòng review)`);
+}
+
 if (errors.length) { console.error(errors.join('\n') + `\n\n${errors.length} lỗi.`); process.exit(1); }
 console.log(`OK: review epic ${epic} đủ mục và bằng chứng có thật.`);
+for (const w of warnings) console.log(`Lưu ý: ${w}`);

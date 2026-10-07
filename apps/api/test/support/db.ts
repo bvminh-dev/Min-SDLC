@@ -47,7 +47,7 @@ export function newPrisma(url = testDbUrl()): PrismaClient {
   return new PrismaClient({ datasourceUrl: url, log: [] });
 }
 
-const TABLES = ['outbox_events', 'processed_events', 'idempotency_keys', 'rate_limit_counters'];
+const TABLES = ['addresses', 'outbox_events', 'processed_events', 'idempotency_keys', 'rate_limit_counters', 'sessions', 'password_reset_tokens', 'email_verification_tokens', 'users'];
 /** Mỗi test bắt đầu từ CSDL sạch (BR11). */
 export async function truncateAll(p: PrismaClient): Promise<void> {
   await p.$executeRaw(Prisma.raw(`TRUNCATE ${TABLES.join(', ')}`));

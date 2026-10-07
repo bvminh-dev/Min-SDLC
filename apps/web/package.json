@@ -2,7 +2,9 @@
   "name": "@ecom/web",
   "private": true,
   "version": "0.0.0",
-  "engines": { "node": ">=24 <25" },
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "dev": "next dev -p ${WEB_PORT:-3000}",
     "start": "next start -p ${WEB_PORT:-3000}",

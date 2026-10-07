@@ -1,0 +1,21 @@
+// Module user (epic USR, USR-DB-20261006-101342348): chỉ Address. Hồ sơ (full_name, phone, avatar_url) là cột của `users` do AUTH sở hữu,
+// USR không có SQL nào chạm `users` (đi qua AuthApi). Phần Prisma không biểu diễn được (CHECK, regex, chỉ mục một phần) nằm trong migration SQL.
+
+model Address {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  receiver  String
+  phone     String    @db.Char(10)
+  line1     String
+  ward      String
+  district  String?
+  city      String
+  isDefault Boolean   @default(false) @map("is_default")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@map("addresses")
+}

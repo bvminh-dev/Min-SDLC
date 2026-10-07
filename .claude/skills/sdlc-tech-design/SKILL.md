@@ -31,6 +31,7 @@ Phần cần phán đoán (chọn cách thiết kế) do skill làm. Phần ph�
 ## Script kiểm (`scripts/check-tech-design.mjs`)
 - **DB**: entity thuộc đúng epic; trạng thái khớp vòng đời; **khóa ngoại chỉ trỏ vào bảng của chính epic hoặc module trong Phụ thuộc** (`FK x`, `-> x.id`, `REFERENCES x`; còn lại dùng cột tham chiếu không FK + `[OPEN]`); entity của epic chưa có DB (cảnh báo/lỗi).
 - **API**: path `/api/v1/`, method hợp lệ, endpoint không trùng, role ⊆ requirement ⊆ ma trận, 401/403 cho endpoint cần đăng nhập, `depends_on`/`emits`/`consumes` khớp kiến trúc và event.
+- **Chữ ký**: `@Tên({ a, b })` và `interface Tên { a, b }` trong backtick, cùng tên mà khác tập khóa giữa requirement, API của epic và `architecture.md` thì cảnh báo (lỗi ở `--strict`): sửa một nguồn gốc trước khi duyệt thiết kế.
 - **SEC**: STRIDE hợp lệ, SB tồn tại, có cách kiểm, epic có API mà thiếu SEC.
 Tự kiểm script: `node .claude/skills/sdlc-tech-design/scripts/check-tech-design.test.mjs`.
 

@@ -33,6 +33,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      - name: Trình duyệt cho E2E của AUTH (thư viện playwright-core điều khiển Chromium; chạy trong Jest)
+        run: pnpm --filter @ecom/api exec playwright-core install --with-deps chromium
       - name: Vai trò CSDL của ứng dụng (ecom_app, ecom_retention; cùng tệp với docker compose)
         run: PGPASSWORD=ecom psql -h localhost -p 5433 -U ecom -d ecom_ci -v ON_ERROR_STOP=1 -f docker/initdb/01-app-roles.sql
       - name: Quét bí mật (SB-15)

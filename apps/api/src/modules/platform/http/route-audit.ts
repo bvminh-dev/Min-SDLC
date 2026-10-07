@@ -3,7 +3,7 @@ import { DiscoveryService, Reflector } from '@nestjs/core';
 import { ProblemFilter } from '../errors/problem.filter';
 import { CsrfGuard } from './csrf.guard';
 import { RateLimitGuard } from './rate-limit';
-import { AuthGuard, IS_PUBLIC, ROLES, SYSTEM_ENDPOINT, type SystemEndpointOptions } from './session';
+import { ACTION, AuthGuard, IS_PUBLIC, ROLES, SYSTEM_ENDPOINT, type SystemEndpointOptions } from './session';
 import { VALIDATE, ValidationInterceptor } from './validation';
 
 /** Thành phần toàn cục bắt buộc phải có trong ứng dụng để mọi route đều qua giới hạn tần suất, CSRF, quyền, schema và bộ lọc lỗi (flow PRJ). */
@@ -56,6 +56,71 @@ export function auditRoutes(app: INestApplication, prefix = '/api/v1'): string[]
     if (sys && typeof sys.verifier !== 'function') out.push(`${id}: @SystemEndpoint thiếu verifier`);
     else if (!isPublic && !roles?.length && !sys) out.push(`${id}: thiếu khai báo quyền (@Public, @Roles hoặc @SystemEndpoint)`);
     if (!reflector.getAllAndOverride(VALIDATE, targets)) out.push(`${id}: thiếu schema kiểm (@Validate)`);
+  }
+  return out;
+}
+
+type Cell = 'Y' | 'own' | '-';
+export interface MatrixRow { action: string; requirement: string; guest: Cell; customer: Cell; staff: Cell; admin: Cell; system: Cell }
+
+/** Đọc bảng `Hành động | Requirement | guest | customer | staff | admin | system` của permissions-matrix.md. Không có hàng nào thì rỗng (bên gọi phải coi là lỗi). */
+export function parseMatrix(md: string): MatrixRow[] {
+  const rows: MatrixRow[] = [];
+  for (const line of md.split(/\r?\n/)) {
+    const c = line.startsWith('|') ? line.split('|').slice(1, -1).map((x) => x.trim()) : [];
+    if (c.length < 7 || !/^[A-Z]{2,4}-REQ-/.test(c[1])) continue;
+    const [action, requirement, guest, customer, staff, admin, system] = c;
+    rows.push({ action, requirement, guest, customer, staff, admin, system } as MatrixRow);
+  }
+  return rows;
+}
+
+/**
+ * Kiểm lệch ma trận (AUTH-REQ-20261006-095515918 BR5, chạy ở CI trên AppModule thật): với route thuộc `scope`, @Action phải trỏ tới một hàng của ma trận
+ * và role khai trong code phải khớp hàng đó (guest Y thì @Public; ngược lại @Roles đúng tập customer, staff, admin có Y hoặc own). Hàng của epic (`epic`)
+ * không có route nào cũng là lỗi, trừ hàng trong `exempt` (hàng không có endpoint, ví dụ chính guard). Ma trận rỗng hoặc không đọc được là lỗi (đóng khi hỏng).
+ * `narrow`: một hàng ma trận phủ nhiều endpoint nhưng có endpoint hẹp hơn hàng đó (ví dụ tra khách theo id chỉ admin trong khi hàng cho staff và admin):
+ * khai rõ `routeId -> role` ở đây, code phải đúng tập này và tập này phải nằm trong hàng ma trận; hẹp hơn mà không khai là lỗi, khai mà route không tồn tại cũng là lỗi.
+ */
+export function auditPermissions(app: INestApplication, matrixMd: string, opts: { scope: (routeId: string) => boolean; epic?: string; exempt?: string[]; prefix?: string; narrow?: Record<string, string[]> }): string[] {
+  const reflector = app.get(Reflector);
+  const matrix = parseMatrix(matrixMd);
+  if (!matrix.length) return ['ma trận quyền rỗng hoặc không đọc được (không tìm thấy hàng nào có mã requirement)'];
+  const byAction = new Map(matrix.map((r) => [r.action, r]));
+  const out: string[] = [];
+  const used = new Set<string>();
+  const usedNarrow = new Set<string>();
+  for (const { id, handler, cls } of listRoutes(app, opts.prefix ?? '/api/v1')) {
+    if (!opts.scope(id)) continue;
+    const targets = [handler as () => void, cls];
+    const label = reflector.getAllAndOverride<string | undefined>(ACTION, targets);
+    if (!label) { out.push(`${id}: thiếu @Action (hàng ma trận quyền)`); continue; }
+    const row = byAction.get(label);
+    if (!row) { out.push(`${id}: @Action("${label}") không có trong permissions-matrix.md`); continue; }
+    used.add(label);
+    const isPublic = !!reflector.getAllAndOverride<boolean>(IS_PUBLIC, targets);
+    const roles = (reflector.getAllAndOverride<string[]>(ROLES, targets) ?? []).slice().sort();
+    if (row.guest === 'Y') {
+      if (!isPublic) out.push(`${id}: ma trận cho guest (${label}) nhưng code không khai @Public`);
+      continue;
+    }
+    if (isPublic) { out.push(`${id}: code khai @Public nhưng ma trận không cho guest (${label})`); continue; }
+    const rowRoles = (['admin', 'customer', 'staff'] as const).filter((r) => row[r] !== '-');
+    let want: string[] = rowRoles;
+    const narrowed = opts.narrow?.[id];
+    if (narrowed) {
+      usedNarrow.add(id);
+      const outside = narrowed.filter((r) => !(rowRoles as readonly string[]).includes(r));
+      if (outside.length) out.push(`${id}: narrow khai [${outside.join(', ')}] ngoài hàng ma trận (${label}) cho [${rowRoles.join(', ')}]`);
+      want = narrowed.slice().sort();
+    }
+    if (want.join() !== roles.join()) out.push(`${id}: code cho [${roles.join(', ')}] nhưng ma trận (${label}) cho [${want.join(', ')}]`);
+  }
+  for (const id of Object.keys(opts.narrow ?? {})) if (!usedNarrow.has(id)) out.push(`${id}: khai narrow nhưng không có route nào khớp trong phạm vi (route đổi tên hoặc bị bỏ?)`);
+  if (opts.epic) {
+    for (const r of matrix) {
+      if (r.requirement.startsWith(`${opts.epic}-REQ-`) && !used.has(r.action) && !(opts.exempt ?? []).includes(r.action)) out.push(`hàng ma trận "${r.action}" của ${opts.epic} không có endpoint nào khai @Action`);
+    }
   }
   return out;
 }

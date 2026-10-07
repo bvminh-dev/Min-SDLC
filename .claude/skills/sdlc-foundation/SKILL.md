@@ -10,7 +10,7 @@ Chạy **một lần cho mỗi dự án** (và khi có quyết định nền m�
 ## Quy tắc cứng
 - Mọi file đầu ra `status: draft`. **Chỉ người được duyệt** (hook chặn việc tự đổi sang approved).
 - **Không tự chọn công nghệ hay kiến trúc.** Quyết định chưa có người trả lời thì ghi ADR `Trạng thái: proposed` kèm `[OPEN]`, không đoán.
-- Kiểm cứng do script: `node .claude/skills/sdlc-foundation/scripts/check-foundation.mjs spec/` (hook cũng tự chạy). Skill này không lặp lại những gì script đã kiểm.
+- Kiểm cứng do script: `node .claude/skills/sdlc-foundation/scripts/check-foundation.mjs spec/` (hook cũng tự chạy). ADR về stack nêu framework hoặc công cụ test thì phải có bảng `## Phiên bản công nghệ` (`Công nghệ | Phiên bản | Lý do ghim`) trong `architecture.md`: script lỗi nếu thiếu. Skill này không lặp lại những gì script đã kiểm.
 
 ## Quy trình
 0. **Nạp framework tham chiếu.** Đọc `.claude/sdlc/adapter/active.md` và dòng phase `foundation` trong file mapping; lấy cách viết nguyên tắc dự án (constitution) từ cột *Đọc*. Cột *Kit tự làm* là phần dưới đây. Đầu ra theo `.claude/sdlc/contract.md`.

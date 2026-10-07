@@ -9,6 +9,8 @@ export interface ConfigVar {
   default?: string;
   /** Chỉ kiểm riêng (TLS...) mà không áp quy tắc bí mật của prod. */
   secretRules?: boolean;
+  /** Có `default` rỗng để dev chạy được, nhưng staging và prod bắt buộc đặt (ví dụ kho ảnh của USR): thiếu thì dừng lúc khởi động, nêu tên biến. */
+  requiredOutsideDev?: boolean;
 }
 export type ConfigFragment = Record<string, ConfigVar>;
 
@@ -56,7 +58,7 @@ export const CORE_VARS: ConfigFragment = {
     zod: z.string().refine((v) => /^postgres(ql)?:\/\//.test(v), bad('phải là URL postgresql://')),
     sensitive: true, // không in giá trị, không có mặc định; chỉ kiểm TLS ở staging và prod (BR4, DB BR7)
   },
-  // Kết nối riêng (vai trò app_retention) cho job dọn audit_logs: DATABASE_URL của ứng dụng không có quyền DELETE ở đó (PRJ-DB mục 12). Rỗng: dùng DATABASE_URL (dev chạy bằng superuser).
+  // Kết nối riêng (vai trò app_retention) cho job dọn audit_logs: DATABASE_URL của ứng dụng không có quyền DELETE ở đó (PRJ-DB mục 12). Rỗng: dùng DATABASE_URL (chỉ dev, chạy bằng superuser); staging và prod bắt buộc đặt (ADR-007).
   RETENTION_DATABASE_URL: {
     zod: z.string().refine((v) => v === '' || /^postgres(ql)?:\/\//.test(v), bad('phải là URL postgresql:// hoặc để trống')),
     sensitive: true,
@@ -181,7 +183,11 @@ export function loadConfig(env: Env, extra: ConfigFragment[] = []): ConfigServic
     const appEnv = values.APP_ENV as string;
     const prod = appEnv === 'prod';
     if (appEnv !== 'dev' && !hasTls(raws.DATABASE_URL)) problems.push({ name: 'DATABASE_URL', reason: 'phải bật TLS (sslmode=require trở lên) ở staging và prod' });
+    if (appEnv !== 'dev' && !raws.RETENTION_DATABASE_URL) problems.push({ name: 'RETENTION_DATABASE_URL', reason: 'bắt buộc ở staging và prod (vai trò app_retention cho job dọn audit_logs)' });
     if (appEnv !== 'dev' && raws.RETENTION_DATABASE_URL && !hasTls(raws.RETENTION_DATABASE_URL)) problems.push({ name: 'RETENTION_DATABASE_URL', reason: 'phải bật TLS (sslmode=require trở lên) ở staging và prod' });
+    if (appEnv !== 'dev') {
+      for (const [name, v] of Object.entries(all)) if (v.requiredOutsideDev && !raws[name]) problems.push({ name, reason: 'bắt buộc ở staging và prod (rỗng chỉ được ở dev)' });
+    }
     if (prod) {
       for (const [name, v] of Object.entries(all)) {
         if (!v.secretRules) continue;

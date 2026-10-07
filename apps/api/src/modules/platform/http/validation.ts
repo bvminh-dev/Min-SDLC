@@ -16,9 +16,11 @@ type Req = Request & { validated?: { params: unknown; query: unknown; body: unkn
 /** Chuyển lỗi zod sang { field, code }; không lặp lại giá trị client gửi (BR5). */
 export function zodItems(err: z.ZodError): ProblemErrorItem[] {
   const out: ProblemErrorItem[] = [];
+  // Module đặt mã lỗi trường riêng bằng `message` dạng `snake_case` thường (ví dụ `too_short`); thông điệp mặc định của zod không khớp mẫu này.
+  const codeOf = (i: z.ZodIssue) => (/^[a-z][a-z_]*$/.test(i.message) ? i.message : i.code);
   for (const i of err.issues) {
     if (i.code === 'unrecognized_keys') for (const k of i.keys) out.push({ field: [...i.path, k].join('.'), code: i.code });
-    else out.push({ field: i.path.join('.') || '(root)', code: i.code });
+    else out.push({ field: i.path.join('.') || '(root)', code: codeOf(i) });
   }
   return out;
 }

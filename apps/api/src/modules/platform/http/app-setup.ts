@@ -5,6 +5,7 @@ import { runWithCorrelation } from '../common/context';
 import { ConfigService } from '../config/config';
 import { sendProblem } from '../errors/problem';
 import { AppLogger, NestLoggerAdapter } from '../logging/logger';
+import { isAllowedMultipart } from './multipart';
 import type { SessionContext } from './session';
 
 const ID_RE = /^[A-Za-z0-9-]{8,64}$/;
@@ -65,6 +66,7 @@ export function configureApp(app: INestApplication, deps: { config: ConfigServic
   const json = express.json({ limit: MAX_BODY_BYTES });
   app.use((req: Request, res: Response, next: NextFunction) => {
     const hasBody = Number(req.headers['content-length'] ?? 0) > 0 || req.headers['transfer-encoding'] !== undefined;
+    if (isAllowedMultipart(req)) return next(); // tải tệp: handler tự đọc luồng và giới hạn kích thước (http/multipart.ts)
     if (hasBody && !req.is('application/json')) return sendProblem(req, res, 'unsupported-media-type');
     json(req, res, (err?: { type?: string }) => {
       if (!err) return next();

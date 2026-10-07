@@ -54,18 +54,18 @@ const DBP = (proposed) => DB()
   .replace('entities: [Order]', `entities: [Order, OrderStatusHistory]${proposed ? '\nproposed_entities: [OrderStatusHistory]' : ''}`)
   .replace('| orders | Order |', '| order_status_history | OrderStatusHistory | id | append-only |\n| orders | Order |');
 
-function run({ db = DB(), api = API(), sec = SEC(), reqStatus = 'approved' } = {}) {
+function run({ db = DB(), api = API(), sec = SEC(), reqStatus = 'approved', reqBody = '', arch = '', strict = true } = {}) {
   const r = mkdtempSync(join(tmpdir(), 'design-'));
   put(r, 'permissions-matrix.md', '| Hành động | Requirement | guest | customer | staff | admin | system |\n|---|---|---|---|---|---|\n');
   put(r, 'domain/entities.md', '| Entity          | Epic | Khóa |\n|---|---|---|\n| Order | ORD | id |\n| StockItem | INV | id |\n| User | AUTH | id |\n\n| Entity        | Từ | Sang | Điều kiện |\n|---|---|---|---|\n| Order | pending | paid | x |\n');
   put(r, 'domain/events.md', '| Event | Entity | Producer | Consumers | Payload | Phát khi |\n|---|---|---|---|---|---|\n| OrderPaid | Order | ORD | SHP | id | Order:paid |\n');
-  put(r, 'architecture.md', '| Epic | Module | Phụ thuộc |\n|---|---|---|\n| AUTH | auth | - |\n| ORD | order | AUTH |\n| INV | inventory | - |\n');
+  put(r, 'architecture.md', '| Epic | Module | Phụ thuộc |\n|---|---|---|\n| AUTH | auth | - |\n| ORD | order | AUTH |\n| INV | inventory | - |\n' + arch);
   put(r, 'security-baseline.md', '| Mã | Yêu cầu | Kiểm bằng | Epic |\n|---|---|---|---|\n| SB-06 | IDOR | test | ORD |\n');
-  put(r, `epics/ORD/requirements/${REQ}.md`, `---\nid: ${REQ}\nepic: ORD\nstatus: ${reqStatus}\nroles: [customer, system]\n---\n`);
+  put(r, `epics/ORD/requirements/${REQ}.md`, `---\nid: ${REQ}\nepic: ORD\nstatus: ${reqStatus}\nroles: [customer, system]\n---\n${reqBody}`);
   put(r, 'epics/ORD/design/ORD-DB-20261006-110000001.md', db);
   put(r, 'epics/ORD/design/ORD-API-20261006-110000002.md', api);
   put(r, 'epics/ORD/design/ORD-SEC-20261006-110000003.md', sec);
-  return spawnSync('node', [script, r, '--strict'], { encoding: 'utf8' });
+  return spawnSync('node', [script, r, ...(strict ? ['--strict'] : [])], { encoding: 'utf8' });
 }
 
 let r = run();
@@ -91,4 +91,13 @@ r = run({ reqStatus: 'draft' });
 assert.equal(r.status, 0, r.stderr);
 assert.match(r.stdout, new RegExp(`Lưu ý.*draft.*${REQ}`), 'requirement draft phải có cảnh báo');
 assert.doesNotMatch(run().stdout, /draft/, 'requirement approved không cảnh báo draft');
+// L30: cùng tên chữ ký decorator/interface mà khác tập khóa giữa requirement, API và architecture.md: cảnh báo (lỗi ở --strict)
+const REQSIG = '- BR7: dùng `@RateLimit({ tier, perWindow, window })`.\n';
+const APISIG = (keys = 'tier, limit, windowSeconds, key') => API().replace('## Endpoint', `Decorator \`@RateLimit({ ${keys} })\`.\n\n## Endpoint`);
+bad({ reqBody: REQSIG, api: APISIG() }, /RateLimit.*PRJ|RateLimit.*requirement.*API|RateLimit.*khác/);
+assert.equal(run({ reqBody: REQSIG.replace('perWindow, window', 'limit, windowSeconds, key').replace('tier,', 'tier,'), api: APISIG('key, tier, limit, windowSeconds') }).status, 0, 'cùng tập khóa (khác thứ tự) thì qua');
+bad({ api: APISIG(), arch: '\nSessionContext: `interface SessionContext { user_id, role }`.\n', reqBody: 'x `interface SessionContext { user_id, role, display_name? }`\n' }, /SessionContext/);
+const warnOnly = run({ reqBody: REQSIG, api: APISIG(), strict: false });
+assert.equal(warnOnly.status, 0, warnOnly.stderr);
+assert.match(warnOnly.stdout, /Lưu ý: .*RateLimit/);
 console.log('OK: check-tech-design.mjs');

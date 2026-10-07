@@ -14,6 +14,10 @@ Skill này **không quyết định lại** thiết kế. Code làm đúng spec;
 - **Truy vết bằng ID**: mỗi test trong code mang ID test case (`ORD-TC-...`) hoặc E2E trong tên test hoặc comment. Hook/script kiểm.
 - **Bám ADR**: stack, cấu trúc dự án, cách migration, định dạng lỗi, log theo `spec/architecture.md` (ADR-002, 003, 006, 008...). Chưa có khung dự án thì dựng đúng ADR-002 trước (task đầu tiên), không chọn khác.
 - **Test trước, code sau** cho phần nghiệp vụ: viết test từ TC, thấy fail đúng lý do, rồi viết code cho qua.
+- **Khung dự án: thay test-first bằng đột biến.** Khung dự án (monorepo, platform) không có lần "fail đúng lý do": gài đột biến có chủ ý vào mã, chạy test, ghi bảng `## Kiểm đột biến` (mỗi SB `Kiểm bằng: test` có ít nhất một đột biến; đột biến lọt thì sửa test). Epic có TC `lỗi` kiểm mối đe dọa SEC cũng phải có bảng này.
+- **Bằng chứng yếu thì nói thẳng.** Ghi chú của TC bắt đầu bằng `YẾU:` khi test kém hơn Then của TC (fixture thay dữ liệu thật, chưa chạy trong container sạch...), kèm lý do và cách nâng ở *Lệch spec*.
+- **Chạy lại như CI.** `clean_run: pass` chỉ khi bốn lệnh chuẩn (lint, typecheck, test, build) đã chạy trong bản clone sạch (`git worktree`, `env -i`, chỉ biến và dịch vụ khai trong workflow); không thì `clean_run: chưa` và một dòng `CI chưa chạy: <lý do>`. Test không cứng đường dẫn máy dev (`/Users/`, `/opt/homebrew`, `.nvm/versions`...).
+- **Cổng kiểm phải đỏ khi công cụ hỏng** (registry lỗi, kết quả rỗng) và bộ quét có ca dương tính cho từng mẫu; kiểm chung của repo (route audit, boundaries) chạy trên đối tượng thật (`AppModule`), không chỉ fixture.
 - **Không nói "pass" khi chưa chạy.** `test_command` và `test_result` trong báo cáo là lệnh đã chạy và dòng tóm tắt nó in ra, chép nguyên.
 
 ## Quy trình
@@ -22,12 +26,12 @@ Skill này **không quyết định lại** thiết kế. Code làm đúng spec;
 2. **Lập kế hoạch task** (bảng đầu của `templates/report.md`): thứ tự DB, rồi API, rồi giao diện; mỗi task nêu tài liệu spec nó thực hiện (Nguồn) và task nó phụ thuộc. Task nhỏ, kiểm được độc lập.
 3. **Làm từng task theo thứ tự**: viết test từ TC/E2E (testid dùng đúng `spec/testids.md`), chạy thấy fail, viết code, chạy thấy pass, cập nhật Trạng thái. Task bị chặn thì `blocked` kèm lý do, không bỏ qua.
 4. **Chạy toàn bộ test** bằng lệnh theo ADR-002; chép lệnh và dòng tóm tắt vào `test_command`, `test_result`.
-5. **Ghi báo cáo** `spec/epics/<EPIC>/report.md` theo `templates/report.md`: kế hoạch task, kết quả test (mỗi TC và E2E của epic một dòng, kèm file test), *Lệch spec*.
+5. **Ghi báo cáo** `spec/epics/<EPIC>/report.md` theo `templates/report.md` (giữ `kit_version: 2`): kế hoạch task, kết quả test (mỗi TC và E2E của epic một dòng, kèm file test), *Kiểm đột biến*, *Lệch spec* (mỗi mục có nhãn `[đã chọn]`, `[chưa làm]` hoặc `[cần quyết]`).
 6. **Kiểm cứng** (sửa tới khi qua): `node .claude/skills/sdlc-implement/scripts/check-report.mjs spec/ . --epic <EPIC>` (đối số thứ hai là thư mục gốc mã; hook cũng tự chạy khi sửa `report.md`).
 7. **Báo cáo ngắn**: task xong/blocked, test pass/fail/skip, danh sách *Lệch spec* cần người quyết (chuyển `sdlc-impact` nếu cần sửa spec).
 
 ## Script kiểm (`scripts/check-report.mjs`)
-Báo cáo có `test_command`, `test_result`, bảng task (Nguồn có thật trong spec, Phụ thuộc là số task, Trạng thái hợp lệ), bảng kết quả test phủ **mọi** TC/E2E của epic, mỗi file test **tồn tại và chứa ID**, `skip` có lý do, có mục *Lệch spec*. Script **không chạy test** và không biết test có thật sự pass: đó là việc của người chạy lệnh và của `review`. Tự kiểm: `node .claude/skills/sdlc-implement/scripts/check-report.test.mjs`.
+Báo cáo có `test_command`, `test_result`, bảng task (Nguồn có thật trong spec, Phụ thuộc là số task, Trạng thái hợp lệ), bảng kết quả test phủ **mọi** TC/E2E của epic, mỗi file test **tồn tại và chứa ID**, `skip` có lý do, có mục *Lệch spec*. Với `kit_version: 2` (hoặc `--strict`) còn là lỗi: thiếu `clean_run` (`chưa` đòi dòng `CI chưa chạy:`), dòng `YẾU:` không được giải thích, file test chứa đường dẫn máy dev (`check-report:allow <lý do>` để miễn), thiếu bảng *Kiểm đột biến* (>= 3 dòng, Test đỏ là ID trong bảng kết quả) khi task 1 là khung dự án hoặc epic có TC `lỗi` kiểm SEC, mục *Lệch spec* thiếu nhãn. Báo cáo cũ không có `kit_version` chỉ bị cảnh báo. Đầu ra in số dòng `YẾU` và số mục *Lệch spec* theo nhãn để review đọc ngay. Script **không chạy test** và không biết test có thật sự pass: đó là việc của người chạy lệnh và của `review`. Tự kiểm: `node .claude/skills/sdlc-implement/scripts/check-report.test.mjs`.
 
 ## Chưa làm
 - Eval: `evals/README.md`, ca `prj` (cần code thật); chưa chạy lần nào (chưa có RESULTS.md).

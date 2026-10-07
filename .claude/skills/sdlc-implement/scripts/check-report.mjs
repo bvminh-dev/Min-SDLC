@@ -2,6 +2,8 @@
 // Kiểm `spec/epics/<EPIC>/report.md` với spec và mã nguồn: truy vết test case -> test code, task -> tài liệu spec.
 // Dùng: node check-report.mjs <spec-dir> <thư-mục-mã> --epic <EPIC>
 // Không chạy test (không biết stack); chỉ kiểm báo cáo trung thực với những gì có trên đĩa.
+// Kiểm mới (L22 YẾU, L23 đường dẫn máy, L24 clean_run, L29 Kiểm đột biến, L38 nhãn Lệch spec) là LỖI với báo cáo có `kit_version: 2`
+// (template mới) hoặc `--strict`; báo cáo cũ không có trường đó chỉ bị cảnh báo để không làm vỡ báo cáo đã có.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
@@ -33,23 +35,30 @@ const rows = (t, headerStart) => {
   return out;
 };
 
-const errors = [];
+const errors = [], warnings = [];
 const reportPath = join(specDir, 'epics', epic, 'report.md');
 const err = (m) => errors.push(`${reportPath}: ${m}`);
 if (!existsSync(reportPath)) { console.error(`${reportPath}: chưa có báo cáo triển khai`); process.exit(1); }
 const text = readFileSync(reportPath, 'utf8');
 const fm = fmOf(text);
+const fresh = Number(fm.kit_version) >= 2 || argv.includes('--strict');
+const gate = (m) => (fresh ? err(m) : warnings.push(`${reportPath}: ${m} (báo cáo không có kit_version: 2 nên chỉ cảnh báo)`));
 if (fm.epic !== epic) err(`epic trong frontmatter phải là ${epic}`);
 if (!fm.test_command) err('thiếu test_command (lệnh test đã chạy)');
 if (!fm.test_result) err('thiếu test_result (dòng tóm tắt do lệnh test in ra)');
 
 // ID có thật trong spec; tài liệu test của epic
 const specIds = new Set(), tests = [];
+let sawSecError = false; // epic có TC kind `lỗi` kiểm một mối đe dọa SEC
 for (const f of walk(specDir)) {
   if (!f.endsWith('.md')) continue;
-  const id = (readFileSync(f, 'utf8').match(/^id:\s*(\S+)/m) ?? [])[1];
+  const doc = readFileSync(f, 'utf8'), id = (doc.match(/^id:\s*(\S+)/m) ?? [])[1];
   if (id) specIds.add(id);
-  if (id && /-(TC|E2E)-/.test(id) && f.includes(join('epics', epic))) tests.push(id);
+  if (id && /-(TC|E2E)-/.test(id) && f.includes(join('epics', epic))) {
+    tests.push(id);
+    const tfm = fmOf(doc);
+    if (tfm.kind === 'lỗi' && /\[\s*[^\s\]]/.test(tfm.threats ?? '')) sawSecError = true;
+  }
   if (/[\\/]ui[\\/][^\\/]+\.md$/.test(f) && f.includes(join('epics', epic))) specIds.add(`ui/${f.split(/[\\/]/).at(-1).replace(/\.md$/, '')}`);
 }
 
@@ -66,22 +75,72 @@ else {
 }
 
 // kết quả test
+const weak = [], MACHINE = /\/Users\/|\/home\/[\w.-]+|\/opt\/homebrew|\.nvm\/versions|\b[A-Za-z]:\\{1,2}[A-Za-z]/;
 const res = rows(text, '| ID | Loại');
 if (!res) err('thiếu bảng "Kết quả test" (| ID | Loại | Test code | Kết quả | Ghi chú |)');
 else {
-  const listed = new Set();
+  const listed = new Set(), scanned = new Set();
   for (const [id, , path, kq, note] of res) {
     listed.add(id);
+    if (note.startsWith('YẾU:')) weak.push(id);
     if (!tests.includes(id)) err(`${id}: không phải test case/E2E của epic ${epic} trong spec`);
     if (!['pass', 'fail', 'skip'].includes(kq)) err(`${id}: Kết quả phải là pass|fail|skip`);
     if (kq === 'skip' && (!note || note === '-')) err(`${id}: skip phải có lý do ở Ghi chú`);
     const p = resolve(codeDir, path);
     if (!existsSync(p) || !statSync(p).isFile()) err(`${id}: file test không tồn tại: ${path}`);
-    else if (!readFileSync(p, 'utf8').includes(id)) err(`${id}: file ${path} không chứa ID (đặt ID vào tên test hoặc comment để truy vết)`);
+    else {
+      const code = readFileSync(p, 'utf8');
+      if (!code.includes(id)) err(`${id}: file ${path} không chứa ID (đặt ID vào tên test hoặc comment để truy vết)`);
+      if (!scanned.has(path)) {
+        scanned.add(path);
+        const bad = code.split('\n').findIndex((l) => MACHINE.test(l) && !/check-report:allow\s+\S/.test(l));
+        if (bad >= 0) gate(`${path}:${bad + 1}: đường dẫn máy (/Users, /home/<tên>, /opt/homebrew, .nvm/versions, ổ đĩa Windows) trong test: CI sẽ không có; dùng PATH/biến môi trường hoặc ghi \`check-report:allow <lý do>\``);
+      }
+    }
   }
   for (const id of tests) if (!listed.has(id)) err(`thiếu dòng cho ${id} (test case của epic chưa có trong báo cáo)`);
 }
 if (!/^## Lệch spec\s*\n+\S/m.test(text)) err('thiếu mục "## Lệch spec" có nội dung (hoặc ghi "Không có")');
+const slang = (text.split(/^## /m).find((x) => x.startsWith('Lệch spec')) ?? '');
+
+// L22: dòng YẾU phải được giải thích (lý do và cách nâng bằng chứng) trong Lệch spec
+for (const id of weak) if (!slang.includes(id)) err(`${id}: Ghi chú bắt đầu bằng "YẾU:" nên mục Lệch spec phải nhắc ID này kèm lý do và cách nâng bằng chứng`);
+
+// L24: chạy lại trong môi trường sạch giống CI
+if (!fm.clean_run) gate('thiếu clean_run (pass | chưa): đã chạy bốn lệnh chuẩn trong bản clone sạch (git worktree, env -i) chưa');
+else if (!['pass', 'chưa'].includes(fm.clean_run)) err('clean_run phải là pass hoặc chưa');
+else if (fm.clean_run === 'chưa') {
+  if (!/^\s*(?:\d+\.\s*|[-*]\s*)?(?:\*\*)?(?:\[[^\]]+\]\s*)?(?:\*\*)?CI chưa chạy:/m.test(slang)) err('clean_run: chưa thì Lệch spec phải có dòng bắt đầu bằng "CI chưa chạy:" nêu lý do');
+  warnings.push(`${reportPath}: clean_run: chưa (CI chưa chạy thật): review coi là HIGH cho tới khi workflow chạy một lần`);
+}
+
+// L29: bảng Kiểm đột biến (thay test-first cho khung dự án; mỗi SB "Kiểm bằng: test" có ít nhất một đột biến)
+const t1 = (tasks?.[0] ?? []).slice(0, 2).join(' ');
+if (/khung|monorepo|scaffold/i.test(t1) || sawSecError) {
+  const mut = rows(text, '| Chỗ phá');
+  if (!mut) gate('thiếu mục "## Kiểm đột biến" (| Chỗ phá | Test đỏ | Kết quả |): khung dự án hoặc epic có TC lỗi kiểm SEC phải gài đột biến');
+  else {
+    if (mut.length < 3) err(`Kiểm đột biến cần ít nhất 3 dòng (có ${mut.length})`);
+    const ids = new Set((res ?? []).map((r) => r[0]));
+    for (const [where, red, kq] of mut) {
+      if (!/^(bắt|lọt)/.test(kq)) err(`Kiểm đột biến / ${where}: Kết quả phải bắt đầu bằng "bắt" hoặc "lọt"`);
+      if (![...ids].some((i) => red.includes(i)) && !(red === '-' && kq.startsWith('lọt'))) err(`Kiểm đột biến / ${where}: Test đỏ phải là ID có trong bảng Kết quả test`);
+    }
+  }
+}
+
+// L38: mỗi mục Lệch spec có nhãn
+const labelCount = { 'đã chọn': 0, 'chưa làm': 0, 'cần quyết': 0 };
+const unlabeled = [];
+for (const l of slang.split(/\r?\n/)) {
+  if (!/^\d+\.\s/.test(l)) continue;
+  const lb = l.match(/^\d+\.\s*(?:\*\*)?\[(đã chọn|chưa làm|cần quyết)\]/)?.[1];
+  lb ? labelCount[lb]++ : unlabeled.push(l.match(/^\d+/)[0]);
+}
+if (unlabeled.length) gate(`Lệch spec mục ${unlabeled.join(', ')} thiếu nhãn [đã chọn] | [chưa làm] | [cần quyết] ở đầu mục`);
 
 if (errors.length) { console.error(errors.join('\n') + `\n\n${errors.length} lỗi.`); process.exit(1); }
 console.log(`OK: báo cáo triển khai epic ${epic} khớp spec và mã nguồn.`);
+console.log(`Bằng chứng yếu: ${weak.length}${weak.length ? ` (${weak.join(', ')})` : ''}`);
+console.log(`Lệch spec theo nhãn: ${Object.entries(labelCount).map(([k, v]) => `${k}=${v}`).join(', ')}${unlabeled.length ? `, chưa nhãn=${unlabeled.length}` : ''}`);
+for (const w of warnings) console.log(`Lưu ý: ${w}`);

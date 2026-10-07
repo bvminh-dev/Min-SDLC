@@ -16,7 +16,7 @@ export class ErrorRegistry {
   audit(): string[] {
     const out = [...this.problems];
     for (const d of this.defs.values()) {
-      if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(d.code)) out.push(`mã lỗi không phải kebab-case: ${d.code}`);
+      if (!/^[a-z0-9]+([-_][a-z0-9]+)*$/.test(d.code)) out.push(`mã lỗi không phải chữ thường nối bằng - hoặc _: ${d.code}`);
       if (!Number.isInteger(d.status) || d.status < 400 || d.status > 599) out.push(`status không hợp lệ cho ${d.code}`);
     }
     for (const [code, status] of Object.entries(BASE_STATUS)) {
@@ -27,14 +27,16 @@ export class ErrorRegistry {
 }
 
 const BASE_STATUS: Record<string, number> = {
-  'validation-failed': 400, unauthenticated: 401, forbidden: 403, 'not-found': 404, conflict: 409,
+  'validation-failed': 400, unauthenticated: 401, session_expired: 401, forbidden: 403, csrf_failed: 403, 'not-found': 404, conflict: 409,
   'idempotency-key-required': 400, 'payload-too-large': 413, 'unsupported-media-type': 415,
   'idempotency-key-reused': 422, 'rate-limited': 429, 'internal-error': 500, 'service-unavailable': 503,
 };
 const BASE_TITLES: Record<string, string> = {
   'validation-failed': 'Request validation failed',
   unauthenticated: 'Authentication required',
+  session_expired: 'Session expired',
   forbidden: 'Access denied',
+  csrf_failed: 'Request origin not allowed',
   'not-found': 'Resource not found',
   conflict: 'Request conflicts with the current state',
   'idempotency-key-required': 'Idempotency-Key header is missing or malformed',
@@ -56,7 +58,7 @@ export const registerProblem = (def: ProblemDef): void => errorRegistry.register
 export class DomainError extends Error {
   constructor(
     readonly code: string,
-    readonly options: { detail?: string; errors?: ProblemErrorItem[]; headers?: Record<string, string> } = {},
+    readonly options: { detail?: string; errors?: ProblemErrorItem[]; headers?: Record<string, string>; extra?: Record<string, string | number | boolean> } = {},
   ) {
     super(code);
     this.name = 'DomainError';

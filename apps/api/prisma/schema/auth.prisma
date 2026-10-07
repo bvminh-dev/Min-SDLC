@@ -1,0 +1,127 @@
+// Module auth (epic AUTH, AUTH-DB-20261006-100006037): User, Session, PasswordResetToken, EmailVerificationToken.
+// Phần Prisma không biểu diễn được (citext, CHECK, chỉ mục một phần) nằm trong migration SQL.
+
+enum UserRole {
+  customer
+  staff
+  admin
+
+  @@map("user_role")
+}
+
+enum UserStatus {
+  active
+  locked
+
+  @@map("user_status")
+}
+
+enum LockReason {
+  too_many_attempts
+  admin
+
+  @@map("lock_reason")
+}
+
+enum SessionStatus {
+  active
+  revoked
+  expired
+
+  @@map("session_status")
+}
+
+enum SessionRevokeReason {
+  logout
+  password_changed
+  admin_lock
+  replaced
+
+  @@map("session_revoke_reason")
+}
+
+enum TokenStatus {
+  issued
+  used
+  expired
+
+  @@map("token_status")
+}
+
+model User {
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email            String      @unique @db.Citext
+  emailVerifiedAt  DateTime?   @map("email_verified_at") @db.Timestamptz(6)
+  passwordHash     String      @map("password_hash")
+  role             UserRole    @default(customer)
+  fullName         String      @map("full_name")
+  phone            String?
+  avatarUrl        String?     @map("avatar_url")
+  status           UserStatus  @default(active)
+  failedLoginCount Int         @default(0) @map("failed_login_count")
+  lastFailedLoginAt DateTime?  @map("last_failed_login_at") @db.Timestamptz(6)
+  lockedUntil      DateTime?   @map("locked_until") @db.Timestamptz(6)
+  lockedReason     LockReason? @map("locked_reason")
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  sessions                Session[]
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  addresses               Address[] // quan hệ ngược cho Address của module user (khóa ngoại USR -> users, USR-DB)
+
+  @@index([role, status])
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@map("users")
+}
+
+model Session {
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String               @map("user_id") @db.Uuid
+  tokenHash         String               @unique @map("token_hash") @db.Char(64)
+  status            SessionStatus        @default(active)
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSeenAt        DateTime             @map("last_seen_at") @db.Timestamptz(6)
+  expiresAt         DateTime             @map("expires_at") @db.Timestamptz(6)
+  absoluteExpiresAt DateTime             @map("absolute_expires_at") @db.Timestamptz(6)
+  revokedAt         DateTime?            @map("revoked_at") @db.Timestamptz(6)
+  revokedReason     SessionRevokeReason? @map("revoked_reason")
+  updatedAt         DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+  @@map("sessions")
+}
+
+model PasswordResetToken {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  tokenHash String      @unique @map("token_hash") @db.Char(64)
+  status    TokenStatus @default(issued)
+  expiresAt DateTime    @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  usedAt    DateTime?   @map("used_at") @db.Timestamptz(6)
+  updatedAt DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  tokenHash String      @unique @map("token_hash") @db.Char(64)
+  status    TokenStatus @default(issued)
+  expiresAt DateTime    @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  usedAt    DateTime?   @map("used_at") @db.Timestamptz(6)
+  updatedAt DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("email_verification_tokens")
+}

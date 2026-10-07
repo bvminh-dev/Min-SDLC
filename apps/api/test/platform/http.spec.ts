@@ -6,7 +6,7 @@ import { AppModule } from '../../src/app.module';
 import { auditRoutes, routeIds, PrismaService } from '../../src/modules/platform';
 import { BadController, FixtureController, fixtureState } from '../support/fixtures';
 import { createTestApp, ORIGIN, type TestApp } from '../support/app';
-import { newPrisma, truncateAll } from '../support/db';
+import { newPrisma, testDbUrl, truncateAll } from '../support/db';
 
 const CUST = '11111111-1111-4111-8111-111111111111:customer';
 const OTHER = '22222222-2222-4222-8222-222222222222:customer';
@@ -116,12 +116,40 @@ describe('API chung (PRJ-REQ-20261006-095422650)', () => {
     };
     const evil = await post('https://evil.example');
     expect(evil.status).toBe(403);
-    expect(evil.body.type).toBe('urn:ecom:error:forbidden');
+    expect(evil.body.type).toBe('urn:ecom:error:csrf_failed');
     expect((await post()).status).toBe(403);
     expect((await post(ORIGIN)).status).toBe(201);
     expect((await post(undefined, `${ORIGIN}/page`)).status).toBe(201); // Referer thay Origin khi thiếu Origin
-    expect((await http().post('/api/v1/fx/state').set('x-test-user', CUST).send({ name: 'x' })).status).toBe(201); // không cookie: không kiểm
+    expect((await http().post('/api/v1/fx/state').set('x-test-user', CUST).send({ name: 'x' })).status).toBe(201); // không cookie, không Origin (máy gọi máy): không kiểm
     expect((await http().get('/api/v1/fx/open').set('Cookie', 'sid=abc').set('Origin', 'https://evil.example')).status).toBe(200);
+  });
+
+  it('PRJ-TC-20261006-100124603: CSRF áp cho cả PUT, PATCH và DELETE có cookie (nguồn lạ 403, nguồn hợp lệ qua)', async () => {
+    for (const method of ['put', 'patch', 'delete'] as const) {
+      const send = (origin: string) => http()[method]('/api/v1/fx/state').set('x-test-user', CUST).set('Cookie', 'sid=abc').set('Origin', origin).send(method === 'delete' ? undefined : { name: 'x' });
+      expect([method, (await send('https://evil.example')).status]).toEqual([method, 403]);
+      expect([method, (await send(ORIGIN)).status]).toEqual([method, 200]);
+    }
+  });
+
+  it('PRJ-TC-20261006-100124556: route không khai quyền bị từ chối khi chạy thật (mặc định từ chối), guest cũng như customer', async () => {
+    const bad = await createTestApp({ controllers: [BadController] });
+    try {
+      const get = (u?: string) => { const r = request(bad.app.getHttpServer()).get('/api/v1/bad/no-auth'); return u ? r.set('x-test-user', u) : r; };
+      expect((await get()).status).toBe(403);
+      expect((await get(CUST)).status).toBe(403);
+      expect((await get(ADMIN)).status).toBe(403);
+    } finally { await bad.close(); }
+  });
+
+  it('PRJ-TC-20261006-100124463: HSTS có ở staging và prod, không có ở dev; X-Powered-By tắt ở mọi môi trường', async () => {
+    const staging = await createTestApp({ controllers: [FixtureController], env: { APP_ENV: 'staging', DATABASE_URL: `${testDbUrl()}?sslmode=require`, RETENTION_DATABASE_URL: `${testDbUrl()}?sslmode=require`, STORAGE_ENDPOINT: 'https://s3.example.test', STORAGE_ACCESS_KEY: 'ak-test-value', STORAGE_SECRET_KEY: 'sk-test-value' } }); // staging cần đủ biến kho ảnh của USR (ConfigVar.requiredOutsideDev)
+    try {
+      const r = await request(staging.app.getHttpServer()).get('/api/v1/health');
+      expect(r.headers['strict-transport-security']).toBe('max-age=31536000');
+      expect(r.headers['x-powered-by']).toBeUndefined();
+    } finally { await staging.close(); }
+    expect((await http().get('/api/v1/health')).headers['strict-transport-security']).toBeUndefined();
   });
 
   it('PRJ-TC-20261006-100124626: CORS, nguồn lạ không nhận Allow-Origin, nguồn hợp lệ nhận đúng nguồn kèm credentials, không bao giờ *', async () => {
@@ -345,6 +373,14 @@ describe('Idempotency-Key (ADR-017, SB-40)', () => {
     expect((await post('crash-key-1', { qty: 5 })).status).toBe(201);
   });
 
+  it('PRJ-TC-20261006-110200108: biên độ dài khóa: 7 ký tự và 65 ký tự bị 400, 8 và 64 ký tự được nhận', async () => {
+    for (const [len, status] of [[7, 400], [8, 201], [64, 201], [65, 400]] as const) {
+      const r = await post(`k${'x'.repeat(len - 1)}`.replace(/x/g, () => 'a'), { qty: 100 + len });
+      expect([len, r.status]).toEqual([len, status]);
+      if (status === 400) expect(r.body.type).toBe('urn:ecom:error:idempotency-key-required');
+    }
+  });
+
   it('PRJ-TC-20261006-110200109: hai yêu cầu đồng thời cùng khóa chạy đúng một lần, hai người dùng cùng chuỗi khóa độc lập', async () => {
     const [a, b] = await Promise.all([post('same-key-1234', { qty: 7 }), post('same-key-1234', { qty: 7 })]);
     expect([a.status, b.status]).toEqual([201, 201]);
@@ -357,7 +393,7 @@ describe('Idempotency-Key (ADR-017, SB-40)', () => {
     expect(await count()).toBe(2);
   });
 
-  it('SB-40, T27: hai người dùng cùng Idempotency-Key và cùng scope không thấy phản hồi của nhau; mỗi người phát lại đúng bản của mình', async () => {
+  it('PRJ-TC-20261006-110200109: SB-40, T27: hai người dùng cùng Idempotency-Key và cùng scope không thấy phản hồi của nhau; mỗi người phát lại đúng bản của mình', async () => {
     const a1 = await post('shared-key-0001', { qty: 11 }, CUST);
     const b1 = await post('shared-key-0001', { qty: 22 }, OTHER);
     expect([a1.status, b1.status]).toEqual([201, 201]);
@@ -385,5 +421,58 @@ describe('zod bắt buộc cho mọi route', () => {
       expect(JSON.stringify(r.body)).not.toContain('12345');
       expect(z.string().safeParse('x').success).toBe(true);
     } finally { await t.close(); }
+  });
+});
+
+describe('Thứ tự kiểm của nền và CSRF khi không có cookie (PRJ-REQ-20261006-095422650 BR5, BR6)', () => {
+  let t: TestApp;
+  beforeAll(async () => { t = await createTestApp({ controllers: [FixtureController], env: { RATE_LIMIT_PER_MINUTE: '100000' } }); });
+  afterAll(() => t.close());
+  const http = () => request(t.app.getHttpServer());
+
+  it('PRJ-TC-20261006-100124603: CSRF không cookie, Origin lạ bị 403 csrf_failed (đăng nhập CSRF), Origin hợp lệ và không Origin qua', async () => {
+    const post = (origin?: string) => {
+      const r = http().post('/api/v1/fx/state').set('x-test-user', CUST);
+      return (origin ? r.set('Origin', origin) : r).send({ name: 'x' });
+    };
+    const evil = await post('https://evil.example');
+    expect(evil.status).toBe(403);
+    expect(evil.body.type).toBe('urn:ecom:error:csrf_failed');
+    expect((await post()).status).toBe(201); // không cookie, không Origin (máy gọi máy): không có gì để CSRF
+    expect((await post(ORIGIN)).status).toBe(201);
+  });
+
+  it('PRJ-TC-20261006-180338418: thứ tự kiểm của nền, 415 rồi 429 rồi CSRF 403 rồi 401 rồi role 403 rồi schema 400', async () => {
+    await t.app.get(PrismaService).$executeRaw`TRUNCATE rate_limit_counters`;
+    const nextWindow = () => t.clock.advance(61_000);
+    const post = (o: { user?: string; origin?: string; body?: unknown; text?: boolean } = {}) => {
+      let r = http().post('/api/v1/fx/ordered');
+      if (o.user) r = r.set('x-test-user', o.user);
+      if (o.origin) r = r.set('Origin', o.origin);
+      return o.text ? r.set('Content-Type', 'text/plain').send('name=x') : r.send(o.body ?? { name: 'x' });
+    };
+    // 415 trước giới hạn tần suất: ba lần liên tiếp vẫn 415, không lần nào bị 429 và không tiêu tốn lượt đếm
+    for (let i = 0; i < 3; i++) expect([i, (await post({ origin: 'https://evil.example', text: true })).status]).toEqual([i, 415]);
+    // CSRF trước xác thực: không phiên, Origin lạ là 403 chứ không phải 401; lần hai cùng cửa sổ là 429 dù Origin lạ và không phiên (429 trước CSRF)
+    const csrf = await post({ origin: 'https://evil.example' });
+    expect(csrf.status).toBe(403);
+    expect(csrf.body.type).toBe('urn:ecom:error:csrf_failed');
+    const limited = await post({ origin: 'https://evil.example' });
+    expect(limited.status).toBe(429);
+    expect(limited.body.type).toBe('urn:ecom:error:rate-limited');
+    expect(Number(limited.headers['retry-after'])).toBeGreaterThanOrEqual(1);
+    // xác thực, role, schema, thành công: mỗi lần ở một cửa sổ mới
+    const steps: [string, Parameters<typeof post>[0], number, string?][] = [
+      ['không phiên', { origin: ORIGIN }, 401, 'unauthenticated'],
+      ['customer gọi endpoint admin', { user: CUST, origin: ORIGIN }, 403, 'forbidden'],
+      ['admin, trường lạ', { user: ADMIN, origin: ORIGIN, body: { name: 'x', extra: 1 } }, 400, 'validation-failed'],
+      ['admin, body đúng', { user: ADMIN, origin: ORIGIN }, 201],
+    ];
+    for (const [label, o, status, code] of steps) {
+      nextWindow();
+      const r = await post(o);
+      expect([label, r.status]).toEqual([label, status]);
+      if (code) expect([label, r.body.type]).toEqual([label, `urn:ecom:error:${code}`]);
+    }
   });
 });

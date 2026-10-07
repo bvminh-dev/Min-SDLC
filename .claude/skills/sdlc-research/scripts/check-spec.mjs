@@ -18,7 +18,7 @@ if (!existsSync(specDir)) {
 }
 const ID_RE = /^([A-Z]{2,4})-(REQ|FLOW|TC|API|DB|SEC|E2E)-\d{8}-\d{9}$/;
 const STATUSES = ['draft', 'approved', 'superseded'];
-const errors = [];
+const errors = [], warnings = [];
 const err = (file, msg) => errors.push({ file, msg });
 const OPEN_RE = /\[OPEN\]|NEEDS CLARIFICATION/;
 
@@ -111,6 +111,14 @@ for (const { file, fm, text } of docs) {
     }
     if (!/### Luồng lỗi[\s\S]*?\*\*Given\*\*/.test(text)) err(file, 'thiếu kịch bản ở mục "Luồng lỗi"');
     if (!/### Ca biên[\s\S]*?\*\*Given\*\*/.test(text)) err(file, 'thiếu kịch bản ở mục "Ca biên"');
+    // L36: "đổi bằng cấu hình" phải kèm tên biến (viết hoa, trong backtick); draft: lỗi, approved: cảnh báo (không phá requirement đã duyệt)
+    for (const l of text.split(/\r?\n/)) {
+      const br = l.match(/^\s*(?:[-*]\s*)?(?:\*\*)?(BR\d+)\b/)?.[1];
+      if (br && /bằng cấu hình|qua cấu hình|cấu hình được/i.test(l) && !/`[A-Z][A-Z0-9_]{2,}`/.test(l)) {
+        const m = `${br}: nói "cấu hình" mà không đặt tên biến viết hoa trong backtick (ví dụ \`DB_TRANSACTION_TIMEOUT_MS\`)`;
+        fm.status === 'draft' ? err(file, m) : warnings.push(`${file}: ${m}`);
+      }
+    }
   }
   if (fm.id.includes('-FLOW-') && !text.includes('```mermaid')) err(file, 'flow thiếu khối mermaid');
   if (fm.status === 'approved' && OPEN_RE.test(text)) {
@@ -135,6 +143,7 @@ for (const d of docs) if (OPEN_RE.test(d.text)) openByEpic[d.fm.epic ?? d.fm.id.
 if (!onlyFile && Object.keys(openByEpic).length) {
   console.log(`OPEN theo epic: ${Object.entries(openByEpic).sort().map(([e, n]) => `${e}=${n}`).join(', ')}`);
 }
+for (const w of onlyFile ? warnings.filter((x) => resolve(x.split(': BR')[0]) === onlyFile) : warnings) console.log(`Lưu ý: ${w}`);
 if (!onlyFile && openCount) {
   console.log(`Lưu ý: ${openCount} tài liệu draft còn [OPEN]/NEEDS CLARIFICATION (cần người quyết định).`);
 }

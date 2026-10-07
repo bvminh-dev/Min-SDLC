@@ -25,7 +25,7 @@ Phần phủ và tham chiếu do script bảo đảm. Skill lo phần phán đo�
 6. **Báo cáo**: tài liệu đã tạo, chỗ yếu của requirement (bước 2), testid còn thiếu (chuyển `sdlc-ui-ux`), mối đe dọa SEC chưa kiểm được bằng test.
 
 ## Script kiểm (`scripts/check-tests.mjs`)
-`covers` trỏ tới requirement có thật; TC phủ đúng một requirement, `kind` đúng một trong ba mục và mục đó **có thật** trong requirement; đủ Given/When/Then; `threats` trỏ tới mối đe dọa có thật; E2E có `role` hợp lệ, mọi testid trong backtick **có trong `spec/testids.md` và dành cho role đó**, có ít nhất một testid. Với `--strict`: thiếu TC cho mục kịch bản nào của requirement nào, hoặc mối đe dọa `Kiểm bằng test` chưa có TC, đều là lỗi. Tự kiểm: `node .claude/skills/sdlc-test-design/scripts/check-tests.test.mjs`.
+`covers` trỏ tới requirement có thật; TC phủ đúng một requirement, `kind` đúng một trong ba mục và mục đó **có thật** trong requirement; đủ Given/When/Then; `threats` trỏ tới mối đe dọa có thật; E2E có `role` hợp lệ, mọi testid trong backtick **có trong `spec/testids.md` và dành cho role đó**, có ít nhất một testid. Với `--strict`: thiếu TC cho mục kịch bản nào của requirement nào, hoặc mối đe dọa `Kiểm bằng test` chưa có TC, đều là lỗi. Tự kiểm: `node .claude/skills/sdlc-test-design/scripts/check-tests.test.mjs`. Cảnh báo (lỗi ở `--strict`): mối đe dọa kiểm bằng `script`/`hook` (cổng kiểm) có ít hơn 2 TC hoặc không có ca `lỗi`/`biên` (đầu vào kiểm cứng hỏng thì cổng phải đỏ; mỗi mẫu quét một ca dương tính); Given/When nêu phiên bản công cụ cụ thể mà mục Dữ liệu không nói cách dựng. Nhãn Given/When/Then lặp hoặc không đứng đầu bước: lỗi với TC `draft` và `--strict`, cảnh báo với TC `approved`.
 
 ## Chưa làm
 - Chưa kiểm được chất lượng assert hay dữ liệu mồi (cần người đọc).

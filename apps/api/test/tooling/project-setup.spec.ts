@@ -10,8 +10,8 @@ const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).fl
 
 describe('Dựng dự án và CI (PRJ-REQ-20261006-095422475)', () => {
   it('test chạy được trên runner sạch: không cứng đường dẫn máy dev (Homebrew, nvm, thư mục home) trong test/', () => {
-    // Mẫu ghép lúc chạy để chính tệp này không tự khớp.
-    const bad = new RegExp([`/opt/${'homebrew'}`, `\\.${'nvm'}/`, `/Users/${'\\w'}`, `homedir${'\\('}`].join('|'));
+    // Mẫu ghép từ các đoạn để chính tệp này không tự khớp (và không chứa đường dẫn máy dev nguyên văn).
+    const bad = new RegExp([['', 'opt', 'homebrew'], ['\\.nvm', 'versions'], ['', 'Users', '\\w']].map((p) => p.join('/')).concat(['homedir\\(']).join('|'));
     const hits = walk(join(REPO_ROOT, 'apps/api/test')).filter((f) => /\.ts$/.test(f) && bad.test(readFileSync(f, 'utf8')));
     expect(hits.map((f) => f.slice(REPO_ROOT.length + 1))).toEqual([]);
   });
@@ -71,9 +71,14 @@ describe('Dựng dự án và CI (PRJ-REQ-20261006-095422475)', () => {
     expect(wrong.out).toContain('>=24 <25');
     expect(existsSync(join(dir, 'node_modules'))).toBe(false);
 
-    // Node đang chạy test (CI lấy từ .nvmrc = 24): cài đặt thoát mã 0 trên repo thật
-    const ok = run('pnpm', ['install', '--frozen-lockfile']);
+    // Node đang chạy test (CI lấy từ .nvmrc = 24): cài đặt thoát mã 0. Chạy ở bản sao tạm, không phải repo thật: `pnpm install` ở repo thật
+    // có thể ghi đè Prisma Client đã sinh trong node_modules (làm các bộ test chạy sau lỗi "did not initialize yet" khi kho pnpm khác).
+    const dirOk = mkdtempSync(join(tmpdir(), 'ecom-node-ok-'));
+    for (const f of ['package.json', '.npmrc', 'pnpm-workspace.yaml', 'pnpm-lock.yaml']) cpSync(join(REPO_ROOT, f), join(dirOk, f));
+    for (const a of ['api', 'web']) { mkdirSync(join(dirOk, 'apps', a), { recursive: true }); cpSync(join(REPO_ROOT, 'apps', a, 'package.json'), join(dirOk, 'apps', a, 'package.json')); }
+    const ok = run('pnpm', ['install', '--frozen-lockfile', '--ignore-scripts'], { cwd: dirOk });
     expect(ok.status).toBe(0);
+    expect(existsSync(join(dirOk, 'node_modules'))).toBe(true);
 
     // Jest là công cụ test duy nhất
     const api = JSON.parse(read('apps/api/package.json'));

@@ -257,6 +257,15 @@ if (present('arch')) {
     if (st === 'proposed' && !/\[OPEN\]/.test(b)) err(doc.arch.path, `${id}: ADR proposed phải kèm [OPEN] nêu câu hỏi cho người quyết định`);
   }
 
+  // L34: ADR về stack nêu framework hoặc công cụ test thì phải có bảng `Công nghệ | Phiên bản | Lý do ghim` (nguồn duy nhất cho package.json)
+  const stack = blocks.find((b) => /^### ADR-\d+.*\bStack\b/i.test(b));
+  const named = [...new Set((stack?.match(/^- Quyết định:.*$/m)?.[0] ?? '').match(/NestJS|Next\.js|Express|Spring|Django|React|Vue|Angular|Jest|Vitest|Playwright|Cypress|pytest|JUnit/g) ?? [])];
+  if (named.length) {
+    const vt = tables(text, 'Công nghệ').find((t) => t.header[1] === 'Phiên bản' && t.header[2] === 'Lý do ghim');
+    if (!vt?.rows.length) err(doc.arch.path, `ADR về stack nêu ${named.join(', ')} nhưng thiếu bảng "## Phiên bản công nghệ" (| Công nghệ | Phiên bản | Lý do ghim |)`);
+    else for (const n of named) if (!vt.rows.some((r) => r[0].toLowerCase().includes(n.toLowerCase()))) err(doc.arch.path, `Phiên bản công nghệ: thiếu dòng cho ${n} (nêu ở quyết định của ADR về stack)`);
+  }
+
   const mod = need(doc.arch, 'Epic', ['Module', 'Phụ thuộc']);
   if (mod) {
     const seen = mod.rows.map((r) => r[0]);
