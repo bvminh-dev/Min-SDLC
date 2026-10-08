@@ -4,12 +4,17 @@
 // Không chạy test (không biết stack); chỉ kiểm báo cáo trung thực với những gì có trên đĩa.
 // Kiểm mới (L22 YẾU, L23 đường dẫn máy, L24 clean_run, L29 Kiểm đột biến, L38 nhãn Lệch spec) là LỖI với báo cáo có `kit_version: 2`
 // (template mới) hoặc `--strict`; báo cáo cũ không có trường đó chỉ bị cảnh báo để không làm vỡ báo cáo đã có.
+// Kiểm thêm (L43 nhãn sai, L49 mốc thời gian cứng, L53 sửa mã nền không test, L55 đo thời gian tuần tự) là LỖI với `kit_version: 3` hoặc `--strict`,
+// cảnh báo với báo cáo kit_version 2 (không làm đỏ báo cáo đã có).
+//  --base <ref>: so mã đổi với <ref> thay vì HEAD (L53; mặc định: tệp sửa và tệp chưa theo dõi so với HEAD)
+import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
 const argv = process.argv.slice(2);
 const epic = argv.includes('--epic') ? argv[argv.indexOf('--epic') + 1] : null;
-const [specDir, codeDir] = argv.filter((a, i) => !a.startsWith('--') && argv[i - 1] !== '--epic');
+const base = argv.includes('--base') ? argv[argv.indexOf('--base') + 1] : 'HEAD';
+const [specDir, codeDir] = argv.filter((a, i) => !a.startsWith('--') && argv[i - 1] !== '--epic' && argv[i - 1] !== '--base');
 if (!specDir || !codeDir || !epic) { console.error('Dùng: check-report.mjs <spec-dir> <code-dir> --epic <EPIC>'); process.exit(2); }
 
 const walk = (d, acc = []) => {
@@ -43,6 +48,8 @@ const text = readFileSync(reportPath, 'utf8');
 const fm = fmOf(text);
 const fresh = Number(fm.kit_version) >= 2 || argv.includes('--strict');
 const gate = (m) => (fresh ? err(m) : warnings.push(`${reportPath}: ${m} (báo cáo không có kit_version: 2 nên chỉ cảnh báo)`));
+const fresh3 = Number(fm.kit_version) >= 3 || argv.includes('--strict');
+const gate3 = (m) => (fresh3 ? err(m) : warnings.push(`${reportPath}: ${m} (báo cáo chưa có kit_version: 3 nên chỉ cảnh báo)`));
 if (fm.epic !== epic) err(`epic trong frontmatter phải là ${epic}`);
 if (!fm.test_command) err('thiếu test_command (lệnh test đã chạy)');
 if (!fm.test_result) err('thiếu test_result (dòng tóm tắt do lệnh test in ra)');
@@ -75,6 +82,18 @@ else {
 }
 
 // kết quả test
+// L49 (mốc thời gian cứng quanh hôm nay) và L55 (hai medianMs( liền nhau trong cùng một test)
+const dayNum = (iso) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 864e5), today = Math.floor(Date.now() / 864e5);
+const scanTime = (path, code) => {
+  const ls = code.split('\n');
+  ls.forEach((l, i) => {
+    const m = l.match(/['"`](\d{4}-\d{2}-\d{2})(?:T[\d:.]+Z?)?['"`]/);
+    if (m && Math.abs(dayNum(m[1]) - today) <= 2 && !/fixed-clock:/.test(l) && !/fixed-clock:/.test(ls[i - 1] ?? '')) gate3(`${path}:${i + 1}: mốc thời gian cứng ${m[1]} quanh hôm nay: trộn với now() của CSDL thì vỡ ngay sau mốc; dùng đồng hồ giả cho mọi nguồn thời gian và ghi \`fixed-clock: <lý do>\` ở dòng này hoặc dòng trước`);
+    if (/\bmedianMs\(/.test(l)) {
+      for (let j = i - 1; j >= Math.max(0, i - 4) && !/^\s*(?:it|test|describe)\(/.test(ls[j]); j--) if (/\bmedianMs\(/.test(ls[j])) { gate3(`${path}:${j + 1}: đo tuần tự hai nhánh (medianMs( liền nhau): tải máy trôi theo thời gian làm lệch một nhánh; đo xen kẽ hoặc đếm số lần gọi hàm băm thay cho thời gian`); break; }
+    }
+  });
+};
 const weak = [], MACHINE = /\/Users\/|\/home\/[\w.-]+|\/opt\/homebrew|\.nvm\/versions|\b[A-Za-z]:\\{1,2}[A-Za-z]/;
 const res = rows(text, '| ID | Loại');
 if (!res) err('thiếu bảng "Kết quả test" (| ID | Loại | Test code | Kết quả | Ghi chú |)');
@@ -90,6 +109,7 @@ else {
     if (!existsSync(p) || !statSync(p).isFile()) err(`${id}: file test không tồn tại: ${path}`);
     else {
       const code = readFileSync(p, 'utf8');
+      if (!scanned.has(path)) scanTime(path, code);
       if (!code.includes(id)) err(`${id}: file ${path} không chứa ID (đặt ID vào tên test hoặc comment để truy vết)`);
       if (!scanned.has(path)) {
         scanned.add(path);
@@ -130,12 +150,28 @@ if (/khung|monorepo|scaffold/i.test(t1) || sawSecError) {
 }
 
 // L38: mỗi mục Lệch spec có nhãn
+// L53: sửa mã module khác (nền) mà không có test dưới test/<module đó>/ đổi theo (ponytail: bố cục NestJS `src/modules/<m>/`; mã đổi lấy từ git, cây sạch thì không thấy gì)
+const myMod = existsSync(join(specDir, 'architecture.md')) ? rows(readFileSync(join(specDir, 'architecture.md'), 'utf8'), '| Epic | Module')?.find((r) => r[0] === epic)?.[1] : null;
+if (myMod) {
+  const git = (...a) => spawnSync('git', a, { cwd: codeDir, encoding: 'utf8' }).stdout?.split('\n').filter(Boolean) ?? [];
+  const changed = [...new Set([...git('diff', '--name-only', base), ...git('ls-files', '-o', '--exclude-standard')])].filter((f) => existsSync(join(codeDir, f)));
+  const byMod = new Map();
+  for (const f of changed) { const m = f.match(/(?:^|\/)src\/modules\/([^/]+)\//)?.[1]; if (m && m !== myMod) byMod.set(m, [...(byMod.get(m) ?? []), f]); }
+  for (const [m, fs] of byMod) if (!changed.some((f) => new RegExp(`(^|/)test/${m}/`).test(f))) gate3(`${fs.join(', ')}: sửa mã module ${m} (epic ${epic} ở module ${myMod}) mà không có test nào dưới test/${m}/ đổi theo: thêm test hoặc đột biến cho từng chỗ sửa`);
+}
 const labelCount = { 'đã chọn': 0, 'chưa làm': 0, 'cần quyết': 0 };
 const unlabeled = [];
 for (const l of slang.split(/\r?\n/)) {
   if (!/^\d+\.\s/.test(l)) continue;
   const lb = l.match(/^\d+\.\s*(?:\*\*)?\[(đã chọn|chưa làm|cần quyết)\]/)?.[1];
   lb ? labelCount[lb]++ : unlabeled.push(l.match(/^\d+/)[0]);
+  const n = l.match(/^\d+/)[0];
+  // L43: [đã chọn] mà việc thật cần người hoặc sdlc-impact/sdlc-foundation quyết
+  if (lb === 'đã chọn' && /(?:nên|cần|phải|chờ)\b[^.;]{0,80}?(?:qua|bằng|chạy)\s*`?sdlc-(?:impact|foundation)|nên ghi vào (?:ADR|nền)|review \w+ cân nhắc lại|chưa (?:chạy|qua)\s*`?sdlc-/i.test(l)) gate3(`Lệch spec mục ${n} gắn [đã chọn] nhưng nội dung còn chờ sdlc-impact/sdlc-foundation (hoặc "nên ghi vào ADR"): đổi sang [cần quyết] (hoặc [chưa làm] nếu việc chưa xong)`);
+  // L53: sửa nền phải nêu TC/E2E cho chỗ sửa
+  if (/sửa (?:mã )?(?:nền|của PRJ|platform)/i.test(l) && !/-(?:TC|E2E)-\d/.test(l)) gate3(`Lệch spec mục ${n}: sửa nền (mã module khác) mà mục không nêu ID TC/E2E kiểm từng chỗ sửa`);
+  // L55: "nhiễu đo" phải kèm bản sửa hoặc việc cho người
+  if (/nhiễu đo/i.test(l) && lb === 'đã chọn' && !/đã sửa|đo xen kẽ|đếm số lần/i.test(l)) gate3(`Lệch spec mục ${n} ghi "nhiễu đo" cho test đỏ mà không kèm bản sửa (đo xen kẽ, đếm số lần gọi) hoặc việc cho người: đổi sang [cần quyết]/[chưa làm] hoặc sửa test`);
 }
 if (unlabeled.length) gate(`Lệch spec mục ${unlabeled.join(', ')} thiếu nhãn [đã chọn] | [chưa làm] | [cần quyết] ở đầu mục`);
 

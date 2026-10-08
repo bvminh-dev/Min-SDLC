@@ -1,0 +1,529 @@
+{
+ "test": "node scripts/run-jest.mjs test/catalog",
+ "mutations": [
+  {
+   "id": "SB-11: chuyển nhánh không kiểm vòng cha-con",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-100355387",
+   "file": "src/modules/catalog/category.service.ts",
+   "find": "if (chain.some((r) => r.id === id)) throw new DomainError('category-cycle');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/category.spec.ts -t \"PRD-TC-20261006-100355387\""
+  },
+  {
+   "id": "SB-11: bỏ kiểm quá 3 cấp khi tạo (chỉ còn CHECK của DB)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-100355433",
+   "file": "src/modules/catalog/category.service.ts",
+   "find": "if (depth > MAX_DEPTH) throw new DomainError('category-too-deep');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/category.spec.ts -t \"PRD-TC-20261006-100355433\""
+  },
+  {
+   "id": "SB-05: staff được tạo sản phẩm (sai ma trận)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "PRD-TC-20261006-100355547",
+   "file": "src/modules/catalog/admin.controller.ts",
+   "find": "@Post() @Action('Tạo sản phẩm nháp') @Roles('admin')",
+   "replace": "@Post() @Action('Tạo sản phẩm nháp') @Roles('staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261006-100355547\""
+  },
+  {
+   "id": "SB-07: staff được tạo và sửa danh mục (sai ma trận)",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "PRD-TC-20261006-100355410",
+   "file": "src/modules/catalog/admin.controller.ts",
+   "find": "@Post() @Action('Tạo và sửa danh mục') @Roles('admin')",
+   "replace": "@Post() @Action('Tạo và sửa danh mục') @Roles('staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/catalog/category.spec.ts -t \"PRD-TC-20261006-100355410\""
+  },
+  {
+   "id": "SB-05: chi tiết công khai trả cả sản phẩm draft và archived",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "PRD-TC-20261006-100355971",
+   "file": "src/modules/catalog/query.service.ts",
+   "find": "FROM products p WHERE p.id = ${id}::uuid AND p.status = 'active'`;",
+   "replace": "FROM products p WHERE p.id = ${id}::uuid`;",
+   "test": "node scripts/run-jest.mjs test/catalog/public-read.spec.ts -t \"PRD-TC-20261006-100355971\""
+  },
+  {
+   "id": "SB-05: danh sách và tìm kiếm công khai không lọc trạng thái active",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "PRD-TC-20261006-100356116",
+   "file": "src/modules/catalog/query.service.ts",
+   "find": "const f: Filter = { status: 'active', categoryId",
+   "replace": "const f: Filter = { status: undefined, categoryId",
+   "test": "node scripts/run-jest.mjs test/catalog/public-read.spec.ts -t \"PRD-TC-20261006-100356116\""
+  },
+  {
+   "id": "SB-11: schema nhận trường lạ (status, rating_count) qua PATCH",
+   "sb": [
+    "SB-05",
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-100355615",
+   "file": "src/modules/catalog/policy.ts",
+   "find": "for (const k of Object.keys(o)) if (!known.has(k)) ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261006-100355615\""
+  },
+  {
+   "id": "SB-23: giá 0 được chấp nhận (bỏ cận dưới 1)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PRD-TC-20261006-100355547",
+   "file": "src/modules/catalog/policy.ts",
+   "find": ".min(1, { message: 'out_of_range' }).max(1_000_000_000,",
+   "replace": ".min(0, { message: 'out_of_range' }).max(1_000_000_000,",
+   "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261006-100355547\""
+  },
+  {
+   "id": "SB-11: trần giá 1.000.000.000 thành 1.000.000.000.000",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-100355569",
+   "file": "src/modules/catalog/policy.ts",
+   "find": ".max(1_000_000_000, { message: 'out_of_range' })",
+   "replace": ".max(1_000_000_000_000, { message: 'out_of_range' })",
+   "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261006-100355569\""
+  },
+  {
+   "id": "SB-19: audit sửa sản phẩm không ghi giá trước",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "PRD-TC-20261006-100355592",
+   "file": "src/modules/catalog/product.service.ts",
+   "find": "before: Object.fromEntries(changed.map((k) => [k, before[k]])), ",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261006-100355592\""
+  },
+  {
+   "id": "SB-19: công bố không ghi audit",
+   "sb": [
+    "SB-07",
+    "SB-19"
+   ],
+   "tc": "PRD-TC-20261006-100355739",
+   "file": "src/modules/catalog/product.service.ts",
+   "find": "      await this.audit.record(tx, { ...actorOf(actor), action: 'catalog.product.publish', target_type: 'product', target_id: id, before: { status: 'draft' }, after: { status: 'active', price: Number(cur.price) } });\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/publish-archive.spec.ts -t \"PRD-TC-20261006-100355739\""
+  },
+  {
+   "id": "SB-07: xóa danh mục không ghi audit",
+   "sb": [
+    "SB-07",
+    "SB-19"
+   ],
+   "tc": "PRD-TC-20261006-100355456",
+   "file": "src/modules/catalog/category.service.ts",
+   "find": "        await this.audit.record(tx, { actor_id: actor.user_id, actor_role: actor.role, action: 'catalog.category.delete', target_type: 'category', target_id: id, before: { name: cur.name, slug: cur.slug, parent_id: cur.parent_id, depth: cur.depth } });\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/category.spec.ts -t \"PRD-TC-20261006-100355456\""
+  },
+  {
+   "id": "SB-30: sửa không tăng version",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "PRD-TC-20261006-100355592",
+   "file": "src/modules/catalog/product.service.ts",
+   "find": "version = version + 1, updated_at = ${now}::timestamptz\n          WHERE id = ${id}::uuid AND version",
+   "replace": "updated_at = ${now}::timestamptz\n          WHERE id = ${id}::uuid AND version",
+   "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261006-100355592\""
+  },
+  {
+   "id": "SB-30: sản phẩm archived sửa được",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "PRD-TC-20261006-100355615",
+   "file": "src/modules/catalog/product.service.ts",
+   "find": "if (cur.status === 'archived') throw new DomainError('product-archived');\n        if (b.version",
+   "replace": "if (b.version",
+   "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261006-100355615\""
+  },
+  {
+   "id": "SB-30: bỏ kiểm version ở đầu hàm (WHERE version = ... bắt cùng ca)",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "PRD-TC-20261006-100355615",
+   "file": "src/modules/catalog/product.service.ts",
+   "find": "if (b.version !== cur.version) throw new DomainError('product-version-conflict');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261006-100355615\"",
+   "equivalent": "lưới thứ hai `WHERE id AND version = :đang-giữ` trả cùng 409 product-version-conflict (PRD-DB mục Giao dịch và khóa 1: hai lớp có chủ đích)"
+  },
+  {
+   "id": "SB-11: công bố lại sản phẩm active không bị chặn",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-100355784",
+   "file": "src/modules/catalog/product.service.ts",
+   "find": "if (cur.status !== 'draft') throw new DomainError('conflict');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/publish-archive.spec.ts -t \"PRD-TC-20261006-100355784\""
+  },
+  {
+   "id": "SB-11: ngừng bán sản phẩm đã archived không bị chặn",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-100355830",
+   "file": "src/modules/catalog/product.service.ts",
+   "find": "if (cur.status === 'archived') throw new DomainError('product-archived');\n      const [row] = await tx.$queryRaw<{ version: number }[]>`\n        UPDATE products SET status = 'archived'",
+   "replace": "const [row] = await tx.$queryRaw<{ version: number }[]>`\n        UPDATE products SET status = 'archived'",
+   "test": "node scripts/run-jest.mjs test/catalog/publish-archive.spec.ts -t \"PRD-TC-20261006-100355830\""
+  },
+  {
+   "id": "SB-27: công bố không ghi ProductActivated vào outbox",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PRD-TC-20261006-100355739",
+   "file": "src/modules/catalog/product.service.ts",
+   "find": "      await this.events.publish(tx, { type: 'ProductActivated', aggregate_type: 'product', aggregate_id: id, payload: { product_id: id } });\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/publish-archive.spec.ts -t \"PRD-TC-20261006-100355739\""
+  },
+  {
+   "id": "SB-27: ngừng bán không ghi ProductArchived vào outbox",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PRD-TC-20261006-100355807",
+   "file": "src/modules/catalog/product.service.ts",
+   "find": "      await this.events.publish(tx, { type: 'ProductArchived', aggregate_type: 'product', aggregate_id: id, payload: { product_id: id } });\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/publish-archive.spec.ts -t \"PRD-TC-20261006-100355807\""
+  },
+  {
+   "id": "SB-27: ReviewPublished lặp (event_id khác) cộng điểm lần hai",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PRD-TC-20261006-100356212",
+   "file": "src/modules/catalog/rating.service.ts",
+   "find": "updated_at = now() WHERE product_review_ratings.counted = false\n",
+   "replace": "updated_at = now()\n",
+   "test": "node scripts/run-jest.mjs test/catalog/rating.spec.ts -t \"PRD-TC-20261006-100356212\""
+  },
+  {
+   "id": "SB-11: trừ điểm theo payload thay vì điểm đã lưu",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-120604121",
+   "file": "src/modules/catalog/rating.service.ts",
+   "find": "rating_sum = rating_sum - ${r.rating} WHERE",
+   "replace": "rating_sum = rating_sum - ${Number(p.rating)} WHERE",
+   "test": "node scripts/run-jest.mjs test/catalog/rating.spec.ts -t \"PRD-TC-20261006-120604121\""
+  },
+  {
+   "id": "SB-05: nhận điểm ngoài 1..5 từ event",
+   "sb": [
+    "SB-05",
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-100356189",
+   "file": "src/modules/catalog/rating.service.ts",
+   "find": "if (!isRating(p.rating)) return skip('rating ngoài 1..5');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/rating.spec.ts -t \"PRD-TC-20261006-100356189\""
+  },
+  {
+   "id": "SB-11: ReviewRatingChanged cập nhật tổng khi review đang ẩn",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-120604121",
+   "file": "src/modules/catalog/rating.service.ts",
+   "find": "if (cur.counted) await",
+   "replace": "if (!cur.counted) await",
+   "test": "node scripts/run-jest.mjs test/catalog/rating.spec.ts -t \"PRD-TC-20261006-120604121\""
+  },
+  {
+   "id": "SB-11: ký tự đại diện của q không được thoát (tìm công khai)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-100356116",
+   "file": "src/modules/catalog/query.service.ts",
+   "find": "`%${likeEscape(t)}%`",
+   "replace": "`%${t}%`",
+   "test": "node scripts/run-jest.mjs test/catalog/public-read.spec.ts -t \"PRD-TC-20261006-100356116\""
+  },
+  {
+   "id": "SB-11: ký tự đại diện của q không được thoát (searchProductIds của INV)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261007-085337181",
+   "file": "src/modules/catalog/catalog.api.ts",
+   "find": "`%${likeEscape(t)}%`",
+   "replace": "`%${t}%`",
+   "test": "node scripts/run-jest.mjs test/catalog/interface.spec.ts -t \"PRD-TC-20261007-085337181\""
+  },
+  {
+   "id": "SB-11: sort nhận chuỗi tùy ý (không còn danh sách trắng)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-100356041",
+   "file": "src/modules/catalog/policy.ts",
+   "find": "sort: enumOf(['newest', 'price_asc', 'price_desc']).default('newest')",
+   "replace": "sort: z.string().default('newest')",
+   "test": "node scripts/run-jest.mjs test/catalog/public-read.spec.ts -t \"PRD-TC-20261006-100356041\""
+  },
+  {
+   "id": "SB-11: category_id không kiểm uuid ở danh sách công khai",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261006-100356041",
+   "file": "src/modules/catalog/policy.ts",
+   "find": "const shared = { category_id: uuid.optional(),",
+   "replace": "const shared = { category_id: z.string().optional(),",
+   "test": "node scripts/run-jest.mjs test/catalog/public-read.spec.ts -t \"PRD-TC-20261006-100356041\""
+  },
+  {
+   "id": "SB-14: q dài tối đa 100 thành 1000",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRD-TC-20261006-100356116",
+   "file": "src/modules/catalog/policy.ts",
+   "find": "!v ? 'required' : len(v) > 100 ? 'too_long' : null;\n  if (code) ctx.addIssue({ code: 'custom', message: code });\n}));\nconst rangeCheck",
+   "replace": "!v ? 'required' : len(v) > 1000 ? 'too_long' : null;\n  if (code) ctx.addIssue({ code: 'custom', message: code });\n}));\nconst rangeCheck",
+   "test": "node scripts/run-jest.mjs test/catalog/public-read.spec.ts -t \"PRD-TC-20261006-100356116\""
+  },
+  {
+   "id": "SB-14: trần limit 100 của platform thành 100000",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRD-TC-20261006-100356041",
+   "file": "src/modules/platform/http/pagination.ts",
+   "find": "limit: int(1, 100, 20)",
+   "replace": "limit: int(1, 100000, 20)",
+   "test": "node scripts/run-jest.mjs test/catalog/public-read.spec.ts -t \"PRD-TC-20261006-100356041\""
+  },
+  {
+   "id": "SB-14: giới hạn danh sách quản trị 30 thành 3000 mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRD-TC-20261006-100355901",
+   "file": "src/modules/catalog/http.ts",
+   "find": "limit: 30,",
+   "replace": "limit: 3000,",
+   "test": "node scripts/run-jest.mjs test/catalog/admin-read.spec.ts -t \"PRD-TC-20261006-100355901\""
+  },
+  {
+   "id": "SB-13: bỏ kiểm Origin (CSRF) cho endpoint ghi",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "PRD-TC-20261006-100355830",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "if (!origin || !this.allowed.has(origin)) throw new DomainError('csrf_failed');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/publish-archive.spec.ts -t \"PRD-TC-20261006-100355830\""
+  },
+  {
+   "id": "SB-10: không kiểm magic bytes (mọi tệp coi như JPEG)",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261006-100355691",
+   "file": "src/modules/catalog/image.ts",
+   "find": "  return null;\n}\n\nexport interface ProcessedImage",
+   "replace": "  return 'jpeg';\n}\n\nexport interface ProcessedImage",
+   "test": "node scripts/run-jest.mjs test/catalog/image.spec.ts -t \"PRD-TC-20261006-100355691\""
+  },
+  {
+   "id": "SB-10: giữ metadata (EXIF, GPS) khi mã hóa lại ảnh JPEG",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261006-100355716",
+   "file": "src/modules/catalog/image.ts",
+   "find": "pipe.jpeg({ quality: 85 })",
+   "replace": "pipe.keepMetadata().jpeg({ quality: 85 })",
+   "test": "node scripts/run-jest.mjs test/catalog/image.spec.ts -t \"PRD-TC-20261006-100355716\""
+  },
+  {
+   "id": "SB-10: trần dung lượng ảnh 5 MB thành 50 MB",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261006-100355716",
+   "file": "src/modules/catalog/config.ts",
+   "find": "IMAGE_MAX_BYTES = 5_242_880",
+   "replace": "IMAGE_MAX_BYTES = 52_428_800",
+   "test": "node scripts/run-jest.mjs test/catalog/image.spec.ts -t \"PRD-TC-20261006-100355716\""
+  },
+  {
+   "id": "SB-10: tối đa 8 ảnh thành 80",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261006-100355691",
+   "file": "src/modules/catalog/config.ts",
+   "find": "MAX_IMAGES = 8;",
+   "replace": "MAX_IMAGES = 80;",
+   "test": "node scripts/run-jest.mjs test/catalog/image.spec.ts -t \"PRD-TC-20261006-100355691\""
+  },
+  {
+   "id": "SB-10: xóa được ảnh cuối của sản phẩm đang bán",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261006-100355691",
+   "file": "src/modules/catalog/image.service.ts",
+   "find": "if (p.status === 'active' && imgs.length <= 1) throw new DomainError('product-last-image');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/image.spec.ts -t \"PRD-TC-20261006-100355691\""
+  },
+  {
+   "id": "SB-10: bỏ kiểm số điểm ảnh từ tiêu đề (bom giải nén)",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261006-120604408",
+   "file": "src/modules/catalog/image.ts",
+   "find": "if (meta.width * meta.height > IMAGE_MAX_PIXELS) throw new ImageError('dimensions_exceeded');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/image.spec.ts -t \"PRD-TC-20261006-120604408\""
+  },
+  {
+   "id": "SB-10: job dọn ảnh mồ côi xóa cả ảnh còn mới (dưới 24 giờ)",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261007-104006678",
+   "file": "src/modules/catalog/image.service.ts",
+   "find": "o.lastModified.getTime() <= cutoff",
+   "replace": "true",
+   "test": "node scripts/run-jest.mjs test/catalog/image.spec.ts -t \"PRD-TC-20261007-104006678\""
+  },
+  {
+   "id": "SB-10: job dọn ảnh mồ côi xóa cả ảnh đang được tham chiếu",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261007-104006678",
+   "file": "src/modules/catalog/image.service.ts",
+   "find": "KEY_RE.test(o.key) && !inUse.has(o.key) &&",
+   "replace": "KEY_RE.test(o.key) &&",
+   "test": "node scripts/run-jest.mjs test/catalog/image.spec.ts -t \"PRD-TC-20261007-104006678\""
+  },
+  {
+   "id": "SB-10: job dọn ảnh vẫn chạy khi nguồn tham chiếu rỗng (xóa hết ảnh đang dùng khi sai CSDL, bài học L52)",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261007-104007745",
+   "file": "src/modules/catalog/image.service.ts",
+   "find": "if (orphans.length && inUse.size === 0) throw",
+   "replace": "if (false as boolean) throw",
+   "test": "node scripts/run-jest.mjs test/catalog/image.spec.ts -t \"PRD-TC-20261007-104007745\""
+  },
+  {
+   "id": "SB-18: log request ghi cả query (từ khóa tìm kiếm) thay vì route mẫu",
+   "sb": [
+    "SB-08",
+    "SB-18"
+   ],
+   "tc": "PRD-TC-20261006-100356116",
+   "file": "src/modules/platform/http/app-setup.ts",
+   "find": "route: routeTemplate(req), status,",
+   "replace": "route: req.originalUrl, status,",
+   "test": "node scripts/run-jest.mjs test/catalog/public-read.spec.ts -t \"PRD-TC-20261006-100356116\""
+  },
+  {
+   "id": "SB-20: lỗi CSDL không kết nối lộ thông điệp nội bộ trong problem+json",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "PRD-TC-20261006-100355318",
+   "file": "src/modules/platform/errors/problem.filter.ts",
+   "find": "      code = 'service-unavailable';\n",
+   "replace": "      code = 'service-unavailable'; opts = { detail: String((exception as Error).message) };\n",
+   "test": "node scripts/run-jest.mjs test/catalog/category.spec.ts -t \"PRD-TC-20261006-100355318\""
+  },
+  {
+   "id": "SB-12: danh sách công khai hiển thị tên sản phẩm bằng innerHTML",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "PRD-TC-20261006-100355569",
+   "file": "../web/app/products/page.tsx",
+   "find": "<span className=\"pcard-name\" data-testid=\"prd-product-list-card-name\">{c.name}</span>",
+   "replace": "<span className=\"pcard-name\" data-testid=\"prd-product-list-card-name\" dangerouslySetInnerHTML={{ __html: c.name }} />",
+   "test": "NEXT_TELEMETRY_DISABLED=1 node scripts/run-jest.mjs test/e2e/prd.e2e.spec.ts -t \"PRD-TC-20261006-100355569\""
+  },
+  {
+   "id": "SB-10: job dọn ảnh xóa không giới hạn lô (review PRD)",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261007-104006678",
+   "file": "src/modules/catalog/image.service.ts",
+   "find": "orphans.slice(0, IMAGE_SWEEP_BATCH)",
+   "replace": "orphans",
+   "test": "node scripts/run-jest.mjs test/catalog/image.spec.ts -t \"PRD-TC-20261007-104006678\""
+  },
+  {
+   "id": "SB-11: searchProductIds nhận q dài vô hạn (review PRD)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261007-085337181",
+   "file": "src/modules/catalog/catalog.api.ts",
+   "find": "[...q].length > SEARCH_Q_MAX",
+   "replace": "false",
+   "test": "node scripts/run-jest.mjs test/catalog/interface.spec.ts -t \"PRD-TC-20261007-085337181\""
+  },
+  {
+   "id": "SB-19: audit ngừng bán không ghi trạng thái trước (review PRD)",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "PRD-TC-20261006-100355807",
+   "file": "src/modules/catalog/product.service.ts",
+   "find": "before: { status: cur.status }, after: { status: 'archived' }",
+   "replace": "after: { status: 'archived' }",
+   "test": "node scripts/run-jest.mjs test/catalog/publish-archive.spec.ts -t \"PRD-TC-20261006-100355807\""
+  },
+  {
+   "id": "SB-11: thân JSON nhận nửa cặp thay thế lẻ (PostgreSQL từ chối: 500 ở AUTH, USR, PRD; review PRD)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRD-TC-20261007-104008808",
+   "file": "src/modules/platform/http/app-setup.ts",
+   "find": "if (typeof v === 'string' && /\\p{Cs}/u.test(v)) throw new SyntaxError('nửa cặp thay thế lẻ'); return v;",
+   "replace": "return v;",
+   "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261007-104008808\""
+  }
+ ]
+}

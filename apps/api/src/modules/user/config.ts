@@ -1,19 +1,7 @@
-// Biến cấu hình của USR (ADR-007, USR-API mục Giao tiếp giữa module: object storage S3 cho ảnh đại diện, ADR-010, ADR-018): nạp vào schema chung lúc import module.
-import { z } from 'zod';
-import { cfg, registerConfigSchema, type ConfigVar } from '../platform';
-
-// Bí mật không có giá trị mặc định thật: rỗng chỉ chấp nhận ở dev (module bắt buộc đủ ở staging và prod, xem storage/storage.ts).
-const secret = (): ConfigVar => ({ zod: z.string(), sensitive: true, default: '', requiredOutsideDev: true });
+// Biến cấu hình của USR (ADR-007). Kho object S3 (STORAGE_*) là phần dùng chung của platform (platform/storage/config.ts).
+import { cfg, registerConfigSchema } from '../platform';
 
 export const USER_VARS = {
-  /** URL gốc của dịch vụ S3 tương thích (kiểu path: <endpoint>/<bucket>/<khóa>). Rỗng chỉ ở dev: tải ảnh đại diện trả 503. */
-  STORAGE_ENDPOINT: { ...cfg.string({ default: '' }), requiredOutsideDev: true },
-  STORAGE_BUCKET: cfg.string({ default: 'ecom-media' }),
-  STORAGE_REGION: cfg.string({ default: 'us-east-1' }),
-  STORAGE_ACCESS_KEY: secret(),
-  STORAGE_SECRET_KEY: secret(),
-  /** Gốc URL công khai của ảnh (CDN); rỗng thì dùng <endpoint>/<bucket>. */
-  STORAGE_PUBLIC_BASE_URL: cfg.string({ default: '' }),
   /** Hạn thời gian xử lý một ảnh (USR-SEC T9). */
   USR_AVATAR_PROCESS_TIMEOUT_MS: cfg.int({ default: 10_000, min: 50 }),
 };

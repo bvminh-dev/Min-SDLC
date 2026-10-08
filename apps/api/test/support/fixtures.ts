@@ -124,6 +124,13 @@ export class FixtureController {
     const rows = await tx.$queryRaw<{ id: number }[]>`INSERT INTO test_idem_records (qty) VALUES (${b.qty}) RETURNING id`;
     return { id: rows[0].id, qty: b.qty };
   }
+
+  /** Như `idem` nhưng nhắm một tài nguyên theo tham số đường dẫn (kho: nhập cho sản phẩm nào): tham số là một phần nội dung của yêu cầu. */
+  @Post('idem-on/:target') @Roles('customer') @Idempotent({ scope: 'test.create-on' }) @Validate({ params: z.object({ target: z.string() }).strict(), body: z.object({ qty: z.number() }).strict() })
+  async idemOn(@ValidParams() p: { target: string }, @ValidBody() b: { qty: number }, @DbTx() tx: Tx) {
+    const rows = await tx.$queryRaw<{ id: number }[]>`INSERT INTO test_idem_records (qty) VALUES (${b.qty}) RETURNING id`;
+    return { id: rows[0].id, target: p.target };
+  }
 }
 
 /** Controller vi phạm để kiểm test quét route. */

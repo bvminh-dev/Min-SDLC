@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { PASSWORD, createAuthApp, http, post, q, seedSession, seedUser, medianMs, type AuthApp } from '../support/auth';
+import { PASSWORD, createAuthApp, http, post, q, seedSession, seedUser, medianPairMs, type AuthApp } from '../support/auth';
 import { API_DIR, newPrisma, testDbUrl, truncateAll } from '../support/db';
 import { waitFor } from '../support/boot';
 import { ORIGIN } from '../support/app';
@@ -96,8 +96,7 @@ describe('Đăng ký (AUTH-REQ-20261006-095515620)', () => {
     expect(await q(t, "SELECT 1 FROM users WHERE email IN ('e@shop.vn', 'p@shop.vn')")).toHaveLength(0);
 
     // độ trễ không phân biệt hai nhánh: chênh lệch trung vị dưới 30% trên 30 lần đo mỗi nhánh (vì luôn băm trước khi tra email)
-    const known = await medianMs(30, (i) => post(t, '/auth/register', { ...ok, email: 'a@shop.vn' }, { ip: `10.6.0.${i + 1}` }));
-    const unknown = await medianMs(30, (i) => post(t, '/auth/register', { ...ok, email: `t${i}@shop.vn` }, { ip: `10.6.1.${i + 1}` }));
+    const [known, unknown] = await medianPairMs(30, (i) => post(t, '/auth/register', { ...ok, email: 'a@shop.vn' }, { ip: `10.6.0.${i + 1}` }), (i) => post(t, '/auth/register', { ...ok, email: `t${i}@shop.vn` }, { ip: `10.6.1.${i + 1}` })); // đo xen kẽ hai nhánh
     expect(Math.abs(known - unknown) / Math.max(known, unknown)).toBeLessThan(0.3);
   }, 90_000);
 

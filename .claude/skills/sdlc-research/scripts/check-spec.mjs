@@ -95,6 +95,7 @@ if (baseRoles && roles) {
   for (const r of roles) if (!baseRoles.includes(r)) err(matrixFile, `cột role "${r}" không có trong roles.md`);
 }
 const epicCodes = roadmapCodes();
+const matrixRows = existsSync(join(specDir, 'permissions-matrix.md')) ? readFileSync(join(specDir, 'permissions-matrix.md'), 'utf8').split(/\r?\n/).filter((l) => l.startsWith('|')).slice(2).map((l) => l.split('|').map((c) => c.trim()).slice(1, -1)) : [];
 for (const { file, fm, text } of docs) {
   for (const link of fm.links ?? []) {
     if (!seen.has(link)) err(file, `links trỏ tới ID không tồn tại: ${link}`);
@@ -118,6 +119,13 @@ for (const { file, fm, text } of docs) {
         const m = `${br}: nói "cấu hình" mà không đặt tên biến viết hoa trong backtick (ví dụ \`DB_TRANSACTION_TIMEOUT_MS\`)`;
         fm.status === 'draft' ? err(file, m) : warnings.push(`${file}: ${m}`);
       }
+    }
+    // L57: BR "chỉ admin/staff/customer" nhưng hàng ma trận duy nhất của requirement cho role khác Y/own: cảnh báo tách hàng (ponytail: chỉ cảnh báo, BR có thể nói về hành động khác; admin bao staff)
+    const mrows = matrixRows.filter((r) => r[1] === fm.id);
+    if (roles && mrows.length === 1) for (const l of text.split(/\r?\n/)) {
+      const br = l.match(/^\s*(?:[-*]\s*)?(?:\*\*)?(BR\d+)\b/)?.[1], who = br && l.match(/\bchỉ (admin|staff|customer)\b/i)?.[1].toLowerCase();
+      const extra = who && roles.filter((r, i) => r !== who && !(who === 'staff' && r === 'admin') && r !== 'guest' && r !== 'system' && /^(Y|own)/i.test(mrows[0][i + 2] ?? ''));
+      if (extra?.length) warnings.push(`${file}: ${br}: nói "chỉ ${who}" nhưng hàng ma trận "${mrows[0][0]}" của chính requirement cho ${extra.join(', ')} (Y/own): tách hàng ma trận theo phạm vi (theo endpoint hay theo cách tra) hoặc sửa BR`);
     }
   }
   if (fm.id.includes('-FLOW-') && !text.includes('```mermaid')) err(file, 'flow thiếu khối mermaid');

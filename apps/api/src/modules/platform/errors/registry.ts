@@ -1,6 +1,8 @@
 // Sổ mã lỗi (PRJ-REQ-20261006-095422820 BR2, ADR-023): `type` = urn:ecom:error:<mã>.
 export interface ProblemDef { code: string; status: number; title: string }
 export interface ProblemErrorItem { field: string; code: string }
+/** Giá trị trường phụ của problem+json: vô hướng hoặc danh sách mã (ví dụ `reasons`, `missing` của PRD). */
+export type ProblemExtra = string | number | boolean | string[];
 
 export class ErrorRegistry {
   private readonly defs = new Map<string, ProblemDef>();
@@ -30,6 +32,7 @@ const BASE_STATUS: Record<string, number> = {
   'validation-failed': 400, unauthenticated: 401, session_expired: 401, forbidden: 403, csrf_failed: 403, 'not-found': 404, conflict: 409,
   'idempotency-key-required': 400, 'payload-too-large': 413, 'unsupported-media-type': 415,
   'idempotency-key-reused': 422, 'rate-limited': 429, 'internal-error': 500, 'service-unavailable': 503,
+  'image-invalid': 400, // ảnh tải lên bị từ chối: dùng chung USR (ảnh đại diện), PRD (ảnh sản phẩm), REV (ảnh đánh giá)
 };
 const BASE_TITLES: Record<string, string> = {
   'validation-failed': 'Request validation failed',
@@ -46,6 +49,7 @@ const BASE_TITLES: Record<string, string> = {
   'rate-limited': 'Too many requests',
   'internal-error': 'Internal server error',
   'service-unavailable': 'Service temporarily unavailable',
+  'image-invalid': 'Image rejected',
 };
 
 /** Sổ toàn cục: module đăng ký mã riêng khi import (mỗi mã đúng một lần). */
@@ -58,7 +62,7 @@ export const registerProblem = (def: ProblemDef): void => errorRegistry.register
 export class DomainError extends Error {
   constructor(
     readonly code: string,
-    readonly options: { detail?: string; errors?: ProblemErrorItem[]; headers?: Record<string, string>; extra?: Record<string, string | number | boolean> } = {},
+    readonly options: { detail?: string; errors?: ProblemErrorItem[]; headers?: Record<string, string>; extra?: Record<string, ProblemExtra> } = {},
   ) {
     super(code);
     this.name = 'DomainError';

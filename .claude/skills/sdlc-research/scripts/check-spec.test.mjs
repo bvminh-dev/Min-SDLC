@@ -27,11 +27,11 @@ ${extra}---
 - **Given** a
 ${body}`;
 
-function run({ req = REQ(), matrixRoles = 'guest | customer', rolesMd = true } = {}) {
+function run({ req = REQ(), matrixRoles = 'guest | customer', rolesMd = true, rows = '' } = {}) {
   const r = mkdtempSync(join(tmpdir(), 'spec-'));
-  put(r, 'permissions-matrix.md', `| Hành động | Requirement | ${matrixRoles} |\n|---|---|---|---|\n`);
+  put(r, 'permissions-matrix.md', `| Hành động | Requirement | ${matrixRoles} |\n|---|---|---|---|\n${rows}`);
   put(r, 'roadmap.md', '| STT | Mã | Epic | Mục con |\n|---|---|---|---|\n| 01 | ORD | Order | x |\n| 02 | CHK | Checkout | y |\n');
-  if (rolesMd) put(r, 'domain/roles.md', '| Role     | Mô tả | Đăng nhập |\n| -------- | --- | --- |\n| guest | g | không |\n| customer | c | có |\n');
+  if (rolesMd) put(r, 'domain/roles.md', '| Role     | Mô tả | Đăng nhập |\n| -------- | --- | --- |\n| guest | g | không |\n| customer | c | có |\n| staff | s | có |\n| admin | a | có |\n');
   put(r, `epics/ORD/requirements/${ID}.md`, req);
   return spawnSync('node', [script, r], { encoding: 'utf8' });
 }
@@ -61,4 +61,13 @@ assert.equal(run({ req: REQ({ body: '- Ghi chú: đổi bằng cấu hình\n' })
 r = run({ req: REQ({ status: 'approved', body: BR('đổi bằng cấu hình.') }) });
 assert.equal(r.status, 0, 'requirement approved cũ chỉ cảnh báo');
 assert.match(r.stdout, /Lưu ý: .*BR1.*tên biến/);
+
+// L57: BR nói "chỉ admin/staff/customer" mà hàng ma trận duy nhất của chính requirement cho role khác Y hoặc own: cảnh báo tách hàng (không chặn: có thể BR nói về hành động khác)
+const MROLES = 'guest | customer | staff | admin', ROW = (c, s, a) => `| Tra cứu hồ sơ khách | ${ID} | - | ${c} | ${s} | ${a} |\n`;
+const w57 = (o) => { const x = run(o); assert.equal(x.status, 0, x.stderr); return x.stdout; };
+assert.match(w57({ req: REQ({ body: BR('chỉ admin được tra theo `id`.') }), matrixRoles: MROLES, rows: ROW('-', 'Y', 'Y') }), /Lưu ý: .*BR1.*chỉ admin.*staff.*tách hàng/);
+assert.match(w57({ req: REQ({ status: 'approved', body: BR('Chỉ customer đặt hàng.') }), matrixRoles: MROLES, rows: ROW('Y', 'Y', '-') }), /Lưu ý: .*BR1.*chỉ customer.*staff.*tách hàng/);
+assert.doesNotMatch(w57({ req: REQ({ body: BR('chỉ admin được tra theo `id`.') }), matrixRoles: MROLES, rows: ROW('-', '-', 'Y') }), /tách hàng/, 'hàng khớp BR thì không cảnh báo');
+assert.doesNotMatch(w57({ req: REQ({ body: BR('chỉ staff được xem.') }), matrixRoles: MROLES, rows: ROW('-', 'Y', 'Y') }), /tách hàng/, 'admin bao staff');
+assert.doesNotMatch(w57({ req: REQ({ body: BR('chỉ admin được tra theo `id`.') }), matrixRoles: MROLES, rows: ROW('-', 'Y', '-') + ROW('-', '-', 'Y') }), /tách hàng/, 'đã tách thành nhiều hàng thì không cảnh báo');
 console.log('OK: check-spec.mjs');

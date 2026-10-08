@@ -1,8 +1,8 @@
-import { PASSWORD, createAuthApp, get, http, login, post, q, seedSession, seedToken, seedUser, type AuthApp } from '../support/auth';
+import { NOW0, PASSWORD, createAuthApp, get, http, login, post, q, seedSession, seedToken, seedUser, type AuthApp } from '../support/auth';
 import { ORIGIN } from '../support/app';
 import { truncateAll } from '../support/db';
 
-const T0 = new Date('2026-10-06T09:00:00.000Z');
+const T0 = new Date(NOW0.getTime() - 3600_000); // 1 giờ trước NOW0 (giờ thật lúc nạp), không mốc ngày cố định
 const min = (n: number) => n * 60_000;
 
 describe('Đăng xuất và phiên (AUTH-REQ-20261006-095515774, AUTH-REQ-20261006-095515808)', () => {
@@ -162,12 +162,12 @@ describe('Đăng xuất và phiên (AUTH-REQ-20261006-095515774, AUTH-REQ-202610
     t.clock.advance(30 * 60_000 + 1_000);
     expect((await probe(cz)).status).toBe(401);
 
-    // 10 phiên còn hạn tạo từ 08:00 mỗi 5 phút; đăng nhập thứ 11 lúc 09:30 thay phiên cũ nhất
-    t.clock.set(new Date('2026-10-06T09:30:00.000Z'));
+    // 10 phiên còn hạn tạo từ T0-1h mỗi 5 phút; đăng nhập thứ 11 lúc T0+30 phút thay phiên cũ nhất
+    t.clock.set(new Date(T0.getTime() + 30 * 60_000));
     const m = await seedUser(t, { email: 'multi@shop.vn' });
     const seeded = [];
     for (let i = 0; i < 10; i++) {
-      seeded.push(await seedSession(t, m.id, { createdAt: new Date(`2026-10-06T08:${String(i * 5).padStart(2, '0')}:00.000Z`), lastSeenAt: new Date('2026-10-06T09:20:00.000Z'), expiresAt: new Date('2026-10-06T09:50:00.000Z') }));
+      seeded.push(await seedSession(t, m.id, { createdAt: new Date(T0.getTime() - 3600_000 + i * 5 * 60_000), lastSeenAt: new Date(T0.getTime() + 20 * 60_000), expiresAt: new Date(T0.getTime() + 50 * 60_000) }));
     }
     const active = async () => (await q<{ id: string }>(t, `SELECT id FROM sessions WHERE user_id = '${m.id}' AND status = 'active'`)).length;
     expect(await active()).toBe(10);

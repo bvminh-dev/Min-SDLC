@@ -1,10 +1,10 @@
 ---
 epic: PRJ
 status: draft
-kit_version: 2
+kit_version: 3
 clean_run: pass
 test_command: pnpm test
-test_result: Tests:       127 passed, 127 total
+test_result: Tests:       545 passed, 545 total
 ---
 # Báo cáo triển khai: PRJ
 
@@ -144,6 +144,7 @@ Mỗi test case của epic một dòng. Mọi test chạy trên PostgreSQL 16 th
 | PRJ-TC-20261006-160721116 | TC | apps/api/test/platform/rate-limit.spec.ts | pass | `key` theo tham số `account`: khác người dùng cùng khóa đếm chung, khác khóa đếm riêng, route khác không đếm chung |
 | PRJ-TC-20261006-160721210 | TC | apps/api/test/platform/rate-limit.spec.ts | pass | `check` không tạo và không tăng bộ đếm, `hitCounter` 1, 2, 3, 4, `reset` về 1; chạy trên PostgreSQL thật, đồng hồ giả |
 | PRJ-TC-20261006-160721307 | TC | apps/api/test/platform/rate-limit.spec.ts | pass | `limit` 0, cửa sổ mới, `reset` khóa chưa có không lỗi, khóa độc lập, không va chạm bộ đếm của `@RateLimit` |
+| PRJ-TC-20261007-144433649 | TC | apps/api/test/platform/rate-limit.spec.ts | pass | TC mới (sdlc-impact review PRM): `take` nguyên tử (40 lời gọi song song chỉ qua đúng 10, `count` 1 đến 40 không trùng), `refund` không xuống dưới 0, `reset`, cửa sổ mới; PostgreSQL thật |
 | PRJ-TC-20261006-160721401 | TC | apps/api/test/tooling/ci-guards.spec.ts | pass | Tám dạng bí mật, mỗi dạng một ca dương tính, chín dòng âm tính, ca `scan-secrets:allow` |
 | PRJ-TC-20261006-160721494 | TC | apps/api/test/tooling/ci-guards.spec.ts | pass | Thư mục không phải git và kho không có tệp: thoát mã 2; `--staged` rỗng thoát 0. Đỏ trên mã cũ (thoát 0 với "sạch (0 tệp)" và in stack) |
 | PRJ-TC-20261006-160721590 | TC | apps/api/test/tooling/lint-and-web.spec.ts | pass | Bốn tên tệp `.env*` với bốn dạng tên cấm, dạng `export`, dòng chú thích, thư mục sai thoát mã 2. Đỏ trên mã cũ (chỉ đọc biến môi trường tiến trình) |
@@ -219,3 +220,5 @@ Lượt triển khai đầu không sửa `spec/`; lượt đóng epic sửa spec
 34. [đã chọn] **Cách chạy `clean_run`** (không được commit nên chỉ gần giống CI): `git worktree add --detach` từ HEAD (e87647e) rồi phủ các tệp đã sửa và tệp mới chưa theo dõi của working tree (trừ `.claude/`), `env -i` chỉ có `PATH` (Node 24.21.0 từ nvm, `/opt/homebrew/bin` cho pnpm, `/usr/bin`, `/bin`), `HOME` rỗng, `CI=true`, `TEST_DB_BASE`; `pnpm install --frozen-lockfile --offline` dùng kho pnpm của máy; PostgreSQL 16 docker (cổng 5433). Đã chạy: install, scan:secrets, check:boundaries, `migrate deploy` và `db:check` (CSDL `ecom_ci`, `ecom_shadow`), lint, typecheck, test, build, tất cả qua. Không chạy: `psql -f 01-app-roles.sql` (máy không có `psql`; `globalSetup` của test chạy cùng tệp), `check-migration-compat --base` (chỉ cho pull request), job `smoke` riêng (đã chạy trong test, PRJ-TC-20261006-100124068), bước `pnpm/action-setup`, `setup-node` (workflow chưa chạy trên GitHub, xem mục 15).
 
 Cập nhật sau review AUTH (`sdlc-impact`, `spec/changes/AUTH-API-20261006-100006077.md`): spec PRJ khớp mã đã chạy (CSRF `csrf_failed` và kiểm `Origin` cả khi không cookie, thứ tự kiểm của nền, sổ mã lỗi cho `_`); thêm một TC (PRJ-TC-20261006-180338418) và một test cho ca không cookie của PRJ-TC-20261006-100124603; mã nền (`platform`) không đổi trong đợt này. `test_result` là số của riêng các bộ test PRJ (13 suite, không tính `test/auth` và `test/e2e`): 125 cộng 2.
+35. [đã chọn] Dọn tồn đọng sau khi kit cải tiến (2026-10-07), `kit_version: 3`: (a) tùy chọn `narrow` của `auditPermissions` (`apps/api/src/modules/platform/http/route-audit.ts`) không còn nơi dùng nên đã xóa, kèm test mới `apps/api/test/platform/route-audit.spec.ts` (3 ca: khớp thì sạch; role rộng hơn hay hẹp hơn hàng ma trận, thiếu `@Action`, `@Action` lạ đều đỏ; ma trận rỗng và phạm vi rỗng đỏ) vì spec PRJ không có TC riêng cho cổng lệch ma trận; (b) `test_result` là số của riêng các bộ test PRJ nay là 14 suite, 132 test (`test/platform` và các spec trong `test/tooling` trừ bảng đột biến của USR); toàn repo là 35 suite, 268 test; (c) `NEXT_TELEMETRY_DISABLED=1` đã có ở `apps/api/test/e2e/support.ts` (tiến trình web) và nay cả ở `.github/workflows/ci.yml` (job `verify`); `clean_run` chạy lại ở AUTH và USR cùng lượt (xem report của hai epic), cùng bản clone sạch chạy lint, typecheck, test, build đều exit 0.
+36. [đã chọn] Sửa nền sau sdlc-impact (review PRM REV-PRM-03): `RateLimitService` (`rate-limit.ts`) thêm `take(key, limit, windowSeconds)` nguyên tử (một câu UPSERT, trả `{ allowed, count, retryAfter }`) và `refund(key, windowSeconds)`; giữ nguyên `check`, `hitCounter`, `reset` (không còn nơi dùng trong `src`, còn PRJ-TC-20261006-160721210 và PRJ-TC-20261006-160721307 kiểm). TC kiểm chỗ sửa: PRJ-TC-20261007-144433649. `test_result` nay là 545 do chạy lại toàn repo. Chưa có đột biến riêng của PRJ cho `take` (PRM và AUTH có đột biến đếm không nguyên tử ở bảng của họ).

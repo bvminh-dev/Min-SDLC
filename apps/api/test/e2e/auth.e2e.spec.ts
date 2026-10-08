@@ -268,7 +268,7 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
     await see(id(page, 'auth-login-session-expired'));
     expect(await ctl('/health')).toEqual({ ok: true });
   });
-  e2e('review AUTH: đăng nhập vượt giới hạn 10 lần mỗi phút (429) khóa nút kèm banner, rồi mở lại khi hết Retry-After (ui/login: nút khóa tới hết giờ)', async (page) => {
+  e2e('AUTH-E2E-20261007-085336677 (review AUTH): đăng nhập vượt giới hạn 10 lần mỗi phút (429) khóa nút kèm banner, rồi mở lại khi hết Retry-After (ui/login: nút khóa tới hết giờ)', async (page) => {
     await page.goto('/login');
     for (let i = 0; i < 11; i++) {
       await id(page, 'auth-login-email').fill(`ghost${i}@shop.vn`);
@@ -281,5 +281,50 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
       expect(await id(page, 'auth-login-rate-limited').count()).toBe(0);
       expect(await id(page, 'auth-login-submit').isDisabled()).toBe(false);
     }, 75_000);
+  });
+
+  // Ba màn còn lại có cửa sổ giới hạn 1 giờ: dùng đồng hồ giả của trình duyệt để tua giờ chờ của giao diện (máy chủ vẫn đếm giờ thật).
+  const API = 'http://localhost:3101/api/v1';
+  const hammer = (page: Page, path: string, body: (i: number) => unknown, n: number) => page.evaluate(async ([url, bodies]) => {
+    for (const b of bodies as unknown[]) await fetch(url as string, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
+  }, [`${API}${path}`, Array.from({ length: n }, (_, i) => body(i))] as const);
+  const limitedThenOpen = async (page: Page, testid: string, submit: string) => {
+    await see(id(page, testid));
+    expect(await textOf(id(page, testid))).toMatch(/\d+ phút/); // CORS phơi Retry-After (app-setup.ts) nên banner hiện số phút (xem Lệch spec của report)
+    expect(await id(page, submit).isDisabled()).toBe(true);
+    await page.clock.fastForward(3_700_000); // hết Retry-After (tối đa 1 giờ): banner biến mất, nút mở lại, không tải lại trang
+    await count(id(page, testid), 0);
+    await eventually(async () => expect(await id(page, submit).isDisabled()).toBe(false));
+  };
+
+  e2e('AUTH-E2E-20261007-085336711: đăng ký vượt 10 lần mỗi giờ (429) khóa nút kèm banner số phút, rồi mở lại khi hết Retry-After', async (page) => {
+    await page.goto('/register');
+    await page.clock.install();
+    await hammer(page, '/auth/register', (i) => ({ full_name: 'Nguyễn An', email: `rl${i}@shop.vn`, password: PASSWORD }), 10);
+    await id(page, 'auth-register-full-name').fill('Nguyễn An');
+    await id(page, 'auth-register-email').fill('over@shop.vn');
+    await id(page, 'auth-register-password').fill(PASSWORD);
+    await id(page, 'auth-register-submit').click();
+    await limitedThenOpen(page, 'auth-register-rate-limited', 'auth-register-submit');
+    await count(id(page, 'auth-register-success'), 0); // lần thứ 11 không tạo gì
+  });
+
+  e2e('AUTH-E2E-20261007-085336746: quên mật khẩu vượt 20 lần mỗi giờ (429) khóa nút kèm banner số phút, rồi mở lại khi hết Retry-After', async (page) => {
+    await page.goto('/forgot-password');
+    await page.clock.install();
+    await hammer(page, '/auth/password/forgot', () => ({ email: 'a@shop.vn' }), 20);
+    await id(page, 'auth-forgot-password-email').fill('a@shop.vn');
+    await id(page, 'auth-forgot-password-submit').click();
+    await limitedThenOpen(page, 'auth-forgot-password-rate-limited', 'auth-forgot-password-submit');
+  });
+
+  e2e('AUTH-E2E-20261007-085336782: đặt lại mật khẩu vượt 10 lần mỗi giờ (429) khóa nút kèm banner số phút, rồi mở lại khi hết Retry-After', async (page) => {
+    await page.goto(`/reset-password#token=${'z'.repeat(43)}`);
+    await see(id(page, 'auth-reset-password-form'));
+    await page.clock.install();
+    await hammer(page, '/auth/password/reset', () => ({ token: 'z'.repeat(43), new_password: 'New-Pass-67890' }), 10);
+    await id(page, 'auth-reset-password-new-password').fill('New-Pass-67890');
+    await id(page, 'auth-reset-password-submit').click();
+    await limitedThenOpen(page, 'auth-reset-password-rate-limited', 'auth-reset-password-submit');
   });
 });

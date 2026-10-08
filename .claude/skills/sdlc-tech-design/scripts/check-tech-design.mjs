@@ -54,10 +54,13 @@ const modDeps = new Map(tableAfter(read('architecture.md'), '| Epic | Module').m
 const events = new Map(tableAfter(read('domain/events.md'), '| Event | Entity').map((r) => [r[0], { producer: r[2], consumers: list(r[3]) }]));
 const sbIds = new Set([...read('security-baseline.md').matchAll(/^\| (SB-\d+) \|/gm)].map((m) => m[1]));
 const matrixRoles = read('permissions-matrix.md').split(/\r?\n/).find((l) => l.startsWith('| Hành động'))?.split('|').map((s) => s.trim()).slice(3).filter(Boolean) ?? [];
-const reqs = new Map(), reqStatus = new Map();
+const reqs = new Map(), reqStatus = new Map(), commonCodes = new Set(); // commonCodes: mã lỗi chung ở dòng "Mã chung" của requirement (L44)
 for (const f of walk(specDir)) {
-  const fm = fmOf(readFileSync(f, 'utf8'));
-  if (fm.id?.includes('-REQ-')) { reqs.set(fm.id, fm.roles ?? []); reqStatus.set(fm.id, fm.status); }
+  const t = readFileSync(f, 'utf8'), fm = fmOf(t);
+  if (fm.id?.includes('-REQ-')) {
+    reqs.set(fm.id, fm.roles ?? []); reqStatus.set(fm.id, fm.status);
+    for (const l of t.split(/\r?\n/)) if (l.includes('Mã chung')) for (const m of l.slice(l.indexOf('Mã chung')).matchAll(/`([a-z][a-z0-9_-]{2,})`/g)) commonCodes.add(m[1]);
+  }
 }
 
 // bảng -> epic sở hữu: từ các tài liệu DB (cột Bảng/Entity) và quy ước snake_case số nhiều của tên entity (User -> users)
@@ -71,7 +74,7 @@ const errors = [], warnings = [];
 const docs = walk(specDir).filter((f) => /[\\/]design[\\/]/.test(f)).map((f) => ({ f, text: readFileSync(f, 'utf8') }))
   .map((d) => ({ ...d, fm: fmOf(d.text) })).filter((d) => !epicOnly || d.fm.epic === epicOnly);
 const err = (f, m) => errors.push(`${f}: ${m}`);
-const sigDiff = [];
+const sigDiff = []; // cảnh báo (lỗi ở --strict): chữ ký lệch (L30), mã lỗi gần trùng mã chung (L44), Kiểm bằng test cho biện pháp ở hạ tầng (L58)
 const endpoints = new Map(), dbEntities = new Set(), apiEpics = new Set(), secEpics = new Set();
 
 for (const { f, text, fm } of docs) {
@@ -111,6 +114,13 @@ for (const { f, text, fm } of docs) {
 
   if (type === 'API') {
     apiEpics.add(fm.epic);
+    // L44: mã lỗi dùng trong API (type urn:ecom:error:<mã>, mã trong cột Lỗi) gần trùng mã chung nhưng khác tên hoặc kiểu đặt tên
+    const norm = (c) => c.replace(/[-_]/g, ''), used = new Set([...text.matchAll(/urn:ecom:error:([a-z][a-z0-9_-]*)/g)].map((m) => m[1]));
+    for (const r of rows(section(text, 'Endpoint'))) for (const m of (r[4] ?? '').matchAll(/`([a-z][a-z0-9_-]{2,})`/g)) used.add(m[1]);
+    for (const u of used) {
+      const c = commonCodes.has(u) ? null : [...commonCodes].find((x) => norm(x) === norm(u) || (norm(u).length >= 4 && norm(x).startsWith(norm(u))));
+      if (c) sigDiff.push(`${f}: mã lỗi "${u}" gần trùng mã chung "${c}" (dòng "Mã chung" của requirement nền): dùng đúng mã chung hoặc đặt tên khác hẳn`);
+    }
     const rowsApi = rows(section(text, 'Endpoint'));
     if (!rowsApi.length) err(f, 'mục Endpoint trống');
     for (const [method, path, role, req, errs] of rowsApi) {
@@ -145,6 +155,8 @@ for (const { f, text, fm } of docs) {
       if (!/^[STRIDE]$/.test(stride)) err(f, `${code}: STRIDE phải là một chữ S, T, R, I, D hoặc E`);
       if (!measure) err(f, `${code}: thiếu biện pháp`);
       if (!/\b(test|hook|script|config|review)\b/.test(check)) err(f, `${code}: Kiểm bằng phải chứa test, hook, script, config hoặc review`);
+      // L58 (ponytail: `proxy` trơn bị loại vì "tin X-Forwarded-For từ proxy cấu hình" test được): Kiểm bằng test mà biện pháp do hạ tầng ngoài ứng dụng bảo đảm thì test không quan sát được điều người dùng nhận
+      if (/\btest\b/.test(check) && !/\b(review|config)\b/.test(check) && /\b(?:CDN|bucket|S3|reverse proxy)\b|proxy ngược|header phản hồi của kho/i.test(measure)) sigDiff.push(`${f}: ${code}: Kiểm bằng test nhưng Biện pháp do hạ tầng ngoài ứng dụng bảo đảm (CDN, bucket, S3, proxy ngược): đổi sang config hoặc review, hay nêu cách test quan sát được ở nơi người dùng nhận`);
       for (const id of list(sb)) if (!sbIds.has(id)) err(f, `${code}: ${id} không có trong security-baseline.md`);
       if (!list(sb).length) warnings.push(`${f}: ${code} là biện pháp mới (SB "-"), cần thêm vào security-baseline.md qua sdlc-foundation`);
     }

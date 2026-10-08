@@ -17,6 +17,8 @@ import { ValidationInterceptor } from './http/validation';
 import { JobRunner } from './jobs/job-runner';
 import { RetentionService } from './jobs/retention.service';
 import { AppLogger } from './logging/logger';
+import { createStorage } from './storage/factory';
+import { OBJECT_STORAGE } from './storage/storage';
 
 /** Nền tảng dùng chung (epic PRJ): mối quan tâm cắt ngang, module khác không cần khai ở cột Phụ thuộc (A-01, ADR-012). */
 @Global()
@@ -28,6 +30,8 @@ import { AppLogger } from './logging/logger';
     { provide: AppLogger, useFactory: (c: ConfigService) => AppLogger.create({ level: c.get('LOG_LEVEL'), env: c.get('APP_ENV') }), inject: [ConfigService] },
     // AUTH thay bằng triển khai thật; mặc định không có phiên nào (mọi endpoint không công khai trả 401).
     { provide: SESSION_RESOLVER, useValue: { resolve: async () => null } },
+    // Kho object dùng chung (ADR-012): USR ảnh đại diện, PRD ảnh sản phẩm.
+    { provide: OBJECT_STORAGE, useFactory: createStorage, inject: [ConfigService] },
     Clock, PrismaService, TransactionService, AuditService, EventsService, OutboxRelay, IdempotencyService,
     RateLimitService, RetentionService, JobRunner, SessionService, IdempotencyInterceptor,
     // Thứ tự khớp flow PRJ: giới hạn tần suất, CSRF, xác thực và quyền (guard); schema (interceptor); lỗi (filter).
@@ -38,7 +42,7 @@ import { AppLogger } from './logging/logger';
     { provide: APP_FILTER, useClass: ProblemFilter },
   ],
   exports: [
-    ConfigService, AppLogger, SESSION_RESOLVER, Clock, PrismaService, TransactionService, AuditService, EventsService,
+    ConfigService, AppLogger, OBJECT_STORAGE, SESSION_RESOLVER, Clock, PrismaService, TransactionService, AuditService, EventsService,
     OutboxRelay, IdempotencyService, RateLimitService, RetentionService, JobRunner, SessionService,
   ],
 })

@@ -121,12 +121,19 @@ export const q = <T = Record<string, any>>(t: AuthApp, sql: string): Promise<T[]
 export const outboxTypes = async (t: AuthApp): Promise<string[]> => (await q<{ type: string }>(t, 'SELECT type FROM outbox_events ORDER BY occurred_at, created_at, id')).map((r) => r.type);
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Trung vị thời gian (ms) của n lần gọi tuần tự. */
-export async function medianMs(n: number, fn: (i: number) => Promise<unknown>, after?: () => Promise<unknown>): Promise<number> {
-  const xs: number[] = [];
-  for (let i = 0; i < n; i++) { const s = process.hrtime.bigint(); await fn(i); xs.push(Number(process.hrtime.bigint() - s) / 1e6); if (after) await after(); }
-  xs.sort((a, b) => a - b);
-  return xs[Math.floor(n / 2)];
+/** Mốc "bây giờ" của test AUTH: giờ thật lúc nạp module (làm tròn giây), không mốc ngày cố định, để đồng hồ giả và now() của CSDL không lệch nhau khi ngày trôi qua. */
+export const NOW0 = new Date(Math.floor(Date.now() / 1000) * 1000);
+
+/** Trung vị thời gian (ms) của hai nhánh, đo XEN KẼ từng cặp (A rồi B ở vòng chẵn, B rồi A ở vòng lẻ, lặp n lần) để tải máy trôi theo thời gian ảnh hưởng đều cả hai nhánh. */
+export async function medianPairMs(n: number, a: (i: number) => Promise<unknown>, b: (i: number) => Promise<unknown>, after?: () => Promise<unknown>): Promise<[number, number]> {
+  const xa: number[] = [], xb: number[] = [];
+  const timed = async (fn: () => Promise<unknown>) => { const s0 = process.hrtime.bigint(); await fn(); const ms = Number(process.hrtime.bigint() - s0) / 1e6; if (after) await after(); return ms; };
+  // đổi chỗ A và B ở các vòng lẻ: lời gọi ĐỨNG ĐẦU mỗi cặp chậm hơn lời gọi đứng sau (đo: 1,8 ms so với 1,1 ms lúc rảnh, 30 ms so với 3,6 ms lúc máy tải nặng) nên nếu A luôn đứng đầu thì A luôn "chậm hơn" và ca đỏ giả khi máy bận (REV-ORD-23)
+  for (let i = 0; i < n; i++) {
+    if (i % 2 === 0) { xa.push(await timed(() => a(i))); xb.push(await timed(() => b(i))); } else { xb.push(await timed(() => b(i))); xa.push(await timed(() => a(i))); }
+  }
+  const med = (xs: number[]) => [...xs].sort((p, q) => p - q)[Math.floor(xs.length / 2)];
+  return [med(xa), med(xb)];
 }
 
 /** Token một lần dựng trực tiếp trong CSDL (fixture); trả token thô để gọi API. */

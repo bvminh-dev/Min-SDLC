@@ -42,7 +42,7 @@ export class EventsService {
     await tx.$executeRaw`
       INSERT INTO outbox_events (id, type, aggregate_type, aggregate_id, payload, correlation_id, occurred_at)
       VALUES (${id}::uuid, ${event.type}, ${event.aggregate_type}, ${event.aggregate_id}, ${JSON.stringify(event.payload)}::jsonb,
-              ${currentCorrelationId() ?? 'none'}, now())`;
+              ${currentCorrelationId() ?? 'none'}, clock_timestamp())`; // clock_timestamp, không now(): now() đứng yên trong giao dịch nên hai event cùng giao dịch (OrderCreated rồi OrderConfirmed của đơn COD) bằng `occurred_at` và relay sắp theo `id` uuid ngẫu nhiên có thể đảo thứ tự
     return id;
   }
 

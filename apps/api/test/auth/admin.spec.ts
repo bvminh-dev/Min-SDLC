@@ -1,6 +1,6 @@
 import { AuditService, type AuditEntry, type Tx } from '../../src/modules/platform';
 import { createAdmin } from '../../src/modules/auth/create-admin';
-import { PASSWORD, createAuthApp, get, http, login, post, q, seedSession, seedUser, type AuthApp } from '../support/auth';
+import { NOW0, PASSWORD, createAuthApp, get, http, login, post, q, seedSession, seedUser, type AuthApp } from '../support/auth';
 import { ORIGIN } from '../support/app';
 import { testDbUrl, truncateAll } from '../support/db';
 
@@ -8,7 +8,7 @@ describe('Quản trị người dùng (AUTH-REQ-20261006-095515956, AUTH-REQ-202
   let t: AuthApp;
   beforeAll(async () => { t = await createAuthApp({ env: { TRUST_PROXY_HOPS: '1' } }); });
   afterAll(() => t.close());
-  beforeEach(async () => { await truncateAll(t.prisma); t.mails.length = 0; t.clock.set(new Date('2026-10-06T10:00:00.000Z')); });
+  beforeEach(async () => { await truncateAll(t.prisma); t.mails.length = 0; t.clock.set(new Date(NOW0)); });
   const asAdmin = async () => { const u = await seedUser(t, { role: 'admin', email: `adm${Math.random().toString(36).slice(2, 8)}@shop.vn` }); return { ...u, cookie: await login(t, u) }; };
   const patchRole = (id: string, cookie: string | undefined, body: unknown, origin: string | null = ORIGIN) => {
     let r = http(t).patch(`/api/v1/admin/users/${id}/role`).set('Content-Type', 'application/json');
@@ -38,7 +38,7 @@ describe('Quản trị người dùng (AUTH-REQ-20261006-095515956, AUTH-REQ-202
   const counts = async () => ({ audit: (await q(t, 'SELECT 1 FROM audit_logs')).length, outbox: (await q(t, 'SELECT 1 FROM outbox_events')).length });
 
   it('AUTH-TC-20261006-100642082: admin xem danh sách (mới nhất trước, đủ tổng, không lộ băm), tìm theo tiền tố email, đổi role có audit cùng giao dịch, không phát event', async () => {
-    const base = new Date('2026-10-01T00:00:00.000Z');
+    const base = new Date(NOW0.getTime() - 6 * 24 * 3600_000);
     const admin = await seedUser(t, { role: 'admin', email: 'a1@shop.vn', createdAt: base });
     const cookie = await login(t, admin);
     for (let i = 1; i <= 44; i++) await seedUser(t, { email: i === 1 ? 'an@shop.vn' : i === 2 ? 'AN@zeta.vn' : i === 3 ? 'banan@shop.vn' : i === 4 ? 'a_b@shop.vn' : i === 5 ? 'axb@shop.vn' : `c${i}@shop.vn`, createdAt: new Date(base.getTime() + i * 60_000), name: `Người ${i}` });
@@ -88,7 +88,7 @@ describe('Quản trị người dùng (AUTH-REQ-20261006-095515956, AUTH-REQ-202
     t.clock.advance(31 * 60_000);
     expect((await get(t, '/admin/users', old)).status).toBe(401);
 
-    t.clock.set(new Date('2026-10-06T10:00:00.000Z'));
+    t.clock.set(new Date(NOW0));
     const a1 = await asAdmin();
     const own = await patchRole(a1.id, a1.cookie, { role: 'staff' });
     expect([own.status, own.body.type]).toEqual([403, 'urn:ecom:error:cannot_change_own_role']);

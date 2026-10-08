@@ -66,3 +66,36 @@ Cơ chế không làm vỡ dữ liệu cũ: `report.md` và `review.md` có `kit
 | L40 | .claude/sdlc/hooks/stop-check-spec.mjs | .claude/sdlc/hooks/stop-check-spec.test.mjs | 18/18 qua |
 | L41 | .claude/skills/sdlc-retro/scripts/check-lessons.mjs, .claude/skills/sdlc-retro/SKILL.md | .claude/skills/sdlc-retro/scripts/check-lessons.test.mjs | 18/18 qua |
 | L42 | .claude/skills/sdlc-retro/SKILL.md, .claude/skills/sdlc-retro/templates/lesson.md, .claude/skills/sdlc-retro/evals/traps.md | .claude/skills/sdlc-retro/evals/traps.md | 18/18 qua |
+
+## 2026-10-07 | spec/lessons/2026-10-06-AUTH-code.md
+
+Lượt `sdlc-improve-kit` trên bài học giai đoạn code của epic AUTH. Kiểm cứng mới viết thành assert thất bại trước (đã xác nhận chạy `*.test.mjs` mới với script HEAD thì đỏ), rồi sửa.
+
+Cơ chế không làm vỡ dữ liệu cũ: các kiểm mới của `check-report` (L43 nhãn sai, L49 mốc thời gian cứng, và L53, L55 ở lượt USR) và `check-review` (L48) lấy `kit_version: 3` (template mới đặt sẵn) hoặc `--strict` làm mốc: LỖI với file `kit_version: 3`, chỉ cảnh báo `Lưu ý:` với file `kit_version: 2` hiện có (PRJ, AUTH, USR) và file không có trường. Không nâng `kit_version: 2` thành lỗi vì sẽ làm đỏ report/review đã có và hook Stop. `check-tests` (L45, L50) và `check-tech-design` (L44) theo mẫu L25/L30: cảnh báo, lỗi ở `--strict`. L43 chỉ bắt mục `[đã chọn]` còn CHỜ sdlc-impact/sdlc-foundation ("nên/cần/phải/chờ ... qua sdlc-impact", "nên ghi vào ADR", "review X cân nhắc lại", "chưa chạy sdlc-impact"), không bắt mục đã đồng bộ ("Đã đồng bộ spec qua sdlc-impact") vì report AUTH/PRJ/USR đã ghi lại như vậy. L49 chỉ xét literal ISO trong khoảng hai ngày quanh hôm nay (`fixed-clock:` miễn). L44 lấy "Mã chung" từ requirement nền, so `-`/`_` và tiền tố; spec hiện tại đã đồng bộ nên không có cảnh báo mới. L47: `mutate.mjs` đặt ở `.claude/skills/sdlc-review/scripts/` (đúng "Nơi sửa" của bài học, implement dùng chung qua SKILL); không sửa `apps/api/scripts/mutations-*.mjs` của dự án. L51 loại `spec`: chuyển nền, không sửa.
+
+| Mã | File đã đổi | Ca hồi quy | Kết quả selftest |
+|---|---|---|---|
+| L43 | .claude/skills/sdlc-implement/scripts/check-report.mjs, .claude/skills/sdlc-implement/templates/report.md, .claude/skills/sdlc-implement/SKILL.md | .claude/skills/sdlc-implement/scripts/check-report.test.mjs | 19/19 qua |
+| L44 | .claude/skills/sdlc-tech-design/scripts/check-tech-design.mjs, .claude/skills/sdlc-tech-design/SKILL.md | .claude/skills/sdlc-tech-design/scripts/check-tech-design.test.mjs | 19/19 qua |
+| L45 | .claude/skills/sdlc-test-design/scripts/check-tests.mjs, .claude/skills/sdlc-test-design/templates/tc.md, .claude/skills/sdlc-test-design/SKILL.md | .claude/skills/sdlc-test-design/scripts/check-tests.test.mjs | 19/19 qua |
+| L46 | .claude/skills/sdlc-implement/evals/traps.md | .claude/skills/sdlc-implement/evals/traps.md | 19/19 qua |
+| L47 | .claude/skills/sdlc-review/scripts/mutate.mjs, .claude/skills/sdlc-review/SKILL.md, .claude/skills/sdlc-review/templates/review.md, .claude/skills/sdlc-review/evals/traps.md, .claude/skills/sdlc-implement/SKILL.md, .claude/skills/sdlc-implement/templates/report.md | .claude/skills/sdlc-review/scripts/mutate.test.mjs | 19/19 qua |
+| L48 | .claude/skills/sdlc-review/scripts/check-review.mjs, .claude/skills/sdlc-review/templates/review.md, .claude/skills/sdlc-review/SKILL.md | .claude/skills/sdlc-review/scripts/check-review.test.mjs | 19/19 qua |
+| L49 | .claude/skills/sdlc-implement/scripts/check-report.mjs, .claude/skills/sdlc-implement/templates/report.md, .claude/skills/sdlc-implement/SKILL.md | .claude/skills/sdlc-implement/scripts/check-report.test.mjs | 19/19 qua |
+| L50 | .claude/skills/sdlc-test-design/scripts/check-tests.mjs, .claude/skills/sdlc-test-design/templates/tc.md, .claude/skills/sdlc-test-design/SKILL.md | .claude/skills/sdlc-test-design/scripts/check-tests.test.mjs | 19/19 qua |
+| L51 | chuyển nền | - | 19/19 qua |
+
+## 2026-10-07 | spec/lessons/2026-10-06-USR-code.md
+
+Lượt `sdlc-improve-kit` trên bài học giai đoạn code của epic USR, cùng cơ chế `kit_version: 3` / `--strict` như mục trên. L53: `check-report` lấy mã đổi từ git (`git diff --name-only HEAD` hoặc `--base <ref>`, cộng tệp chưa theo dõi) và module của epic từ `spec/architecture.md`; cây sạch (đã commit) thì không thấy gì, nên chạy trước khi commit hoặc truyền `--base`; chỉ nhận bố cục `src/modules/<m>/` và `test/<m>/`. L55: hai `medianMs(` cách nhau tối đa 4 dòng không có `it(`/`test(` xen giữa. L56: `find-refs.mjs --phrase` và dòng `Cụm từ xuyên module: "<cụm>"` trong báo cáo tác động (chỉ khi có dòng đó mới kiểm, nên báo cáo hiện có không đổi). L57: chỉ cảnh báo (không lỗi cả với requirement `draft`) vì BR nói "chỉ X" có thể về hành động khác của cùng requirement; chỉ xét requirement có đúng một hàng ma trận (đã tách hàng thì thôi), admin bao staff. L58: bỏ `proxy` trơn khỏi mẫu hạ tầng vì "tin X-Forwarded-For từ proxy cấu hình" test được (PRJ T7, ORD T3, INV T16 là ví dụ báo nhầm). L52, L54: eval (R7, R8, M13) và SKILL test-design/review. L59 loại `spec`: chuyển nền (ADR-018), không sửa.
+
+| Mã | File đã đổi | Ca hồi quy | Kết quả selftest |
+|---|---|---|---|
+| L52 | .claude/skills/sdlc-review/evals/traps.md, .claude/skills/sdlc-review/SKILL.md, .claude/skills/sdlc-test-design/SKILL.md, .claude/skills/sdlc-test-design/templates/tc.md | .claude/skills/sdlc-review/evals/traps.md | 19/19 qua |
+| L53 | .claude/skills/sdlc-implement/scripts/check-report.mjs, .claude/skills/sdlc-implement/SKILL.md | .claude/skills/sdlc-implement/scripts/check-report.test.mjs | 19/19 qua |
+| L54 | .claude/skills/sdlc-implement/evals/traps.md | .claude/skills/sdlc-implement/evals/traps.md | 19/19 qua |
+| L55 | .claude/skills/sdlc-implement/scripts/check-report.mjs, .claude/skills/sdlc-implement/templates/report.md, .claude/skills/sdlc-implement/SKILL.md | .claude/skills/sdlc-implement/scripts/check-report.test.mjs | 19/19 qua |
+| L56 | .claude/skills/sdlc-impact/scripts/find-refs.mjs, .claude/skills/sdlc-impact/scripts/check-impact.mjs, .claude/skills/sdlc-impact/SKILL.md, .claude/skills/sdlc-impact/templates/report.md, .claude/skills/sdlc-tech-design/SKILL.md | .claude/skills/sdlc-impact/scripts/check-impact.test.mjs | 19/19 qua |
+| L57 | .claude/skills/sdlc-research/scripts/check-spec.mjs, .claude/skills/sdlc-research/SKILL.md | .claude/skills/sdlc-research/scripts/check-spec.test.mjs | 19/19 qua |
+| L58 | .claude/skills/sdlc-tech-design/scripts/check-tech-design.mjs, .claude/skills/sdlc-tech-design/SKILL.md | .claude/skills/sdlc-tech-design/scripts/check-tech-design.test.mjs | 19/19 qua |
+| L59 | chuyển nền | - | 19/19 qua |

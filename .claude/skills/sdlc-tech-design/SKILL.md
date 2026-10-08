@@ -16,6 +16,8 @@ Phần cần phán đoán (chọn cách thiết kế) do skill làm. Phần ph�
 - **Bám ADR đã `accepted`.** Không đổi stack, kiểu API, CSDL, xác thực... trong tài liệu thiết kế. Cần quyết định nền mới thì ghi `[OPEN]` trong tài liệu và chuyển người dùng sang `sdlc-foundation` để thêm ADR; không tự quyết.
 - **Kiến trúc là ràng buộc cứng.** API chỉ gọi trực tiếp module có trong cột *Phụ thuộc* của epic ở `architecture.md` (`depends_on`); liên lạc ngược chiều đi bằng event (`emits`, `consumes`, theo `events.md`). Cần phụ thuộc mới thì phải có ADR mới, không thêm lặng lẽ.
 - **Không sửa file `approved`, không tự đổi sang `approved`** (hook chặn). Thiết kế đổi sau khi duyệt thì chạy `sdlc-impact`.
+- **Không chép lại thứ tự kiểm, mã lỗi chung hay giới hạn của nền**: trỏ tới tài liệu API của PRJ (nơi sửa duy nhất), không viết lại bản thứ hai. Mã lỗi dùng đúng mã chung ở dòng "Mã chung" của requirement lỗi nền (`validation-failed`, không `validation`); mã riêng của epic chỉ khi nền cho phép (ADR-023).
+- **Hành vi do hạ tầng bảo đảm** (header phản hồi của kho, CDN, bucket) không ghi `Kiểm bằng: test`: ghi `config` hoặc `review`, hay nêu cách test quan sát được ở nơi người dùng nhận.
 - Không bịa nghiệp vụ: endpoint nào cũng truy về một requirement trong `links`, role của endpoint nằm trong `roles` của requirement đó.
 
 ## Quy trình
@@ -32,7 +34,8 @@ Phần cần phán đoán (chọn cách thiết kế) do skill làm. Phần ph�
 - **DB**: entity thuộc đúng epic; trạng thái khớp vòng đời; **khóa ngoại chỉ trỏ vào bảng của chính epic hoặc module trong Phụ thuộc** (`FK x`, `-> x.id`, `REFERENCES x`; còn lại dùng cột tham chiếu không FK + `[OPEN]`); entity của epic chưa có DB (cảnh báo/lỗi).
 - **API**: path `/api/v1/`, method hợp lệ, endpoint không trùng, role ⊆ requirement ⊆ ma trận, 401/403 cho endpoint cần đăng nhập, `depends_on`/`emits`/`consumes` khớp kiến trúc và event.
 - **Chữ ký**: `@Tên({ a, b })` và `interface Tên { a, b }` trong backtick, cùng tên mà khác tập khóa giữa requirement, API của epic và `architecture.md` thì cảnh báo (lỗi ở `--strict`): sửa một nguồn gốc trước khi duyệt thiết kế.
-- **SEC**: STRIDE hợp lệ, SB tồn tại, có cách kiểm, epic có API mà thiếu SEC.
+- **SEC**: STRIDE hợp lệ, SB tồn tại, có cách kiểm, epic có API mà thiếu SEC; `Kiểm bằng` chứa `test` mà Biện pháp nêu CDN, bucket, S3, proxy ngược hoặc header phản hồi của kho thì cảnh báo (lỗi ở `--strict`, L58).
+- **Mã lỗi**: mã trong API (`urn:ecom:error:<mã>`, cột Lỗi) gần trùng mã chung của nền (cùng chữ khác `-`/`_`, hoặc là tiền tố của mã chung) thì cảnh báo (lỗi ở `--strict`, L44).
 Tự kiểm script: `node .claude/skills/sdlc-tech-design/scripts/check-tech-design.test.mjs`.
 
 ## Chưa làm

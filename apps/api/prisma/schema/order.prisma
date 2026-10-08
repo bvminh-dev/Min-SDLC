@@ -1,0 +1,123 @@
+// Module order (epic ORD, ORD-DB-20261006-092703753): Order, OrderItem, OrderStatusHistory.
+// Phần Prisma không biểu diễn được (CHECK, chỉ mục một phần, trigger chỉ-thêm) nằm trong migration SQL.
+// Khóa ngoại chỉ trỏ vào bảng của ORD hoặc `users` (AUTH); `product_id`, `shipping_method_id` là cột trơn (ranh giới module, P7, SB-35).
+
+enum OrderStatus {
+  pending
+  confirmed
+  paid
+  shipped
+  delivered
+  cancelled
+  expired
+  returned
+
+  @@map("order_status")
+}
+
+enum OrderPaymentStatus {
+  pending
+  processing
+  succeeded
+  failed
+  expired
+  cancelled
+  refunded
+
+  @@map("order_payment_status")
+}
+
+enum OrderPaymentMethod {
+  vnpay
+  cod
+
+  @@map("order_payment_method")
+}
+
+enum OrderCancelReason {
+  customer_request
+  admin
+  payment_failed
+  stock_commit_failed
+
+  @@map("order_cancel_reason")
+}
+
+enum OrderActorRole {
+  customer
+  admin
+  system
+
+  @@map("order_actor_role")
+}
+
+model Order {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String             @map("user_id") @db.Uuid
+  code             String             @unique
+  status           OrderStatus        @default(pending)
+  paymentStatus    OrderPaymentStatus @default(pending) @map("payment_status")
+  itemsTotal       BigInt             @map("items_total")
+  discount         BigInt
+  shippingFee      BigInt             @map("shipping_fee")
+  grandTotal       BigInt             @map("grand_total")
+  shippingAddress  Json               @map("shipping_address")
+  shippingMethodId String             @map("shipping_method_id") @db.Uuid
+  paymentMethod    OrderPaymentMethod @map("payment_method")
+  paymentExpiresAt DateTime?          @map("payment_expires_at") @db.Timestamptz(6)
+  handoffLockedAt  DateTime?          @map("handoff_locked_at") @db.Timestamptz(6)
+  trackingNumber   String?            @map("tracking_number")
+  cancelReason     OrderCancelReason? @map("cancel_reason")
+  cancelledByRole  OrderActorRole?    @map("cancelled_by_role")
+  confirmedAt      DateTime?          @map("confirmed_at") @db.Timestamptz(6)
+  paidAt           DateTime?          @map("paid_at") @db.Timestamptz(6)
+  deliveredAt      DateTime?          @map("delivered_at") @db.Timestamptz(6)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user    User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items   OrderItem[]
+  history OrderStatusHistory[]
+  shipments Shipment[] // khóa ngoại của SHP (shipments.order_id): chỉ để ràng buộc toàn vẹn, ORD không truy vấn
+
+  @@index([userId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([userId, status, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([status, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@map("orders")
+}
+
+model OrderItem {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId      String @map("order_id") @db.Uuid
+  productId    String @map("product_id") @db.Uuid
+  nameSnapshot String @map("name_snapshot")
+  unitPrice    BigInt @map("unit_price")
+  quantity     Int
+  position     Int // thứ tự dòng khi đặt (ORD-DB không có cột này: id là uuid ngẫu nhiên nên không khôi phục được thứ tự dòng)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, position])
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seq        BigInt         @unique @default(autoincrement())
+  orderId    String         @map("order_id") @db.Uuid
+  fromStatus OrderStatus?   @map("from_status")
+  toStatus   OrderStatus    @map("to_status")
+  actorId    String?        @map("actor_id") @db.Uuid
+  actorRole  OrderActorRole @map("actor_role")
+  reason     String?
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([orderId, seq])
+  @@map("order_status_history")
+}

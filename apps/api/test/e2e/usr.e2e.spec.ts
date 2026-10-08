@@ -87,7 +87,7 @@ describe('E2E USR (trình duyệt thật, API thật)', () => {
     expect(dialogs).toEqual([]);
   });
 
-  e2e('USR-E2E-20261006-102054373: customer đổi mật khẩu: sai mật khẩu hiện tại, bị giới hạn rồi đổi thành công', async (page) => {
+  e2e('USR-E2E-20261006-102054373 và USR-E2E-20261007-085336817 (trạng thái bị giới hạn: banner, nút khóa, thoát khi hết giờ): customer đổi mật khẩu: sai mật khẩu hiện tại, bị giới hạn rồi đổi thành công', async (page) => {
     await seedUser({ email: 'u1@shop.vn', password: 'Old-Password-1' });
     await loginUi(page, 'u1@shop.vn', 'Old-Password-1');
     await page.goto('/account/password');
@@ -255,7 +255,7 @@ describe('E2E USR (trình duyệt thật, API thật)', () => {
     await see(id(page, 'auth-access-denied-container'));
   });
 
-  e2e('USR-E2E-20261006-102054475: admin tra cứu khách theo email và thấy hồ sơ đầy đủ kèm địa chỉ; bị giới hạn rồi thoát khỏi trạng thái đó', async (page) => {
+  e2e('USR-E2E-20261006-102054475 và USR-E2E-20261007-085336850 (trạng thái bị giới hạn: banner, nút khóa, thoát khi hết giờ): admin tra cứu khách theo email và thấy hồ sơ đầy đủ kèm địa chỉ; bị giới hạn rồi thoát khỏi trạng thái đó', async (page) => {
     const dialogs = noDialogs(page);
     await seedUser({ email: 'ad1@shop.vn', role: 'admin' });
     await seedUser({ email: 'an.nguyen@shop.vn', name: 'Nguyễn An', phone: '0901234567', avatar: true });

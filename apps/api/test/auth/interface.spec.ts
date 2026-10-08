@@ -1,8 +1,8 @@
 import { DomainError, RateLimitService } from '../../src/modules/platform';
-import { createAuthApp, get, outboxTypes, post, q, seedSession, seedUser, type AuthApp } from '../support/auth';
+import { NOW0, createAuthApp, get, outboxTypes, post, q, seedSession, seedUser, type AuthApp } from '../support/auth';
 import { truncateAll } from '../support/db';
 
-const T0 = new Date('2026-10-06T10:00:00.000Z');
+const T0 = new Date(NOW0);
 const OLD = 'Old-Password-1';
 const NEW = 'New-Password-22';
 const STRANGER = '99999999-9999-4999-8999-999999999999';
@@ -178,6 +178,29 @@ describe('Giao diện đồng bộ của AUTH cho USR, NTF, REV (AUTH-API, Giao 
       expect(await q(t, `SELECT 1 FROM outbox_events WHERE type = 'PasswordChanged' AND payload->>'user_id' = '${race.id}'`)).toHaveLength(1);
       const winner = results[0].status === 'fulfilled' ? 'First-Password-11' : 'Second-Password-22';
       expect(await canLogin(race, winner)).toBe(200);
+    }, 60_000);
+  });
+
+  describe('changePassword song song (ADR-014 take nguyên tử)', () => {
+    it('USR-TC-20261007-144433797 và AUTH-TC-20261006-180337117: 40 lời gọi mật khẩu hiện tại sai song song chỉ cho đúng 5 lần invalid_current_password, 35 lần rate-limited; mật khẩu đúng cũng bị chặn; mật khẩu hiện tại đúng mà mới sai chính sách không tính lần sai', async () => {
+      const u1 = await seedUser(t, { email: 'par1@shop.vn', password: OLD });
+      const a = await seedSession(t, u1.id);
+      const before = await hashOf(u1.id);
+      const rs = await Promise.allSettled(Array.from({ length: 40 }, () => t.api.changePassword(u1.id, a.id, 'Sai-Mat-Khau-9', NEW)));
+      const codes = rs.map((r) => (r.status === 'rejected' ? (r.reason as DomainError).code : 'ok'));
+      expect(codes.filter((c) => c === 'invalid_current_password')).toHaveLength(5);
+      expect(codes.filter((c) => c === 'rate-limited')).toHaveLength(35);
+      for (const r of rs) if (r.status === 'rejected' && (r.reason as DomainError).code === 'rate-limited') expect(Number((r.reason as DomainError).options.headers?.['Retry-After'])).toBeGreaterThanOrEqual(1);
+      expect(await hashOf(u1.id)).toBe(before);
+      expect((await sessions(u1.id)).map((x) => x.status)).toEqual(['active']);
+      await domain(t.api.changePassword(u1.id, a.id, OLD, NEW), 'rate-limited'); // mật khẩu đúng cũng bị chặn
+      t.clock.advance(3600_000 + 1000); // qua cả cửa sổ 15 phút và cửa sổ giờ
+      expect((await t.api.changePassword(u1.id, a.id, OLD, NEW)).new_session.id).toMatch(/^[0-9a-f-]{36}$/);
+
+      const u2 = await seedUser(t, { email: 'par2@shop.vn', password: OLD });
+      const bad = await Promise.allSettled(Array.from({ length: 5 }, () => t.api.changePassword(u2.id, STRANGER, OLD, 'short')));
+      expect(bad.map((r) => (r.status === 'rejected' ? (r.reason as DomainError).code : 'ok'))).toEqual(Array(5).fill('validation-failed')); // song song dưới ngưỡng 5: cả 5 đều qua (quá ngưỡng thì chặn thận trọng, kể cả mật khẩu đúng)
+      expect(await wrongCount(u2.id)).toBe(0); // mật khẩu hiện tại đúng được hoàn lượt, không tính lần sai
     }, 60_000);
   });
 

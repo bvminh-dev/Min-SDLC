@@ -1,0 +1,87 @@
+// Module shipping (epic SHP, SHP-DB-20261006-101603015): ShippingMethod, Shipment, ShipmentStatusHistory.
+// Phần Prisma không biểu diễn được (CHECK, chỉ mục một phần và theo biểu thức, trigger chỉ-thêm) nằm trong migration SQL.
+// Khóa ngoại chỉ trỏ vào bảng của SHP hoặc `orders` (ORD, ràng buộc toàn vẹn; SHP không SELECT `orders`, SB-35).
+
+enum ShipmentStatus {
+  pending
+  shipped
+  delivered
+  failed
+  returned
+  cancelled
+
+  @@map("shipment_status")
+}
+
+enum ShipmentHistoryEvent {
+  status_changed
+  tracking_changed
+
+  @@map("shipment_history_event")
+}
+
+enum ShipmentFailReason {
+  customer_unreachable
+  refused
+  wrong_address
+  damaged
+  other
+
+  @@map("shipment_fail_reason")
+}
+
+model ShippingMethod {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  baseFee   BigInt   @map("base_fee")
+  rule      Json
+  isActive  Boolean  @default(true) @map("is_active")
+  version   Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  shipments Shipment[]
+
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@map("shipping_methods")
+}
+
+model Shipment {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId          String         @map("order_id") @db.Uuid
+  shippingMethodId String         @map("shipping_method_id") @db.Uuid
+  status           ShipmentStatus @default(pending)
+  trackingNumber   String?        @map("tracking_number")
+  codAmount        BigInt         @default(0) @map("cod_amount")
+  shippedAt        DateTime?      @map("shipped_at") @db.Timestamptz(6)
+  deliveredAt      DateTime?      @map("delivered_at") @db.Timestamptz(6)
+  version          Int            @default(1)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  order   Order                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  method  ShippingMethod          @relation(fields: [shippingMethodId], references: [id], onDelete: Restrict)
+  history ShipmentStatusHistory[]
+
+  @@index([status, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@index([orderId])
+  @@map("shipments")
+}
+
+model ShipmentStatusHistory {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seq            BigInt               @unique @default(autoincrement())
+  shipmentId     String               @map("shipment_id") @db.Uuid
+  event          ShipmentHistoryEvent
+  status         ShipmentStatus
+  trackingNumber String?              @map("tracking_number")
+  reasonCode     ShipmentFailReason?  @map("reason_code")
+  note           String?
+  createdAt      DateTime             @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Restrict)
+
+  @@index([shipmentId, seq])
+  @@map("shipment_status_history")
+}

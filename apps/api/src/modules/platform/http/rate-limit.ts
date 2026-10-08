@@ -69,6 +69,19 @@ export class RateLimitService {
   async hitCounter(key: string, windowSeconds: number): Promise<number> {
     return (await this.hit('A', `ctr:${key}`, windowSeconds)).count;
   }
+  /**
+   * Đếm NGUYÊN TỬ (ADR-014): một câu UPSERT tăng rồi so với `limit`, không còn khe giữa kiểm và ghi nên các lời gọi song song cũng chỉ qua tối đa `limit` lần.
+   * Lần vượt vẫn tăng bộ đếm (cửa sổ cố định, hết cửa sổ tự về 0). Thao tác thành công gọi `refund` để không tính lần đó.
+   */
+  async take(key: string, limit: number, windowSeconds: number): Promise<{ allowed: boolean; count: number; retryAfter: number }> {
+    const { count, retryAfter } = await this.hit('A', `ctr:${key}`, windowSeconds);
+    return { allowed: count <= limit, count, retryAfter };
+  }
+  /** Hoàn lại một lần `take` của cửa sổ hiện tại. ponytail: nếu `take` và `refund` rơi vào hai cửa sổ thì không hoàn (đếm dư tối đa một lần ở cửa sổ cũ, an toàn). */
+  async refund(key: string, windowSeconds: number): Promise<void> {
+    const { start } = this.windowStart(windowSeconds);
+    await this.prisma.$executeRaw`UPDATE rate_limit_counters SET count = GREATEST(count - 1, 0) WHERE bucket = ${`ctr:${key}`} AND window_start = ${start}::timestamptz`;
+  }
   async reset(key: string): Promise<void> {
     await this.prisma.$executeRaw`DELETE FROM rate_limit_counters WHERE bucket = ${`ctr:${key}`}`;
   }

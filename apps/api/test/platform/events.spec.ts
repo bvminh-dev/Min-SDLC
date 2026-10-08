@@ -60,6 +60,20 @@ describe('Outbox, relay, consumer idempotent (PRJ-REQ-20261006-095422563 BR12, B
     expect((await outbox(s)).filter((r) => r.aggregate_id === 'order-2')).toHaveLength(0);
   });
 
+  it('ORD-TC-20261006-111225380: hai event của cùng một đơn ghi trong CÙNG giao dịch (OrderCreated rồi OrderConfirmed của đơn COD) được relay phát đúng thứ tự ghi, lặp trên 40 đơn để uuid ngẫu nhiên lộ ra (occurred_at là clock_timestamp, không phải now() đứng yên trong giao dịch)', async () => {
+    const seen: string[] = [];
+    // loại event riêng cho ca này: bộ đăng ký của `s` dùng chung giữa các ca, OrderConfirmed thật sẽ kéo consumer này vào ca sau
+    for (const type of ['TC380Created', 'TC380Confirmed']) s.events.subscribe('TC380-consumer', type, async (_tx, e) => { seen.push(`${e.aggregate_id}:${type}`); });
+    const aggs = Array.from({ length: 40 }, (_, i) => `cod-${i}`);
+    for (const agg of aggs) await s.transactions.run(async (tx) => {
+      await s.events.publish(tx, { type: 'TC380Created', aggregate_type: 'order', aggregate_id: agg, payload: {} });
+      await s.events.publish(tx, { type: 'TC380Confirmed', aggregate_type: 'order', aggregate_id: agg, payload: {} });
+    });
+    for (let i = 0; i < 4; i++) await s.relay.runOnce(new Date(NOW.getTime() + i * 120_000));
+    expect(seen).toHaveLength(80);
+    for (const agg of aggs) expect(seen.filter((x) => x.startsWith(`${agg}:`))).toEqual([`${agg}:TC380Created`, `${agg}:TC380Confirmed`]);
+  });
+
   it('PRJ-TC-20261006-110200102: handler lỗi rollback, relay thử lại sau backoff, event không mất, tác động đúng một lần', async () => {
     let calls = 0, effects = 0;
     s.events.subscribe('NTF', 'OrderConfirmed', async (tx) => {

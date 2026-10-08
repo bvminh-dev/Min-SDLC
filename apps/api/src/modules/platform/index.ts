@@ -5,7 +5,7 @@ export { currentCorrelationId, runWithCorrelation, newCorrelationId } from './co
 export { ConfigService, registerConfigSchema, cfg, loadConfig, loadConfigFromProcess, ConfigError, type CoreConfig, type ConfigFragment, type ConfigVar } from './config/config';
 export { AppLogger } from './logging/logger';
 export { redactDeep, REDACTED } from './logging/redact';
-export { DomainError, registerProblem, errorRegistry, ErrorRegistry, type ProblemDef } from './errors/registry';
+export { DomainError, registerProblem, errorRegistry, ErrorRegistry, type ProblemDef, type ProblemExtra } from './errors/registry';
 export { PrismaService } from './db/prisma.service';
 export { TransactionService, type Tx } from './db/transaction.service';
 export { AuditService, type AuditEntry } from './audit/audit.service';
@@ -22,3 +22,8 @@ export { auditRoutes, auditPermissions, parseMatrix, routeIds } from './http/rou
 export { configureApp, nestLogger } from './http/app-setup';
 export { clientIp } from './http/client-ip';
 export { allowMultipart } from './http/multipart';
+export { readSingleFile, UploadError, MULTIPART_SLACK, type UploadRead, type UploadReason } from './http/upload';
+export { OBJECT_STORAGE, UnconfiguredStorage, type ObjectStorage, type StoredObject } from './storage/storage';
+export { S3Storage, type S3Options } from './storage/s3';
+export { createStorage } from './storage/factory';
+export { signV4, sha256Hex, type SignInput } from './storage/signer';

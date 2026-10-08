@@ -1,10 +1,10 @@
-import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { chmodSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { REPO_ROOT } from '../support/db';
 import { run, runScript } from '../support/sh';
+import { mkTmp } from '../support/tmp';
 
-const tmp = () => mkdtempSync(join(tmpdir(), 'ecom-ci-'));
+const tmp = () => mkTmp('ecom-ci-');
 // Chuỗi bí mật giả ghép lúc chạy để chính tệp test này không bị máy quét bắt.
 const FAKE_SECRET = `VNPAY_HASH_SECRET=${'AKIA' + 'IOSFODNN7EXAMPLE'}`;
 

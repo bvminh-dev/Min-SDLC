@@ -4,6 +4,8 @@
 - **Lý do:** <vì sao đổi>
 - **Người yêu cầu:** <ai quyết định đổi>
 
+Quy tắc xuyên module (thứ tự kiểm, mã lỗi, giới hạn) bị chép lại ở epic khác: thêm dòng `Cụm từ xuyên module: "<cụm từ>"` (tìm bằng `find-refs.mjs spec/ --phrase`); `check-impact` đòi mọi tài liệu nhắc cụm đó có dòng trong bảng.
+
 Tên file là ID của tài liệu bị đổi: `spec/changes/<ID>.md`.
 
 | ID bị ảnh hưởng | Loại | Mức | Lý do | Việc cần làm |

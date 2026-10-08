@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../../src/app.module';
 import { AppLogger, Clock, ConfigService, auditPermissions, auditRoutes, configureApp, parseMatrix } from '../../src/modules/platform';
-import { createAuthApp, get, http, login, post, q, seedUser, type AuthApp } from '../support/auth';
+import { NOW0, createAuthApp, get, http, login, post, q, seedUser, type AuthApp } from '../support/auth';
 import { FakeClock, ORIGIN, createTestApp, testConfig } from '../support/app';
 import { UndeclaredProbeController } from '../support/probe';
 import { REPO_ROOT, truncateAll } from '../support/db';
@@ -16,7 +16,7 @@ describe('Kiểm quyền theo role (AUTH-REQ-20261006-095515918)', () => {
   let t: AuthApp;
   beforeAll(async () => { t = await createAuthApp({ env: { TRUST_PROXY_HOPS: '1' } }); });
   afterAll(() => t.close());
-  beforeEach(async () => { await truncateAll(t.prisma); t.clock.set(new Date('2026-10-06T10:00:00.000Z')); });
+  beforeEach(async () => { await truncateAll(t.prisma); t.clock.set(new Date(NOW0)); });
   const as = async (role: 'customer' | 'staff' | 'admin') => login(t, await seedUser(t, { role }));
   const patchRole = (id: string, cookie: string, role: string) => http(t).patch(`/api/v1/admin/users/${id}/role`).set('Cookie', cookie).set('Origin', ORIGIN).set('Content-Type', 'application/json').send(JSON.stringify({ role }));
 
@@ -105,7 +105,7 @@ describe('Kiểm quyền theo role (AUTH-REQ-20261006-095515918)', () => {
     expect([exp.status, exp.body.type]).toEqual([401, 'urn:ecom:error:session_expired']);
 
     // tác nhân hệ thống: cookie phiên không bao giờ vào endpoint dành cho system, role system không tồn tại cho tài khoản
-    t.clock.set(new Date('2026-10-06T10:00:00.000Z'));
+    t.clock.set(new Date(NOW0));
     const callers: Record<string, string | undefined> = { guest: undefined, customer: await as('customer'), staff: await as('staff'), admin: await as('admin') };
     for (const [who, cookie] of Object.entries(callers)) {
       const r = await post(t, '/probe/system', {}, { cookie, ip: '10.9.1.1' });

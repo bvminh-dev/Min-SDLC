@@ -77,4 +77,20 @@ const REP38 = REPORT('1. [đã chọn] a.\n2. [chưa làm] **Audit không chặn
 freshBad({}, /chưa làm.*mục 2|mục 2.*chưa làm/, REP38);
 assert.equal(fresh({ sb: row('SB-06') + row('SB-09') + row('SB-17 audit', 'chưa làm', '-', 'tách vai trò CSDL') }, REP38).status, 0);
 assert.equal(fresh({ sb: SB2, perm: row('Xem đơn của tôi', 'lệch', 'src/a.ts:1', 'xem Lệch spec mục 2') }, REP38).status, 0);
+
+// ---- L48 (kit_version: 3): dòng "Đã sửa" ở Việc cần làm phải có mục "## Kết quả sau sửa" với Đã sửa ở là file:dòng có thật và Chứng minh; kit_version 2 chỉ cảnh báo
+const F3 = 'kit_version: 3\n', FIXED = row('Xem đơn của tôi', 'đạt', 'src/a.ts:1', 'Đã sửa trong lượt review (M1)');
+const AFTER = (fixedAt = '`src/a.ts:2`', proof = 'test đỏ khi bỏ bản sửa', rows = null) => `## Kết quả sau sửa\n| Phát hiện (mức) | Đã sửa ở | Chứng minh |\n|---|---|---|\n${rows ?? `| MEDIUM: x | ${fixedAt} | ${proof} |`}\n\n`;
+const f3 = (o, rep = REPORT()) => run({ sb: SB2, fm: F3, rerun: RR(), perm: FIXED, ...o }, { report: rep });
+const f3bad = (o, re) => { const x = f3(o); assert.equal(x.status, 1, String(re)); assert.match(x.stderr, re); };
+assert.equal(f3({ rerun: RR() + AFTER() }).status, 0, f3({ rerun: RR() + AFTER() }).stderr);
+f3bad({}, /Đã sửa.*Kết quả sau sửa/);
+f3bad({ rerun: RR() + AFTER('`src/none.ts:2`') }, /Kết quả sau sửa.*file:dòng có thật/);
+f3bad({ rerun: RR() + AFTER('`src/a.ts:99`') }, /Kết quả sau sửa.*vượt quá/);
+f3bad({ rerun: RR() + AFTER('sửa ở trang đăng nhập') }, /Kết quả sau sửa.*file:dòng/);
+f3bad({ rerun: RR() + AFTER('`src/a.ts:2`', '-') }, /Kết quả sau sửa.*Chứng minh/);
+const l48 = run({ sb: SB2, fm: F2, rerun: RR(), perm: FIXED }, { report: REPORT() });
+assert.equal(l48.status, 0, l48.stderr);
+assert.match(l48.stdout, /Lưu ý: .*Kết quả sau sửa/);
+assert.equal(f3({ perm: row('Xem đơn của tôi'), rerun: RR() }).status, 0, 'không có dòng Đã sửa thì không cần mục');
 console.log('OK: check-review.mjs');

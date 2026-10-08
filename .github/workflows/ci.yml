@@ -26,6 +26,9 @@ jobs:
           --health-cmd "pg_isready -U ecom -d ecom_ci" --health-interval 2s --health-timeout 3s --health-retries 20
     env:
       TEST_DB_BASE: postgresql://ecom:ecom@localhost:5433
+      NEXT_TELEMETRY_DISABLED: '1' # build và chạy web trong test/E2E không gọi mạng ngoài
+      # Bộ test "S3 thật" của USR (storage.minio.spec.ts, avatar-cache.spec.ts, E2E USR): MinIO dựng ở bước bên dưới; thiếu biến thì các bộ đó chỉ bị bỏ qua (có báo lý do)
+      STORAGE_TEST_ENDPOINT: http://localhost:9210
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -35,6 +38,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Trình duyệt cho E2E của AUTH (thư viện playwright-core điều khiển Chromium; chạy trong Jest)
         run: pnpm --filter @ecom/api exec playwright-core install --with-deps chromium
+      # MinIO thật từ docker-compose.yml (ảnh chainguard, không có shell nên không dùng `services:` của Actions được vì cần tham số `server /data`). CHƯA CHẠY trên GitHub (chưa push): kiểm ở lần chạy đầu.
+      - name: MinIO thật cho test kho ảnh của USR (bucket ecom-test, đọc ẩn danh)
+        run: docker compose up -d minio minio-bucket minio-policy
       - name: Vai trò CSDL của ứng dụng (ecom_app, ecom_retention; cùng tệp với docker compose)
         run: PGPASSWORD=ecom psql -h localhost -p 5433 -U ecom -d ecom_ci -v ON_ERROR_STOP=1 -f docker/initdb/01-app-roles.sql
       - name: Quét bí mật (SB-15)

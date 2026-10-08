@@ -49,10 +49,16 @@ for (const f of walk(schemaDir).filter((p) => p.endsWith('.prisma'))) {
 }
 
 const out = [];
+// Công cụ hỏng thì đỏ, không im lặng cho qua (thư mục sai chỗ làm quét rỗng mà vẫn in "sạch"): thiếu thư mục hay không quét được tệp nào là lỗi môi trường (thoát 2).
+const scanned = walk(modulesDir).filter((p) => /\.(ts|tsx|js|mjs)$/.test(p));
+if (!existsSync(modulesDir) || !existsSync(schemaDir) || scanned.length === 0 || Object.keys(ownerOfTable).length === 0) {
+  process.stderr.write(`check-boundaries: không quét được (modules=${modulesDir} có ${scanned.length} tệp, schemas=${schemaDir} có ${Object.keys(ownerOfTable).length} bảng)\n`);
+  process.exit(2);
+}
 const IMPORT_RE = /(?:\bfrom\s+|\bimport\s*\(\s*|\brequire\s*\(\s*|\bimport\s+)(['"])(\.{1,2}\/[^'"]*|\.{1,2})\1/g;
 const OPS = 'findMany|findFirst|findUnique|findFirstOrThrow|findUniqueOrThrow|create|createMany|update|updateMany|upsert|delete|deleteMany|count|aggregate|groupBy';
 
-for (const file of walk(modulesDir).filter((p) => /\.(ts|tsx|js|mjs)$/.test(p))) {
+for (const file of scanned) {
   const rel = relative(modulesDir, file).split(sep);
   const A = rel[0];
   if (rel.length < 2) continue;
@@ -83,7 +89,8 @@ for (const file of walk(modulesDir).filter((p) => /\.(ts|tsx|js|mjs)$/.test(p)))
     const o = ownerOfAccessor[m[1]];
     if (o && o !== A) out.push(`${shown}:${lineOf(text, m.index)}: [${A} -> ${o}] đọc/ghi model Prisma ${m[1]} thuộc module ${o}; phải gọi giao diện ở architecture.md (SB-35)`);
   }
-  for (const m of text.matchAll(/\$(?:queryRaw|executeRaw)(?:Unsafe)?\s*(?:<[^>]*>)?\s*[(]?\s*([`'"])([\s\S]*?)\1/g)) {
+  // `$queryRaw`, `$executeRaw` (kể cả Unsafe) và các mảnh `Prisma.sql`, `Prisma.raw` dựng riêng rồi ghép vào câu truy vấn (SHP `listRowsSql`): đều quét tên bảng.
+  for (const m of text.matchAll(/(?:\$(?:queryRaw|executeRaw)(?:Unsafe)?\s*(?:<[^>]*>)?|\bPrisma\.(?:sql|raw))\s*[(]?\s*([`'"])([\s\S]*?)\1/g)) {
     for (const t of m[2].matchAll(/\b(?:FROM|JOIN|INTO|UPDATE)\s+"?([a-z_][a-z0-9_]*)"?/gi)) {
       const o = ownerOfTable[t[1]];
       if (o && o !== A) out.push(`${shown}:${lineOf(text, m.index + m[0].indexOf(t[0]))}: [${A} -> ${o}] SQL thô đọc/ghi bảng ${t[1]} thuộc module ${o}; phải gọi giao diện ở architecture.md (SB-35)`);

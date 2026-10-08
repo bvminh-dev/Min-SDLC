@@ -7,19 +7,21 @@ import { UserModule } from '../../src/modules/user/user.module';
 import { JobRunner } from '../../src/modules/platform';
 import { ORIGIN } from './app';
 import { FakeS3 } from './fake-s3';
+import type { S3Cfg } from './real-s3';
 import { createAuthApp, http, q, seedSession, seedUser, type AuthApp, type SeedUser } from './auth';
 
-export interface UsrApp extends AuthApp { fake: FakeS3; addressSvc: AddressService; avatarSvc: AvatarService; jobs: JobRunner }
+export interface UsrApp extends AuthApp { fake: FakeS3; /** Kho đang dùng: S3 giả trong tiến trình hoặc kho thật (`s3`). */ storage: S3Cfg; addressSvc: AddressService; avatarSvc: AvatarService; jobs: JobRunner }
 
 /** Ứng dụng thật (PlatformModule + AuthModule + UserModule), PostgreSQL thật, client S3 thật của USR nói chuyện với dịch vụ S3 giả trong tiến trình. */
-export async function createUsrApp(o: { env?: Record<string, string>; level?: string; noStorage?: boolean } = {}): Promise<UsrApp> {
+export async function createUsrApp(o: { env?: Record<string, string>; level?: string; noStorage?: boolean; s3?: S3Cfg } = {}): Promise<UsrApp> {
   const fake = new FakeS3();
   await fake.start();
-  const storage: Record<string, string> = o.noStorage ? {} : { STORAGE_ENDPOINT: fake.url, STORAGE_BUCKET: fake.bucket, STORAGE_ACCESS_KEY: fake.accessKey, STORAGE_SECRET_KEY: fake.secretKey };
+  const cfg: S3Cfg = o.s3 ?? { endpoint: fake.url, bucket: fake.bucket, region: 'us-east-1', accessKey: fake.accessKey, secretKey: fake.secretKey };
+  const storage: Record<string, string> = o.noStorage ? {} : { STORAGE_ENDPOINT: cfg.endpoint, STORAGE_BUCKET: cfg.bucket, STORAGE_REGION: cfg.region, STORAGE_ACCESS_KEY: cfg.accessKey, STORAGE_SECRET_KEY: cfg.secretKey };
   const t = await createAuthApp({ imports: [PlatformModule, AuthModule, UserModule], controllers: [], level: o.level, env: { TRUST_PROXY_HOPS: '1', ...storage, ...(o.env ?? {}) } });
   const closeBase = t.close;
   return Object.assign(t, {
-    fake, addressSvc: t.app.get(AddressService), avatarSvc: t.app.get(AvatarService), jobs: t.app.get(JobRunner),
+    fake, storage: cfg, addressSvc: t.app.get(AddressService), avatarSvc: t.app.get(AvatarService), jobs: t.app.get(JobRunner),
     close: async () => { await closeBase(); await fake.stop(); },
   });
 }

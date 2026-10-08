@@ -65,6 +65,16 @@ for (const f of reports) {
     const ref = basename(file, '.md');
     if (!listed.has(ref)) err(f, `thiếu dòng cho ${ref} (có links/covers tới ${id}; nếu không bị tác động thì ghi "không đổi" kèm lý do)`);
   }
+  // L56: quy tắc xuyên module chép lại ở nhiều epic (find-refs theo ID không thấy): dòng `Cụm từ xuyên module: "<cụm>"` buộc mọi tài liệu khác nhắc cụm đó phải có dòng
+  for (const m of lines.join('\n').matchAll(/^Cụm từ xuyên module:\s*(.+)$/gm)) {
+    for (const phrase of [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1])) {
+      const p = spawnSync(process.execPath, [FIND_REFS, specDir, '--phrase', phrase], { encoding: 'utf8' });
+      for (const line of p.stdout.split(/\r?\n/)) {
+        const [kind, file] = line.split('\t'), ref = file && basename(file, '.md');
+        if (kind === 'nhắc cụm từ' && ref !== id && ID_RE.test(ref) && !listed.has(ref)) err(f, `thiếu dòng cho ${ref} (có chép cụm từ "${phrase}"; nếu không bị tác động thì ghi "không đổi" kèm lý do)`);
+      }
+    }
+  }
 }
 
 if (errors.length) { console.error(errors.join('\n') + `\n\n${errors.length} lỗi.`); process.exit(1); }

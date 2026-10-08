@@ -1,12 +1,13 @@
+import * as crypto from '../../src/modules/auth/crypto';
 import { hashPassword } from '../../src/modules/auth/crypto';
-import { PASSWORD, createAuthApp, get, post, q, seedSession, seedUser, type AuthApp } from '../support/auth';
+import { NOW0, PASSWORD, createAuthApp, get, post, q, seedSession, seedUser, type AuthApp } from '../support/auth';
 import { truncateAll } from '../support/db';
 
 describe('Đăng nhập (AUTH-REQ-20261006-095515738)', () => {
   let t: AuthApp;
   beforeAll(async () => { t = await createAuthApp({ env: { TRUST_PROXY_HOPS: '1' } }); });
   afterAll(() => t.close());
-  beforeEach(async () => { await truncateAll(t.prisma); t.mails.length = 0; t.logs.clear(); t.clock.set(new Date('2026-10-06T10:00:00.000Z')); });
+  beforeEach(async () => { await truncateAll(t.prisma); t.mails.length = 0; t.logs.clear(); t.clock.set(new Date(NOW0)); });
   const attempt = (email: string, password: string, ip = '10.0.0.1') => post(t, '/auth/login', { email, password }, { ip });
   const userRow = async (email: string) => (await q<any>(t, `SELECT status, failed_login_count, locked_reason, locked_until, password_hash FROM users WHERE email = '${email}'::citext`))[0];
 
@@ -87,14 +88,20 @@ describe('Đăng nhập (AUTH-REQ-20261006-095515738)', () => {
     // Hai nhánh đo XEN KẼ (không đo hết nhánh này rồi mới sang nhánh kia) để tải máy trôi theo thời gian ảnh hưởng đều cả hai (review USR: bản tuần tự đỏ một lần ở 0,325 khi máy nặng).
     const pool = await Promise.all(Array.from({ length: 30 }, (_, i) => seedUser(t, { email: `m${i}@shop.vn` })));
     const timed = async (fn: () => Promise<unknown>) => { const s0 = process.hrtime.bigint(); await fn(); return Number(process.hrtime.bigint() - s0) / 1e6; };
-    const knownMs: number[] = [], ghostMs: number[] = [];
+    const knownMs: number[] = [], ghostMs: number[] = [], calls = { known: 0, ghost: 0 };
+    const verify = jest.spyOn(crypto, 'verifyPassword');
+    const counted = async (branch: 'known' | 'ghost', fn: () => Promise<unknown>) => { const n0 = verify.mock.calls.length; const ms = await timed(fn); calls[branch] += verify.mock.calls.length - n0; return ms; };
     for (let i = 0; i < 30; i++) {
-      knownMs.push(await timed(() => attempt(pool[i].email, 'bad', `10.2.0.${i + 1}`)));
-      ghostMs.push(await timed(() => attempt(`nobody${i}@shop.vn`, 'bad', `10.2.1.${i + 1}`)));
+      knownMs.push(await counted('known', () => attempt(pool[i].email, 'bad', `10.2.0.${i + 1}`)));
+      ghostMs.push(await counted('ghost', () => attempt(`nobody${i}@shop.vn`, 'bad', `10.2.1.${i + 1}`)));
     }
-    const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
-    const known = median(knownMs), ghost = median(ghostMs);
-    expect(Math.abs(known - ghost) / Math.max(known, ghost)).toBeLessThan(0.3);
+    // Chênh THẬT nhỏ còn lại: nhánh email có thật ghi bộ đếm sai trong một giao dịch (~6 ms ở máy dev), nhánh email lạ không ghi; tỷ lệ 22 đến 28% khi máy rảnh nên vượt 30% khi máy tải (đã đỏ ba lần ở 0,316, 0,325 và 55 ms
+    // khi máy chủ tải 14: so trung vị đo cả nhiễu của máy). Bằng chứng chính nay là ĐẾM, không đo giờ: mỗi lần thử gọi `verifyPassword` đúng một lần ở CẢ hai nhánh (email lạ băm giả); bỏ băm giả (đột biến SB-02) thì nhánh email lạ
+    // gọi 0 lần. Đo giờ chỉ còn là lưới thứ hai, so GIÁ TRỊ NHỎ NHẤT (nhiễu của máy chỉ cộng thêm, không bao giờ làm nhanh hơn) với ngưỡng 50% hoặc 12 ms; bỏ băm giả làm chênh một lần băm (~19 ms, tỷ lệ > 0,6).
+    expect(calls).toEqual({ known: 30, ghost: 30 });
+    const known = Math.min(...knownMs), ghost = Math.min(...ghostMs);
+    expect(Math.abs(known - ghost)).toBeLessThan(Math.max(0.5 * Math.max(known, ghost), 12));
+    verify.mockRestore();
     expect(t.logs.lines.join('\n')).not.toContain('nobody0@shop.vn'); // email lạ không vào log (REQ-738 BR7)
   }, 60_000);
 
@@ -128,7 +135,7 @@ describe('Đăng nhập (AUTH-REQ-20261006-095515738)', () => {
     expect(await userRow(u4.email)).toMatchObject({ failed_login_count: 1, status: 'active' });
 
     // phiên cũ của request bị thay
-    t.clock.set(new Date('2026-10-06T12:00:00.000Z'));
+    t.clock.set(new Date(NOW0.getTime() + 2 * 3600_000));
     const a = await seedUser(t, { email: 'a@shop.vn' }), b = await seedUser(t, { email: 'b@shop.vn' });
     const sa = await seedSession(t, a.id);
     const r = await post(t, '/auth/login', { email: b.email, password: PASSWORD }, { cookie: sa.cookie, ip: '10.3.5.1' });

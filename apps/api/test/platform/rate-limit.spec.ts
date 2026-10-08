@@ -123,4 +123,27 @@ describe('RateLimitService.check, hitCounter, reset (PRJ-API: Giao tiếp giữa
     expect((await get('/api/v1/fx/limited-a', CUST)).status).toBe(429); // đúng 3 lần của @RateLimit, hitCounter không cộng thêm
   });
 
+  it('PRJ-TC-20261007-144433649: take nguyên tử (40 lời gọi song song chỉ qua đúng 10), refund hoàn lại và không xuống dưới 0, reset, khóa chưa đếm, cửa sổ mới', async () => {
+    const key = 'take:a@x';
+    const rs = await Promise.all(Array.from({ length: 40 }, () => svc.take(key, 10, 60)));
+    expect(rs.filter((r) => r.allowed)).toHaveLength(10);
+    expect(rs.filter((r) => !r.allowed)).toHaveLength(30);
+    expect(rs.map((r) => r.count).sort((a, b) => a - b)).toEqual(Array.from({ length: 40 }, (_v, i) => i + 1)); // mỗi lời gọi một số đếm riêng
+    for (const r of rs) { expect(Number.isInteger(r.retryAfter)).toBe(true); expect(r.retryAfter).toBeGreaterThanOrEqual(1); expect(r.retryAfter).toBeLessThanOrEqual(60); }
+    expect((await rows(key))[0].count).toBe(40);
+    for (let i = 0; i < 5; i++) await svc.refund(key, 60);
+    expect((await rows(key))[0].count).toBe(35);
+    expect(await svc.take(key, 10, 60)).toMatchObject({ allowed: false, count: 36 });
+    for (let i = 0; i < 50; i++) await svc.refund(key, 60);
+    expect((await rows(key))[0].count).toBe(0); // không âm
+    await svc.reset(key);
+    expect(await svc.take(key, 10, 60)).toMatchObject({ allowed: true, count: 1 });
+    await expect(svc.refund('chua-tung-dem', 60)).resolves.toBeUndefined();
+    expect(await rows('chua-tung-dem')).toEqual([]); // refund không tạo bộ đếm
+    expect(await svc.take('zero-take', 0, 60)).toMatchObject({ allowed: false, count: 1 }); // ngưỡng 0 luôn chặn
+    t.clock.advance(61_000);
+    expect(await svc.take(key, 10, 60)).toMatchObject({ allowed: true, count: 1 }); // cửa sổ mới
+    expect(await svc.hitCounter(key, 60)).toBe(2); // cùng không gian khóa với hitCounter, check
+  });
+
 });

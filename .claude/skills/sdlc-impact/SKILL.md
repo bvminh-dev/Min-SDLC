@@ -12,6 +12,7 @@ description: Phân tích tác động khi một requirement, flow hoặc quyền
 1. **Khoanh vùng tín hiệu cứng bằng script** trước khi suy luận:
    `node .claude/skills/sdlc-impact/scripts/find-refs.mjs spec/ <ID>`
    Script liệt kê mọi file có `links` hoặc `covers` trỏ tới ID đó, và các file nhắc ID trong thân.
+1b. **Quy tắc xuyên module** (thứ tự kiểm, mã lỗi, giới hạn) hay bị chép lại ở epic khác mà `find-refs` theo ID không thấy: tìm theo cụm từ `node .claude/skills/sdlc-impact/scripts/find-refs.mjs spec/ --phrase "<cụm từ>"` và ghi dòng `Cụm từ xuyên module: "<cụm>"` vào báo cáo; `check-impact` đòi mọi tài liệu khác nhắc cụm đó có dòng trong bảng.
 2. **Mở rộng bằng suy luận** những thứ liên kết không bắt được: cùng entity (xem `spec/domain/`), cùng domain event, cùng dòng trong ma trận quyền, cùng quy tắc nghiệp vụ.
 3. **Phân loại từng mục bị ảnh hưởng:**
    - `phải dựng lại`: nghiệp vụ hoặc flow hết đúng.

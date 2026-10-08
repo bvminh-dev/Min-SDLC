@@ -1,7 +1,5 @@
 import { ConfigError, loadConfig } from '../../src/modules/platform';
-import { S3Storage } from '../../src/modules/user/storage/s3';
-import { sha256Hex, signV4 } from '../../src/modules/user/storage/signer';
-import { createStorage } from '../../src/modules/user/user.module';
+import { S3Storage, createStorage, sha256Hex, signV4 } from '../../src/modules/platform';
 import { baseEnv } from '../support/app';
 import { testDbUrl, truncateAll } from '../support/db';
 import { FakeS3 } from '../support/fake-s3';

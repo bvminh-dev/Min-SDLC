@@ -61,9 +61,10 @@ export function configureApp(app: INestApplication, deps: { config: ConfigServic
   app.enableCors({
     origin: (origin: string | undefined, cb: (e: Error | null, ok?: boolean) => void) => cb(null, !!origin && allowed.has(origin)),
     credentials: true,
+    exposedHeaders: ['Retry-After'], // web khác gốc cần đọc để hiện thời gian chờ khi 429
   });
 
-  const json = express.json({ limit: MAX_BODY_BYTES });
+  const json = express.json({ limit: MAX_BODY_BYTES, reviver: (_k, v) => { if (typeof v === 'string' && /\p{Cs}/u.test(v)) throw new SyntaxError('nửa cặp thay thế lẻ'); return v; } }); // nửa cặp thay thế lẻ ("\ud800") không mã hóa được UTF-8, PostgreSQL từ chối: 400 ở biên thay vì 500
   app.use((req: Request, res: Response, next: NextFunction) => {
     const hasBody = Number(req.headers['content-length'] ?? 0) > 0 || req.headers['transfer-encoding'] !== undefined;
     if (isAllowedMultipart(req)) return next(); // tải tệp: handler tự đọc luồng và giới hạn kích thước (http/multipart.ts)

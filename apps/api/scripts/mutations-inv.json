@@ -1,0 +1,663 @@
+{
+ "test": "node scripts/run-jest.mjs test/inventory",
+ "mutations": [
+  {
+   "id": "SB-05, T1: customer được nhập kho (sai ma trận)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "INV-TC-20261006-101123047",
+   "file": "src/modules/inventory/inventory.controller.ts",
+   "find": "@Post(':product_id/stock-in') @Action('Nhập kho') @HttpCode(200) @Roles('staff', 'admin')",
+   "replace": "@Post(':product_id/stock-in') @Action('Nhập kho') @HttpCode(200) @Roles('customer', 'staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123047\""
+  },
+  {
+   "id": "SB-05, T1: danh sách tồn kho mở cho khách chưa đăng nhập",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "INV-TC-20261006-101122968",
+   "file": "src/modules/inventory/inventory.controller.ts",
+   "find": "@Get() @Action('Xem danh sách và chi tiết tồn kho') @Roles('staff', 'admin')",
+   "replace": "@Get() @Action('Xem danh sách và chi tiết tồn kho') @Public()",
+   "test": "node scripts/run-jest.mjs test/inventory/read.spec.ts -t \"INV-TC-20261006-101122968\""
+  },
+  {
+   "id": "SB-06, T10: id sai định dạng trả 400 thay vì cùng một 404 với id không có bản ghi",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "INV-TC-20261006-101122968",
+   "file": "src/modules/inventory/read.service.ts",
+   "find": "async detail(productId: string) {\n    if (!UUID_RE.test(productId)) throw new DomainError('not-found');",
+   "replace": "async detail(productId: string) {\n    if (!UUID_RE.test(productId)) throw new DomainError('validation-failed');",
+   "test": "node scripts/run-jest.mjs test/inventory/read.spec.ts -t \"INV-TC-20261006-101122968\""
+  },
+  {
+   "id": "SB-37, T10: endpoint công khai trả thêm số còn bán",
+   "sb": [
+    "SB-37",
+    "SB-06"
+   ],
+   "tc": "INV-TC-20261006-121043713",
+   "file": "src/modules/inventory/read.service.ts",
+   "find": "({ product_id: id, in_stock: by.get(id) === true })",
+   "replace": "({ product_id: id, in_stock: by.get(id) === true, available: 1 })",
+   "test": "node scripts/run-jest.mjs test/inventory/public.spec.ts -t \"INV-TC-20261006-121043713\""
+  },
+  {
+   "id": "SB-37, T16: sản phẩm ngừng bán còn tồn vẫn báo còn hàng",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "INV-TC-20261006-121043905",
+   "file": "src/modules/inventory/read.service.ts",
+   "find": "(on_hand - reserved > 0 AND archived_at IS NULL) AS in_stock",
+   "replace": "(on_hand - reserved > 0) AS in_stock",
+   "test": "node scripts/run-jest.mjs test/inventory/public.spec.ts -t \"INV-TC-20261006-121043905\""
+  },
+  {
+   "id": "SB-37, T16: endpoint công khai bị đệm (bỏ Cache-Control no-store)",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "INV-TC-20261006-121043713",
+   "file": "src/modules/inventory/inventory.controller.ts",
+   "find": "res.setHeader('Cache-Control', 'no-store');",
+   "replace": "res.setHeader('Cache-Control', 'public, max-age=300');",
+   "test": "node scripts/run-jest.mjs test/inventory/public.spec.ts -t \"INV-TC-20261006-121043713\""
+  },
+  {
+   "id": "SB-11, T3: trần số lượng mỗi lần 100.000 thành 100.000.000",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "INV-TC-20261006-101123047",
+   "file": "src/modules/inventory/config.ts",
+   "find": "export const MAX_QTY = 100_000;",
+   "replace": "export const MAX_QTY = 100_000_000;",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123047\""
+  },
+  {
+   "id": "SB-11, T3: trần tồn 10.000.000 thành 100.000.000",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "INV-TC-20261006-101123076",
+   "file": "src/modules/inventory/config.ts",
+   "find": "export const MAX_ON_HAND = 10_000_000;",
+   "replace": "export const MAX_ON_HAND = 100_000_000;",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123076\""
+  },
+  {
+   "id": "SB-11, T3: số thực được nhận làm số lượng (bỏ kiểm số nguyên)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "INV-TC-20261006-101123047",
+   "file": "src/modules/inventory/policy.ts",
+   "find": ".int({ message: 'invalid_format' }).min(min,",
+   "replace": ".min(min,",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123047\""
+  },
+  {
+   "id": "SB-11, T12: schema nhận trường lạ (on_hand, actor_id) trong thân",
+   "sb": [
+    "SB-11",
+    "SB-05"
+   ],
+   "tc": "INV-TC-20261006-101123580",
+   "file": "src/modules/inventory/policy.ts",
+   "find": "if (!known.has(k)) ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "replace": "if (!known.has(k)) void 0;",
+   "test": "node scripts/run-jest.mjs test/inventory/lowstock.spec.ts -t \"INV-TC-20261006-101123580\""
+  },
+  {
+   "id": "SB-11: lý do Khác không đòi ghi chú",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "INV-TC-20261006-101123047",
+   "file": "src/modules/inventory/policy.ts",
+   "find": "if (o.reason === 'other' && !o.note) ctx.addIssue",
+   "replace": "if (false) ctx.addIssue",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123047\""
+  },
+  {
+   "id": "SB-11: điều chỉnh không đổi vẫn được ghi (bỏ no-change)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "INV-TC-20261006-101123241",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "if (b.new_on_hand === cur.on_hand) throw new DomainError('no-change');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123241\""
+  },
+  {
+   "id": "SB-11: khoảng lọc lịch sử 366 ngày thành 3660 ngày",
+   "sb": [
+    "SB-11",
+    "SB-14"
+   ],
+   "tc": "INV-TC-20261006-101123679",
+   "file": "src/modules/inventory/config.ts",
+   "find": "export const MOVEMENT_MAX_SPAN_DAYS = 366;",
+   "replace": "export const MOVEMENT_MAX_SPAN_DAYS = 3660;",
+   "test": "node scripts/run-jest.mjs test/inventory/read.spec.ts -t \"INV-TC-20261006-101123679\""
+  },
+  {
+   "id": "SB-14, T15: bậc D 30 mỗi phút thành 3000",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "INV-TC-20261006-121043533",
+   "file": "src/modules/inventory/http.ts",
+   "find": "admin: { tier: 'D', limit: 30,",
+   "replace": "admin: { tier: 'D', limit: 3000,",
+   "test": "node scripts/run-jest.mjs test/inventory/read.spec.ts -t \"INV-TC-20261006-121043533\""
+  },
+  {
+   "id": "SB-14, T16: bậc C công khai 120 mỗi phút thành 12000",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "INV-TC-20261006-121043905",
+   "file": "src/modules/inventory/http.ts",
+   "find": "publicRead: { tier: 'C', limit: 120,",
+   "replace": "publicRead: { tier: 'C', limit: 12000,",
+   "test": "node scripts/run-jest.mjs test/inventory/public.spec.ts -t \"INV-TC-20261006-121043905\""
+  },
+  {
+   "id": "SB-19, T5: điều chỉnh không ghi audit giá trước, sau",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "INV-TC-20261006-101123195",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "await this.audited(tx, actor, 'inventory.adjust', cur.product_id, { on_hand: cur.on_hand }, { on_hand: row.on_hand });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123195\""
+  },
+  {
+   "id": "SB-19, T5: nhập kho không ghi audit",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "INV-TC-20261006-101123021",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "await this.audited(tx, actor, 'inventory.stock_in', cur.product_id, { on_hand: cur.on_hand }, { on_hand: row.on_hand });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123021\""
+  },
+  {
+   "id": "SB-19, T5: xuất kho không ghi audit",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "INV-TC-20261006-101123124",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "await this.audited(tx, actor, 'inventory.stock_out', cur.product_id, { on_hand: cur.on_hand }, { on_hand: row.on_hand });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123124\""
+  },
+  {
+   "id": "SB-19, T5: đổi ngưỡng ghi audit sai hành động",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "INV-TC-20261006-101123557",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "'inventory.threshold', cur.product_id",
+   "replace": "'inventory.threshold_x', cur.product_id",
+   "test": "node scripts/run-jest.mjs test/inventory/lowstock.spec.ts -t \"INV-TC-20261006-101123557\""
+  },
+  {
+   "id": "SB-19, T9: thu tiền trễ không có audit của hệ thống",
+   "sb": [
+    "SB-19",
+    "SB-24"
+   ],
+   "tc": "INV-TC-20261006-101123375",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "action: 'inventory.late_payment'",
+   "replace": "action: 'inventory.late_payment_x'",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123375\""
+  },
+  {
+   "id": "SB-05, T12: actor_id lấy từ phiên bị thay bằng NULL",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "INV-TC-20261006-101123021",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "${actor.user_id}::uuid, ${actor.display_name ?? null}, clock_timestamp())",
+   "replace": "${null}::uuid, ${actor.display_name ?? null}, clock_timestamp())",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123021\""
+  },
+  {
+   "id": "SB-24, SB-25, T9: chốt không kiểm status = held (event trùng khác event_id trừ kho hai lần)",
+   "sb": [
+    "SB-24",
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123398",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "UPDATE stock_reservations SET status = 'committed', updated_at = now() WHERE order_id = ${order}::uuid AND status = 'held' RETURNING stock_item_id, quantity",
+   "replace": "UPDATE stock_reservations SET status = 'committed', updated_at = now() WHERE order_id = ${order}::uuid RETURNING stock_item_id, quantity",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123398\""
+  },
+  {
+   "id": "SB-24, T14: nhả đơn đã chốt không kiểm status = committed (hoàn on_hand hai lần)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "INV-TC-20261006-101123421",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "UPDATE stock_reservations SET status = 'released', updated_at = now() WHERE order_id = ${order}::uuid AND status = 'committed' RETURNING",
+   "replace": "UPDATE stock_reservations SET status = 'released', updated_at = now() WHERE order_id = ${order}::uuid AND status IN ('committed', 'released') RETURNING",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123421\""
+  },
+  {
+   "id": "SB-24, T14: ShipmentReturned không chống trùng theo shipment_id (bỏ ON CONFLICT)",
+   "sb": [
+    "SB-24",
+    "SB-27"
+   ],
+   "tc": "INV-TC-20261006-101123421",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "FROM stock_items WHERE id = ${l.stock_item_id}::uuid\n        ON CONFLICT DO NOTHING RETURNING id`;",
+   "replace": "FROM stock_items WHERE id = ${l.stock_item_id}::uuid\n        RETURNING id`;",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123421\""
+  },
+  {
+   "id": "SB-24: hàng hoàn về không bán lại được vẫn cộng on_hand",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "INV-TC-20261006-121043995",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "if (!restockable) {",
+   "replace": "if (false as boolean) {",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-121043995\""
+  },
+  {
+   "id": "SB-24: ProductActivated nhận lại ghi đè bản ghi kho đã có",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "INV-TC-20261006-101123835",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "ON CONFLICT (product_id) DO NOTHING RETURNING id",
+   "replace": "ON CONFLICT (product_id) DO UPDATE SET on_hand = 0 RETURNING id",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123835\""
+  },
+  {
+   "id": "SB-25, T2: giữ hàng không kiểm on_hand - reserved >= n trong câu UPDATE",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123724",
+   "file": "src/modules/inventory/reservation.service.ts",
+   "find": "WHERE id = ${row.id}::uuid AND archived_at IS NULL AND on_hand - reserved >= ${quantity}`;",
+   "replace": "WHERE id = ${row.id}::uuid AND archived_at IS NULL`;",
+   "test": "node scripts/run-jest.mjs test/inventory/reserve.spec.ts -t \"INV-TC-20261006-101123724\""
+  },
+  {
+   "id": "SB-25, T2: xuất kho lấy cả phần đang giữ (bỏ điều kiện available)",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123148",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "WHERE id = ${cur.id}::uuid AND on_hand - reserved >= ${b.quantity}",
+   "replace": "WHERE id = ${cur.id}::uuid",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123148\""
+  },
+  {
+   "id": "SB-25: điều chỉnh xuống dưới số đang giữ (bỏ điều kiện new >= reserved)",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123218",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "AND version = ${b.version} AND ${b.new_on_hand} >= reserved",
+   "replace": "AND version = ${b.version}",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123218\""
+  },
+  {
+   "id": "SB-25: sản phẩm ngừng bán giữ hàng được",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123286",
+   "file": "src/modules/inventory/reservation.service.ts",
+   "find": "if (!row || row.archived_at) {",
+   "replace": "if (!row) {",
+   "test": "node scripts/run-jest.mjs test/inventory/reserve.spec.ts -t \"INV-TC-20261006-101123286\""
+  },
+  {
+   "id": "SB-25: nhập kho vào sản phẩm ngừng bán (bỏ kiểm archived)",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123047",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "if (cur.archived_at) throw new DomainError('product-archived');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123047\""
+  },
+  {
+   "id": "SB-25: giữ hàng nửa vời khi thiếu (bỏ SAVEPOINT quay lui)",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123286",
+   "file": "src/modules/inventory/reservation.service.ts",
+   "find": "await tx.$executeRaw`ROLLBACK TO SAVEPOINT inv_reserve`;\n        await tx.$executeRaw`RELEASE SAVEPOINT inv_reserve`;\n        return { ok: false, shortages };",
+   "replace": "return { ok: false, shortages };",
+   "test": "node scripts/run-jest.mjs test/inventory/reserve.spec.ts -t \"INV-TC-20261006-101123286\""
+  },
+  {
+   "id": "SB-25, SB-34, T8: job hết hạn bỏ ranh giới `<=` (đúng giờ chưa hết hạn)",
+   "sb": [
+    "SB-25",
+    "SB-34"
+   ],
+   "tc": "INV-TC-20261006-101123535",
+   "file": "src/modules/inventory/jobs.service.ts",
+   "find": "WHERE status = 'held' AND expires_at <= COALESCE(${at}::timestamptz, now()) ORDER BY order_id LIMIT",
+   "replace": "WHERE status = 'held' AND expires_at < COALESCE(${at}::timestamptz, now()) ORDER BY order_id LIMIT",
+   "test": "node scripts/run-jest.mjs test/inventory/jobs.spec.ts -t \"INV-TC-20261006-101123535\""
+  },
+  {
+   "id": "SB-25, T9: job hết hạn không kiểm status = held khi đổi trạng thái",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "INV-TC-20261006-101123535",
+   "file": "src/modules/inventory/jobs.service.ts",
+   "find": "WHERE order_id = ANY(${orders}::uuid[]) AND status = 'held' AND expires_at <= COALESCE(${at}::timestamptz, now())\n        RETURNING",
+   "replace": "WHERE order_id = ANY(${orders}::uuid[]) AND expires_at <= COALESCE(${at}::timestamptz, now())\n        RETURNING",
+   "test": "node scripts/run-jest.mjs test/inventory/jobs.spec.ts -t \"INV-TC-20261006-101123535\""
+  },
+  {
+   "id": "SB-25: ProductArchived không đặt archived_at",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123858",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "UPDATE stock_items SET archived_at = now(), updated_at = now() WHERE id",
+   "replace": "UPDATE stock_items SET updated_at = now() WHERE id",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123858\""
+  },
+  {
+   "id": "SB-26, SB-33, T7: trần 50 dòng mỗi đơn thành 500",
+   "sb": [
+    "SB-26",
+    "SB-33"
+   ],
+   "tc": "INV-TC-20261006-101123330",
+   "file": "src/modules/inventory/config.ts",
+   "find": "export const MAX_RESERVE_LINES = 50;",
+   "replace": "export const MAX_RESERVE_LINES = 500;",
+   "test": "node scripts/run-jest.mjs test/inventory/reserve.spec.ts -t \"INV-TC-20261006-101123330\""
+  },
+  {
+   "id": "SB-27: giữ hàng không ghi StockReserved vào outbox",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "INV-TC-20261006-101123263",
+   "file": "src/modules/inventory/reservation.service.ts",
+   "find": "type: 'StockReserved'",
+   "replace": "type: 'StockReservedX'",
+   "test": "node scripts/run-jest.mjs test/inventory/reserve.spec.ts -t \"INV-TC-20261006-101123263\""
+  },
+  {
+   "id": "SB-27, T13: job hết hạn không ghi StockReservationExpired",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "INV-TC-20261006-101123465",
+   "file": "src/modules/inventory/jobs.service.ts",
+   "find": "type: 'StockReservationExpired'",
+   "replace": "type: 'StockReservationExpiredX'",
+   "test": "node scripts/run-jest.mjs test/inventory/jobs.spec.ts -t \"INV-TC-20261006-101123465\""
+  },
+  {
+   "id": "SB-27, T9: thu tiền trễ không phát StockCommitFailed",
+   "sb": [
+    "SB-27",
+    "SB-24"
+   ],
+   "tc": "INV-TC-20261006-101123375",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "type: 'StockCommitFailed'",
+   "replace": "type: 'StockCommitFailedX'",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123375\""
+  },
+  {
+   "id": "SB-27: chốt không phát StockCommitted",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "INV-TC-20261006-101123353",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "type: 'StockCommitted'",
+   "replace": "type: 'StockCommittedX'",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123353\""
+  },
+  {
+   "id": "SB-27: nhả không phát StockReleased",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "INV-TC-20261006-101123421",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "type: 'StockReleased'",
+   "replace": "type: 'StockReleasedX'",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123421\""
+  },
+  {
+   "id": "SB-27: tồn thấp không ghi LowStockDetected",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "INV-TC-20261006-101123557",
+   "file": "src/modules/inventory/low-stock.service.ts",
+   "find": "type: 'LowStockDetected'",
+   "replace": "type: 'LowStockDetectedX'",
+   "test": "node scripts/run-jest.mjs test/inventory/lowstock.spec.ts -t \"INV-TC-20261006-101123557\""
+  },
+  {
+   "id": "SB-27, T14: LowStockDetected phát lại mỗi lần (bỏ điều kiện cờ chuyển false -> true)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "INV-TC-20261006-101123603",
+   "file": "src/modules/inventory/low-stock.service.ts",
+   "find": "if (!r || r.was || !r.now) continue;",
+   "replace": "if (!r || !r.now) continue;",
+   "test": "node scripts/run-jest.mjs test/inventory/lowstock.spec.ts -t \"INV-TC-20261006-101123603\""
+  },
+  {
+   "id": "SB-30, T11: điều chỉnh bỏ kiểm version (sai version báo sai mã lỗi)",
+   "sb": [
+    "SB-30",
+    "SB-11"
+   ],
+   "tc": "INV-TC-20261006-101123218",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "if (b.version !== cur.version) throw new DomainError('stock-version-conflict', { extra: { version: cur.version } });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123218\""
+  },
+  {
+   "id": "SB-30, T11: đổi ngưỡng bỏ kiểm version trong câu UPDATE",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "INV-TC-20261006-153000100",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "WHERE id = ${cur.id}::uuid AND version = ${b.version} RETURNING id`;",
+   "replace": "WHERE id = ${cur.id}::uuid RETURNING id`;",
+   "test": "node scripts/run-jest.mjs test/inventory/lowstock.spec.ts -t \"INV-TC-20261006-153000100\""
+  },
+  {
+   "id": "SB-30: đổi ngưỡng không tăng version",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "INV-TC-20261006-101123557",
+   "file": "src/modules/inventory/stock.service.ts",
+   "find": "SET low_stock_threshold = ${b.low_stock_threshold}, version = version + 1,",
+   "replace": "SET low_stock_threshold = ${b.low_stock_threshold},",
+   "test": "node scripts/run-jest.mjs test/inventory/lowstock.spec.ts -t \"INV-TC-20261006-101123557\""
+  },
+  {
+   "id": "SB-31, T17: đọc tên sản phẩm của PRD khi cầm khóa không có hạn (2 giây thành 10 phút)",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "INV-TC-20261006-101123557",
+   "file": "src/modules/inventory/config.ts",
+   "find": "export const NAME_LOOKUP_MS = 2000;",
+   "replace": "export const NAME_LOOKUP_MS = 600_000;",
+   "test": "node scripts/run-jest.mjs test/inventory/lowstock.spec.ts -t \"INV-TC-20261006-101123557\""
+  },
+  {
+   "id": "SB-31, T17: giữ hàng khóa dòng kho không theo id tăng dần",
+   "sb": [
+    "SB-31",
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123443",
+   "file": "src/modules/inventory/reservation.service.ts",
+   "find": "WHERE product_id = ANY(${[...want.keys()]}::uuid[]) ORDER BY id FOR UPDATE",
+   "replace": "WHERE product_id = ANY(${[...want.keys()]}::uuid[]) FOR UPDATE",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123443\""
+  },
+  {
+   "id": "SB-31, T17: chốt, nhả khóa dòng kho không theo id tăng dần",
+   "sb": [
+    "SB-31",
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123443",
+   "file": "src/modules/inventory/lifecycle.service.ts",
+   "find": "WHERE order_id = ${order}::uuid) ORDER BY id FOR UPDATE`.then(() => undefined)",
+   "replace": "WHERE order_id = ${order}::uuid) FOR UPDATE`.then(() => undefined)",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123443\""
+  },
+  {
+   "id": "SB-31, T17: job hết hạn khóa dòng kho không theo id tăng dần",
+   "sb": [
+    "SB-31",
+    "SB-25"
+   ],
+   "tc": "INV-TC-20261006-101123443",
+   "file": "src/modules/inventory/jobs.service.ts",
+   "find": ") ORDER BY id FOR UPDATE`;\n      // điều kiện status",
+   "replace": "FOR UPDATE`;\n      // điều kiện status",
+   "test": "node scripts/run-jest.mjs test/inventory/lifecycle.spec.ts -t \"INV-TC-20261006-101123443\""
+  },
+  {
+   "id": "SB-32, T6: trigger chỉ-thêm chỉ chặn DELETE (UPDATE lịch sử được)",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "INV-TC-20261006-101123702",
+   "file": "prisma/migrations/20261007000900_inventory_tables/migration.sql",
+   "find": "BEFORE UPDATE OR DELETE ON \"stock_movements\"",
+   "replace": "BEFORE DELETE ON \"stock_movements\"",
+   "test": "node scripts/run-jest.mjs test/inventory/read.spec.ts -t \"INV-TC-20261006-101123702\""
+  },
+  {
+   "id": "SB-32, T6: vai trò ứng dụng vẫn có quyền UPDATE, DELETE lịch sử (bỏ REVOKE)",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "INV-TC-20261006-101123702",
+   "file": "prisma/migrations/20261007000900_inventory_tables/migration.sql",
+   "find": "REVOKE UPDATE, DELETE, TRUNCATE ON \"stock_movements\" FROM PUBLIC, app_runtime;",
+   "replace": "REVOKE TRUNCATE ON \"stock_movements\" FROM PUBLIC, app_runtime;",
+   "test": "node scripts/run-jest.mjs test/inventory/read.spec.ts -t \"INV-TC-20261006-101123702\""
+  },
+  {
+   "id": "SB-34, T8: lô hết hạn 500 đơn thành 5.000.000 (không giới hạn lô)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "INV-TC-20261006-101123535",
+   "file": "src/modules/inventory/config.ts",
+   "find": "export const EXPIRE_BATCH = 500;",
+   "replace": "export const EXPIRE_BATCH = 5_000_000;",
+   "test": "node scripts/run-jest.mjs test/inventory/jobs.spec.ts -t \"INV-TC-20261006-101123535\""
+  },
+  {
+   "id": "SB-34, T8: job hết hạn bỏ hạn thời gian của lần chạy",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "INV-TC-20261006-101123489",
+   "file": "src/modules/inventory/jobs.service.ts",
+   "find": "while (!o.signal?.aborted && Date.now() - start < budget) {",
+   "replace": "while (!o.signal?.aborted) {",
+   "test": "node scripts/run-jest.mjs test/inventory/jobs.spec.ts -t \"INV-TC-20261006-101123489\""
+  },
+  {
+   "id": "SB-34, T8: job tạo bù không đóng khi PRD lỗi (ném lỗi lên)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "INV-TC-20261006-101123791",
+   "file": "src/modules/inventory/jobs.service.ts",
+   "find": "this.log.error('tạo bù bản ghi kho dừng vì lỗi (không tạo thêm gì)', { err });",
+   "replace": "throw err;",
+   "test": "node scripts/run-jest.mjs test/inventory/jobs.spec.ts -t \"INV-TC-20261006-101123791\""
+  },
+  {
+   "id": "SB-34, T8: job tạo bù xin trang 1000 id (quá giới hạn 500 của PRD)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "INV-TC-20261006-101123791",
+   "file": "src/modules/inventory/config.ts",
+   "find": "export const RECONCILE_PAGE = 500;",
+   "replace": "export const RECONCILE_PAGE = 1000;",
+   "test": "node scripts/run-jest.mjs test/inventory/jobs.spec.ts -t \"INV-TC-20261006-101123791\""
+  },
+  {
+   "id": "SB-40, T4: nhập kho không đòi Idempotency-Key",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "INV-TC-20261006-101123047",
+   "file": "src/modules/inventory/inventory.controller.ts",
+   "find": "@Idempotent({ scope: 'inventory.stock-in' }) ",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123047\""
+  },
+  {
+   "id": "SB-40, T4 (nền sửa kèm): request_hash không gồm tham số đường dẫn (cùng khóa cho sản phẩm khác bị coi là phát lại)",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "INV-TC-20261006-101123100",
+   "file": "src/modules/platform/http/idempotency.ts",
+   "find": "{ params: req.params, body: req.body }",
+   "replace": "req.body",
+   "test": "node scripts/run-jest.mjs test/inventory/stock-write.spec.ts -t \"INV-TC-20261006-101123100\""
+  }
+ ]
+}

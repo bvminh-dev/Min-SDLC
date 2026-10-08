@@ -1,0 +1,854 @@
+{
+ "test": "node scripts/run-jest.mjs test/promotion",
+ "mutations": [
+  {
+   "id": "SB-05, SB-07, T1: staff được tạo coupon (sai ma trận)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "PRM-TC-20261006-101036662",
+   "file": "src/modules/promotion/promotion.controller.ts",
+   "find": "@Post() @Action('Tạo coupon') @Roles('admin')",
+   "replace": "@Post() @Action('Tạo coupon') @Roles('staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-create.spec.ts -t \"PRM-TC-20261006-101036662\""
+  },
+  {
+   "id": "SB-05, T1: danh sách coupon mở cho customer",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "PRM-TC-20261006-101037169",
+   "file": "src/modules/promotion/promotion.controller.ts",
+   "find": "@Get() @Action('Xem danh sách và chi tiết coupon (quản trị)') @Roles('admin')",
+   "replace": "@Get() @Action('Xem danh sách và chi tiết coupon (quản trị)') @Roles('customer', 'admin')",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-read.spec.ts -t \"PRM-TC-20261006-101037169\""
+  },
+  {
+   "id": "SB-07, T1: customer được xem chi tiết coupon",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "PRM-TC-20261006-101037169",
+   "file": "src/modules/promotion/promotion.controller.ts",
+   "find": "@Get(':id') @Action('Xem danh sách và chi tiết coupon (quản trị)') @Roles('admin')",
+   "replace": "@Get(':id') @Action('Xem danh sách và chi tiết coupon (quản trị)') @Roles('customer', 'admin')",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-read.spec.ts -t \"PRM-TC-20261006-101037169\""
+  },
+  {
+   "id": "SB-07, T1: staff được xóa coupon",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "PRM-TC-20261006-101036906",
+   "file": "src/modules/promotion/promotion.controller.ts",
+   "find": "@Delete(':id') @Action('Xóa coupon (xóa mềm)') @HttpCode(204) @Roles('admin')",
+   "replace": "@Delete(':id') @Action('Xóa coupon (xóa mềm)') @HttpCode(204) @Roles('staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-state.spec.ts -t \"PRM-TC-20261006-101036906\""
+  },
+  {
+   "id": "SB-07, T1: staff được tắt coupon",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "PRM-TC-20261006-101036906",
+   "file": "src/modules/promotion/promotion.controller.ts",
+   "find": "@Post(':id/disable') @Action('Bật và tắt coupon') @HttpCode(200) @Roles('admin')",
+   "replace": "@Post(':id/disable') @Action('Bật và tắt coupon') @HttpCode(200) @Roles('staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-state.spec.ts -t \"PRM-TC-20261006-101036906\""
+  },
+  {
+   "id": "SB-07, T1: staff được sửa coupon",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "PRM-TC-20261006-101036805",
+   "file": "src/modules/promotion/promotion.controller.ts",
+   "find": "@Patch(':id') @Action('Sửa coupon (giá trị, điều kiện, hạn, số lượt)') @Roles('admin')",
+   "replace": "@Patch(':id') @Action('Sửa coupon (giá trị, điều kiện, hạn, số lượt)') @Roles('staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-update.spec.ts -t \"PRM-TC-20261006-101036805\""
+  },
+  {
+   "id": "SB-07, T6: tạo coupon không ghi audit",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "PRM-TC-20261006-101036592",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "await this.audit.record(tx, { ...actorOf(actor), action: 'promotion.coupon.create', target_type: 'coupon', target_id: r.id, after: snapshot(r) });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-create.spec.ts -t \"PRM-TC-20261006-101036592\""
+  },
+  {
+   "id": "SB-07, T6: sửa coupon ghi audit sai hành động",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "PRM-TC-20261006-101036756",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "action: 'promotion.coupon.update'",
+   "replace": "action: 'promotion.coupon.edit'",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-update.spec.ts -t \"PRM-TC-20261006-101036756\""
+  },
+  {
+   "id": "SB-07, T6: xóa coupon ghi audit sai hành động",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "PRM-TC-20261006-101036906",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "action: 'promotion.coupon.delete'",
+   "replace": "action: 'promotion.coupon.removed'",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-state.spec.ts -t \"PRM-TC-20261006-101036906\""
+  },
+  {
+   "id": "SB-07, T6: bật và tắt coupon ghi audit chung một hành động",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "PRM-TC-20261006-101037001",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "action: `promotion.coupon.${enable ? 'enable' : 'disable'}`",
+   "replace": "action: 'promotion.coupon.toggle'",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-state.spec.ts -t \"PRM-TC-20261006-101037001\""
+  },
+  {
+   "id": "SB-11, T8: percentage nhận value tới 1000",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101036639",
+   "file": "src/modules/promotion/policy.ts",
+   "find": "if (type === 'percentage' && value > 100)",
+   "replace": "if (type === 'percentage' && value > 1000)",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-create.spec.ts -t \"PRM-TC-20261006-101036639\""
+  },
+  {
+   "id": "SB-11, T8: CHECK của CSDL cho percentage tới 1000",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101036639",
+   "file": "prisma/migrations/20261007001000_promotion_tables/migration.sql",
+   "find": "(type = 'percentage' AND value BETWEEN 1 AND 100)",
+   "replace": "(type = 'percentage' AND value BETWEEN 1 AND 1000)",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-create.spec.ts -t \"PRM-TC-20261006-101036639\""
+  },
+  {
+   "id": "SB-11, T8: coupon fixed nhận max_discount khi tạo",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101036686",
+   "file": "src/modules/promotion/policy.ts",
+   "find": "if (o.type === 'fixed' && o.max_discount != null) ctx.addIssue({ code: 'custom', path: ['max_discount'], message: 'invalid_format' }); // chỉ cho percentage (BR6)",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-create.spec.ts -t \"PRM-TC-20261006-101036686\""
+  },
+  {
+   "id": "SB-11, T8: coupon fixed nhận max_discount khi sửa (chỉ còn CHECK của CSDL, trả 500)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101037453",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "if (b.max_discount != null && cur.type !== 'percentage') throw invalid('max_discount', 'invalid_format'); // chỉ cho percentage (BR4)",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/discount.spec.ts -t \"PRM-TC-20261006-101037453\""
+  },
+  {
+   "id": "SB-11, T8: CHECK của CSDL cho fixed có max_discount bị bỏ",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101037453",
+   "file": "prisma/migrations/20261007001000_promotion_tables/migration.sql",
+   "find": "CHECK (max_discount IS NULL OR (type = 'percentage' AND max_discount BETWEEN 1 AND 1000000000))",
+   "replace": "CHECK (max_discount IS NULL OR max_discount BETWEEN 1 AND 1000000000)",
+   "test": "node scripts/run-jest.mjs test/promotion/discount.spec.ts -t \"PRM-TC-20261006-101037453\""
+  },
+  {
+   "id": "SB-11: trường lạ (status, consumed_count) được nhận khi tạo",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101036686",
+   "file": "src/modules/promotion/policy.ts",
+   "find": "for (const k of Object.keys(o)) if (!known.has(k)) ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-create.spec.ts -t \"PRM-TC-20261006-101036686\""
+  },
+  {
+   "id": "SB-11: mã đổi hoa TRƯỚC khi kiểm khuôn (ß, ı, ſ lọt thành mã khác)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101036709",
+   "file": "src/modules/promotion/policy.ts",
+   "find": "const code = z.string(str).transform((s) => s.trim()).pipe(",
+   "replace": "const code = z.string(str).transform((s) => s.trim().toUpperCase()).pipe(",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-create.spec.ts -t \"PRM-TC-20261006-101036709\""
+  },
+  {
+   "id": "SB-11: hạn bằng đúng giờ máy chủ vẫn nhận (bỏ dấu bằng)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101036709",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "if (b.expires_at.getTime() <= this.clock.now().getTime())",
+   "replace": "if (b.expires_at.getTime() < this.clock.now().getTime())",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-create.spec.ts -t \"PRM-TC-20261006-101036709\""
+  },
+  {
+   "id": "SB-11: trần số lượt 1.000.000 thành 100.000.000",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101036709",
+   "file": "src/modules/promotion/config.ts",
+   "find": "export const MAX_LIMIT = 1_000_000;",
+   "replace": "export const MAX_LIMIT = 100_000_000;",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-create.spec.ts -t \"PRM-TC-20261006-101036709\""
+  },
+  {
+   "id": "SB-11: đổi type khi sửa được chấp nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101036781",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "if (b.type !== undefined && b.type !== cur.type) throw problem('field_immutable', { errors: [{ field: 'type', code: 'field_immutable' }] });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-update.spec.ts -t \"PRM-TC-20261006-101036781\""
+  },
+  {
+   "id": "SB-11: usage_limit nhỏ hơn số đang dùng được ghi (CHECK của CSDL trả 500)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101036829",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "if (b.usage_limit !== undefined && b.usage_limit < used) throw problem('usage_limit_below_used', { extra: { used } });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-update.spec.ts -t \"PRM-TC-20261006-101036829\""
+  },
+  {
+   "id": "SB-11, T8: tạo nhận per_user_limit 0 (bỏ kiểm khoảng)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-130100101",
+   "file": "src/modules/promotion/policy.ts",
+   "find": "expires_at: instant, usage_limit: int(1, MAX_LIMIT), per_user_limit: int(1, MAX_LIMIT).nullable().optional(),",
+   "replace": "expires_at: instant, usage_limit: int(1, MAX_LIMIT), per_user_limit: int(0, MAX_LIMIT).nullable().optional(),",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-create.spec.ts -t \"PRM-TC-20261006-130100101\""
+  },
+  {
+   "id": "SB-11, T9: tiền tố q chứa NUL hay nửa cặp thay thế lẻ không bị chặn (500)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101037145",
+   "file": "src/modules/promotion/policy.ts",
+   "find": "CONTROL.test(v) || LONE_SURROGATE.test(v) ? 'invalid_format' : null",
+   "replace": "false ? 'invalid_format' : null",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-read.spec.ts -t \"PRM-TC-20261006-101037145\""
+  },
+  {
+   "id": "SB-11, T9: tiền tố q dài tới 2000 ký tự",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101037145",
+   "file": "src/modules/promotion/policy.ts",
+   "find": "const c = v.length > 20 ? 'too_long'",
+   "replace": "const c = v.length > 2000 ? 'too_long'",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-read.spec.ts -t \"PRM-TC-20261006-101037145\""
+  },
+  {
+   "id": "SB-11, T9: % và _ trong q không được thoát (khớp mọi mã)",
+   "sb": [
+    "SB-11",
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261006-101037193",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "const likeEscape = (s: string): string => s.replace(/[\\\\%_]/g, '\\\\$&');",
+   "replace": "const likeEscape = (s: string): string => s;",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-read.spec.ts -t \"PRM-TC-20261006-101037193\""
+  },
+  {
+   "id": "SB-11: danh sách trả cả coupon đã xóa mềm",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101037121",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "const where = Prisma.sql`status <> 'deleted'::coupon_status${",
+   "replace": "const where = Prisma.sql`TRUE${",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-read.spec.ts -t \"PRM-TC-20261006-101037121\""
+  },
+  {
+   "id": "SB-14, T9: bậc D 30 mỗi phút thành 3000",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261006-113100505",
+   "file": "src/modules/promotion/config.ts",
+   "find": "limit: 30, windowSeconds: 60, group: 'prm:admin'",
+   "replace": "limit: 3000, windowSeconds: 60, group: 'prm:admin'",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-read.spec.ts -t \"PRM-TC-20261006-113100505\""
+  },
+  {
+   "id": "SB-14, T9: các endpoint quản trị không còn chung bộ đếm (mỗi route một bộ)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261006-113100505",
+   "file": "src/modules/promotion/config.ts",
+   "find": "limit: 30, windowSeconds: 60, group: 'prm:admin' }",
+   "replace": "limit: 30, windowSeconds: 60 }",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-read.spec.ts -t \"PRM-TC-20261006-113100505\""
+  },
+  {
+   "id": "SB-14, T4: ngưỡng 10 lần sai thành 1000",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261006-101037309",
+   "file": "src/modules/promotion/config.ts",
+   "find": "export const WRONG_ATTEMPTS = 10;",
+   "replace": "export const WRONG_ATTEMPTS = 1000;",
+   "test": "node scripts/run-jest.mjs test/promotion/evaluate.spec.ts -t \"PRM-TC-20261006-101037309\""
+  },
+  {
+   "id": "SB-14, T4: mã không có không ghi vào bộ đếm thử sai (được hoàn lượt như mã tìm thấy)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261006-101037309",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "if (!c || c.status === 'disabled') return fail('coupon_not_found'); // lượt đã `take` ở trên giữ nguyên làm một lần sai",
+   "replace": "if (!c || c.status === 'disabled') { if (count) await this.limiter.refund(key, WRONG_WINDOW_SECONDS); return fail('coupon_not_found'); }",
+   "test": "node scripts/run-jest.mjs test/promotion/evaluate.spec.ts -t \"PRM-TC-20261006-101037309\""
+  },
+  {
+   "id": "SB-14, T4: too_many_attempts không chặn mã đúng",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261006-101037309",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "if (!gate.allowed) return { ok: false, reason: 'too_many_attempts', retry_after_seconds: gate.retryAfter };",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/evaluate.spec.ts -t \"PRM-TC-20261006-101037309\""
+  },
+  {
+   "id": "SB-14, T4: bộ đếm thử sai dùng chung giữa mọi người dùng",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261006-101037309",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "const attemptKey = (userId: string): string => `prm:notfound:${userId.toLowerCase()}`;",
+   "replace": "const attemptKey = (_userId: string): string => `prm:notfound:all`;",
+   "test": "node scripts/run-jest.mjs test/promotion/evaluate.spec.ts -t \"PRM-TC-20261006-101037309\""
+  },
+  {
+   "id": "SB-14, T15: count_attempt=false vẫn tính và bị chặn",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261006-113100303",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "const count = i.count_attempt !== false;",
+   "replace": "const count = true;",
+   "test": "node scripts/run-jest.mjs test/promotion/evaluate.spec.ts -t \"PRM-TC-20261006-113100303\""
+  },
+  {
+   "id": "SB-14, T4: coupon đang tắt không tính một lần sai (phân biệt được với mã không có)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261006-101037263",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "if (!c || c.status === 'disabled') return fail('coupon_not_found'); // lượt đã `take` ở trên giữ nguyên làm một lần sai",
+   "replace": "if (!c) return fail('coupon_not_found');",
+   "test": "node scripts/run-jest.mjs test/promotion/evaluate.spec.ts -t \"PRM-TC-20261006-101037263\""
+  },
+  {
+   "id": "SB-14, T4: mã tìm thấy không được hoàn lượt đã đếm (per_user_limit_reached hay mã đúng bị tính một lần sai)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261006-130100303",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "if (count) await this.limiter.refund(key, WRONG_WINDOW_SECONDS); // tìm thấy: không phải lần sai",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/evaluate.spec.ts -t \"PRM-TC-20261006-130100303\""
+  },
+  {
+   "id": "SB-14, T4: đếm không nguyên tử (kiểm bằng check rồi mới đếm, như cặp check và hitCounter cũ): 40 lời gọi sai song song đều qua cổng",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRM-TC-20261007-144433497",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "const gate = await this.limiter.take(key, WRONG_ATTEMPTS, WRONG_WINDOW_SECONDS);",
+   "replace": "const pre = await this.limiter.check(key, WRONG_ATTEMPTS, WRONG_WINDOW_SECONDS);\n      const gate = pre.allowed ? await this.limiter.take(key, 1_000_000_000, WRONG_WINDOW_SECONDS) : { allowed: false, count: 0, retryAfter: pre.retryAfter };",
+   "test": "node scripts/run-jest.mjs test/promotion/review.spec.ts -t \"PRM-TC-20261007-144433497\""
+  },
+  {
+   "id": "SB-23, T3: reserve nhận trường amount từ bên gọi",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PRM-TC-20261006-101938470",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "!shapeOk(i, ['order_id', 'user_id', 'code', 'items_subtotal'])",
+   "replace": "!shapeOk(i, ['order_id', 'user_id', 'code', 'items_subtotal', 'amount'])",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-101938470\""
+  },
+  {
+   "id": "SB-23, T8: tiền giảm vượt tạm tính (bỏ chặn tạm tính)",
+   "sb": [
+    "SB-23",
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101037477",
+   "file": "src/modules/promotion/discount.ts",
+   "find": "if (d > s) d = s;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/discount.spec.ts -t \"PRM-TC-20261006-101037477\""
+  },
+  {
+   "id": "SB-23, T8: làm tròn lên thay vì xuống",
+   "sb": [
+    "SB-23",
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101037406",
+   "file": "src/modules/promotion/discount.ts",
+   "find": "(s * BigInt(rule.value)) / 100n",
+   "replace": "(s * BigInt(rule.value) + 99n) / 100n",
+   "test": "node scripts/run-jest.mjs test/promotion/discount.spec.ts -t \"PRM-TC-20261006-101037406\""
+  },
+  {
+   "id": "SB-23, T8: bỏ mức giảm tối đa",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PRM-TC-20261006-101037357",
+   "file": "src/modules/promotion/discount.ts",
+   "find": "if (rule.type === 'percentage' && rule.max_discount !== null && d > BigInt(rule.max_discount)) d = BigInt(rule.max_discount);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/discount.spec.ts -t \"PRM-TC-20261006-101037357\""
+  },
+  {
+   "id": "SB-23, T8: tạm tính vượt 1 tỷ được nhận",
+   "sb": [
+    "SB-23",
+    "SB-11"
+   ],
+   "tc": "PRM-TC-20261006-101037286",
+   "file": "src/modules/promotion/discount.ts",
+   "find": " && v <= MAX_MONEY;",
+   "replace": ";",
+   "test": "node scripts/run-jest.mjs test/promotion/evaluate.spec.ts -t \"PRM-TC-20261006-101037286\""
+  },
+  {
+   "id": "SB-23: giá trị tối thiểu đúng bằng tạm tính bị từ chối",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PRM-TC-20261006-101037548",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "if (subtotal < min) return",
+   "replace": "if (subtotal <= min) return",
+   "test": "node scripts/run-jest.mjs test/promotion/evaluate.spec.ts -t \"PRM-TC-20261006-101037548\""
+  },
+  {
+   "id": "SB-23: tiền giảm bằng 0 vẫn được áp (bỏ no_discount)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PRM-TC-20261006-101037382",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "return amount < 1 ? fail('no_discount')",
+   "replace": "return amount < 0 ? fail('no_discount')",
+   "test": "node scripts/run-jest.mjs test/promotion/discount.spec.ts -t \"PRM-TC-20261006-101037382\""
+  },
+  {
+   "id": "SB-23, T3: CouponRedeemed mang amount lấy từ payload event thay vì từ lượt",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PRM-TC-20261006-101938311",
+   "file": "src/modules/promotion/lifecycle.service.ts",
+   "find": "order_id: order, amount: Number(r.amount) } });",
+   "replace": "order_id: order, amount: Number(e.payload.amount ?? r.amount) } });",
+   "test": "node scripts/run-jest.mjs test/promotion/lifecycle.spec.ts -t \"PRM-TC-20261006-101938311\""
+  },
+  {
+   "id": "SB-24, SB-25, T5: tiêu thụ không kiểm trạng thái lượt (thanh toán trễ sau khi nhả)",
+   "sb": [
+    "SB-24",
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101938390",
+   "file": "src/modules/promotion/lifecycle.service.ts",
+   "find": "if (r.status !== 'reserved') return this.skip(e, ",
+   "replace": "if (false as boolean) return this.skip(e, ",
+   "test": "node scripts/run-jest.mjs test/promotion/lifecycle.spec.ts -t \"PRM-TC-20261006-101938390\""
+  },
+  {
+   "id": "SB-24, T5: nhả không kiểm trạng thái lượt (event khác event_id nhả hai lần)",
+   "sb": [
+    "SB-24",
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101938352",
+   "file": "src/modules/promotion/lifecycle.service.ts",
+   "find": "if (r.status === 'released') return this.skip(e, 'lượt đã nhả', order);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/promotion/lifecycle.spec.ts -t \"PRM-TC-20261006-101938352\""
+  },
+  {
+   "id": "SB-25, T5: lượt tiêu thụ cuối không đưa coupon sang exhausted",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037786",
+   "file": "src/modules/promotion/lifecycle.service.ts",
+   "find": "consumed_count + 1 = usage_limit THEN 'exhausted'::coupon_status",
+   "replace": "consumed_count + 1 = usage_limit + 1 THEN 'exhausted'::coupon_status",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-101037786\""
+  },
+  {
+   "id": "SB-25, T5: trả lượt consumed không đưa coupon exhausted về active",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-113100101",
+   "file": "src/modules/promotion/lifecycle.service.ts",
+   "find": "CASE WHEN status = 'exhausted'::coupon_status THEN 'active'::coupon_status ELSE status END",
+   "replace": "CASE WHEN status = 'exhausted'::coupon_status THEN 'exhausted'::coupon_status ELSE status END",
+   "test": "node scripts/run-jest.mjs test/promotion/lifecycle.spec.ts -t \"PRM-TC-20261006-113100101\""
+  },
+  {
+   "id": "SB-25, T10: evaluate và reserve không kiểm hạn theo giờ CSDL (trạng thái đã lưu active)",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037619",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "if (c.status === 'expired' || c.overdue) return fail('coupon_expired');",
+   "replace": "if (c.status === 'expired') return fail('coupon_expired');",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037619\""
+  },
+  {
+   "id": "SB-25, T10: reserve tính quá hạn sai (overdue luôn false)",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037619",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "SELECT ${COLS}, (expires_at <= COALESCE(${o.now ?? null}::timestamptz, now())) AS overdue FROM coupons WHERE code = ${code} AND status <> 'deleted'::coupon_status FOR UPDATE",
+   "replace": "SELECT ${COLS}, false AS overdue FROM coupons WHERE code = ${code} AND status <> 'deleted'::coupon_status FOR UPDATE",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037619\""
+  },
+  {
+   "id": "SB-25, T10: ranh giới hạn (đúng expires_at vẫn còn hạn)",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037596",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "SELECT ${COLS}, (expires_at <= COALESCE(${now ?? null}::timestamptz, now())) AS overdue FROM coupons WHERE code = ${code} AND status <> 'deleted'::coupon_status`;",
+   "replace": "SELECT ${COLS}, (expires_at < COALESCE(${now ?? null}::timestamptz, now())) AS overdue FROM coupons WHERE code = ${code} AND status <> 'deleted'::coupon_status`;",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037596\""
+  },
+  {
+   "id": "SB-25, T2: evaluate bỏ kiểm hết chỗ (consumed + reserved >= usage_limit)",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037713",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "if (c.status === 'exhausted' || c.consumed_count + c.reserved_count >= c.usage_limit) return fail('coupon_exhausted');",
+   "replace": "if (c.status === 'exhausted') return fail('coupon_exhausted');",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-101037713\""
+  },
+  {
+   "id": "SB-25, T2: reserve bỏ khóa dòng coupon (FOR UPDATE)",
+   "sb": [
+    "SB-25",
+    "SB-33"
+   ],
+   "tc": "PRM-TC-20261006-130100404",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "AND status <> 'deleted'::coupon_status FOR UPDATE`;\n    if (!c || c.status === 'disabled') return fail('coupon_not_found');",
+   "replace": "AND status <> 'deleted'::coupon_status`;\n    if (!c || c.status === 'disabled') return fail('coupon_not_found');",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-130100404\""
+  },
+  {
+   "id": "SB-25, T2 (lưới thứ hai, tương đương): câu UPDATE giữ lượt bỏ điều kiện hết chỗ",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037738",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": " AND consumed_count + reserved_count < usage_limit` : 0;",
+   "replace": "` : 0;",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-101037738\"",
+   "equivalent": "kiểm hết chỗ đã nằm ở verdict dưới khóa dòng coupon (FOR UPDATE) nên câu UPDATE chỉ là lưới an toàn thứ hai; bất biến vẫn do CHECK coupons_used_le_limit giữ (đột biến bỏ CHECK ở dòng sau bị bắt)"
+  },
+  {
+   "id": "SB-25, T2: CHECK consumed_count + reserved_count <= usage_limit ở CSDL bị bỏ",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037738",
+   "file": "prisma/migrations/20261007001000_promotion_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"coupons_used_le_limit\" CHECK (consumed_count + reserved_count <= usage_limit),",
+   "replace": "ADD CONSTRAINT \"coupons_used_le_limit\" CHECK (consumed_count + reserved_count <= usage_limit + 1000),",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-101037738\""
+  },
+  {
+   "id": "SB-25, T11: reserve lặp cùng đơn không chống trùng (bỏ ON CONFLICT order_id)",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037811",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "ON CONFLICT (order_id) DO NOTHING RETURNING id",
+   "replace": "RETURNING id",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-101037811\""
+  },
+  {
+   "id": "SB-25, T11: unique(order_id) ở CSDL bị bỏ",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037811",
+   "file": "prisma/migrations/20261007001000_promotion_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"coupon_redemptions_order_id_key\" ON \"coupon_redemptions\"(\"order_id\");",
+   "replace": "CREATE INDEX \"coupon_redemptions_order_id_key\" ON \"coupon_redemptions\"(\"order_id\");",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-101037811\""
+  },
+  {
+   "id": "SB-25, T11: mã khác cho cùng đơn được giữ thêm",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037811",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "if (r.code !== code || r.user_id !== userId.toLowerCase() || r.status === 'released') return fail('order_already_has_coupon');",
+   "replace": "if (r.status === 'released') return fail('order_already_has_coupon');",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-101037811\""
+  },
+  {
+   "id": "SB-25, T5: handler không khóa dòng lượt (FOR UPDATE) nên PaymentSucceeded và OrderCancelled đua nhau",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "PRM-TC-20261006-101938589",
+   "file": "src/modules/promotion/lifecycle.service.ts",
+   "find": "FROM coupon_redemptions WHERE order_id = ${order}::uuid FOR UPDATE`",
+   "replace": "FROM coupon_redemptions WHERE order_id = ${order}::uuid`",
+   "test": "node scripts/run-jest.mjs test/promotion/lifecycle.spec.ts -t \"PRM-TC-20261006-101938589\""
+  },
+  {
+   "id": "SB-25, T10: job hết hạn bỏ ranh giới (đúng expires_at chưa chuyển expired)",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PRM-TC-20261006-101037572",
+   "file": "src/modules/promotion/jobs.service.ts",
+   "find": "AND expires_at <= COALESCE(${now ?? null}::timestamptz, now())\n          ORDER BY",
+   "replace": "AND expires_at < COALESCE(${now ?? null}::timestamptz, now())\n          ORDER BY",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037572\""
+  },
+  {
+   "id": "SB-27, T14: tiêu thụ không ghi CouponRedeemed vào outbox",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PRM-TC-20261006-101938311",
+   "file": "src/modules/promotion/lifecycle.service.ts",
+   "find": "await this.events.publish(tx, { type: 'CouponRedeemed',",
+   "replace": "await Promise.resolve({ type: 'CouponRedeemed',",
+   "test": "node scripts/run-jest.mjs test/promotion/lifecycle.spec.ts -t \"PRM-TC-20261006-101938311\""
+  },
+  {
+   "id": "SB-27, T14: job hết hạn không ghi CouponExpired vào outbox",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PRM-TC-20261006-101037572",
+   "file": "src/modules/promotion/jobs.service.ts",
+   "find": "await this.events.publish(tx, { type: 'CouponExpired',",
+   "replace": "await Promise.resolve({ type: 'CouponExpired',",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037572\""
+  },
+  {
+   "id": "SB-27, T14: job hết hạn chọn cả coupon exhausted (phát CouponExpired sai)",
+   "sb": [
+    "SB-27",
+    "SB-34"
+   ],
+   "tc": "PRM-TC-20261006-101037642",
+   "file": "src/modules/promotion/jobs.service.ts",
+   "find": "status IN ('active'::coupon_status, 'disabled'::coupon_status) AND expires_at <= COALESCE(",
+   "replace": "status IN ('active'::coupon_status, 'disabled'::coupon_status, 'exhausted'::coupon_status) AND expires_at <= COALESCE(",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037642\""
+  },
+  {
+   "id": "SB-27: job hết hạn bỏ SKIP LOCKED (hai instance cùng lô)",
+   "sb": [
+    "SB-27",
+    "SB-34"
+   ],
+   "tc": "PRM-TC-20261006-101037642",
+   "file": "src/modules/promotion/jobs.service.ts",
+   "find": "LIMIT ${batch} FOR UPDATE SKIP LOCKED",
+   "replace": "LIMIT ${batch} FOR UPDATE",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037642\""
+  },
+  {
+   "id": "SB-34, T10: job hết hạn không giới hạn lô",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PRM-TC-20261006-101037642",
+   "file": "src/modules/promotion/jobs.service.ts",
+   "find": "LIMIT ${batch} FOR UPDATE SKIP LOCKED",
+   "replace": "LIMIT ${batch * 1000} FOR UPDATE SKIP LOCKED",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037642\""
+  },
+  {
+   "id": "SB-34: job hết hạn không có hạn thời gian của lần chạy",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PRM-TC-20261006-101037642",
+   "file": "src/modules/promotion/jobs.service.ts",
+   "find": "while (!o.signal?.aborted && Date.now() - start < budget)",
+   "replace": "while (!o.signal?.aborted)",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037642\""
+  },
+  {
+   "id": "SB-34: job hết hạn bỏ qua tín hiệu hủy của JobRunner",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PRM-TC-20261006-101037642",
+   "file": "src/modules/promotion/jobs.service.ts",
+   "find": "while (!o.signal?.aborted && Date.now() - start < budget)",
+   "replace": "while (Date.now() - start < budget)",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037642\""
+  },
+  {
+   "id": "SB-34: hạn thời gian của job lớn hơn chu kỳ (chạy chồng)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PRM-TC-20261006-101037642",
+   "file": "src/modules/promotion/config.ts",
+   "find": "export const EXPIRE_BUDGET_MS = 45_000;",
+   "replace": "export const EXPIRE_BUDGET_MS = 450_000;",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037642\""
+  },
+  {
+   "id": "SB-34: chu kỳ job đối soát đổi thành mỗi phút",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PRM-TC-20261006-101037642",
+   "file": "src/modules/promotion/config.ts",
+   "find": "export const RECONCILE_JOB_MS = 24 * 3600_000;",
+   "replace": "export const RECONCILE_JOB_MS = 60_000;",
+   "test": "node scripts/run-jest.mjs test/promotion/expiry.spec.ts -t \"PRM-TC-20261006-101037642\""
+  },
+  {
+   "id": "SB-30, T7: sửa bỏ điều kiện version trong câu UPDATE (hai admin đều thắng)",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "PRM-TC-20261006-101036805",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "WHERE id = ${cur.id}::uuid AND version = ${b.version} AND status IN",
+   "replace": "WHERE id = ${cur.id}::uuid AND status IN",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-update.spec.ts -t \"PRM-TC-20261006-101036805\""
+  },
+  {
+   "id": "SB-30, T7: sửa không tăng version",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "PRM-TC-20261006-101036756",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "per_user_limit = ${next.per_user_limit}, version = version + 1, updated_at = now()",
+   "replace": "per_user_limit = ${next.per_user_limit}, updated_at = now()",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-update.spec.ts -t \"PRM-TC-20261006-101036756\""
+  },
+  {
+   "id": "SB-30, T7: bật và tắt không tăng version",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "PRM-TC-20261006-101037001",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "UPDATE coupons SET status = ${to}::coupon_status, version = version + 1, updated_at = now()",
+   "replace": "UPDATE coupons SET status = ${to}::coupon_status, updated_at = now()",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-state.spec.ts -t \"PRM-TC-20261006-101037001\""
+  },
+  {
+   "id": "SB-24, T7: ghi quản trị không khóa dòng coupon (hai admin xóa cùng lúc đều ghi audit)",
+   "sb": [
+    "SB-24",
+    "SB-30"
+   ],
+   "tc": "PRM-TC-20261006-101036977",
+   "file": "src/modules/promotion/coupon.service.ts",
+   "find": "AND status <> 'deleted'::coupon_status FOR UPDATE`;\n    if (!c) throw new DomainError('not-found');\n    return c;",
+   "replace": "AND status <> 'deleted'::coupon_status`;\n    if (!c) throw new DomainError('not-found');\n    return c;",
+   "test": "node scripts/run-jest.mjs test/promotion/admin-state.spec.ts -t \"PRM-TC-20261006-101036977\""
+  },
+  {
+   "id": "SB-33, T12: giới hạn mỗi người đếm cả lượt released",
+   "sb": [
+    "SB-33"
+   ],
+   "tc": "PRM-TC-20261006-130100505",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "AND status IN ('reserved'::redemption_status, 'consumed'::redemption_status)`",
+   "replace": "AND status IN ('reserved'::redemption_status, 'consumed'::redemption_status, 'released'::redemption_status)`",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-130100505\""
+  },
+  {
+   "id": "SB-33, T12: giới hạn mỗi người bằng used > limit (vượt thêm một lượt)",
+   "sb": [
+    "SB-33"
+   ],
+   "tc": "PRM-TC-20261006-130100303",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "used >= c.per_user_limit) return",
+   "replace": "used > c.per_user_limit) return",
+   "test": "node scripts/run-jest.mjs test/promotion/evaluate.spec.ts -t \"PRM-TC-20261006-130100303\""
+  },
+  {
+   "id": "SB-33, T12: giới hạn mỗi người đếm theo mọi người dùng (bỏ lọc user_id)",
+   "sb": [
+    "SB-33"
+   ],
+   "tc": "PRM-TC-20261006-130100505",
+   "file": "src/modules/promotion/evaluate.service.ts",
+   "find": "AND user_id = ${userId.toLowerCase()}::uuid AND status IN",
+   "replace": "AND status IN",
+   "test": "node scripts/run-jest.mjs test/promotion/reserve.spec.ts -t \"PRM-TC-20261006-130100505\""
+  }
+ ]
+}

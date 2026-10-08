@@ -1,7 +1,1 @@
-{
-  "spec/permissions-matrix.md": {
-    "reason": "Review USR: USR-API/flow còn thứ tự kiểm cũ, ma trận quyền gộp staff+admin ở hàng Tra cứu hồ sơ khách, chưa có chính sách nosniff/cache khi phát ảnh (T8, T19), TC trần theo giờ lệch cửa sổ cố định của ADR-014",
-    "solution": "sdlc-impact theo spec/lessons/2026-10-06-USR-code.md và spec/epics/USR/review.md: sửa spec khớp mã đã review; tách hàng ma trận; chốt cache ngắn cho ảnh; duyệt lại một lần",
-    "authorized_by": "người dùng (\"bạn tự làm hết đi\")"
-  }
-}
+{}

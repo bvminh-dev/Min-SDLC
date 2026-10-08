@@ -1,0 +1,73 @@
+// Module promotion (epic PRM, PRM-DB-20261006-101036519): Coupon, CouponRedemption.
+// Phần Prisma không biểu diễn được (CHECK nhiều cột, chỉ mục một phần, text_pattern_ops) nằm trong migration SQL.
+// Khóa ngoại chỉ trỏ vào bảng của PRM; `order_id`, `user_id`, `created_by` là cột trơn (PRM không phụ thuộc module nào, P7, SB-35).
+
+enum CouponType {
+  percentage
+  fixed
+
+  @@map("coupon_type")
+}
+
+enum CouponStatus {
+  active
+  disabled
+  expired
+  exhausted
+  deleted
+
+  @@map("coupon_status")
+}
+
+enum RedemptionStatus {
+  reserved
+  consumed
+  released
+
+  @@map("redemption_status")
+}
+
+model Coupon {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code           String       @unique
+  type           CouponType
+  value          BigInt
+  minOrderValue  BigInt       @default(0) @map("min_order_value")
+  maxDiscount    BigInt?      @map("max_discount")
+  expiresAt      DateTime     @map("expires_at") @db.Timestamptz(6)
+  usageLimit     Int          @map("usage_limit")
+  perUserLimit   Int?         @map("per_user_limit")
+  consumedCount  Int          @default(0) @map("consumed_count")
+  reservedCount  Int          @default(0) @map("reserved_count")
+  status         CouponStatus @default(active)
+  version        Int          @default(1)
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String       @map("created_by") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  redemptions CouponRedemption[]
+
+  @@index([status, createdAt(sort: Desc), id(sort: Desc)])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  couponId   String           @map("coupon_id") @db.Uuid
+  orderId    String           @unique @map("order_id") @db.Uuid
+  userId     String           @map("user_id") @db.Uuid
+  amount     BigInt
+  status     RedemptionStatus @default(reserved)
+  reservedAt DateTime         @default(now()) @map("reserved_at") @db.Timestamptz(6)
+  consumedAt DateTime?        @map("consumed_at") @db.Timestamptz(6)
+  releasedAt DateTime?        @map("released_at") @db.Timestamptz(6)
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Restrict)
+
+  @@index([couponId, status])
+  @@index([userId, reservedAt(sort: Desc)])
+  @@map("coupon_redemptions")
+}

@@ -1,16 +1,16 @@
 import { spawn } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, symlinkSync, writeFileSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpSync, existsSync, mkdirSync, readdirSync, symlinkSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Client } from 'pg';
 import request from 'supertest';
 import { createTestApp } from '../support/app';
 import { API_DIR, PRISMA_BIN, adminQuery, migrateDeploy, migrateDeployAsync, testDbUrl, withTempDb } from '../support/db';
 import { run } from '../support/sh';
+import { mkTmp } from '../support/tmp';
 
 /** Bản sao tạm của thư mục prisma/ để thử migration mà không đụng repo. */
 function copyProject(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'ecom-prisma-'));
+  const dir = mkTmp('ecom-prisma-');
   cpSync(join(API_DIR, 'prisma'), join(dir, 'prisma'), { recursive: true });
   cpSync(join(API_DIR, 'prisma.config.ts'), join(dir, 'prisma.config.ts'));
   symlinkSync(join(API_DIR, 'node_modules'), join(dir, 'node_modules'));

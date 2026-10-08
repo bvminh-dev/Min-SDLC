@@ -1,6 +1,6 @@
-import { DomainError } from '../../platform';
+import { DomainError } from '../errors/registry';
 
-/** Object storage cho ảnh đại diện (ADR-010): chỉ ba thao tác USR cần. Khóa đối tượng không bao giờ lấy từ dữ liệu client. */
+/** Object storage dùng chung (ADR-010, ADR-012 "kho object" là phần của platform): chỉ ba thao tác module cần. Khóa đối tượng không bao giờ lấy từ dữ liệu client. */
 export interface StoredObject { key: string; lastModified: Date }
 export interface ObjectStorage {
   put(key: string, body: Buffer, o: { contentType: string; headers?: Record<string, string> }): Promise<void>;

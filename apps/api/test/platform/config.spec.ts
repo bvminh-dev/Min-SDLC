@@ -5,6 +5,8 @@ import { testDbUrl } from '../support/db';
 const TLS_URL = 'postgresql://u:pw-not-printed@db.example:5432/app?sslmode=require'; // scan-secrets:allow giá trị giả của test
 const rand = (n: number) => Array.from({ length: n }, (_, i) => 'q3Z8k2Mx9R7wE5tY4uI1oP6aS0dFgHjK'[(i * 7 + 3) % 32]).join('') + 'mN'.repeat(n).slice(0, 0);
 const problems = (fn: () => unknown) => { try { fn(); } catch (e) { if (e instanceof ConfigError) return e; throw e; } throw new Error('không ném ConfigError'); };
+// kho object là cấu hình của platform (STORAGE_*, requiredOutsideDev): staging và prod phải đủ ba biến này
+const STORAGE = { STORAGE_ENDPOINT: 'https://s3.example.test', STORAGE_ACCESS_KEY: 'k'.repeat(20), STORAGE_SECRET_KEY: 's'.repeat(40) };
 const base = { APP_ENV: 'dev', DATABASE_URL: 'postgresql://u:pw@localhost:5433/x', CORS_ALLOWED_ORIGINS: 'http://localhost:3000' };
 
 describe('Cấu hình kiểm schema lúc khởi động (PRJ-REQ-20261006-095422735)', () => {
@@ -32,7 +34,7 @@ describe('Cấu hình kiểm schema lúc khởi động (PRJ-REQ-20261006-095422
     expect(code).not.toBe(0);
     expect(b.stderr()).toContain('DATABASE_URL');
     expect(b.stderr()).toContain('CORS_ALLOWED_ORIGINS');
-    expect(await portOpen(port)).toBe(false);
+    expect(b.stdout()).not.toContain('đã lắng nghe'); // tiến trình con đã thoát: kiểm cổng toàn máy (portOpen) chỉ bắt tiến trình lạ chiếm đúng cổng freePort vừa trả (đỏ giả), không nói gì về ứng dụng
   }, 60_000);
 
   it('PRJ-TC-20261006-100124883 (đơn vị): lỗi gom một lượt, không in giá trị', () => {
@@ -44,7 +46,7 @@ describe('Cấu hình kiểm schema lúc khởi động (PRJ-REQ-20261006-095422
   it('PRJ-TC-20261006-100124905: prod từ chối bí mật giữ chỗ changeme, example, test và rỗng, nêu tên biến và lý do, không in giá trị', () => {
     const secret: ConfigFragment = { PAYMENT_HASH_SECRET: cfg.secret() };
     for (const v of ['changeme', 'example-key-long-long-long-long-xxxxxxx', 'test', 'Test-1234567890123456789012345678901', '']) {
-      const e = problems(() => loadConfig({ ...base, APP_ENV: 'prod', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL, PAYMENT_HASH_SECRET: v }, [secret]));
+      const e = problems(() => loadConfig({ ...base, ...STORAGE, APP_ENV: 'prod', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL, PAYMENT_HASH_SECRET: v }, [secret]));
       expect(e.problems.map((p) => p.name)).toEqual(['PAYMENT_HASH_SECRET']);
       expect(e.problems[0].reason).toMatch(/giữ chỗ|thiếu hoặc rỗng/);
       if (v.length > 8) expect(e.format()).not.toContain(v); // giá trị ngắn trùng đúng từ khóa chính sách thì lý do nêu từ khóa đó, không phải lộ giá trị
@@ -52,7 +54,7 @@ describe('Cấu hình kiểm schema lúc khởi động (PRJ-REQ-20261006-095422
   });
 
   it('PRJ-TC-20261006-100124927: prod từ chối CORS *, CSDL không TLS và log debug; cùng cấu hình ở dev khởi động được', () => {
-    const prodBase = { ...base, APP_ENV: 'prod', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL };
+    const prodBase = { ...base, ...STORAGE, APP_ENV: 'prod', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL };
     expect(problems(() => loadConfig({ ...prodBase, CORS_ALLOWED_ORIGINS: '*' })).problems.map((p) => p.name)).toEqual(['CORS_ALLOWED_ORIGINS']);
     expect(problems(() => loadConfig({ ...prodBase, DATABASE_URL: 'postgresql://u:p@db:5432/a' })).problems.map((p) => p.name)).toEqual(['DATABASE_URL']); // scan-secrets:allow giá trị giả của test
     expect(problems(() => loadConfig({ ...prodBase, LOG_LEVEL: 'debug' })).problems.map((p) => p.name)).toEqual(['LOG_LEVEL']);
@@ -75,7 +77,7 @@ describe('Cấu hình kiểm schema lúc khởi động (PRJ-REQ-20261006-095422
   }, 60_000);
 
   it('PRJ-TC-20261006-100124974: staging không đặt LOG_LEVEL và PORT dùng mặc định info và 3001, log trạng thái "dùng mặc định"', () => {
-    const c = loadConfig({ ...base, APP_ENV: 'staging', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL });
+    const c = loadConfig({ ...base, ...STORAGE, APP_ENV: 'staging', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL });
     expect(c.get('LOG_LEVEL')).toBe('info');
     expect(c.get('PORT')).toBe(3001);
     const st = Object.fromEntries(c.statuses.map((s) => [s.name, s.status]));
@@ -100,7 +102,7 @@ describe('Cấu hình kiểm schema lúc khởi động (PRJ-REQ-20261006-095422
   it('PRJ-TC-20261006-120200102: prod từ chối bí mật quá ngắn hoặc giữ chỗ theo chính sách, liệt kê cả ba, không in giá trị', async () => {
     const secrets: ConfigFragment = { PAYMENT_HASH_SECRET: cfg.secret(), SESSION_SIGNING_KEY: cfg.secret(), WEBHOOK_SECRET: cfg.secret() };
     const short31 = rand(31), repeat40 = 'a'.repeat(40), ph = 'Placeholder-9f3k2m1x8q7w6e5r4t3y2u1i0o9p8a7s';
-    const env = { ...base, APP_ENV: 'prod', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL, PAYMENT_HASH_SECRET: short31, SESSION_SIGNING_KEY: repeat40, WEBHOOK_SECRET: ph };
+    const env = { ...base, ...STORAGE, APP_ENV: 'prod', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL, PAYMENT_HASH_SECRET: short31, SESSION_SIGNING_KEY: repeat40, WEBHOOK_SECRET: ph };
     const e = problems(() => loadConfig(env, [secrets]));
     const by = Object.fromEntries(e.problems.map((p) => [p.name, p.reason]));
     expect(by.PAYMENT_HASH_SECRET).toMatch(/quá ngắn/);
@@ -115,7 +117,7 @@ describe('Cấu hình kiểm schema lúc khởi động (PRJ-REQ-20261006-095422
     const port = await freePort();
     const b = bootApp({ ...env, PORT: String(port) });
     expect(await b.exited).not.toBe(0);
-    expect(await portOpen(port)).toBe(false);
+    expect(b.stdout()).not.toContain('đã lắng nghe'); // tiến trình con đã thoát: kiểm cổng toàn máy (portOpen) chỉ bắt tiến trình lạ chiếm đúng cổng freePort vừa trả (đỏ giả), không nói gì về ứng dụng
     for (const v of [short31, repeat40, ph]) expect(b.stderr()).not.toContain(v);
   }, 60_000);
 
@@ -123,7 +125,7 @@ describe('Cấu hình kiểm schema lúc khởi động (PRJ-REQ-20261006-095422
     const dsh: ConfigFragment = { DASHBOARD_CACHE_TTL_SECONDS: cfg.int({ default: 60 }), DASHBOARD_RATE_LIMIT_PER_MINUTE: cfg.int({ default: 30 }) };
     const pay: ConfigFragment = { PAY_MAX_ATTEMPTS: cfg.int({ default: 3 }) };
     const ntf: ConfigFragment = { SES_REGION: cfg.string(), MAIL_FROM: cfg.string(), APP_BASE_URL: cfg.string() };
-    const stg = { ...base, APP_ENV: 'staging', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL };
+    const stg = { ...base, ...STORAGE, APP_ENV: 'staging', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL };
     const e = problems(() => loadConfig({ ...stg, SES_REGION: 'ap-southeast-1', MAIL_FROM: 'no-reply@shop.example' }, [dsh, pay, ntf]));
     expect(e.problems.map((p) => p.name)).toEqual(['APP_BASE_URL']);
     const c = loadConfig({ ...stg, SES_REGION: 'ap-southeast-1', MAIL_FROM: 'no-reply@shop.example', APP_BASE_URL: 'https://shop.example' }, [dsh, pay, ntf]);

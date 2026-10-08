@@ -1,0 +1,1094 @@
+{
+ "test": "node scripts/run-jest.mjs test/order",
+ "mutations": [
+  {
+   "id": "SB-05, T4: staff được hủy đơn (sai ma trận)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "ORD-TC-20261006-111226244",
+   "file": "src/modules/order/order.controller.ts",
+   "find": "@Roles('customer', 'admin') @RateLimit(LIMITS.cancel)",
+   "replace": "@Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.cancel)",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226244\""
+  },
+  {
+   "id": "SB-05, T1: danh sách của mình mở cho staff và admin (sai ma trận, lệch quyền)",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "ORD-TC-20261006-111224663",
+   "file": "src/modules/order/order.controller.ts",
+   "find": "@Action('Xem danh sách đơn của mình (lọc theo trạng thái)') @Roles('customer')",
+   "replace": "@Action('Xem danh sách đơn của mình (lọc theo trạng thái)') @Roles('customer', 'staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/order/guard.spec.ts -t \"ORD-TC-20261006-111224663\""
+  },
+  {
+   "id": "SB-05, T4: danh sách quản trị mở cho customer",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "ORD-TC-20261006-111224663",
+   "file": "src/modules/order/order.controller.ts",
+   "find": "@Action('Xem danh sách mọi đơn, lọc trạng thái, tìm theo mã đơn') @Roles('staff', 'admin')",
+   "replace": "@Action('Xem danh sách mọi đơn, lọc trạng thái, tìm theo mã đơn') @Roles('customer', 'staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/order/list.spec.ts -t \"ORD-TC-20261006-111224663\""
+  },
+  {
+   "id": "SB-05, T9: thêm route HTTP khóa bàn giao cho customer (không có đường HTTP nào cho giao diện nội bộ)",
+   "sb": [
+    "SB-05",
+    "SB-35",
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-150000400",
+   "file": "src/modules/order/order.controller.ts",
+   "find": "  @Post(':code/cancel') @Action(",
+   "replace": "  @Post(':code/handoff') @Action('Hủy đơn (trước khi giao)') @Roles('customer') @Validate({ params: codeParams }) handoff(@ValidParams() p: Params) { return { code: p.code }; }\n\n  @Post(':code/cancel') @Action(",
+   "test": "node scripts/run-jest.mjs test/order/handoff.spec.ts -t \"ORD-TC-20261006-150000400\""
+  },
+  {
+   "id": "SB-35, T23: route HTTP khóa bàn giao bị phát hiện ở danh sách route",
+   "sb": [
+    "SB-35"
+   ],
+   "tc": "ORD-TC-20261006-111225620",
+   "file": "src/modules/order/order.controller.ts",
+   "find": "  @Post(':code/cancel') @Action(",
+   "replace": "  @Post(':code/lock') @Action('Hủy đơn (trước khi giao)') @Roles('customer') @Validate({ params: codeParams }) lock(@ValidParams() p: Params) { return { code: p.code }; }\n\n  @Post(':code/cancel') @Action(",
+   "test": "node scripts/run-jest.mjs test/order/guard.spec.ts -t \"ORD-TC-20261006-111225620\""
+  },
+  {
+   "id": "SB-06, T1: danh sách của customer bỏ điều kiện user_id (IDOR)",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "ORD-TC-20261006-111224310",
+   "file": "src/modules/order/read.service.ts",
+   "find": "const conds = [Prisma.sql`o.user_id = ${s.user_id}::uuid`];",
+   "replace": "const conds = [Prisma.sql`TRUE`];",
+   "test": "node scripts/run-jest.mjs test/order/list.spec.ts -t \"ORD-TC-20261006-111224310\""
+  },
+  {
+   "id": "SB-06, T1: chi tiết bỏ điều kiện sở hữu (customer xem đơn người khác)",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "ORD-TC-20261006-111224962",
+   "file": "src/modules/order/read.service.ts",
+   "find": "const own = s.role === 'customer' ? Prisma.sql` AND user_id = ${s.user_id}::uuid` : Prisma.empty;",
+   "replace": "const own = Prisma.empty;",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111224962\""
+  },
+  {
+   "id": "SB-06, T2: mã sai định dạng trả 400 thay vì cùng 404 (tách được mã sai định dạng khỏi của người khác)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "ORD-TC-20261006-111225056",
+   "file": "src/modules/order/read.service.ts",
+   "find": "if (!CODE_RE.test(code)) throw new DomainError('not-found');\n    const own",
+   "replace": "if (!CODE_RE.test(code)) throw new DomainError('validation-failed');\n    const own",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111225056\""
+  },
+  {
+   "id": "SB-06, T1: hủy nạp đơn không kèm điều kiện sở hữu (customer hủy và khóa đơn của người khác)",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "ORD-TC-20261006-111226366",
+   "file": "src/modules/order/cancel.service.ts",
+   "find": "lockByCode(tx, code, role === 'customer' ? s.user_id : undefined)",
+   "replace": "lockByCode(tx, code)",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226366\""
+  },
+  {
+   "id": "SB-05, T5: vai trò suy từ phiên bị thay bằng customer cho admin (admin hủy đơn bị ghi như customer)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "ORD-TC-20261006-111226206",
+   "file": "src/modules/order/cancel.service.ts",
+   "find": "const role = s.role === 'admin' ? 'admin' : 'customer';",
+   "replace": "const role = 'customer';",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226206\""
+  },
+  {
+   "id": "SB-06, T2: findOwned bỏ điều kiện user_id (SHP thấy đơn người khác)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "ORD-TC-20261006-120228244",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "return CODE_RE.test(c) && isUuid(userId) ? this.shipment(Prisma.sql`code = ${c} AND user_id = ${userId}::uuid`) : null;",
+   "replace": "return CODE_RE.test(c) && isUuid(userId) ? this.shipment(Prisma.sql`code = ${c}`) : null;",
+   "test": "node scripts/run-jest.mjs test/order/interfaces.spec.ts -t \"ORD-TC-20261006-120228244\""
+  },
+  {
+   "id": "SB-08, T6: staff thấy địa chỉ giao",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "ORD-TC-20261006-111224900",
+   "file": "src/modules/order/read.service.ts",
+   "find": "...(s.role === 'staff' ? {} : { shipping_address: o.shipping_address }),",
+   "replace": "...{ shipping_address: o.shipping_address },",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111224900\""
+  },
+  {
+   "id": "SB-08, T6: can_cancel đúng cho staff",
+   "sb": [
+    "SB-08",
+    "SB-05"
+   ],
+   "tc": "ORD-TC-20261006-111224900",
+   "file": "src/modules/order/read.service.ts",
+   "find": "const canCancel = s.role !== 'staff' && (",
+   "replace": "const canCancel = (",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111224900\""
+  },
+  {
+   "id": "SB-08, T6: tìm theo mã đơn khớp một phần (ILIKE) thay vì khớp chính xác",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "ORD-TC-20261006-111224634",
+   "file": "src/modules/order/read.service.ts",
+   "find": "conds.push(Prisma.sql`o.code = ${upperCode(q.code)}`);",
+   "replace": "conds.push(Prisma.sql`o.code ILIKE ${`%${q.code}%`}`);",
+   "test": "node scripts/run-jest.mjs test/order/list.spec.ts -t \"ORD-TC-20261006-111224634\""
+  },
+  {
+   "id": "SB-08, T6: danh sách quản trị cho phép tham số email (schema mở)",
+   "sb": [
+    "SB-08",
+    "SB-11"
+   ],
+   "tc": "ORD-TC-20261006-111224721",
+   "file": "src/modules/order/policy.ts",
+   "find": "export const adminListQuery = paginationQuery.extend({ status: status.optional(), code: searchCode.optional() });",
+   "replace": "export const adminListQuery = paginationQuery.passthrough().extend({ status: status.optional(), code: searchCode.optional() });",
+   "test": "node scripts/run-jest.mjs test/order/list.spec.ts -t \"ORD-TC-20261006-111224721\""
+  },
+  {
+   "id": "SB-08, T19: getRecipient trả thêm user_id",
+   "sb": [
+    "SB-08",
+    "SB-35"
+   ],
+   "tc": "ORD-TC-20261006-120228061",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "return r ? { receiver: r.a.receiver, phone: r.a.phone, line1: r.a.line1, ward: r.a.ward, city: r.a.city } : null;",
+   "replace": "return r ? { receiver: r.a.receiver, phone: r.a.phone, line1: r.a.line1, ward: r.a.ward, city: r.a.city, user_id: 'x' } as never : null;",
+   "test": "node scripts/run-jest.mjs test/order/interfaces.spec.ts -t \"ORD-TC-20261006-120228061\""
+  },
+  {
+   "id": "SB-08, T19: findForPayment trả thêm địa chỉ giao",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "ORD-TC-20261006-120228061",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "SELECT id AS order_id, code, user_id, status::text AS status, payment_method::text AS payment_method, grand_total, payment_expires_at FROM orders",
+   "replace": "SELECT id AS order_id, code, user_id, status::text AS status, payment_method::text AS payment_method, grand_total, payment_expires_at, shipping_address FROM orders",
+   "test": "node scripts/run-jest.mjs test/order/interfaces.spec.ts -t \"ORD-TC-20261006-120228061\""
+  },
+  {
+   "id": "SB-08, T19: listRecent của DSH trả thêm user_id",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "ORD-TC-20261006-120228155",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "return rows.map((r) => ({ code: r.code, created_at: r.created_at.toISOString(), status: r.status, grand_total: Number(r.grand_total), payment_status: r.payment_status, item_count: r.item_count }));\n  }\n\n  /** DSH: dòng hàng nhóm",
+   "replace": "return rows.map((r) => ({ code: r.code, created_at: r.created_at.toISOString(), status: r.status, grand_total: Number(r.grand_total), payment_status: r.payment_status, item_count: r.item_count, user_id: 'x' }));\n  }\n\n  /** DSH: dòng hàng nhóm",
+   "test": "node scripts/run-jest.mjs test/order/interfaces.spec.ts -t \"ORD-TC-20261006-120228155\""
+  },
+  {
+   "id": "SB-18, T15: log bỏ qua event ghi cả payload (dữ liệu cá nhân, tham số)",
+   "sb": [
+    "SB-18",
+    "SB-08"
+   ],
+   "tc": "ORD-TC-20261006-111225438",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "{ event_type: e.type, event_id: e.event_id, why }); // không ghi payload",
+   "replace": "{ event_type: e.type, event_id: e.event_id, why, payload: e.payload });",
+   "test": "node scripts/run-jest.mjs test/order/review.spec.ts -t \"ORD-TC-20261006-111225438\""
+  },
+  {
+   "id": "SB-14, T3: chi tiết, lịch sử, danh sách của mình không còn giới hạn bậc C (120 -> 1200)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "ORD-TC-20261006-111225088",
+   "file": "src/modules/order/http.ts",
+   "find": "read: { tier: 'C', limit: 120, windowSeconds: 60 },",
+   "replace": "read: { tier: 'C', limit: 1200, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111225088\""
+  },
+  {
+   "id": "SB-14, T3: hủy đơn bỏ giới hạn bậc B",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "ORD-TC-20261006-111225088",
+   "file": "src/modules/order/order.controller.ts",
+   "find": "@Roles('customer', 'admin') @RateLimit(LIMITS.cancel) @Validate({ params: codeParams, body: cancelBody })",
+   "replace": "@Roles('customer', 'admin') @Validate({ params: codeParams, body: cancelBody })",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111225088\""
+  },
+  {
+   "id": "SB-14, T3: danh sách quản trị bỏ giới hạn bậc D",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "ORD-TC-20261006-111225088",
+   "file": "src/modules/order/order.controller.ts",
+   "find": "@Roles('staff', 'admin') @RateLimit(LIMITS.admin) @Validate({ query: adminListQuery })",
+   "replace": "@Roles('staff', 'admin') @Validate({ query: adminListQuery })",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111225088\""
+  },
+  {
+   "id": "SB-14, T3: hạn mức bậc B của hủy đơn 10 -> 100",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "ORD-TC-20261006-111225088",
+   "file": "src/modules/order/http.ts",
+   "find": "cancel: { tier: 'B', limit: 10, windowSeconds: 60 },",
+   "replace": "cancel: { tier: 'B', limit: 100, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111225088\""
+  },
+  {
+   "id": "SB-14, T3: hạn mức bậc D 30 -> 300",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "ORD-TC-20261006-111225088",
+   "file": "src/modules/order/http.ts",
+   "find": "admin: { tier: 'D', limit: 30, windowSeconds: 60 },",
+   "replace": "admin: { tier: 'D', limit: 300, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111225088\""
+  },
+  {
+   "id": "SB-11, T5: body hủy chấp nhận khóa lạ (role, user_id)",
+   "sb": [
+    "SB-11",
+    "SB-05"
+   ],
+   "tc": "ORD-TC-20261006-111226435",
+   "file": "src/modules/order/policy.ts",
+   "find": "export const cancelBody = closedObject({ reason: reason.optional() });",
+   "replace": "export const cancelBody = z.object({ reason: reason.optional() });",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226435\""
+  },
+  {
+   "id": "SB-11, T12: trần lý do 500 -> 5000",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "ORD-TC-20261006-111720161",
+   "file": "src/modules/order/config.ts",
+   "find": "export const REASON_MAX = 500;",
+   "replace": "export const REASON_MAX = 5000;",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111720161\""
+  },
+  {
+   "id": "SB-11, T14: trạng thái lọc nhận chuỗi tự do",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "ORD-TC-20261006-111224341",
+   "file": "src/modules/order/policy.ts",
+   "find": "export const listQuery = paginationQuery.extend({ status: status.optional() });",
+   "replace": "export const listQuery = paginationQuery.extend({ status: z.string().optional() });",
+   "test": "node scripts/run-jest.mjs test/order/list.spec.ts -t \"ORD-TC-20261006-111224341\""
+  },
+  {
+   "id": "SB-11, T14: trần độ dài mã tìm 32 -> 320",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "ORD-TC-20261006-111224750",
+   "file": "src/modules/order/config.ts",
+   "find": "export const SEARCH_CODE_MAX = 32;",
+   "replace": "export const SEARCH_CODE_MAX = 320;",
+   "test": "node scripts/run-jest.mjs test/order/list.spec.ts -t \"ORD-TC-20261006-111224750\""
+  },
+  {
+   "id": "SB-11, T14: lý do hủy đếm byte thay vì ký tự (500 ký tự 2 byte bị từ chối)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "ORD-TC-20261006-111720161",
+   "file": "src/modules/order/policy.ts",
+   "find": "const len = (s: string): number => [...s].length;",
+   "replace": "const len = (s: string): number => Buffer.byteLength(s);",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111720161\""
+  },
+  {
+   "id": "SB-12, T12: lý do bị lọc thẻ HTML trước khi lưu (đổi nội dung đã nhập)",
+   "sb": [
+    "SB-12",
+    "SB-11"
+   ],
+   "tc": "ORD-TC-20261006-111720161",
+   "file": "src/modules/order/policy.ts",
+   "find": "})).transform((v) => v || undefined);",
+   "replace": "})).transform((v) => v.replace(/<[^>]*>/g, '') || undefined);",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111720161\""
+  },
+  {
+   "id": "SB-24, T7: cho hủy đơn đã shipped",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111226306",
+   "file": "src/modules/order/config.ts",
+   "find": "export const CANCELLABLE: readonly OrderStatus[] = ['pending', 'confirmed', 'paid'];",
+   "replace": "export const CANCELLABLE: readonly OrderStatus[] = ['pending', 'confirmed', 'paid', 'shipped'];",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226306\""
+  },
+  {
+   "id": "SB-24, T23: hủy của người dùng bỏ điều kiện cờ bàn giao",
+   "sb": [
+    "SB-24",
+    "SB-35"
+   ],
+   "tc": "ORD-TC-20261006-150000600",
+   "file": "src/modules/order/cancel.service.ts",
+   "find": "        guard: Prisma.sql` AND handoff_locked_at IS NULL`,\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-150000600\""
+  },
+  {
+   "id": "SB-24, T8: hủy lần hai không bị từ chối (bỏ kiểm trạng thái hủy được)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111226336",
+   "file": "src/modules/order/cancel.service.ts",
+   "find": "if (!CANCELLABLE.includes(o.status)) throw new DomainError('order-not-cancellable');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226336\""
+  },
+  {
+   "id": "SB-24, T8: was_paid luôn true",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111226147",
+   "file": "src/modules/order/cancel.service.ts",
+   "find": "was_paid: o.status === 'paid' } },",
+   "replace": "was_paid: true } },",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226147\""
+  },
+  {
+   "id": "SB-24, T8: payment_status không tự đặt cancelled khi hủy đơn chưa thu tiền",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111226147",
+   "file": "src/modules/order/cancel.service.ts",
+   "find": "payment_status = CASE WHEN payment_status IN ('pending', 'processing', 'failed') THEN 'cancelled'::order_payment_status ELSE payment_status END`",
+   "replace": "payment_status = payment_status`",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226147\""
+  },
+  {
+   "id": "SB-24, T8: payment_status đã thu bị đặt cancelled khi hủy (mất dấu hoàn tiền)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111226117",
+   "file": "src/modules/order/cancel.service.ts",
+   "find": "CASE WHEN payment_status IN ('pending', 'processing', 'failed') THEN 'cancelled'::order_payment_status ELSE payment_status END`",
+   "replace": "CASE WHEN payment_status IN ('pending', 'processing', 'failed', 'succeeded') THEN 'cancelled'::order_payment_status ELSE payment_status END`",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226117\""
+  },
+  {
+   "id": "SB-24, T8: mã lý do của OrderCancelled luôn customer_request",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111226206",
+   "file": "src/modules/order/cancel.service.ts",
+   "find": "reason: role === 'admin' ? 'admin' : 'customer_request', was_paid",
+   "replace": "reason: 'customer_request', was_paid",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226206\""
+  },
+  {
+   "id": "SB-24, T7: cancelled_by_role luôn customer",
+   "sb": [
+    "SB-24",
+    "SB-19"
+   ],
+   "tc": "ORD-TC-20261006-111226206",
+   "file": "src/modules/order/cancel.service.ts",
+   "find": "cancelled_by_role = ${role}::order_actor_role,",
+   "replace": "cancelled_by_role = 'customer'::order_actor_role,",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226206\""
+  },
+  {
+   "id": "SB-24, T20: ghi lịch sử bị bỏ khi chuyển trạng thái",
+   "sb": [
+    "SB-24",
+    "SB-19"
+   ],
+   "tc": "ORD-TC-20261006-111225234",
+   "file": "src/modules/order/transition.service.ts",
+   "find": "    await this.history(tx, o.id, o.status, to, opts.actor, opts.now, opts.reason);\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225234\""
+  },
+  {
+   "id": "SB-27, T17: OrderPaid không vào outbox khi chuyển trạng thái",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "ORD-TC-20261006-111225234",
+   "file": "src/modules/order/transition.service.ts",
+   "find": "    if (opts.event) await this.events.publish(tx, { ...opts.event, aggregate_type: 'order', aggregate_id: o.id });\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225234\""
+  },
+  {
+   "id": "SB-24, T20: PaymentSucceeded đến sau hủy không còn được phép chuyển payment_status (bỏ cancelled khỏi cột Từ)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225467",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "succeeded: ['pending', 'processing', 'failed', 'cancelled'],",
+   "replace": "succeeded: ['pending', 'processing', 'failed'],",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225467\""
+  },
+  {
+   "id": "SB-24, T20: PaymentRefunded chấp nhận cả từ pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225410",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "refunded: ['succeeded'],",
+   "replace": "refunded: ['succeeded', 'pending'],",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225410\""
+  },
+  {
+   "id": "SB-24, T7: PaymentFailed lẻ (is_final false) cũng hủy đơn",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225350",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (e.payload.is_final !== true) return;",
+   "replace": "if (e.payload.is_final === undefined) return;",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225350\""
+  },
+  {
+   "id": "SB-24, T7: PaymentFailed is_final hủy cả đơn đã paid",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225350",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (o.status !== 'pending') return this.reject(o, e, 'cancelled');",
+   "replace": "if (o.status !== 'pending' && o.status !== 'paid') return this.reject(o, e, 'cancelled');",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225350\""
+  },
+  {
+   "id": "SB-24, T22: StockCommitFailed không hủy đơn paid",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-140000100",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (o.status !== 'pending' && o.status !== 'paid') {\n      this.log.info",
+   "replace": "if (o.status !== 'pending') {\n      this.log.info",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-140000100\""
+  },
+  {
+   "id": "SB-24, T22: StockCommitFailed hủy cả đơn shipped",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120228595",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (o.status !== 'pending' && o.status !== 'paid') {\n      this.log.info",
+   "replace": "if (o.status !== 'pending' && o.status !== 'paid' && o.status !== 'shipped') {\n      this.log.info",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-120228595\""
+  },
+  {
+   "id": "SB-24, T22: StockCommitFailed không hủy đơn pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-140000200",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (o.status !== 'pending' && o.status !== 'paid') {\n      this.log.info",
+   "replace": "if (o.status !== 'paid') {\n      this.log.info",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-140000200\""
+  },
+  {
+   "id": "SB-24, T22: hủy hệ thống không ghi audit (không có dấu vết)",
+   "sb": [
+    "SB-19",
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-140000100",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "    await this.audit.record(tx, { actor_id: null, actor_role: 'system', action: 'order.cancel', target_type: 'order', target_id: o.id, before: { status: o.status }, after: { status: 'cancelled' }, reason });\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-140000100\""
+  },
+  {
+   "id": "SB-24, T7: StockReservationExpired hết hạn cả đơn paid",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225795",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (o.status !== 'pending') return this.reject(o, e, 'expired');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225795\""
+  },
+  {
+   "id": "SB-24, T7: ShipmentShipped chỉ nhận đơn paid (đơn COD confirmed không giao được)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225263",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (o.status !== 'paid' && o.status !== 'confirmed') return this.reject(o, e, 'shipped');",
+   "replace": "if (o.status !== 'paid') return this.reject(o, e, 'shipped');",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225263\""
+  },
+  {
+   "id": "SB-24, T7: ShipmentShipped giao được cả đơn cancelled",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225438",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (o.status !== 'paid' && o.status !== 'confirmed') return this.reject(o, e, 'shipped');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225438\""
+  },
+  {
+   "id": "SB-24, T7: ShipmentDelivered chuyển được đơn không phải shipped",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120228419",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (o.status !== 'shipped') return this.reject(o, e, 'delivered');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-120228419\""
+  },
+  {
+   "id": "SB-24, T7: ShipmentReturned chuyển được đơn không phải shipped",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120228419",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (o.status !== 'shipped') return this.reject(o, e, 'returned');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/review.spec.ts -t \"ORD-TC-20261006-120228419\""
+  },
+  {
+   "id": "SB-24, T7: ShipmentFailed ghi dòng lịch sử cho đơn không còn shipped",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225767",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "    if (o.status !== 'shipped') return this.reject(o, e, 'shipped');\n    await this.transitions.history(",
+   "replace": "    await this.transitions.history(",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225767\""
+  },
+  {
+   "id": "SB-24, T20: ShipmentTrackingChanged bỏ qua đơn delivered",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120228504",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "status IN ('shipped', 'delivered', 'returned')`;",
+   "replace": "status IN ('shipped', 'returned')`;",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-120228504\""
+  },
+  {
+   "id": "SB-24, T20: PaymentSucceeded của COD ghi log từ chối (nhầm là chuyển trạng thái)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225708",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "if (o.payment_method === 'vnpay') this.reject(o, e, 'paid');",
+   "replace": "this.reject(o, e, 'paid');",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225708\""
+  },
+  {
+   "id": "SB-24, T20: paid_at lấy giờ ORD thay vì giờ của event",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225234",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "const paidAt = dateOf(e.payload.paid_at) ?? this.clock.now();",
+   "replace": "const paidAt = this.clock.now();",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225234\""
+  },
+  {
+   "id": "SB-22, T9: handler không kiểm đơn tồn tại (bỏ return sau log)",
+   "sb": [
+    "SB-05",
+    "SB-22"
+   ],
+   "tc": "ORD-TC-20261006-111225590",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "order_id: id }); return; } // không dựng đơn mồ côi",
+   "replace": "order_id: id }); } // không dựng đơn mồ côi",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225590\""
+  },
+  {
+   "id": "SB-27, T20: EventsService không chống trùng theo event_id (bỏ nhánh skipped)",
+   "sb": [
+    "SB-27",
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111225767",
+   "file": "src/modules/platform/events/events.service.ts",
+   "find": "if (rows.length === 0) return 'skipped' as const;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225767\""
+  },
+  {
+   "id": "SB-27, T17: outbox ghi bằng now() (hai event cùng giao dịch đảo thứ tự)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "ORD-TC-20261006-111225380",
+   "file": "src/modules/platform/events/events.service.ts",
+   "find": "${currentCorrelationId() ?? 'none'}, clock_timestamp())`;",
+   "replace": "${currentCorrelationId() ?? 'none'}, now())`;",
+   "test": "node scripts/run-jest.mjs test/platform/events.spec.ts -t \"ORD-TC-20261006-111225380\""
+  },
+  {
+   "id": "SB-24, T7: lỗi ghi lịch sử không rollback (handler nuốt lỗi)",
+   "sb": [
+    "SB-24",
+    "SB-27"
+   ],
+   "tc": "ORD-TC-20261006-111225737",
+   "file": "src/modules/order/lifecycle.service.ts",
+   "find": "      throw err;\n    }\n  }",
+   "replace": "    }\n  }",
+   "test": "node scripts/run-jest.mjs test/order/lifecycle.spec.ts -t \"ORD-TC-20261006-111225737\""
+  },
+  {
+   "id": "SB-23, T16: createPending không kiểm công thức tiền",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "ORD-TC-20261006-120227861",
+   "file": "src/modules/order/create.service.ts",
+   "find": "if (i.grand_total !== i.items_total - i.discount + i.shipping_fee) bad('grand_total không bằng items_total - discount + shipping_fee');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227861\""
+  },
+  {
+   "id": "SB-23, T21: createPending cho đơn 0 đồng (R-03)",
+   "sb": [
+    "SB-23",
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120227861",
+   "file": "src/modules/order/create.service.ts",
+   "find": "if (i.grand_total <= 0) bad('grand_total phải lớn hơn 0 (R-03)');",
+   "replace": "if (i.grand_total < 0) bad('grand_total phải lớn hơn 0 (R-03)');",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227861\""
+  },
+  {
+   "id": "SB-23, T16: items_total không kiểm theo tổng dòng hàng",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "ORD-TC-20261006-120227861",
+   "file": "src/modules/order/create.service.ts",
+   "find": "if (i.items_total !== sum) bad('items_total không bằng tổng các dòng hàng');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227861\""
+  },
+  {
+   "id": "SB-24, T21: createPending nhận đơn COD kèm hạn thanh toán",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120227861",
+   "file": "src/modules/order/create.service.ts",
+   "find": "else if (i.payment_expires_at != null) bad('đơn COD không có payment_expires_at');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227861\""
+  },
+  {
+   "id": "SB-24, T21: createPending nhận hạn thanh toán ở quá khứ",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120227861",
+   "file": "src/modules/order/create.service.ts",
+   "find": "if (!ok) bad('payment_expires_at phải sau thời điểm hiện tại');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227861\""
+  },
+  {
+   "id": "SB-24, T21: confirmCod xác nhận được đơn vnpay",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120227861",
+   "file": "src/modules/order/create.service.ts",
+   "find": "if (o.payment_method !== 'cod' || o.status !== 'pending') throw new OrderBusinessError('not_confirmable');",
+   "replace": "if (o.status !== 'pending') throw new OrderBusinessError('not_confirmable');",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227861\""
+  },
+  {
+   "id": "SB-24, T21: mã đơn ngắn hơn 12 ký tự",
+   "sb": [
+    "SB-24",
+    "SB-06"
+   ],
+   "tc": "ORD-TC-20261006-120227769",
+   "file": "src/modules/order/config.ts",
+   "find": "export const CODE_LENGTH = 12;",
+   "replace": "export const CODE_LENGTH = 10;",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227769\""
+  },
+  {
+   "id": "SB-06, T2: mã đơn tuần tự thay vì ngẫu nhiên mật mã học (dễ đoán)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "ORD-TC-20261006-120227769",
+   "file": "src/modules/order/create.service.ts",
+   "find": "CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]",
+   "replace": "CODE_ALPHABET[0]",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227769\""
+  },
+  {
+   "id": "SB-24, T10: dòng lịch sử đầu của đơn không ghi người đặt",
+   "sb": [
+    "SB-19",
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120227769",
+   "file": "src/modules/order/create.service.ts",
+   "find": "{ id: input.user_id, role: 'customer' }, now);",
+   "replace": "{ id: null, role: 'system' }, now);",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227769\""
+  },
+  {
+   "id": "SB-24, T21: countOpenOrders không tính COD pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120227953",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "count(*) FILTER (WHERE payment_method = 'cod' AND status IN ('pending', 'confirmed'))::int AS cod_open",
+   "replace": "count(*) FILTER (WHERE payment_method = 'cod' AND status = 'confirmed')::int AS cod_open",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227953\""
+  },
+  {
+   "id": "SB-24, T23: lockForHandoff khóa cả đơn pending",
+   "sb": [
+    "SB-24",
+    "SB-35"
+   ],
+   "tc": "ORD-TC-20261006-150000400",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "if (!o || (o.status !== 'paid' && o.status !== 'confirmed')) throw",
+   "replace": "if (!o) throw",
+   "test": "node scripts/run-jest.mjs test/order/handoff.spec.ts -t \"ORD-TC-20261006-150000400\""
+  },
+  {
+   "id": "SB-24, T23: gọi lại lockForHandoff ghi đè giờ khóa đầu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-150000500",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "handoff_locked_at = COALESCE(handoff_locked_at, ${now}::timestamptz)",
+   "replace": "handoff_locked_at = ${now}::timestamptz",
+   "test": "node scripts/run-jest.mjs test/order/handoff.spec.ts -t \"ORD-TC-20261006-150000500\""
+  },
+  {
+   "id": "SB-35, T19: getDeliveredItems trả cả đơn shipped",
+   "sb": [
+    "SB-35",
+    "SB-08"
+   ],
+   "tc": "ORD-TC-20261006-120228061",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "o.status = 'delivered' AND i.product_id",
+   "replace": "o.status IN ('delivered', 'shipped') AND i.product_id",
+   "test": "node scripts/run-jest.mjs test/order/interfaces.spec.ts -t \"ORD-TC-20261006-120228061\""
+  },
+  {
+   "id": "SB-35, T19: countByStatus tính cả đơn đúng mốc to (nửa mở sai)",
+   "sb": [
+    "SB-35"
+   ],
+   "tc": "ORD-TC-20261006-120228334",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "FROM orders WHERE created_at >= ${range.from}::timestamptz AND created_at < ${range.to}::timestamptz GROUP BY status`;",
+   "replace": "FROM orders WHERE created_at >= ${range.from}::timestamptz AND created_at <= ${range.to}::timestamptz GROUP BY status`;",
+   "test": "node scripts/run-jest.mjs test/order/interfaces.spec.ts -t \"ORD-TC-20261006-120228334\""
+  },
+  {
+   "id": "SB-35, T19: khoảng ngược không bị từ chối",
+   "sb": [
+    "SB-35"
+   ],
+   "tc": "ORD-TC-20261006-120228244",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "r.to < r.from ||",
+   "replace": "false ||",
+   "test": "node scripts/run-jest.mjs test/order/interfaces.spec.ts -t \"ORD-TC-20261006-120228244\""
+  },
+  {
+   "id": "SB-35, T19: trần limit của DSH 100 -> 1000",
+   "sb": [
+    "SB-35",
+    "SB-11"
+   ],
+   "tc": "ORD-TC-20261006-120228244",
+   "file": "src/modules/order/config.ts",
+   "find": "export const AGG_LIMIT_MAX = 100;",
+   "replace": "export const AGG_LIMIT_MAX = 1000;",
+   "test": "node scripts/run-jest.mjs test/order/interfaces.spec.ts -t \"ORD-TC-20261006-120228244\""
+  },
+  {
+   "id": "SB-35, T19: getTopProducts tính cả đơn đã hủy (bỏ lọc trạng thái)",
+   "sb": [
+    "SB-35"
+   ],
+   "tc": "ORD-TC-20261006-120228155",
+   "file": "src/modules/order/internal.service.ts",
+   "find": " AND o.status NOT IN ('cancelled', 'expired', 'returned')",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/review.spec.ts -t \"ORD-TC-20261006-120228155\""
+  },
+  {
+   "id": "SB-35, T19: doanh thu gom theo mốc created_at thay vì paid_at",
+   "sb": [
+    "SB-35"
+   ],
+   "tc": "ORD-TC-20261006-120228155",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "SELECT ${utc(Prisma.sql`paid_at`)} AS s, count(*)::int AS n, sum(grand_total) AS total FROM orders",
+   "replace": "SELECT ${utc(Prisma.sql`created_at`)} AS s, count(*)::int AS n, sum(grand_total) AS total FROM orders",
+   "test": "node scripts/run-jest.mjs test/order/interfaces.spec.ts -t \"ORD-TC-20261006-120228155\""
+  },
+  {
+   "id": "SB-11, T14: trang 2 lệch một (OFFSET page thay vì page - 1)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "ORD-TC-20261006-111224310",
+   "file": "src/modules/order/read.service.ts",
+   "find": "const offsetOf = (q: { page: number; limit: number }) => (q.page - 1) * q.limit;",
+   "replace": "const offsetOf = (q: { page: number; limit: number }) => q.page * q.limit;",
+   "test": "node scripts/run-jest.mjs test/order/list.spec.ts -t \"ORD-TC-20261006-111224310\""
+  },
+  {
+   "id": "SB-11, T14: thứ tự phụ của danh sách đảo (id ASC)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "ORD-TC-20261006-111224546",
+   "file": "src/modules/order/read.service.ts",
+   "find": "ORDER BY o.created_at DESC, o.id DESC LIMIT",
+   "replace": "ORDER BY o.created_at DESC, o.id ASC LIMIT",
+   "test": "node scripts/run-jest.mjs test/order/list.spec.ts -t \"ORD-TC-20261006-111224546\""
+  },
+  {
+   "id": "SB-24, T11: lịch sử đọc theo created_at, id thay vì seq",
+   "sb": [
+    "SB-19",
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111226057",
+   "file": "src/modules/order/read.service.ts",
+   "find": "FROM order_status_history WHERE order_id = ${o.id}::uuid ORDER BY seq`",
+   "replace": "FROM order_status_history WHERE order_id = ${o.id}::uuid ORDER BY created_at, id`",
+   "test": "node scripts/run-jest.mjs test/order/history.spec.ts -t \"ORD-TC-20261006-111226057\""
+  },
+  {
+   "id": "SB-19, T11: lịch sử lộ lý do rỗng (reason: null) thay vì bỏ khóa",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "ORD-TC-20261006-111225998",
+   "file": "src/modules/order/read.service.ts",
+   "find": "...(r.reason ? { reason: r.reason } : {}) })) };",
+   "replace": "reason: r.reason })) };",
+   "test": "node scripts/run-jest.mjs test/order/history.spec.ts -t \"ORD-TC-20261006-111225998\""
+  },
+  {
+   "id": "SB-24, T7: hạn thanh toán trả cả cho đơn đã rời pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-121202827",
+   "file": "src/modules/order/read.service.ts",
+   "find": "...(o.payment_expires_at && o.status === 'pending' && o.payment_method === 'vnpay' ?",
+   "replace": "...(o.payment_expires_at && o.payment_method === 'vnpay' ?",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-121202827\""
+  },
+  {
+   "id": "SB-23, T16: line_total tính bằng đơn giá (bỏ nhân số lượng)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "ORD-TC-20261006-111224869",
+   "file": "src/modules/order/read.service.ts",
+   "find": "line_total: Number(i.unit_price) * i.quantity",
+   "replace": "line_total: Number(i.unit_price)",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111224869\""
+  },
+  {
+   "id": "SB-19, T11: trigger lịch sử chỉ chặn DELETE (UPDATE sửa được)",
+   "sb": [
+    "SB-19",
+    "SB-32"
+   ],
+   "tc": "ORD-TC-20261006-111225969",
+   "file": "prisma/migrations/20261007001100_order_tables/migration.sql",
+   "find": "BEFORE UPDATE OR DELETE ON \"order_status_history\"",
+   "replace": "BEFORE DELETE ON \"order_status_history\"",
+   "test": "node scripts/run-jest.mjs test/order/history.spec.ts -t \"ORD-TC-20261006-111225969\""
+  },
+  {
+   "id": "SB-32, T11: không thu quyền UPDATE, DELETE, TRUNCATE của vai trò ứng dụng trên lịch sử",
+   "sb": [
+    "SB-32",
+    "SB-19"
+   ],
+   "tc": "ORD-TC-20261006-111225969",
+   "file": "prisma/migrations/20261007001100_order_tables/migration.sql",
+   "find": "REVOKE UPDATE, DELETE, TRUNCATE ON \"order_status_history\" FROM PUBLIC, app_runtime;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/history.spec.ts -t \"ORD-TC-20261006-111225969\""
+  },
+  {
+   "id": "SB-23, T16: bỏ CHECK công thức tổng tiền",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "ORD-TC-20261006-111225205",
+   "file": "prisma/migrations/20261007001100_order_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"orders_grand_total_formula\" CHECK (grand_total = items_total - discount + shipping_fee),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/detail.spec.ts -t \"ORD-TC-20261006-111225205\""
+  },
+  {
+   "id": "SB-23, T21: bỏ CHECK grand_total > 0",
+   "sb": [
+    "SB-23",
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120227861",
+   "file": "prisma/migrations/20261007001100_order_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"orders_grand_total_positive\" CHECK (grand_total > 0),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227861\""
+  },
+  {
+   "id": "SB-24, T21: bỏ CHECK hạn thanh toán chỉ có ở đơn vnpay",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-120227861",
+   "file": "prisma/migrations/20261007001100_order_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"orders_expiry_iff_vnpay\" CHECK ((payment_method = 'vnpay') = (payment_expires_at IS NOT NULL)),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261006-120227861\""
+  },
+  {
+   "id": "SB-24, T23: bỏ CHECK cờ bàn giao chỉ cho đơn đã thanh toán hoặc xác nhận",
+   "sb": [
+    "SB-24",
+    "SB-35"
+   ],
+   "tc": "ORD-TC-20261006-150000400",
+   "file": "prisma/migrations/20261007001100_order_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"orders_handoff_lock_status\" CHECK (handoff_locked_at IS NULL OR status NOT IN ('pending', 'expired')),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/handoff.spec.ts -t \"ORD-TC-20261006-150000400\""
+  },
+  {
+   "id": "SB-24, T8: bỏ unique một phần (đơn, trạng thái đích) của lịch sử",
+   "sb": [
+    "SB-24",
+    "SB-27"
+   ],
+   "tc": "ORD-TC-20261006-111226497",
+   "file": "prisma/migrations/20261007001100_order_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"order_status_history_transition_key\" ON \"order_status_history\" (order_id, to_status) WHERE from_status IS DISTINCT FROM to_status;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/review.spec.ts -t \"ORD-TC-20261006-111226497\""
+  },
+  {
+   "id": "SB-24, T7: bỏ CHECK lịch sử tự trỏ chỉ cho shipped",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "ORD-TC-20261006-111226497",
+   "file": "prisma/migrations/20261007001100_order_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"order_status_history_self_loop\" CHECK (from_status IS NULL OR from_status <> to_status OR to_status = 'shipped'),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/order/review.spec.ts -t \"ORD-TC-20261006-111226497\""
+  },
+  {
+   "id": "SB-13, T13: CSRF chỉ kiểm có Origin, không kiểm Origin thuộc danh sách cho phép",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "ORD-TC-20261006-111226396",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "if (!origin || !this.allowed.has(origin)) throw new DomainError('csrf_failed');",
+   "replace": "if (!origin) throw new DomainError('csrf_failed');",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226396\""
+  },
+  {
+   "id": "SB-20, T18: 409 hủy đơn nêu trạng thái hiện tại trong detail",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "ORD-TC-20261006-111226306",
+   "file": "src/modules/order/cancel.service.ts",
+   "find": "if (!CANCELLABLE.includes(o.status)) throw new DomainError('order-not-cancellable');",
+   "replace": "if (!CANCELLABLE.includes(o.status)) throw new DomainError('order-not-cancellable', { detail: `status ${o.status}` });",
+   "test": "node scripts/run-jest.mjs test/order/cancel.spec.ts -t \"ORD-TC-20261006-111226306\""
+  },
+  {
+   "id": "SB-12, T12: web hiển thị lý do hủy như HTML (không escape)",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "ORD-TC-20261006-111720161",
+   "file": "../web/app/orders/[code]/page.tsx",
+   "find": "<span data-testid=\"ord-order-detail-history-reason\">Lý do: {reasonText(h.status, h.reason, h.failed)}</span>",
+   "replace": "<span data-testid=\"ord-order-detail-history-reason\" dangerouslySetInnerHTML={{ __html: `Lý do: ${reasonText(h.status, h.reason, h.failed)}` }} />",
+   "test": "node scripts/run-jest.mjs test/e2e/ord.e2e.spec.ts -t \"ORD-TC-20261006-111720161\""
+  }
+ ]
+}

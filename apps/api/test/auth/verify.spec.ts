@@ -1,4 +1,4 @@
-import { PASSWORD, createAuthApp, get, http, login, post, q, seedToken, seedUser, sleep, type AuthApp } from '../support/auth';
+import { NOW0, PASSWORD, createAuthApp, get, http, login, post, q, seedToken, seedUser, sleep, type AuthApp } from '../support/auth';
 import { ORIGIN } from '../support/app';
 import { waitFor } from '../support/boot';
 import { PrismaService, TransactionService } from '../../src/modules/platform';
@@ -14,7 +14,7 @@ describe('Xác minh email và gửi lại (AUTH-REQ-20261006-095515665, AUTH-REQ
   let t: AuthApp;
   beforeAll(async () => { t = await createAuthApp({ env: { TRUST_PROXY_HOPS: '1' } }); });
   afterAll(() => t.close());
-  beforeEach(async () => { await truncateAll(t.prisma); t.mails.length = 0; t.clock.set(new Date('2026-10-06T10:00:00.000Z')); });
+  beforeEach(async () => { await truncateAll(t.prisma); t.mails.length = 0; t.clock.set(new Date(NOW0)); });
   const userOf = (email: string) => q<{ email_verified_at: Date | null }>(t, `SELECT email_verified_at FROM users WHERE email = '${email}'::citext`).then((r) => r[0]);
 
   it('AUTH-TC-20261006-100640975: xác minh thành công bằng token từ event; chỉ token mới ghi được email_verified_at', async () => {

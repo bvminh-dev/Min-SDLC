@@ -64,7 +64,8 @@ export const CORE_VARS: ConfigFragment = {
     sensitive: true,
     default: '',
   },
-  DB_POOL_MAX: cfg.int({ default: 10, min: 1, max: 200 }),
+  // min 2: consumer của outbox giữ một kết nối của giao dịch giao event rồi đọc module khác bằng kết nối thứ hai (SHP tạo vận đơn đọc ORD, INV đọc PRD): pool một kết nối treo mãi tới hạn chờ (L71, SHP report mục 7).
+  DB_POOL_MAX: cfg.int({ default: 10, min: 2, max: 200 }),
   LOG_LEVEL: cfg.enum(LEVELS, { default: 'info' }),
   CORS_ALLOWED_ORIGINS: {
     zod: z

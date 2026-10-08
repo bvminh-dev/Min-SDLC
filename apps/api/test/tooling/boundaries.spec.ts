@@ -39,6 +39,21 @@ describe('Kiểm ranh giới module (PRJ-REQ-20261006-095422475 BR5, BR11; SB-35
     expect(r.stderr).not.toMatch(/uses-platform\.ts:1:/);
   });
 
+  it('PRJ-TC-20261006-110200114 (review SHP): mảnh Prisma.sql và Prisma.raw dựng riêng rồi ghép vào câu truy vấn cũng bị quét tên bảng; công cụ hỏng (thư mục modules hay schemas không có, quét rỗng) thì đỏ mã 2, không in sạch', () => {
+    const r = check('f114s');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/catalog\/builds-sql\.ts:2: \[catalog -> order\] SQL thô đọc\/ghi bảng orders/);
+    expect(r.stderr).toMatch(/catalog\/builds-sql\.ts:3: \[catalog -> order\] SQL thô đọc\/ghi bảng orders/);
+    expect(r.stderr).not.toMatch(/builds-sql\.ts:4|reads-own\.ts/); // bảng của chính module qua
+    const ok = ['--modules', `${F}/okmods/modules`, '--schemas', `${F}/schemas`];
+    for (const args of [['--modules', `${F}/khong-co`, '--schemas', `${F}/schemas`], ['--modules', `${F}/okmods/modules`, '--schemas', `${F}/khong-co`], ['--modules', `${F}/schemas`, '--schemas', `${F}/schemas`]]) {
+      const bad = runScript('scripts/check-boundaries.mjs', args);
+      expect([args.join(' '), bad.status]).toEqual([args.join(' '), 2]);
+      expect(bad.stdout).not.toMatch(/sạch/);
+    }
+    expect(runScript('scripts/check-boundaries.mjs', ok).status).toBe(0);
+  });
+
   it('mã thật của repo sạch', () => {
     expect(runScript('scripts/check-boundaries.mjs').status).toBe(0);
   });

@@ -162,6 +162,7 @@ describe('API chung (PRJ-REQ-20261006-095422650)', () => {
     expect(ok.headers['access-control-allow-credentials']).toBe('true');
     const okGet = await http().get('/api/v1/fx/open').set('Origin', ORIGIN);
     expect(okGet.headers['access-control-allow-origin']).toBe(ORIGIN);
+    expect(okGet.headers['access-control-expose-headers']).toContain('Retry-After'); // web khác gốc đọc được thời gian chờ khi 429
   });
 
   it('PRJ-TC-20261006-100124650: vượt giới hạn tần suất bậc C mặc định nhận 429 kèm Retry-After, hết phút lại qua, client khác không bị ảnh hưởng', async () => {
@@ -381,6 +382,19 @@ describe('Idempotency-Key (ADR-017, SB-40)', () => {
     }
   });
 
+  // Sửa nền kèm epic INV (INV-TC-20261006-101123100): request_hash gồm tham số đường dẫn, không chỉ mẫu route và thân.
+  it('PRJ-TC-20261006-110200108 và INV-TC-20261006-101123100: cùng khóa, cùng thân nhưng khác tham số đường dẫn (khác sản phẩm) là nội dung khác: 422, không ghi; cùng tham số thì phát lại', async () => {
+    const on = (target: string, key: string) => request(t.app.getHttpServer()).post(`/api/v1/fx/idem-on/${target}`).set('x-test-user', CUST).set('Idempotency-Key', key).send({ qty: 1 });
+    const first = await on('san-pham-a', 'khoa-theo-tai-nguyen');
+    expect([first.status, first.body.target]).toEqual([201, 'san-pham-a']);
+    const other = await on('san-pham-b', 'khoa-theo-tai-nguyen');
+    expect([other.status, other.body.type]).toEqual([422, 'urn:ecom:error:idempotency-key-reused']);
+    expect(await count()).toBe(1);
+    const again = await on('san-pham-a', 'khoa-theo-tai-nguyen');
+    expect([again.status, again.body, again.headers['idempotent-replayed']]).toEqual([201, first.body, 'true']);
+    expect(await count()).toBe(1);
+  });
+
   it('PRJ-TC-20261006-110200109: hai yêu cầu đồng thời cùng khóa chạy đúng một lần, hai người dùng cùng chuỗi khóa độc lập', async () => {
     const [a, b] = await Promise.all([post('same-key-1234', { qty: 7 }), post('same-key-1234', { qty: 7 })]);
     expect([a.status, b.status]).toEqual([201, 201]);
@@ -474,5 +488,15 @@ describe('Thứ tự kiểm của nền và CSRF khi không có cookie (PRJ-REQ-
       expect([label, r.status]).toEqual([label, status]);
       if (code) expect([label, r.body.type]).toEqual([label, `urn:ecom:error:${code}`]);
     }
+  });
+
+  it('PRD-TC-20261007-104008808 (nền, SB-11): thân JSON chứa nửa cặp thay thế lẻ ("\\ud800") bị 400 validation-failed ở biên, không còn 500 (PostgreSQL không lưu được); cặp hợp lệ (emoji) vẫn nhận', async () => {
+    const lone = String.fromCharCode(0xd800);
+    for (const raw of [JSON.stringify({ name: `a${lone}` }), JSON.stringify({ name: `😀${lone}😀` })]) {
+      const r = await http().post('/api/v1/fx/echo').set('Content-Type', 'application/json').send(raw);
+      expect([r.status, r.body.type]).toEqual([400, 'urn:ecom:error:validation-failed']);
+    }
+    const ok = await http().post('/api/v1/fx/echo').set('Content-Type', 'application/json').send(JSON.stringify({ name: 'Áo 😀' }));
+    expect(ok.status).toBe(201);
   });
 });

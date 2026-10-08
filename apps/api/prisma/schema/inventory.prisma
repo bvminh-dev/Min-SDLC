@@ -1,0 +1,87 @@
+// Module inventory (epic INV, INV-DB-20261006-101122740): StockItem, StockMovement, StockReservation.
+// Phần Prisma không biểu diễn được (CHECK, chỉ mục một phần, trigger chỉ-thêm) nằm trong migration SQL.
+// Khóa ngoại chỉ trỏ vào bảng của INV hoặc PRD (`products`); `order_id`, `actor_id`, `ref_id` là cột trơn (ranh giới module, P7, SB-35).
+
+enum MovementType {
+  in
+  out
+  adjust
+  sale
+  restock
+  return
+
+  @@map("movement_type")
+}
+
+enum MovementRef {
+  order
+  shipment
+
+  @@map("movement_ref")
+}
+
+enum ReservationStatus {
+  held
+  committed
+  released
+  expired
+
+  @@map("reservation_status")
+}
+
+model StockItem {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId         String    @unique @map("product_id") @db.Uuid
+  onHand            Int       @default(0) @map("on_hand")
+  reserved          Int       @default(0)
+  lowStockThreshold Int       @default(5) @map("low_stock_threshold")
+  lowStockNotified  Boolean   @default(true) @map("low_stock_notified")
+  archivedAt        DateTime? @map("archived_at") @db.Timestamptz(6)
+  version           Int       @default(1)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  product      Product            @relation(fields: [productId], references: [id], onDelete: Restrict)
+  movements    StockMovement[]
+  reservations StockReservation[]
+
+  @@index([updatedAt(sort: Desc), id(sort: Desc)])
+  @@map("stock_items")
+}
+
+model StockMovement {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stockItemId String        @map("stock_item_id") @db.Uuid
+  type        MovementType
+  quantity    Int
+  onHandAfter Int           @map("on_hand_after")
+  reason      String?
+  note        String?
+  actorId     String?       @map("actor_id") @db.Uuid
+  actorName   String?       @map("actor_name")
+  refType     MovementRef?  @map("ref_type")
+  refId       String?       @map("ref_id") @db.Uuid
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  stockItem StockItem @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+
+  @@index([stockItemId, createdAt(sort: Desc), id(sort: Desc)])
+  @@map("stock_movements")
+}
+
+model StockReservation {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stockItemId String            @map("stock_item_id") @db.Uuid
+  orderId     String            @map("order_id") @db.Uuid
+  quantity    Int
+  status      ReservationStatus @default(held)
+  expiresAt   DateTime?         @map("expires_at") @db.Timestamptz(6)
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime          @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  stockItem StockItem @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+
+  @@unique([stockItemId, orderId])
+  @@index([orderId])
+  @@map("stock_reservations")
+}

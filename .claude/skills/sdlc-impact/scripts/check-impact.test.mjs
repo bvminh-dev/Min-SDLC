@@ -26,4 +26,15 @@ assert.equal(r.status, 0, r.stderr);
 assert.equal(run(good.replace('| Loại |', '| Kiểu |')).status, 1, 'sai tiêu đề phải lỗi');
 assert.equal(run(good.replace(/\n\| INV-TC-20261002-100000005[^\n]*/, '')).status, 1, 'thiếu dòng cho tài liệu có link phải lỗi');
 assert.equal(run(good.replace('| HIGH |', '| nặng |')).status, 1, 'Mức sai phải lỗi');
+
+// L56: dòng "Cụm từ xuyên module: ..." (quy tắc chép lại ở nhiều epic, find-refs chỉ tìm theo ID không thấy): mọi tài liệu khác nhắc cụm từ đó phải có dòng trong bảng
+const PHRASE = 'Cụm từ xuyên module: "hết hạn giữ hàng"\n\n', PRM = 'PRM-REQ-20261002-100000003';
+const bad56 = run(PHRASE + good);
+assert.equal(bad56.status, 1, 'tài liệu chép lại cụm từ mà không có dòng phải lỗi');
+assert.match(bad56.stderr, new RegExp(`thiếu dòng cho ${PRM}.*hết hạn giữ hàng`));
+assert.equal(run(PHRASE + good + row(PRM)).status, 0, 'có dòng cho tài liệu chép lại thì qua');
+assert.equal(run(good).status, 0, 'không có dòng Cụm từ thì không kiểm (báo cáo cũ)');
+const fr = spawnSync('node', [join(here, 'find-refs.mjs'), FIX, '--phrase', 'HẾT HẠN  giữ hàng'], { encoding: 'utf8' });
+assert.match(fr.stdout, /nhắc cụm từ\t.*PRM-REQ-20261002-100000003\.md/, 'find-refs --phrase không phân biệt hoa thường và khoảng trắng');
+assert.doesNotMatch(fr.stdout, /INV-REQ-20261001-090000004/);
 console.log('OK: check-impact.mjs');

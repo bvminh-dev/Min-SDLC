@@ -13,6 +13,8 @@ Phần phủ và tham chiếu do script bảo đảm. Skill lo phần phán đo�
 - **ID do script sinh**: `node .claude/skills/sdlc-research/scripts/new-id.mjs <EPIC> <TC|E2E> spec/`.
 - **Không sửa file `approved`, không tự đổi sang `approved`** (hook chặn). Test sai vì requirement sai thì chạy `sdlc-impact`, không sửa requirement.
 - Mỗi test case phủ **đúng một requirement** và một mục kịch bản (`kind: chính | lỗi | biên`) có thật trong requirement đó. Không bịa hành vi mới trong test.
+- **Job nền xóa hàng loạt** (dọn mồ côi, purge) dựa trên "danh sách còn dùng": kịch bản phải có ca "đóng khi không chắc": nguồn tham chiếu rỗng, lỗi hay không ánh xạ được (đổi cấu hình, đổi gốc URL) thì job dừng và báo lỗi, không xóa gì.
+- **Trạng thái màn hình có thời hạn** ("tới hết giờ", "đếm ngược", "sau N giây") cần TC hoặc E2E nhắc testid của trạng thái đó cùng bước thoát (nút mở lại, banner biến mất). **Mỗi hàm** trong "Giao diện module ... cung cấp" của tài liệu API cần ít nhất một TC của epic nhắc tên hàm.
 - E2E chỉ thao tác giao diện qua **testid có trong `spec/testids.md` và dành cho role của luồng**. Testid chưa có thì quay lại `sdlc-ui-ux`, không tự đặt.
 
 ## Quy trình
@@ -25,7 +27,7 @@ Phần phủ và tham chiếu do script bảo đảm. Skill lo phần phán đo�
 6. **Báo cáo**: tài liệu đã tạo, chỗ yếu của requirement (bước 2), testid còn thiếu (chuyển `sdlc-ui-ux`), mối đe dọa SEC chưa kiểm được bằng test.
 
 ## Script kiểm (`scripts/check-tests.mjs`)
-`covers` trỏ tới requirement có thật; TC phủ đúng một requirement, `kind` đúng một trong ba mục và mục đó **có thật** trong requirement; đủ Given/When/Then; `threats` trỏ tới mối đe dọa có thật; E2E có `role` hợp lệ, mọi testid trong backtick **có trong `spec/testids.md` và dành cho role đó**, có ít nhất một testid. Với `--strict`: thiếu TC cho mục kịch bản nào của requirement nào, hoặc mối đe dọa `Kiểm bằng test` chưa có TC, đều là lỗi. Tự kiểm: `node .claude/skills/sdlc-test-design/scripts/check-tests.test.mjs`. Cảnh báo (lỗi ở `--strict`): mối đe dọa kiểm bằng `script`/`hook` (cổng kiểm) có ít hơn 2 TC hoặc không có ca `lỗi`/`biên` (đầu vào kiểm cứng hỏng thì cổng phải đỏ; mỗi mẫu quét một ca dương tính); Given/When nêu phiên bản công cụ cụ thể mà mục Dữ liệu không nói cách dựng. Nhãn Given/When/Then lặp hoặc không đứng đầu bước: lỗi với TC `draft` và `--strict`, cảnh báo với TC `approved`.
+`covers` trỏ tới requirement có thật; TC phủ đúng một requirement, `kind` đúng một trong ba mục và mục đó **có thật** trong requirement; đủ Given/When/Then; `threats` trỏ tới mối đe dọa có thật; E2E có `role` hợp lệ, mọi testid trong backtick **có trong `spec/testids.md` và dành cho role đó**, có ít nhất một testid. Với `--strict`: thiếu TC cho mục kịch bản nào của requirement nào, hoặc mối đe dọa `Kiểm bằng test` chưa có TC, đều là lỗi. Tự kiểm: `node .claude/skills/sdlc-test-design/scripts/check-tests.test.mjs`. Cảnh báo (lỗi ở `--strict`): trạng thái màn hình có thời hạn không có TC/E2E nhắc testid cùng bước thoát (L45); hàm trong "Giao diện module ... cung cấp" của tài liệu API không TC nào nhắc (L50); mối đe dọa kiểm bằng `script`/`hook` (cổng kiểm) có ít hơn 2 TC hoặc không có ca `lỗi`/`biên` (đầu vào kiểm cứng hỏng thì cổng phải đỏ; mỗi mẫu quét một ca dương tính); Given/When nêu phiên bản công cụ cụ thể mà mục Dữ liệu không nói cách dựng. Nhãn Given/When/Then lặp hoặc không đứng đầu bước: lỗi với TC `draft` và `--strict`, cảnh báo với TC `approved`.
 
 ## Chưa làm
 - Chưa kiểm được chất lượng assert hay dữ liệu mồi (cần người đọc).

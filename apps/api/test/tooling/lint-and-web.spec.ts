@@ -1,8 +1,8 @@
 import { existsSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { REPO_ROOT } from '../support/db';
 import { run, runScript } from '../support/sh';
+import { mkTmp } from '../support/tmp';
 
 /** Lint mã giả ở đường dẫn giả bằng ESLint CLI (ESLint nạp cấu hình ESM nên chạy ở tiến trình con, không trong Jest). */
 function lint(code: string, filePath: string) {
@@ -81,7 +81,7 @@ describe('Build web (PRJ-REQ-20261006-095422735 BR7)', () => {
 
   it('PRJ-TC-20261006-160721590: build web thất bại khi NEXT_PUBLIC_ chứa bí mật nằm trong tệp .env của web (Next.js nạp tệp này vào gói trình duyệt)', () => {
     const value = 'zq9-in-env-file-5521';
-    const dir = mkdtempSync(join(tmpdir(), 'ecom-web-'));
+    const dir = mkTmp('ecom-web-');
     for (const [file, name] of [['.env', 'NEXT_PUBLIC_API_KEY'], ['.env.local', 'NEXT_PUBLIC_DB_PASSWORD'], ['.env.production', 'NEXT_PUBLIC_PAYMENT_SECRET'], ['.env.production.local', 'NEXT_PUBLIC_AUTH_TOKEN']]) {
       const d = mkdtempSync(join(dir, 'w-'));
       writeFileSync(join(d, file), `# cấu hình\nNEXT_PUBLIC_API_BASE_URL=http://localhost:3001\n${name}=${value}\n`);

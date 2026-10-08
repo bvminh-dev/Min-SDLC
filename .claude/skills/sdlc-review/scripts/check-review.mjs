@@ -4,6 +4,7 @@
 //       node check-review.mjs --tree <thư-mục-gốc-mã>     (in giá trị `reviewed_tree` để ghi vào frontmatter)
 // Kiểm mới (L27 Kết quả chạy lại, L28 reviewed_tree, L38 khớp mục [chưa làm] của report) là LỖI với review có `kit_version: 2`
 // hoặc `--strict`; review cũ không có trường đó chỉ bị cảnh báo.
+// Kiểm thêm L48 (dòng "Đã sửa" cần mục Kết quả sau sửa) là LỖI với `kit_version: 3` hoặc `--strict`, cảnh báo với review kit_version 2.
 // Không đánh giá code đúng hay sai; chỉ bảo đảm review không bỏ sót mục nào và mỗi kết luận có bằng chứng kiểm được trên đĩa.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -51,6 +52,8 @@ const text = readFileSync(path, 'utf8');
 const fm = fmOf(text);
 const fresh = Number(fm.kit_version) >= 2 || argv.includes('--strict');
 const gate = (m) => (fresh ? err(m) : warnings.push(`${path}: ${m} (review không có kit_version: 2 nên chỉ cảnh báo)`));
+const fresh3 = Number(fm.kit_version) >= 3 || argv.includes('--strict');
+const gate3 = (m) => (fresh3 ? err(m) : warnings.push(`${path}: ${m} (review chưa có kit_version: 3 nên chỉ cảnh báo)`));
 if (fm.epic !== epic) err(`epic trong frontmatter phải là ${epic}`);
 if (!fm.reviewed_commit) err('thiếu reviewed_commit (git rev-parse --short HEAD của mã đã review)');
 
@@ -125,6 +128,23 @@ for (const [name, items] of Object.entries(need)) {
   for (const it of items) {
     const ok = [...listed[name]].some((x) => x === it || x.startsWith(`${it} `));
     if (!ok) err(`mục "${name}" thiếu dòng cho: ${it}`);
+  }
+}
+
+// L48: dòng có Việc cần làm bắt đầu bằng "Đã sửa" phải có mục "Kết quả sau sửa": Đã sửa ở là file:dòng có thật, Chứng minh không trống
+const nFixed = ['Đối chiếu spec', 'Quyền', 'Bảo mật'].flatMap((n) => tableOf(section(text, n))).filter((r) => /^Đã sửa/.test(r[4] ?? '')).length;
+if (nFixed) {
+  const fx = tableOf(section(text, 'Kết quả sau sửa'));
+  if (!fx.length) gate3(`có ${nFixed} dòng "Đã sửa" ở Việc cần làm nhưng thiếu mục "## Kết quả sau sửa" dạng bảng (| Phát hiện (mức) | Đã sửa ở | Chứng minh |)`);
+  for (const r of fx) {
+    const tag = `Kết quả sau sửa / ${(r[0] ?? '').slice(0, 40)}`, refs = [...(r[1] ?? '').matchAll(/([^\s`,()]+):(\d+)/g)];
+    if (!refs.length) gate3(`${tag}: cột Đã sửa ở phải có file:dòng`);
+    for (const [, f, n] of refs) {
+      const p = resolve(root, f);
+      if (!existsSync(p) || !statSync(p).isFile()) gate3(`${tag}: "${f}:${n}" không phải file:dòng có thật`);
+      else if (Number(n) < 1 || Number(n) > readFileSync(p, 'utf8').split('\n').length) gate3(`${tag}: dòng ${n} vượt quá độ dài file ${f}`);
+    }
+    if (!r[2] || r[2] === '-') gate3(`${tag}: thiếu Chứng minh (test nào đỏ khi bỏ bản sửa)`);
   }
 }
 

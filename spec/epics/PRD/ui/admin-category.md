@@ -41,7 +41,7 @@ Hộp thoại Xóa:             "Xóa danh mục Phụ kiện? Không thể khô
 | hết phiên hoặc không có quyền | 401 chuyển về đăng nhập; 403 (staff vào trang) hiện "Bạn không có quyền" và không hiện cây | PRD-REQ-20261006-095502507 | prd-admin-category-error |
 | trùng tên | Chữ đỏ trong hộp thoại: "Đã có danh mục tên này trong cùng danh mục cha" (409) | PRD-REQ-20261006-095502507 | prd-admin-category-name-error |
 | tên không hợp lệ | Chữ đỏ: tên rỗng hoặc quá 100 ký tự (400) | PRD-REQ-20261006-095502507 | prd-admin-category-name-error |
-| vòng hoặc quá sâu | Chữ đỏ ở ô danh mục cha: "Không thể chuyển vào nhánh con của chính nó" hoặc "Tối đa 3 cấp" (409) | PRD-REQ-20261006-095502507 | prd-admin-category-parent-error |
+| vòng hoặc quá sâu | Chữ đỏ ở ô danh mục cha: "Không thể chuyển vào nhánh con của chính nó" hoặc "Tối đa 3 cấp" (409). Ô cha đã loại sẵn chính nó, con cháu và cha làm nhánh vượt 3 cấp nên lỗi này chỉ hiện khi cây đã đổi ở nơi khác sau lúc tải (server vẫn kiểm) | PRD-REQ-20261006-095502507 | prd-admin-category-parent-error |
 | không xóa được | Hộp thoại xóa hiện lý do: "Còn danh mục con" và hoặc "Còn sản phẩm" (409, kể cả sản phẩm đã lưu trữ); nút Xóa tắt | PRD-REQ-20261006-095502529 | prd-admin-category-delete-error |
 | đã bị xóa ở nơi khác | Hộp thoại hiện "Danh mục không còn tồn tại" (404) rồi tải lại cây | PRD-REQ-20261006-095502529 | prd-admin-category-delete-error |
 

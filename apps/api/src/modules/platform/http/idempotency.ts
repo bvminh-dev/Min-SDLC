@@ -75,7 +75,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const httpCode = Reflect.getMetadata('__httpCode__', ctx.getHandler()) as number | undefined;
     const status = httpCode ?? (req.method === 'POST' ? 201 : 200);
     const out = await this.idem.run(
-      { scope: opts.scope, userId: req.session.user_id, key, requestHash: requestHash(req.method, req.route?.path ?? req.path, req.body) },
+      { scope: opts.scope, userId: req.session.user_id, key, requestHash: requestHash(req.method, req.route?.path ?? req.path, { params: req.params, body: req.body }) }, // tham số đường dẫn là một phần nội dung (cùng khóa, cùng thân, khác sản phẩm là yêu cầu khác)
       async (tx) => {
         req.tx = tx; // handler lấy tx qua @DbTx() để ghi nghiệp vụ cùng giao dịch với khóa
         return { status, body: await firstValueFrom(next.handle(), { defaultValue: null }) };

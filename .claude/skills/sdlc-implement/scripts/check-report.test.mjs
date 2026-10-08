@@ -88,4 +88,60 @@ bad(good({ slang: '1. chọn mặc định X.' }), /nhãn/);
 const lbl = run(good({ slang: '1. [đã chọn] a.\n2. [chưa làm] b.\n3. [cần quyết] c.\n4. [cần quyết] d.' }));
 assert.equal(lbl.status, 0, lbl.stderr);
 assert.match(lbl.stdout, /đã chọn=1, chưa làm=1, cần quyết=2/);
+
+// ---- L43, L49, L53, L55 (kit_version: 3): lỗi với báo cáo `kit_version: 3` hoặc --strict; báo cáo kit_version 2 chỉ cảnh báo
+const F3 = 'kit_version: 3\nclean_run: pass\n';
+const g3 = (o = {}) => ({ fm: F3, slang: LB, ...o });
+assert.equal(run(g3()).status, 0, run(g3()).stderr);
+const warn3 = (o, re, code, tc) => { // cùng đầu vào: v3 là lỗi, v2 chỉ cảnh báo
+  const e = run(o, code, tc); assert.equal(e.status, 1, String(re)); assert.match(e.stderr, re);
+  const w = run({ ...o, fm: FRESH }, code, tc); assert.equal(w.status, 0, w.stderr); assert.match(w.stdout, new RegExp(`Lưu ý: .*${re.source}`));
+};
+// L43: [đã chọn] mà nội dung cần người hoặc sdlc-impact/sdlc-foundation quyết
+warn3(g3({ slang: '1. [đã chọn] E2E dùng công cụ trái ADR-002, nên ghi vào ADR-002 qua `sdlc-foundation`.' }), /mục 1.*\[đã chọn\].*\[cần quyết\]/);
+warn3(g3({ slang: '1. [đã chọn] sửa mã PRJ, cần review PRJ cân nhắc lại.' }), /mục 1.*\[cần quyết\]/);
+warn3(g3({ slang: `${LB}\n2. [đã chọn] thiếu TC job dọn. Nên thêm TC qua \`sdlc-impact\`.` }), /mục 2.*\[cần quyết\]/);
+assert.equal(run(g3({ slang: '1. [cần quyết] E2E trái ADR-002, nên ghi vào ADR-002 qua `sdlc-foundation`.' })).status, 0, 'đã [cần quyết] thì qua');
+assert.equal(run(g3({ slang: '1. [đã chọn] BR đã sửa qua `sdlc-impact` (báo cáo đã chạy), chọn X.' })).status, 0, 'đã chạy sdlc-impact thì không phải việc chờ');
+// L49: mốc thời gian cứng quanh hôm nay trong test không có fixed-clock:
+const D = (n = 0) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+const T49 = (line) => `// ${TC}\n${line}\n`;
+warn3(g3(), /orders\.spec\.ts:2.*mốc thời gian/, T49(`const NOW = new Date('${D()}T10:00:00Z');`));
+warn3(g3(), /orders\.spec\.ts:2.*mốc thời gian/, T49(`const NOW = '${D(-2)}T10:00:00.000Z';`));
+assert.equal(run(g3(), T49(`const NOW = '${D(-30)}T10:00:00Z';`)).status, 0, 'mốc xa hôm nay không bị bắt');
+assert.equal(run(g3(), T49(`// fixed-clock: Clock giả cho mọi nguồn thời gian\nconst NOW = '${D()}T10:00:00Z';`)).status, 0);
+assert.equal(run(g3(), T49(`const NOW = '${D()}T10:00:00Z'; // fixed-clock: đồng hồ giả`)).status, 0);
+// L53: sửa mã module khác (nền) mà không có test đổi theo ở test/<module>/
+const ARCH = '| Epic | Module | Phụ thuộc |\n|---|---|---|\n| ORD | order | - |\n| PRJ | platform | - |\n';
+function runGit(o, edit) {
+  const r = mkdtempSync(join(tmpdir(), 'impl-git-'));
+  put(r, `spec/epics/ORD/design/${API}.md`, `---\nid: ${API}\n---\n`);
+  put(r, `spec/epics/ORD/tests/${TC}.md`, `---\nid: ${TC}\n---\n`);
+  put(r, 'spec/architecture.md', ARCH);
+  put(r, 'spec/epics/ORD/report.md', report(o));
+  put(r, 'src/orders.spec.ts', `// ${TC}\ntest('x')\n`);
+  put(r, 'apps/api/src/modules/platform/a.ts', 'a\n');
+  const g = (...a) => spawnSync('git', a, { cwd: r, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' } });
+  g('init', '-q'); g('add', '-A'); g('commit', '-qm', 'x');
+  edit(r);
+  return spawnSync('node', [script, join(r, 'spec'), r, '--epic', 'ORD'], { encoding: 'utf8' });
+}
+const nền = (r) => put(r, 'apps/api/src/modules/platform/a.ts', 'đổi\n');
+const g53 = runGit(g3(), nền);
+assert.equal(g53.status, 1, 'sửa nền không có test');
+assert.match(g53.stderr, /apps\/api\/src\/modules\/platform\/a\.ts.*test\/platform/);
+const w53 = runGit({ ...g3(), fm: FRESH }, nền);
+assert.equal(w53.status, 0, w53.stderr);
+assert.match(w53.stdout, /Lưu ý: .*modules\/platform\/a\.ts/);
+assert.equal(runGit(g3(), (r) => { nền(r); put(r, 'apps/api/test/platform/a.spec.ts', 'test\n'); }).status, 0, 'có test/platform đổi theo thì qua');
+assert.equal(runGit(g3(), (r) => put(r, 'apps/api/src/modules/order/b.ts', 'b\n')).status, 0, 'sửa module của chính epic không cần');
+bad(g3({ slang: '1. [đã chọn] Sửa mã nền (platform) cho CSRF, cho cả đăng nhập.' }), /sửa nền.*TC|TC.*sửa nền/);
+assert.equal(run(g3({ slang: `1. [đã chọn] Sửa mã nền (platform) cho CSRF, đã có test ${TC}.` })).status, 0);
+// L55: hai lời gọi medianMs( liền nhau (đo tuần tự), và "nhiễu đo" không kèm bản sửa hay việc cho người
+const SEQ = `// ${TC}\nit('x', async () => {\n  const a = await medianMs(30, f);\n  const b = await medianMs(30, g);\n  expect(a).toBeCloseTo(b);\n});\n`;
+warn3(g3(), /orders\.spec\.ts:3.*đo tuần tự/, SEQ);
+assert.equal(run(g3(), `// ${TC}\nit('x', async () => {\n  const a = await medianMs(30, f);\n});\nit('y', async () => {\n  const b = await medianMs(30, g);\n});\n`).status, 0, 'hai test khác nhau, mỗi test một lời gọi');
+warn3(g3({ slang: '1. [đã chọn] TC đỏ một lần ở 0,325 là nhiễu đo, giữ ngưỡng.' }), /mục 1.*nhiễu đo/);
+assert.equal(run(g3({ slang: '1. [đã chọn] TC đỏ một lần là nhiễu đo; đã sửa sang đo xen kẽ.' })).status, 0);
+assert.equal(run(g3({ slang: '1. [cần quyết] TC đỏ một lần là nhiễu đo, cần người chọn ngưỡng.' })).status, 0);
 console.log('OK: check-report.mjs');

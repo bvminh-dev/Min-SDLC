@@ -1,9 +1,10 @@
 'use client';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { api, SESSION_EXPIRED_EVENT } from '../lib/api';
 import { ROLE_LABEL, useAuth } from '../lib/auth';
+import { expiredTestId } from '../lib/shipping';
 
 /** Menu tài khoản (AUTH-REQ-20261006-095515808, ...774): avatar, tên, email, role, chip chưa xác minh (chỉ customer), đăng xuất. */
 export function AccountMenu() {
@@ -44,6 +45,8 @@ export function AccountMenu() {
           <Link className="btn btn-quiet" href="/account/profile" onClick={() => setOpen(false)}>Hồ sơ của tôi</Link>
           {user.role === 'customer' && <Link className="btn btn-quiet" href="/account/addresses" onClick={() => setOpen(false)}>Sổ địa chỉ</Link>}
           {user.role !== 'customer' && <Link className="btn btn-quiet" href="/admin/customers" onClick={() => setOpen(false)}>Tra cứu khách</Link>}
+          {user.role !== 'customer' && <Link className="btn btn-quiet" href="/admin/products" onClick={() => setOpen(false)}>Quản lý sản phẩm</Link>}
+          {user.role === 'admin' && <Link className="btn btn-quiet" href="/admin/categories" onClick={() => setOpen(false)}>Quản lý danh mục</Link>}
           {failed && (
             <div role="alert" className="banner banner-error" data-testid="auth-account-menu-error">
               Không đăng xuất được. Thử lại. <button className="btn" onClick={() => void logout()} data-testid="auth-account-menu-retry">Thử lại</button>
@@ -63,6 +66,7 @@ export function AccountMenu() {
 /** Hộp thoại chặn thao tác khi API trả 401 `session_expired` ở bất kỳ màn nào. */
 export function SessionExpiredDialog() {
   const [open, setOpen] = useState(false);
+  const path = usePathname();
   useEffect(() => {
     const on = () => setOpen(true);
     window.addEventListener(SESSION_EXPIRED_EVENT, on);
@@ -72,7 +76,7 @@ export function SessionExpiredDialog() {
   const next = typeof window === 'undefined' ? '/' : window.location.pathname + window.location.search;
   return (
     <div className="backdrop">
-      <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="se-title" data-testid="auth-account-menu-session-expired">
+      <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="se-title" data-testid={expiredTestId(path) ?? 'auth-account-menu-session-expired'}>
         <h2 id="se-title">Phiên đã hết hạn</h2>
         <p>Hãy đăng nhập lại để tiếp tục.</p>
         <a className="btn btn-primary" href={`/login?next=${encodeURIComponent(next)}&reason=expired`} data-testid="auth-account-menu-session-expired-login">Đăng nhập</a>

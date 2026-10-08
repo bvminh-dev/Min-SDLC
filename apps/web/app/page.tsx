@@ -10,6 +10,9 @@ export default function Home() {
       <section className="card">
         <h1>Ecom</h1>
         <p>{user ? `Xin chào ${user.full_name}.` : 'Chào mừng. Hãy đăng nhập hoặc tạo tài khoản để mua sắm.'}</p>
+        <p><Link href="/products">Xem sản phẩm</Link></p>
+        {user && user.role !== 'customer' && <p><Link href="/admin/products">Quản lý sản phẩm</Link></p>}
+        {user?.role === 'admin' && <p><Link href="/admin/categories">Quản lý danh mục</Link></p>}
         {user?.role === 'admin' && <p><Link href="/admin/users">Quản lý người dùng</Link></p>}
       </section>
     </main>

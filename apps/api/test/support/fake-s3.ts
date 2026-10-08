@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { sha256Hex, signV4 } from '../../src/modules/user/storage/signer';
+import { sha256Hex, signV4 } from '../../src/modules/platform';
 
 export interface FakeObject { body: Buffer; contentType: string; headers: Record<string, string>; lastModified: Date }
 export interface FakeRequest { method: string; path: string; query: Record<string, string>; headers: Record<string, string | string[] | undefined> }
@@ -79,7 +79,8 @@ export class FakeS3 {
     if (method === 'GET' && path.startsWith(prefix)) {
       const o = this.objects.get(path.slice(prefix.length));
       if (!o) return reply(404, '<Error><Code>NoSuchKey</Code></Error>');
-      res.writeHead(200, { 'Content-Type': o.contentType });
+      const cache = o.headers['cache-control']; // S3 thật lưu và phát lại Cache-Control đã ghi
+      res.writeHead(200, { 'Content-Type': o.contentType, ...(cache ? { 'Cache-Control': cache } : {}) });
       res.end(o.body);
       return;
     }

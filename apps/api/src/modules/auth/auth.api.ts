@@ -143,21 +143,20 @@ export class AuthApi {
     if (!isUuid(userId)) throw new DomainError('unauthenticated');
     const wrongKey = `usr:pwchange:${userId}`;
     const callKey = `usr:pwchange:hour:${userId}`;
-    // Đếm lần gọi TRƯỚC khi băm: cộng nguyên tử nên chạy song song cũng không vượt 10 lần thử mỗi giờ (ponytail: cửa sổ cố định như ADR-014)
-    const calls = await this.limiter.hitCounter(callKey, PWCHANGE_CALL_WINDOW_S);
-    const [byWrong, byCalls] = await Promise.all([this.limiter.check(wrongKey, PWCHANGE_WRONG_LIMIT, PWCHANGE_WRONG_WINDOW_S), this.limiter.check(callKey, PWCHANGE_CALL_LIMIT, PWCHANGE_CALL_WINDOW_S)]);
-    if (calls > PWCHANGE_CALL_LIMIT || !byWrong.allowed) {
-      const wait = Math.max(!byWrong.allowed ? byWrong.retryAfter : 0, calls > PWCHANGE_CALL_LIMIT ? byCalls.retryAfter : 0, 1);
+    // Cả hai bộ đếm đều `take` NGUYÊN TỬ TRƯỚC khi băm (ADR-014): chạy song song cũng không vượt 10 lần gọi mỗi giờ và 5 lần sai mỗi 15 phút (ponytail: cửa sổ cố định)
+    const byCalls = await this.limiter.take(callKey, PWCHANGE_CALL_LIMIT, PWCHANGE_CALL_WINDOW_S);
+    const byWrong = byCalls.allowed ? await this.limiter.take(wrongKey, PWCHANGE_WRONG_LIMIT, PWCHANGE_WRONG_WINDOW_S) : null;
+    if (!byCalls.allowed || !byWrong?.allowed) {
+      const wait = Math.max(!byCalls.allowed ? byCalls.retryAfter : 0, byWrong && !byWrong.allowed ? byWrong.retryAfter : 0, 1);
       throw new DomainError('rate-limited', { headers: { 'Retry-After': String(wait) } });
     }
 
+    // lượt `take` của bộ đếm sai giữ nguyên nếu mật khẩu hiện tại sai; mọi kết cục khác hoàn lại
     const [u] = await this.prisma.$queryRaw<{ email: string; role: Role; password_hash: string }[]>`
       SELECT email::text AS email, role, password_hash FROM users WHERE id = ${userId}::uuid AND status = 'active'`;
-    if (!u) throw new DomainError('unauthenticated');
-    if (typeof current !== 'string' || !(await verifyPassword(current, u.password_hash))) {
-      await this.limiter.hitCounter(wrongKey, PWCHANGE_WRONG_WINDOW_S);
-      throw new DomainError('invalid_current_password');
-    }
+    if (!u) { await this.limiter.refund(wrongKey, PWCHANGE_WRONG_WINDOW_S); throw new DomainError('unauthenticated'); }
+    if (typeof current !== 'string' || !(await verifyPassword(current, u.password_hash))) throw new DomainError('invalid_current_password');
+    await this.limiter.refund(wrongKey, PWCHANGE_WRONG_WINDOW_S);
     const errors = this.policyErrors(u.email, current, next);
     if (errors.length) throw new DomainError('validation-failed', { errors: errors.map((code) => ({ field: 'new_password', code })) });
 

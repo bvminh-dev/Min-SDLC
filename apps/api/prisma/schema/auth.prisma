@@ -69,6 +69,8 @@ model User {
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
   addresses               Address[] // quan hệ ngược cho Address của module user (khóa ngoại USR -> users, USR-DB)
+  orders                  Order[] // quan hệ ngược cho Order của module order (khóa ngoại ORD -> users, ORD-DB)
+  orderStatusHistory      OrderStatusHistory[] // actor_id của order_status_history (ORD-DB)
 
   @@index([role, status])
   @@index([createdAt(sort: Desc), id(sort: Desc)])

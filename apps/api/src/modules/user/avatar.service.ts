@@ -2,11 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { Request, Response } from 'express';
 import { AuthApi } from '../auth';
-import { AppLogger, Clock, ConfigService, DomainError } from '../platform';
+import { AppLogger, Clock, ConfigService, DomainError, OBJECT_STORAGE, type ObjectStorage } from '../platform';
 import { AVATAR_CACHE_CONTROL, AVATAR_MAX_BYTES, AVATAR_ORPHAN_AGE_MS } from './config';
 import { ImageError, processAvatar } from './image';
 import { readSingleFile } from './multipart';
-import { OBJECT_STORAGE, type ObjectStorage } from './storage/storage';
 
 const KEY_RE = /^avatars\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/;
 const withTimeout = <T>(p: Promise<T>, ms: number): Promise<T> => new Promise<T>((resolve, reject) => {

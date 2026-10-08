@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import { truncateAll } from '../support/db';
 import { createUsrApp, call, setProfile, upload, userWithSession, type UsrApp } from '../support/usr';
-import { S3Storage } from '../../src/modules/user/storage/s3';
+import { S3Storage } from '../../src/modules/platform';
 import { ORIGIN } from '../support/app';
 import { http, q, seedSession } from '../support/auth';
 import { animatedWebp, gif, jpegWithExif, padJpeg, php, png, pngClaiming, svgWithScript, webp } from '../support/images';

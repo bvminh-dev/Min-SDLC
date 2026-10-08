@@ -18,14 +18,14 @@ export interface ApiResult<T = any> {
 export const SESSION_EXPIRED_EVENT = 'auth:session-expired';
 
 /** `silentExpired`: 401 session_expired không bật hộp thoại phiên hết hạn (đăng xuất coi như đã xong). */
-export async function api<T = any>(path: string, o: { method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'; body?: unknown; silentExpired?: boolean } = {}): Promise<ApiResult<T>> {
+export async function api<T = any>(path: string, o: { method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'; body?: unknown; silentExpired?: boolean; headers?: Record<string, string> } = {}): Promise<ApiResult<T>> {
   try {
     // FormData (tải ảnh đại diện): để trình duyệt tự đặt multipart/form-data kèm ranh giới; còn lại luôn là JSON.
     const form = typeof FormData !== 'undefined' && o.body instanceof FormData;
     const res = await fetch(`${BASE}${path}`, {
       method: o.method ?? 'GET',
       credentials: 'include',
-      headers: o.method && o.method !== 'GET' && !form ? { 'Content-Type': 'application/json' } : undefined,
+      headers: o.method && o.method !== 'GET' && !form ? { 'Content-Type': 'application/json', ...o.headers } : o.headers,
       body: o.body === undefined ? undefined : form ? (o.body as FormData) : JSON.stringify(o.body),
     });
     const text = res.status === 204 ? '' : await res.text();

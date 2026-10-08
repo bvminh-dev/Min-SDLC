@@ -1,0 +1,96 @@
+// Module catalog (epic PRD, PRD-DB-20261006-095502781): Category, Product, ProductImage, ProductReviewRating.
+// Phần Prisma không biểu diễn được (CHECK, regex, chỉ mục một phần, GIN trigram, unique hoãn được) nằm trong migration SQL.
+// Khóa ngoại chỉ trỏ vào bảng của chính module (không sang bảng module khác, P7).
+
+enum ProductStatus {
+  draft
+  active
+  archived
+
+  @@map("product_status")
+}
+
+enum ImageType {
+  jpeg
+  png
+  webp
+
+  @@map("image_type")
+}
+
+model Category {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  slug      String   @unique
+  parentId  String?  @map("parent_id") @db.Uuid
+  depth     Int      @db.SmallInt
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children Category[] @relation("CategoryTree")
+  products Product[]
+
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Product {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId  String        @map("category_id") @db.Uuid
+  name        String
+  sku         String        @unique
+  description String?
+  price       BigInt
+  status      ProductStatus @default(draft)
+  version     Int           @default(1)
+  publishedAt DateTime?     @map("published_at") @db.Timestamptz(6)
+  ratingCount Int           @default(0) @map("rating_count")
+  ratingSum   Int           @default(0) @map("rating_sum")
+  searchText  String        @map("search_text")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  category Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images   ProductImage[]
+  ratings  ProductReviewRating[]
+  // Phía ngược của khóa ngoại stock_items.product_id (INV phụ thuộc PRD, INV-DB): Prisma đòi hai phía, PRD không đọc bảng này.
+  stockItem StockItem?
+
+  @@index([status, categoryId, publishedAt(sort: Desc), id(sort: Desc)])
+  @@index([status, price, id])
+  @@index([updatedAt(sort: Desc), id(sort: Desc)])
+  @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_search_text_trgm_idx")
+  @@map("products")
+}
+
+model ProductImage {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId   String    @map("product_id") @db.Uuid
+  storageKey  String    @unique @map("storage_key")
+  contentType ImageType @map("content_type")
+  width       Int
+  height      Int
+  bytes       Int
+  position    Int       @db.SmallInt
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([productId, position])
+  @@map("product_images")
+}
+
+model ProductReviewRating {
+  reviewId  String   @id @map("review_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  rating    Int      @db.SmallInt
+  counted   Boolean
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([productId])
+  @@map("product_review_ratings")
+}

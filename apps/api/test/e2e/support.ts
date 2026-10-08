@@ -33,7 +33,7 @@ export async function startE2e(): Promise<E2eEnv> {
   async function boot(): Promise<E2eEnv> {
     const api = keep(spawn(process.execPath, ['-r', 'ts-node/register/transpile-only', 'test/e2e/server.ts'], {
       cwd: API_DIR,
-      env: { PATH: process.env.PATH ?? '', APP_ENV: 'dev', DATABASE_URL: 'postgresql://ecom:ecom@localhost:5433/ecom_e2e', CORS_ALLOWED_ORIGINS: WEB, E2E_API_PORT: String(API_PORT), E2E_CTL_PORT: String(CTL_PORT), E2E_S3_PORT: String(S3_PORT), ...(process.env.TEST_DB_BASE ? { TEST_DB_BASE: process.env.TEST_DB_BASE } : {}) },
+      env: { PATH: process.env.PATH ?? '', APP_ENV: 'dev', DATABASE_URL: 'postgresql://ecom:ecom@localhost:5433/ecom_e2e', CORS_ALLOWED_ORIGINS: WEB, E2E_API_PORT: String(API_PORT), E2E_CTL_PORT: String(CTL_PORT), E2E_S3_PORT: String(S3_PORT), ...(process.env.TEST_DB_BASE ? { TEST_DB_BASE: process.env.TEST_DB_BASE } : {}), ...Object.fromEntries(Object.entries(process.env).filter(([k, v]) => k.startsWith('STORAGE_TEST_') && v !== undefined)) },
       stdio: ['ignore', 'pipe', 'pipe'],
     }));
     pipe(api, apiLog);
@@ -60,8 +60,25 @@ export const ctl = async (path: string, body?: unknown): Promise<any> => {
 export const reset = () => ctl('/reset', {});
 export const seedUser = (u: { email: string; password?: string; role?: 'customer' | 'staff' | 'admin'; verified?: boolean; name?: string; createdAt?: string; phone?: string; avatar?: boolean }) => ctl('/seed-user', u);
 export const seedAddress = (a: { email: string; receiver?: string; phone?: string; line1?: string; ward?: string; district?: string | null; city?: string; is_default?: boolean; age_ms?: number }) => ctl('/seed-address', a);
-export const s3Keys = async (): Promise<string[]> => (await ctl('/s3-objects')).keys;
+export const s3Keys = async (prefix = 'avatars/'): Promise<string[]> => (await ctl(`/s3-objects?prefix=${encodeURIComponent(prefix)}`)).keys;
+export const seedCategory = async (name: string, parent_id?: string): Promise<string> => (await ctl('/seed-category', { name, parent_id })).id;
+export const seedProduct = async (p: { name: string; category_id: string; sku?: string; price?: number; status?: 'draft' | 'active' | 'archived'; images?: number; rating_count?: number; rating_sum?: number; description?: string; age_ms?: number }): Promise<string> => (await ctl('/seed-product', p)).id;
+export const productState = (id: string): Promise<{ status: string; version: number; price: number; name: string; sku: string; images: number } | null> => ctl(`/product?id=${id}`);
 export const advance = (ms: number) => ctl('/advance', { ms });
+export const alignWindow = () => ctl('/align-window', {});
+export const seedStock = (s: { product_id: string; on_hand?: number; reserved?: number; threshold?: number; archived?: boolean; version?: number; notified?: boolean }): Promise<{ id: string }> => ctl('/seed-stock', s);
+export const stockState = (product_id: string): Promise<{ on_hand: number; reserved: number; version: number; threshold: number } | null> => ctl(`/stock?product_id=${product_id}`);
+export const seedCoupon = (c: { code: string; type?: 'percentage' | 'fixed'; value?: number; min_order?: number; max_discount?: number | null; expires_in_sec?: number; usage_limit?: number; per_user_limit?: number | null; consumed?: number; reserved?: number; status?: 'active' | 'disabled' | 'expired' | 'exhausted' | 'deleted'; version?: number; age_sec?: number }): Promise<{ id: string }> => ctl('/seed-coupon', c);
+export const couponState = (code: string): Promise<{ id: string; code: string; status: string; type: string; value: number; min_order_value: number; max_discount: number | null; usage_limit: number; per_user_limit: number | null; consumed_count: number; reserved_count: number; version: number } | null> => ctl(`/coupon?code=${encodeURIComponent(code)}`);
+export const seedMovement = (m: { product_id: string; type: 'in' | 'out' | 'adjust' | 'sale' | 'restock' | 'return'; quantity: number; on_hand_after: number; reason?: string; human?: boolean; minutes_ago?: number }) => ctl('/seed-movement', m);
+export const seedOrder = (o: { email: string; code?: string; status?: string; method?: 'vnpay' | 'cod'; payment?: string; created_at?: string; items?: { name?: string; price?: number; qty?: number }[]; discount?: number; shipping?: number; paid_at?: string; tracking?: string | null; handoff?: string; expires_at?: string; delivered_at?: string; address?: Record<string, string>; cancel?: { reason: string; by: string; text?: string } }): Promise<{ id: string; code: string }> => ctl('/seed-order', o);
+export const orderState = (code: string): Promise<{ id: string; status: string; payment_status: string; tracking_number: string | null; history: number } | null> => ctl(`/order?code=${code}`);
+export const seedShippingMethod = (m: { name?: string; base_fee?: number; rule?: { free_over?: number | null; surcharge?: number; surcharge_cities?: string[] }; active?: boolean; version?: number; age_sec?: number } = {}): Promise<{ id: string }> => ctl('/seed-shipping-method', m);
+/** Vận đơn dựng thẳng của đơn (theo mã đơn) kèm lịch sử đúng đường đi tới `status`; chưa có phương thức thì tự tạo một phương thức mặc định. */
+export const seedShipment = (s: { order_code: string; status?: 'pending' | 'shipped' | 'delivered' | 'failed' | 'returned' | 'cancelled'; tracking?: string; reason_code?: string; note?: string; cod_amount?: number; method_id?: string; created_at?: string; version?: number }): Promise<{ id: string; method_id: string; tracking_number: string | null }> => ctl('/seed-shipment', s);
+export const shipmentState = (order_code: string): Promise<{ id: string; status: string; tracking_number: string | null; cod_amount: number; version: number; history: number; outbox: string[] } | null> => ctl(`/shipment?order_code=${order_code}`);
+/** Giao một event của PAY, INV, SHP cho ORD (đơn theo mã đơn). */
+export const sendEvent = (type: string, order_code: string, payload: Record<string, unknown> = {}) => ctl('/event', { type, order_code, payload });
 
 const T = 10_000;
 /** Thử lại tới khi đúng (thay cho các khẳng định tự thử lại của công cụ test E2E). */

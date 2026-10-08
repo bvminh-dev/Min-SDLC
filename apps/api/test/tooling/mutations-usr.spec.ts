@@ -1,13 +1,13 @@
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { API_DIR } from '../support/db';
 import { run } from '../support/sh';
+import { mkTmp } from '../support/tmp';
 
 // Cổng kiểm của bảng đột biến USR (sdlc-implement: mỗi SB `Kiểm bằng: test` có ít nhất một đột biến). Mang ID tài liệu USR-SEC vì chưa có TC riêng cho công cụ.
 // Ca "công cụ hỏng thì đỏ" và ca dương tính từng mẫu lỗi: SB thiếu đột biến, đoạn cần phá đã đổi, đoạn mơ hồ, đột biến vô tác dụng, test hay ID không có, USR-SEC không đọc được.
 describe('Bảng đột biến USR được kiểm lại bằng `mutations-usr.mjs --check` (USR-SEC-20261006-101342524)', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'mut-usr-'));
+  const dir = mkTmp('mut-usr-');
   const node = (args: string[]) => run(process.execPath, ['scripts/mutations-usr.mjs', ...args], { cwd: API_DIR });
   const real = (): any[] => JSON.parse(node(['--print']).stdout);
   const check = (table: unknown[], extra: string[] = []) => {

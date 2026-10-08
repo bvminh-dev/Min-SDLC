@@ -1,7 +1,7 @@
 ---
 epic: ORD
 status: draft
-kit_version: 2               # bắt buộc giữ: bật kiểm cứng của check-review (Kết quả chạy lại, reviewed_tree, khớp [chưa làm])
+kit_version: 3               # bắt buộc giữ: bật kiểm cứng của check-review (Kết quả chạy lại, reviewed_tree, khớp [chưa làm], Kết quả sau sửa)
 reviewed_commit: abc1234     # git rev-parse --short HEAD của mã đã review
 reviewed_tree: 0000000       # khi mã bẩn hoặc chưa commit: node .claude/skills/sdlc-review/scripts/check-review.mjs --tree <gốc mã>; xóa dòng này nếu mã sạch
 ---
@@ -10,7 +10,7 @@ reviewed_tree: 0000000       # khi mã bẩn hoặc chưa commit: node .claude/s
 Kết quả: `đạt` | `lệch` | `chưa làm` | `không áp dụng`. Bằng chứng: `đường/dẫn/file:dòng`, cách nhau bởi dấu phẩy (bắt buộc với `đạt` và `lệch`; đường dẫn tính từ gốc dự án). `lệch` và `chưa làm` phải có Việc cần làm.
 
 ## Kết quả chạy lại
-Reviewer tự chạy lại, không tin `report.md`: phải có dòng chứa `test_command` của report (kết quả kiểu `Tests: N passed` để script so với `test_result`). Cột So với report.md: `khớp` chỉ khi số pass giống; lệch thì ghi `lệch: <vì sao>`. Thêm dòng cho lint, typecheck, build, đột biến đã thử (mỗi SB `Kiểm bằng: test`) và các cổng kiểm đã tái hiện bằng tay.
+Reviewer tự chạy lại, không tin `report.md`: phải có dòng chứa `test_command` của report (kết quả kiểu `Tests: N passed` để script so với `test_result`). Cột So với report.md: `khớp` chỉ khi số pass giống; lệch thì ghi `lệch: <vì sao>`. Thêm dòng cho lint, typecheck, build, đột biến đã thử bằng `scripts/mutate.mjs` (mỗi SB `Kiểm bằng: test`, mỗi chỗ nền sửa kèm; dán bảng nó in) và các cổng kiểm đã tái hiện bằng tay.
 
 | Lệnh | Kết quả thật | So với report.md |
 |---|---|---|
@@ -36,6 +36,13 @@ Mỗi yêu cầu `SB-nn` của `spec/security-baseline.md` có epic liên quan l
 | Mục | Nguồn | Kết quả | Bằng chứng | Việc cần làm |
 |---|---|---|---|---|
 | SB-06 chống IDOR | SB-06 | đạt | apps/api/src/orders/orders.service.ts:44 | - |
+
+## Kết quả sau sửa
+Tùy chọn: chỉ khi reviewer được giao sửa mã hoặc test. Bắt buộc khi có dòng nào ở ba bảng trên có Việc cần làm bắt đầu bằng "Đã sửa". Đã sửa ở: `file:dòng` có thật (số dòng ứng với mã sau sửa, nên `reviewed_tree` tính sau sửa). Chứng minh: test nào đỏ khi bỏ bản sửa.
+
+| Phát hiện (mức) | Đã sửa ở | Chứng minh |
+|---|---|---|
+| MEDIUM: nút khóa mãi sau 429 | apps/web/app/login/page.tsx:27 | E2E ORD-E2E-... đỏ khi bỏ bản sửa |
 
 ## Việc còn thiếu
 (tóm tắt các dòng `lệch` và `chưa làm`, xếp theo mức nghiêm trọng)

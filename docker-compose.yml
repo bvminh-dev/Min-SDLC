@@ -1,5 +1,8 @@
 # PostgreSQL 16 cho dev và test tích hợp (BR10: không dùng SQLite hay giả lập).
 # Cổng 5433 để tránh xung đột với PostgreSQL cài sẵn ở 5432. Mật khẩu chỉ dùng local.
+# MinIO (S3 thật, cổng 9210; console 9211) cho bộ test "S3 thật" của USR: `docker compose up -d minio minio-bucket minio-policy` rồi chạy test với
+#   STORAGE_TEST_ENDPOINT=http://localhost:9210 STORAGE_TEST_ACCESS_KEY=ecom-minio STORAGE_TEST_SECRET_KEY=ecom-minio-local STORAGE_TEST_BUCKET=ecom-test pnpm test
+# Không đặt STORAGE_TEST_ENDPOINT thì các bộ test đó báo rõ "bỏ qua" (không xanh im lặng).
 services:
   db:
     image: postgres:16-alpine
@@ -17,3 +20,34 @@ services:
       interval: 2s
       timeout: 3s
       retries: 20
+
+  # MinIO thật. Ảnh chainguard vì `minio/minio` không còn kéo được từ Docker Hub (kiểm ngày 2026-10-07: "pull access denied"); ảnh này không có shell,
+  # curl hay mc nên không có healthcheck: hai dịch vụ dưới thử lại tới khi MinIO lên.
+  minio:
+    image: chainguard/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ecom-minio
+      MINIO_ROOT_PASSWORD: ecom-minio-local
+    ports:
+      - "${MINIO_PORT:-9210}:9000"
+      - "${MINIO_CONSOLE_PORT:-9211}:9001"
+
+  # Tạo bucket thử rồi cho phép đọc ẩn danh (ảnh đại diện phát công khai theo khóa ngẫu nhiên, ADR-018). MC_HOST_local thay cho `mc alias set` (ảnh không có shell).
+  minio-bucket:
+    image: chainguard/minio-client:latest
+    depends_on: [minio]
+    environment:
+      MC_HOST_local: http://ecom-minio:ecom-minio-local@minio:9000 # scan-secrets:allow khóa local của docker compose
+    entrypoint: ["/usr/bin/mc", "mb", "--ignore-existing", "local/ecom-test"]
+    restart: on-failure
+
+  minio-policy:
+    image: chainguard/minio-client:latest
+    depends_on:
+      minio-bucket:
+        condition: service_completed_successfully
+    environment:
+      MC_HOST_local: http://ecom-minio:ecom-minio-local@minio:9000 # scan-secrets:allow khóa local của docker compose
+    entrypoint: ["/usr/bin/mc", "anonymous", "set", "download", "local/ecom-test"]
+    restart: "no"

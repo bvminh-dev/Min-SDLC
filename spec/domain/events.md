@@ -35,7 +35,7 @@ Các mục con của NTF như "Order created", "Payment successful", "Order ship
 | CouponRedeemed | CouponRedemption | PRM | - | coupon_id, order_id, amount | CouponRedemption:consumed |
 | CheckoutCompleted | CheckoutSession | CHK | CRT | checkout_id, cart_id, order_id | CheckoutSession:completed |
 | CheckoutExpired | CheckoutSession | CHK | - | checkout_id, user_id, cart_id | CheckoutSession:expired |
-| OrderCreated | Order | ORD | NTF, PAY | order_id, order_code, user_id, grand_total, payment_method, payment_expires_at (rỗng nếu COD), items | Order:pending |
+| OrderCreated | Order | ORD | NTF, PAY | order_id, order_code, user_id, grand_total, payment_method, payment_expires_at (rỗng nếu COD), items (`[{ product_id, name, unit_price, quantity }]`, `name` và `unit_price` là bản chụp lúc đặt) | Order:pending |
 | OrderPaid | Order | ORD | SHP | order_id, paid_at | Order:paid |
 | OrderConfirmed | Order | ORD | SHP, NTF, INV, PRM | order_id, order_code, user_id, confirmed_at | Order:confirmed |
 | OrderCancelled | Order | ORD | INV, PAY, PRM, SHP, NTF | order_id, order_code, user_id, reason (customer_request, admin, payment_failed, stock_commit_failed), was_paid | Order:cancelled |
@@ -103,3 +103,4 @@ Các mục con của NTF như "Order created", "Payment successful", "Order ship
 - 2026-10-06 | R-19 | Thêm NTF vào Consumers của OrderExpired, payload thêm `order_code`, `user_id` | lý do: khách không biết đơn quá hạn thanh toán (NTF câu 19) | giải pháp: thông báo `in_app`, không email; NTF cần viết requirement cho handler này; loại không báo (khách phải tự mở đơn mới biết)
 - 2026-10-06 | R-20 | Thêm event ReviewUnpublished (REV; PRD; Phát khi `Review:pending` từ `published`) | lý do: sửa đánh giá đã đăng khi bật REVIEW_PRE_MODERATION không có event nên PRD giữ điểm cũ, bản sửa bị từ chối làm điểm lệch vĩnh viễn (REV, PRD) | giải pháp: PRD trừ điểm qua ProductReviewRating, ReviewPublished cộng lại khi duyệt; loại cho ReviewHidden phát cả ở chuyển này (trộn ý nghĩa ẩn và chờ duyệt)
 - 2026-10-06 | R-11, R-05 | Ghi chú xử lý ShipmentReturned với `restockable = false` (không đổi `on_hand`, không StockMovement, chỉ log và audit); ShipmentFailed ghi một dòng OrderStatusHistory `shipped -> shipped` | lý do: giữ khớp với `entities.md` đợt 3 (INV, SHP, ORD) | giải pháp: chỉ sửa ghi chú, không đổi payload; loại StockMovement số lượng 0
+- 2026-10-07 | review ORD, sdlc-impact | OrderCreated `items` ghi rõ hình dạng `[{ product_id, name, unit_price, quantity }]` | lý do: events.md chỉ ghi `items` nên PAY, NTF không biết trường; mã ORD đã chạy và đã review (688 test xanh) phát đúng hình dạng này | giải pháp: ghi theo mã, không đổi mã; loại thêm `line_total` hay `position` vào event vì consumer tự tính được và chưa consumer nào cần

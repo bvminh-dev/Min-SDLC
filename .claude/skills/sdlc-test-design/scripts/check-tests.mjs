@@ -117,6 +117,32 @@ for (const [t, v] of threats) {
   const ks = threatTcs.get(t) ?? [];
   if (ks.length < 2 || !ks.some((k) => k === 'lỗi' || k === 'biên')) lack.push(`mối đe dọa ${t} (Kiểm bằng script/hook: cổng kiểm) cần ít nhất 2 test case trỏ tới nó, một ca lỗi hoặc biên (công cụ kiểm hỏng thì phải đỏ; mỗi mẫu quét một ca dương tính); hiện có ${ks.length}`);
 }
+// L45: trạng thái màn hình có thời hạn ("tới hết giờ", "đếm ngược", "sau N giây/phút") cần TC/E2E nhắc testid của nó cùng bước thoát (nếu không, nút khóa mãi mà test vẫn xanh)
+const TIMED = /tới hết (?:giờ|thời gian)|đếm ngược|sau (?:N|\d+) (?:giây|phút)/, EXIT = /mở lại|hết giờ|biến mất|bật lại|dùng lại được|không còn/;
+for (const { f, text } of all) {
+  const fm = fmOf(text);
+  if (!/[\\/]ui[\\/][^\\/]+\.md$/.test(f) || !fm.screen || (epicOnly && fm.epic !== epicOnly)) continue;
+  const elems = tableRows(text, '| testid');
+  for (const [name, desc, , ownId] of tableRows(text, '| Trạng thái')) {
+    if (!TIMED.test(desc)) continue;
+    const id = (ownId ?? '').match(/[a-z]{2,4}(?:-[a-z0-9]+)+/)?.[0] ?? elems.find((e) => e[1].toLowerCase().includes(name.toLowerCase()))?.[0]; // ponytail: không ánh xạ được testid thì bỏ qua
+    if (!id) continue;
+    if (!docs.some((d) => d.fm.epic === fm.epic && d.text.includes(id) && EXIT.test(d.text))) lack.push(`màn ${fm.screen} (${fm.epic}): trạng thái "${name}" có thời hạn nhưng không TC hay E2E nào nhắc ${id} cùng bước thoát (mở lại, hết giờ, biến mất): thêm bước kiểm trạng thái này kết thúc`);
+  }
+}
+// L50: hàm trong mục "Giao diện module ... cung cấp" của tài liệu API phải được một TC của epic nhắc tới
+for (const { f, text } of all) {
+  const fm = fmOf(text);
+  if (!fm.id?.includes('-API-') || (epicOnly && fm.epic !== epicOnly)) continue;
+  const ls = text.split(/\r?\n/), i = ls.findIndex((l) => /^#{1,4} Giao diện module|^[^|]*Giao diện (?:module|nội bộ)[^|]*(?:cung cấp|phơi ra)/.test(l)); // chỉ phía cung cấp (không phải bảng "CHK gọi")
+  if (i < 0) continue;
+  let j = i + 1; // mục kết thúc ở tiêu đề kế (nếu là tiêu đề) hoặc gạch đầu dòng cấp ngoài kế (nếu là gạch đầu dòng)
+  while (j < ls.length && !(/^#/.test(ls[i]) ? /^#{1,3} / : /^(?:[-*] |#)/).test(ls[j])) j++;
+  const fns = [...new Set([...ls.slice(i + 1, j).join('\n').matchAll(/`(?:\w+\.)?([a-z]\w*)\(/g)].map((m) => m[1]))];
+  const tcText = docs.filter((d) => d.fm.epic === fm.epic && d.fm.id?.includes('-TC-')).map((d) => d.text).join('\n');
+  const miss = fns.filter((n) => !new RegExp(`\\b${n}\\b`).test(tcText));
+  if (miss.length) lack.push(`${fm.id}: giao diện module chưa có TC nào nhắc: ${miss.join(', ')} (mỗi hàm cung cấp cho epic khác cần ít nhất một TC)`);
+}
 (strict ? errors : warnings).push(...lack.map((m) => `thiếu phủ: ${m}`));
 
 

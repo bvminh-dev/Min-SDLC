@@ -1,8 +1,8 @@
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { REPO_ROOT, roleDbUrl } from '../support/db';
 import { cleanPath, run, runScript } from '../support/sh';
+import { mkTmp } from '../support/tmp';
 
 const read = (p: string) => readFileSync(join(REPO_ROOT, p), 'utf8');
 
@@ -24,7 +24,7 @@ describe('Dựng dự án và CI (PRJ-REQ-20261006-095422475)', () => {
   }, 300_000);
 
   it('PRJ-TC-20261006-100124092: lockfile lệch thì pnpm install --frozen-lockfile thất bại; CI cài đặt trước mọi bước khác', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'ecom-lock-'));
+    const dir = mkTmp('ecom-lock-');
     const pkg = { name: 'tmp', private: true, version: '0.0.0', packageManager: 'pnpm@10.15.1' };
     writeFileSync(join(dir, 'package.json'), JSON.stringify(pkg));
     expect(run('pnpm', ['install', '--lockfile-only'], { cwd: dir }).status).toBe(0);
@@ -62,7 +62,7 @@ describe('Dựng dự án và CI (PRJ-REQ-20261006-095422475)', () => {
 
     // Node 22 (sai): bản sao tối thiểu của dự án. Giả lập phiên bản bằng cài đặt `node-version` của pnpm (chính bước kiểm engines),
     // nên không phụ thuộc Node nào cài sẵn trên máy hay runner.
-    const dir = mkdtempSync(join(tmpdir(), 'ecom-node-'));
+    const dir = mkTmp('ecom-node-');
     for (const f of ['package.json', '.npmrc', 'pnpm-workspace.yaml', 'pnpm-lock.yaml']) cpSync(join(REPO_ROOT, f), join(dir, f));
     for (const a of ['api', 'web']) { mkdirSync(join(dir, 'apps', a), { recursive: true }); cpSync(join(REPO_ROOT, 'apps', a, 'package.json'), join(dir, 'apps', a, 'package.json')); }
     const wrong = run('pnpm', ['install', '--frozen-lockfile', '--config.node-version=22.11.0'], { cwd: dir, env: { PATH: cleanPath() } });
@@ -73,7 +73,7 @@ describe('Dựng dự án và CI (PRJ-REQ-20261006-095422475)', () => {
 
     // Node đang chạy test (CI lấy từ .nvmrc = 24): cài đặt thoát mã 0. Chạy ở bản sao tạm, không phải repo thật: `pnpm install` ở repo thật
     // có thể ghi đè Prisma Client đã sinh trong node_modules (làm các bộ test chạy sau lỗi "did not initialize yet" khi kho pnpm khác).
-    const dirOk = mkdtempSync(join(tmpdir(), 'ecom-node-ok-'));
+    const dirOk = mkTmp('ecom-node-ok-');
     for (const f of ['package.json', '.npmrc', 'pnpm-workspace.yaml', 'pnpm-lock.yaml']) cpSync(join(REPO_ROOT, f), join(dirOk, f));
     for (const a of ['api', 'web']) { mkdirSync(join(dirOk, 'apps', a), { recursive: true }); cpSync(join(REPO_ROOT, 'apps', a, 'package.json'), join(dirOk, 'apps', a, 'package.json')); }
     const ok = run('pnpm', ['install', '--frozen-lockfile', '--ignore-scripts'], { cwd: dirOk });

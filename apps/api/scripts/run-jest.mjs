@@ -2,7 +2,8 @@
 // Test tích hợp cần PostgreSQL thật: `docker compose up -d db` (xem README).
 import { spawnSync } from 'node:child_process';
 
-const r = spawnSync(process.execPath, [new URL('../node_modules/jest/bin/jest.js', import.meta.url).pathname, '--config', 'jest.config.js', ...process.argv.slice(2).filter((a, i) => !(i === 0 && a === '--'))], {
+// `--expose-gc`: test đo RSS (PRD ảnh 30 megapixel, USR ảnh bom) gọi `global.gc()` trước khi đo; thiếu cờ này `gc` không có nên số đo phụ thuộc bộ test chạy trước (đỏ chập chờn, review SHP).
+const r = spawnSync(process.execPath, ['--expose-gc', new URL('../node_modules/jest/bin/jest.js', import.meta.url).pathname, '--config', 'jest.config.js', ...process.argv.slice(2).filter((a, i) => !(i === 0 && a === '--'))], {
   stdio: 'inherit',
   env: { ...process.env, APP_ENV: process.env.APP_ENV ?? 'dev' },
 });

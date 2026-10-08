@@ -1,4 +1,4 @@
-import { createAuthApp, login, medianMs, post, q, seedToken, seedUser, type AuthApp } from '../support/auth';
+import { NOW0, createAuthApp, login, medianPairMs, post, q, seedToken, seedUser, type AuthApp } from '../support/auth';
 import { truncateAll } from '../support/db';
 import { waitFor } from '../support/boot';
 
@@ -10,7 +10,7 @@ describe('Quên và đặt lại mật khẩu (AUTH-REQ-20261006-095515843, AUTH
   let t: AuthApp;
   beforeAll(async () => { t = await createAuthApp({ env: { TRUST_PROXY_HOPS: '1' } }); });
   afterAll(() => t.close());
-  beforeEach(async () => { await truncateAll(t.prisma); t.mails.length = 0; t.logs.clear(); t.clock.set(new Date('2026-10-06T10:00:00.000Z')); });
+  beforeEach(async () => { await truncateAll(t.prisma); t.mails.length = 0; t.logs.clear(); t.clock.set(new Date(NOW0)); });
   const forgot = async (email: string, ip = '10.0.0.1') => { const r = await post(t, '/auth/password/forgot', { email }, { ip }); await t.auth.idle(); await new Promise((res) => setTimeout(res, 40)); return r; }; // chờ việc sau phản hồi và event in-process
   const resetTokens = (userId: string) => q<any>(t, `SELECT status, token_hash, expires_at, created_at FROM password_reset_tokens WHERE user_id = '${userId}' ORDER BY created_at, status::text`);
   const userRow = async (email: string) => (await q<any>(t, `SELECT status, failed_login_count, locked_until, locked_reason FROM users WHERE email = '${email}'::citext`))[0];
@@ -43,8 +43,7 @@ describe('Quên và đặt lại mật khẩu (AUTH-REQ-20261006-095515843, AUTH
     expect(u1.id).toBeTruthy();
 
     const settle = () => t.auth.idle(); // việc sau phản hồi chạy ngoài khoảng đo
-    const mk = await medianMs(30, (i) => post(t, '/auth/password/forgot', { email: 'u1@shop.vn' }, { ip: `10.1.1.${i + 1}` }), settle);
-    const mn = await medianMs(30, (i) => post(t, '/auth/password/forgot', { email: `none${i}@shop.vn` }, { ip: `10.1.2.${i + 1}` }), settle);
+    const [mk, mn] = await medianPairMs(30, (i) => post(t, '/auth/password/forgot', { email: 'u1@shop.vn' }, { ip: `10.1.1.${i + 1}` }), (i) => post(t, '/auth/password/forgot', { email: `none${i}@shop.vn` }, { ip: `10.1.2.${i + 1}` }), settle); // đo xen kẽ hai nhánh
     // YẾU: forgot trả lời trong ~1 ms nên 30% tương đối là nhiễu; ngưỡng thực dùng là 30% hoặc 2 ms tuyệt đối, cái nào lớn hơn (xem report.md, Lệch spec)
     expect(Math.abs(mk - mn)).toBeLessThan(Math.max(0.3 * Math.max(mk, mn), 2));
 

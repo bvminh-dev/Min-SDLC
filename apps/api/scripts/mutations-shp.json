@@ -1,0 +1,2413 @@
+{
+ "test": "node scripts/run-jest.mjs test/shipping",
+ "mutations": [
+  {
+   "id": "SB-05, T4: staff được tạo phương thức (sai ma trận)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "SHP-TC-20261006-102133082",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Post() @Action('Tạo và sửa phương thức vận chuyển') @Roles('admin')",
+   "replace": "@Post() @Action('Tạo và sửa phương thức vận chuyển') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133082\""
+  },
+  {
+   "id": "SB-05, T4: staff xem được danh sách phương thức quản trị",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102133082",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Get() @Action('Xem danh sách mọi phương thức vận chuyển (kể cả đã tắt)') @Roles('admin')",
+   "replace": "@Get() @Action('Xem danh sách mọi phương thức vận chuyển (kể cả đã tắt)') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133082\""
+  },
+  {
+   "id": "SB-05, T4: staff được sửa phương thức",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "SHP-TC-20261006-102133082",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Patch(':id') @Action('Tạo và sửa phương thức vận chuyển') @Roles('admin')",
+   "replace": "@Patch(':id') @Action('Tạo và sửa phương thức vận chuyển') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133082\""
+  },
+  {
+   "id": "SB-05, T4: staff được tắt phương thức",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102133082",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Post(':id/disable') @Action('Bật hoặc tắt phương thức vận chuyển') @HttpCode(200) @Roles('admin')",
+   "replace": "@Post(':id/disable') @Action('Bật hoặc tắt phương thức vận chuyển') @HttpCode(200) @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133082\""
+  },
+  {
+   "id": "SB-05, T3: customer được bàn giao vận đơn",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "SHP-TC-20261006-102133553",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Action('Bàn giao vận đơn và nhập mã vận đơn') @HttpCode(200) @Roles('staff', 'admin')",
+   "replace": "@Action('Bàn giao vận đơn và nhập mã vận đơn') @HttpCode(200) @Roles('customer', 'staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133553\""
+  },
+  {
+   "id": "SB-05, T3: customer được sửa mã vận đơn",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102133553",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Action('Sửa mã vận đơn đã nhập') @Roles('staff', 'admin')",
+   "replace": "@Action('Sửa mã vận đơn đã nhập') @Roles('customer', 'staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133553\""
+  },
+  {
+   "id": "SB-05, T3: customer được báo giao thất bại",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102133893",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Post('orders/:code/shipment/fail') @Action('Xác nhận giao xong, báo giao thất bại, xác nhận hàng hoàn về kho') @HttpCode(200) @Roles('staff', 'admin')",
+   "replace": "@Post('orders/:code/shipment/fail') @Action('Xác nhận giao xong, báo giao thất bại, xác nhận hàng hoàn về kho') @HttpCode(200) @Roles('customer', 'staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133893\""
+  },
+  {
+   "id": "SB-05, T3: customer được xác nhận giao xong",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102133893",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Post('orders/:code/shipment/deliver') @Action('Xác nhận giao xong, báo giao thất bại, xác nhận hàng hoàn về kho') @HttpCode(200) @Roles('staff', 'admin')",
+   "replace": "@Post('orders/:code/shipment/deliver') @Action('Xác nhận giao xong, báo giao thất bại, xác nhận hàng hoàn về kho') @HttpCode(200) @Roles('customer', 'staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133893\""
+  },
+  {
+   "id": "SB-05, T3: customer được hoàn hàng",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102133893",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Post('orders/:code/shipment/return') @Action('Xác nhận giao xong, báo giao thất bại, xác nhận hàng hoàn về kho') @HttpCode(200) @Roles('staff', 'admin')",
+   "replace": "@Post('orders/:code/shipment/return') @Action('Xác nhận giao xong, báo giao thất bại, xác nhận hàng hoàn về kho') @HttpCode(200) @Roles('customer', 'staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133893\""
+  },
+  {
+   "id": "SB-05, T3: customer xem danh sách vận đơn",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102133553",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Roles('staff', 'admin') @RateLimit(LIMITS.list)",
+   "replace": "@Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.list)",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133553\""
+  },
+  {
+   "id": "SB-05, T3: staff được báo phí (quote chỉ customer)",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102133308",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@HttpCode(200) @Roles('customer') @RateLimit(LIMITS.quote)",
+   "replace": "@HttpCode(200) @Roles('customer', 'staff') @RateLimit(LIMITS.quote)",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133308\""
+  },
+  {
+   "id": "SB-05: staff xem phương thức đang bật của customer",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102133235",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Action('Xem các phương thức vận chuyển đang áp dụng') @Roles('customer')",
+   "replace": "@Action('Xem các phương thức vận chuyển đang áp dụng') @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133235\""
+  },
+  {
+   "id": "SB-05, T1: lịch sử không còn cho customer",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102133082",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Action('Xem lịch sử trạng thái vận đơn') @Roles('customer', 'staff', 'admin')",
+   "replace": "@Action('Xem lịch sử trạng thái vận đơn') @Roles('staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/shipping/guard.spec.ts -t \"SHP-SEC-20261006-101603066 T3, T4\""
+  },
+  {
+   "id": "SB-05, T11: thêm route HTTP nhận event của ORD (không có đường HTTP nào để giả event)",
+   "sb": [
+    "SB-05",
+    "SB-27",
+    "SB-35"
+   ],
+   "tc": "SHP-TC-20261006-102147397",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "  @Post('orders/:code/shipment/ship')",
+   "replace": "  @Post('events') @Action('Tạo vận đơn tự động khi đơn paid hoặc confirmed (event của ORD, không có endpoint)') @Roles('admin') @Validate({}) onEvent() { return {}; }\n\n  @Post('orders/:code/shipment/ship')",
+   "test": "node scripts/run-jest.mjs test/shipping/guard.spec.ts -t \"SHP-SEC-20261006-101603066 T11, T13\""
+  },
+  {
+   "id": "SB-32, T13: thêm route sửa lịch sử vận đơn",
+   "sb": [
+    "SB-32",
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102147397",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "  @Post('orders/:code/shipment/ship')",
+   "replace": "  @Patch('orders/:code/shipment/history') @Action('Xem lịch sử trạng thái vận đơn') @Roles('admin') @Validate({ params: codeParams }) rewrite() { return {}; }\n\n  @Post('orders/:code/shipment/ship')",
+   "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147397\""
+  },
+  {
+   "id": "SB-06, T1: customer xem chi tiết bằng findByCode (đơn người khác lộ)",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "SHP-TC-20261006-102134013",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "const o = s.role === 'customer' ? await this.orders.findOwned(code, s.user_id) : await this.orders.findByCode(code);",
+   "replace": "const o = await this.orders.findByCode(code);",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134013\""
+  },
+  {
+   "id": "SB-06, T1: lịch sử của đơn người khác không kiểm sở hữu",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "SHP-TC-20261006-102147373",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "  async history(s: SessionContext, code: string) {\n    const o = await this.order(s, code);",
+   "replace": "  async history(s: SessionContext, code: string) {\n    const o = await this.orders.findByCode(code);\n    if (!o) throw new DomainError('not-found');",
+   "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147373\""
+  },
+  {
+   "id": "SB-06, T2: mã sai định dạng trả 400 thay vì cùng 404 (tách được mã sai định dạng khỏi mã không có)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "SHP-TC-20261006-102134013",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "export const codeParams = z.object({ code: z.string() }).strict();",
+   "replace": "export const codeParams = z.object({ code: z.string().regex(/^[0-9A-Z]{12}$/i) }).strict();",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134013\""
+  },
+  {
+   "id": "SB-08, T10: customer thấy cod_amount",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102133965",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "if (s.role === 'customer') return { order_code: o.code, shipment: base };",
+   "replace": "if (s.role === 'customer') return { order_code: o.code, shipment: { ...base, cod_amount: Number(c.cod_amount) } };",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133965\""
+  },
+  {
+   "id": "SB-08, T9: staff luôn thấy người nhận (kể cả đã giao)",
+   "sb": [
+    "SB-08",
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "if (s.role === 'admin' || STAFF_RECIPIENT.includes(c.status)) {",
+   "replace": "if (true) {",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-08, T9: staff không còn thấy người nhận khi failed",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "const STAFF_RECIPIENT: readonly ShipmentStatus[] = ['pending', 'shipped', 'failed'];",
+   "replace": "const STAFF_RECIPIENT: readonly ShipmentStatus[] = ['pending', 'shipped'];",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-08, T9: staff thấy người nhận cả khi returned",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "const STAFF_RECIPIENT: readonly ShipmentStatus[] = ['pending', 'shipped', 'failed'];",
+   "replace": "const STAFF_RECIPIENT: readonly ShipmentStatus[] = ['pending', 'shipped', 'failed', 'returned'];",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-08, T9: admin không còn thấy người nhận khi đã giao",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "if (s.role === 'admin' || STAFF_RECIPIENT.includes(c.status)) {",
+   "replace": "if (STAFF_RECIPIENT.includes(c.status)) {",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-08, T10: customer thấy lý do thất bại ở lịch sử",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102147349",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "...(staff && r.reason_code ? { reason_code: r.reason_code } : {}),",
+   "replace": "...(r.reason_code ? { reason_code: r.reason_code } : {}),",
+   "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147349\""
+  },
+  {
+   "id": "SB-08, T10: customer thấy ghi chú ở lịch sử",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102147349",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "...(staff && r.note ? { note: r.note } : {}),",
+   "replace": "...(r.note ? { note: r.note } : {}),",
+   "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147349\""
+  },
+  {
+   "id": "SB-08, T9: danh sách nhận tham số email (tìm theo dữ liệu cá nhân)",
+   "sb": [
+    "SB-08",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102134039",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "export const listQuery = paginationQuery.extend({",
+   "replace": "export const listQuery = paginationQuery.extend({\n  email: z.string().optional(),",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134039\""
+  },
+  {
+   "id": "SB-08, T10: ShipmentFailed mang ghi chú nội bộ",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102133819",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "payload: { order_code: o.code, user_id: owner.user_id, reason: b.reason_code }",
+   "replace": "payload: { order_code: o.code, user_id: owner.user_id, reason: b.reason_code, note: b.note }",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133819\""
+  },
+  {
+   "id": "SB-08, SB-19, T9: audit xem người nhận ghi cả địa chỉ",
+   "sb": [
+    "SB-08",
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102133988",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "after: { order_code: o.code },",
+   "replace": "after: { order_code: o.code, recipient },",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
+  },
+  {
+   "id": "SB-19, T9: lần xem người nhận không còn audit (đổi tên hành động)",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102133988",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "action: 'shipment.view_recipient'",
+   "replace": "action: 'shipment.view'",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
+  },
+  {
+   "id": "SB-19, T9: lỗi audit xem người nhận bị nuốt (vẫn trả recipient)",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102133988",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "        }));\n        extra.recipient = recipient;",
+   "replace": "        })).catch(() => undefined);\n        extra.recipient = recipient;",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
+  },
+  {
+   "id": "SB-08, T9: danh sách của staff trả cả địa chỉ (recipient)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102133988",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "    return toPage(rows.map((r) => ({\n      order_code: codes.get(r.order_id) ?? '',",
+   "replace": "    return toPage(rows.map((r) => ({\n      recipient: r.order_id, order_code: codes.get(r.order_id) ?? '',",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
+  },
+  {
+   "id": "SB-08: staff thấy cod_amount sai (0)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102133988",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "cod_amount: Number(c.cod_amount) };",
+   "replace": "cod_amount: 0 };",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
+  },
+  {
+   "id": "SB-08: staff không thấy version",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102133988",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "const extra: Record<string, unknown> = { version: c.version,",
+   "replace": "const extra: Record<string, unknown> = { version: 0,",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
+  },
+  {
+   "id": "SB-08: lý do thất bại chỉ cho failed (bỏ returned)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "if (c.status === 'failed' || c.status === 'returned') {",
+   "replace": "if (c.status === 'failed') {",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-08, T22: log bỏ qua event ghi cả payload",
+   "sb": [
+    "SB-08",
+    "SB-18"
+   ],
+   "tc": "SHP-TC-20261006-102133431",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "{ event_type: e.type, event_id: e.event_id, why }",
+   "replace": "{ event_type: e.type, event_id: e.event_id, why, payload: e.payload }",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T11 \\(L85\\)\""
+  },
+  {
+   "id": "SB-11, T5: body chấp nhận khóa lạ (shipped_at, status, fee, is_active)",
+   "sb": [
+    "SB-11",
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133529",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "if (!known.has(k)) ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "replace": "if (false && !known.has(k)) ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133529\""
+  },
+  {
+   "id": "SB-11: khóa __proto__ của JSON lọt qua schema đóng",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "if (v && typeof v === 'object' && Object.prototype.hasOwnProperty.call(v, '__proto__'))",
+   "replace": "if (false && v && typeof v === 'object' && Object.prototype.hasOwnProperty.call(v, '__proto__'))",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T5, T14 \\(L81\\)\""
+  },
+  {
+   "id": "SB-11, T8: mã vận đơn tối thiểu 8 -> 1",
+   "sb": [
+    "SB-11",
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133675",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const TRACKING_MIN = 8;",
+   "replace": "export const TRACKING_MIN = 1;",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133675\""
+  },
+  {
+   "id": "SB-11, T8: mã vận đơn tối đa 30 -> 60",
+   "sb": [
+    "SB-11",
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133675",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const TRACKING_MAX = 30;",
+   "replace": "export const TRACKING_MAX = 60;",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133675\""
+  },
+  {
+   "id": "SB-11, T8: kiểm khuôn mã vận đơn SAU khi đổi chữ hoa (ſ thành S lọt khuôn)",
+   "sb": [
+    "SB-11",
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "src/modules/shipping/policy.ts",
+   "find": ".test(s) ? s.toUpperCase() : null;",
+   "replace": ".test(s.toUpperCase()) ? s.toUpperCase() : null;",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133602\""
+  },
+  {
+   "id": "SB-11, T8: mã vận đơn không bỏ khoảng trắng đầu cuối",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133675",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "  const s = raw.trim();\n  return new RegExp",
+   "replace": "  const s = raw;\n  return new RegExp",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133675\""
+  },
+  {
+   "id": "SB-11, T14: ghi chú tối đa 300 -> 3000 ký tự",
+   "sb": [
+    "SB-11",
+    "SB-12",
+    "SB-18"
+   ],
+   "tc": "SHP-TC-20261006-102133916",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const NOTE_MAX = 300;",
+   "replace": "export const NOTE_MAX = 3000;",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133916\""
+  },
+  {
+   "id": "SB-11, T14: độ dài đếm theo đơn vị UTF-16 thay vì ký tự",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "SHP-TC-20261006-102133916",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "const len = (s: string): number => [...s].length;",
+   "replace": "const len = (s: string): number => s.length;",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133916\""
+  },
+  {
+   "id": "SB-11, T14: ghi chú cho phép NUL (ký tự điều khiển)",
+   "sb": [
+    "SB-11",
+    "SB-18"
+   ],
+   "tc": "SHP-TC-20261006-102133893",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "const CONTROL_TEXT = /[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/;",
+   "replace": "const CONTROL_TEXT = /[\\u0001-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/;",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133893\""
+  },
+  {
+   "id": "SB-11, T14: tên, thành phố, mã đơn cho phép NUL",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "const CONTROL = /[\\u0000-\\u001F\\u007F]/;",
+   "replace": "const CONTROL = /[\\u0001-\\u001F\\u007F]/;",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T6, T14 \\(L62\\)\""
+  },
+  {
+   "id": "SB-11, T14: ghi chú trim làm mất kiểm chỉ khoảng trắng (không chuyển thành không có)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133819",
+   "file": "src/modules/shipping/policy.ts",
+   "find": ".transform((v) => v || undefined);",
+   "replace": ".transform((v) => v);",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133819\""
+  },
+  {
+   "id": "SB-11, T6: phí cơ bản tối đa 1.000.000 -> 10.000.000",
+   "sb": [
+    "SB-11",
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133186",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const BASE_FEE_MAX = 1_000_000;",
+   "replace": "export const BASE_FEE_MAX = 10_000_000;",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133186\""
+  },
+  {
+   "id": "SB-11, T6: phụ thu tối đa 500.000 -> 5.000.000",
+   "sb": [
+    "SB-11",
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const SURCHARGE_MAX = 500_000;",
+   "replace": "export const SURCHARGE_MAX = 5_000_000;",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133111\""
+  },
+  {
+   "id": "SB-11, T6: ngưỡng miễn phí tối đa -> gấp 10",
+   "sb": [
+    "SB-11",
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const FREE_OVER_MAX = 10_000_000_000;",
+   "replace": "export const FREE_OVER_MAX = 100_000_000_000;",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133111\""
+  },
+  {
+   "id": "SB-11, T6: ngưỡng miễn phí nhận số âm",
+   "sb": [
+    "SB-11",
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "  free_over: int(0, FREE_OVER_MAX).nullable().optional(),",
+   "replace": "  free_over: int(-1000, FREE_OVER_MAX).nullable().optional(),",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133111\""
+  },
+  {
+   "id": "SB-11, T6: tối đa 63 thành phố -> 640",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const CITIES_MAX = 63;",
+   "replace": "export const CITIES_MAX = 640;",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133111\""
+  },
+  {
+   "id": "SB-11, T6: phụ thu > 0 không bắt buộc có thành phố",
+   "sb": [
+    "SB-11",
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "if ((r.surcharge ?? 0) > 0 && !(r.surcharge_cities?.length))",
+   "replace": "if (false && (r.surcharge ?? 0) > 0 && !(r.surcharge_cities?.length))",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133111\""
+  },
+  {
+   "id": "SB-11, T6: số thực được nhận làm tiền (bỏ kiểm số nguyên)",
+   "sb": [
+    "SB-11",
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "const int = (min: number, max: number) => z.number(str).int({ message: 'invalid_format' }).min(min,",
+   "replace": "const int = (min: number, max: number) => z.number(str).min(min,",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133111\""
+  },
+  {
+   "id": "SB-11, T6: tên phương thức tối thiểu 2 -> 1",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133186",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const NAME_MIN = 2;",
+   "replace": "export const NAME_MIN = 1;",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133186\""
+  },
+  {
+   "id": "SB-11, T6: tên phương thức tối đa 80 -> 800",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const NAME_MAX = 80;",
+   "replace": "export const NAME_MAX = 800;",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133111\""
+  },
+  {
+   "id": "SB-11, T5: tên không cắt khoảng trắng (2 khoảng trắng vẫn là tên)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133186",
+   "file": "src/modules/shipping/policy.ts",
+   "find": "const name = z.string(str).transform((s) => s.trim())",
+   "replace": "const name = z.string(str).transform((s) => s)",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133186\""
+  },
+  {
+   "id": "SB-11, T5: báo phí tối đa subtotal gấp 10",
+   "sb": [
+    "SB-11",
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133308",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const SUBTOTAL_MAX = 10_000_000_000;",
+   "replace": "export const SUBTOTAL_MAX = 100_000_000_000;",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133308\""
+  },
+  {
+   "id": "SB-11, T5: city của báo phí 100 -> 1000 ký tự",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133308",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const CITY_QUERY_MAX = 100;",
+   "replace": "export const CITY_QUERY_MAX = 1000;",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133308\""
+  },
+  {
+   "id": "SB-11: lý do thất bại nhận giá trị ngoài danh sách",
+   "sb": [
+    "SB-11",
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133893",
+   "file": "src/modules/shipping/config.ts",
+   "find": "'damaged', 'other'] as const; // shipment_fail_reason",
+   "replace": "'damaged', 'other', 'lost'] as const; // shipment_fail_reason",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133893\""
+  },
+  {
+   "id": "SB-11: mã đơn của danh sách tối đa 32 -> 3200",
+   "sb": [
+    "SB-11",
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102134039",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const ORDER_CODE_QUERY_MAX = 32;",
+   "replace": "export const ORDER_CODE_QUERY_MAX = 3200;",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T17 \\(L80\\)\""
+  },
+  {
+   "id": "SB-11, T17: version tối đa int32 bị bỏ (vượt int32 gây lỗi CSDL thô)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133136",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const VERSION_MAX = 2_147_483_647;",
+   "replace": "export const VERSION_MAX = 9_007_199_254_740_991;",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133136\""
+  },
+  {
+   "id": "SB-11, T17: lịch sử trả tối đa 100 -> 1000 dòng",
+   "sb": [
+    "SB-11",
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102134039",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const HISTORY_MAX = 100;",
+   "replace": "export const HISTORY_MAX = 1000;",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T17 \\(L80\\)\""
+  },
+  {
+   "id": "SB-11, T17: tracking_number của danh sách khớp tiền tố (LIKE)",
+   "sb": [
+    "SB-11",
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "where.push(Prisma.sql`s.tracking_number = ${q.tracking_number}`);",
+   "replace": "where.push(Prisma.sql`s.tracking_number LIKE ${`${q.tracking_number}%`}`);",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-13, T15: nền bỏ kiểm Origin của CSRF (POST từ trang khác nguồn lọt)",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "SHP-TC-20261006-102133578",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "if (!origin || !this.allowed.has(origin)) throw new DomainError('csrf_failed');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133578\""
+  },
+  {
+   "id": "SB-13, T15: nền bỏ PATCH khỏi các phương thức đổi dữ liệu của CSRF",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "SHP-TC-20261006-102133578",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);",
+   "replace": "const UNSAFE = new Set(['POST', 'PUT', 'DELETE']);",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133578\""
+  },
+  {
+   "id": "SB-14, T16: danh sách vận đơn bỏ giới hạn bậc D (30 -> 300)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102134039",
+   "file": "src/modules/shipping/http.ts",
+   "find": "list: { tier: 'D', limit: 30, windowSeconds: 60 },",
+   "replace": "list: { tier: 'D', limit: 300, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134039\""
+  },
+  {
+   "id": "SB-14, T16: danh sách vận đơn dùng bậc C trong bộ nhớ (không đúng giữa các instance)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102134039",
+   "file": "src/modules/shipping/http.ts",
+   "find": "list: { tier: 'D', limit: 30, windowSeconds: 60 },",
+   "replace": "list: { tier: 'C', limit: 30, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134039\""
+  },
+  {
+   "id": "SB-14, T25: thao tác ghi của staff 30 -> 300",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-130000001",
+   "file": "src/modules/shipping/http.ts",
+   "find": "write: { tier: 'D', limit: 30, windowSeconds: 60, group: 'shp-staff-write' },",
+   "replace": "write: { tier: 'D', limit: 300, windowSeconds: 60, group: 'shp-staff-write' },",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-130000001\""
+  },
+  {
+   "id": "SB-14, T25: thao tác ghi của staff dùng bậc C trong bộ nhớ",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-130000001",
+   "file": "src/modules/shipping/http.ts",
+   "find": "write: { tier: 'D', limit: 30, windowSeconds: 60, group: 'shp-staff-write' },",
+   "replace": "write: { tier: 'C', limit: 30, windowSeconds: 60, group: 'shp-staff-write' },",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-130000001\""
+  },
+  {
+   "id": "SB-14, T25: quản trị phương thức 30 -> 300",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-130000002",
+   "file": "src/modules/shipping/http.ts",
+   "find": "adminMethods: { tier: 'D', limit: 30, windowSeconds: 60, group: 'shp-admin-methods' },",
+   "replace": "adminMethods: { tier: 'D', limit: 300, windowSeconds: 60, group: 'shp-admin-methods' },",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-130000002\""
+  },
+  {
+   "id": "SB-14, T25: đọc và ghi quản trị không còn chung bộ đếm",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-130000002",
+   "file": "src/modules/shipping/http.ts",
+   "find": ", group: 'shp-admin-methods' },",
+   "replace": " },",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-130000002\""
+  },
+  {
+   "id": "SB-14, T16: báo phí 120 -> 1200",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102133383",
+   "file": "src/modules/shipping/http.ts",
+   "find": "quote: { tier: 'C', limit: 120, windowSeconds: 60 },",
+   "replace": "quote: { tier: 'C', limit: 1200, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133383\""
+  },
+  {
+   "id": "SB-14, T16: tra cứu 120 -> 1200",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102133383",
+   "file": "src/modules/shipping/http.ts",
+   "find": "lookup: { tier: 'C', limit: 120, windowSeconds: 60, group: 'shp-lookup' },",
+   "replace": "lookup: { tier: 'C', limit: 1200, windowSeconds: 60, group: 'shp-lookup' },",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T16 \\(SB-14 bậc C\\)\""
+  },
+  {
+   "id": "SB-14, T16: chi tiết và lịch sử không chung hạn mức",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102133383",
+   "file": "src/modules/shipping/http.ts",
+   "find": ", group: 'shp-lookup' },",
+   "replace": " },",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T16 \\(SB-14 bậc C\\)\""
+  },
+  {
+   "id": "SB-14, T16: tra cứu chi tiết bỏ @RateLimit",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102133383",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.lookup) @Validate({ params: codeParams })\n  detail",
+   "replace": "@Roles('customer', 'staff', 'admin') @RateLimit({ tier: 'C', limit: 100000, windowSeconds: 60 }) @Validate({ params: codeParams })\n  detail",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T16 \\(SB-14 bậc C\\)\""
+  },
+  {
+   "id": "SB-18, T22: log lệch của OrderCancelled ghi user_id",
+   "sb": [
+    "SB-18",
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102147299",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "{ code: 'shipment-order-cancelled-mismatch', event_type: e.type, status: s.status,",
+   "replace": "{ code: 'shipment-order-cancelled-mismatch', event_type: e.type, user_id: e.payload.user_id, reason: e.payload.reason, status: s.status,",
+   "test": "node scripts/run-jest.mjs test/shipping/cancel.spec.ts -t \"SHP-TC-20261006-102147299\""
+  },
+  {
+   "id": "SB-18, T22: log nhận mã đơn là chuỗi bất kỳ của payload (rò rỉ dữ liệu cá nhân)",
+   "sb": [
+    "SB-18",
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261006-102133308",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "const codeOf = (v: unknown): string | null => (typeof v === 'string' && /^[0-9A-Z-]{1,32}$/.test(v) ? v : null);",
+   "replace": "const codeOf = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null);",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T6, T22\""
+  },
+  {
+   "id": "SB-18: log tạo vận đơn không có mã đơn (bỏ order_code)",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "SHP-TC-20261006-102133431",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "code: 'order-not-shippable', event_type: e.type, order_code: o.code, status: o.status",
+   "replace": "code: 'order-not-shippable', event_type: e.type, status: o.status",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133431\""
+  },
+  {
+   "id": "SB-19, T12: audit của chuyển trạng thái đổi tên hành động",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "SHP-TC-20261006-102133529",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "action: `shipping.shipment.${name}`",
+   "replace": "action: 'shipping.shipment.x'",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133529\""
+  },
+  {
+   "id": "SB-19, T12: audit ghi sai role (luôn admin)",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "SHP-TC-20261006-102133529",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "const actorOf = (s: SessionContext) => ({ actor_id: s.user_id, actor_role: s.role });",
+   "replace": "const actorOf = (s: SessionContext) => ({ actor_id: s.user_id, actor_role: 'admin' as const });",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133529\""
+  },
+  {
+   "id": "SB-19, T12: audit sửa mã vận đơn đổi tên hành động",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102133722",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "action: 'shipping.shipment.tracking'",
+   "replace": "action: 'shipping.shipment.x'",
+   "test": "node scripts/run-jest.mjs test/shipping/tracking.spec.ts -t \"SHP-TC-20261006-102133722\""
+  },
+  {
+   "id": "SB-19, T12: audit tạo phương thức đổi tên hành động",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "SHP-TC-20261006-102133000",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "action: 'shipping.method.create'",
+   "replace": "action: 'shipping.method.x'",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133000\""
+  },
+  {
+   "id": "SB-19, T12: audit sửa phương thức ghi giá trị sau thay cho trước",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102133028",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "before: snapshot(m), after: snapshot(r) });\n        return toMethod(r);\n      });\n    } catch (e) {\n      if (isUnique(e, /shipping_methods_name_key|btrim\\(name/)) throw new DomainError('shipping-method-name-taken');\n      throw e;\n    }\n  }\n\n  /** Bật",
+   "replace": "before: snapshot(r), after: snapshot(r) });\n        return toMethod(r);\n      });\n    } catch (e) {\n      if (isUnique(e, /shipping_methods_name_key|btrim\\(name/)) throw new DomainError('shipping-method-name-taken');\n      throw e;\n    }\n  }\n\n  /** Bật",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133028\""
+  },
+  {
+   "id": "SB-19, T12: audit tạo vận đơn theo event ghi role admin thay cho system",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "SHP-TC-20261006-102133407",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "actor_role: 'system', action: 'shipping.shipment.create'",
+   "replace": "actor_role: 'admin', action: 'shipping.shipment.create'",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133407\""
+  },
+  {
+   "id": "SB-19, T12: audit hủy vận đơn theo event không ghi nguồn event",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102147270",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "before: { status: 'pending' }, after: { status: 'cancelled' }, reason: e.type });",
+   "replace": "before: { status: 'pending' }, after: { status: 'cancelled' } });",
+   "test": "node scripts/run-jest.mjs test/shipping/cancel.spec.ts -t \"SHP-TC-20261006-102147270\""
+  },
+  {
+   "id": "SB-19, T12: audit tắt hoặc bật phương thức dùng chung một tên",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102133054",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "action: active ? 'shipping.method.enable' : 'shipping.method.disable'",
+   "replace": "action: 'shipping.method.toggle'",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133054\""
+  },
+  {
+   "id": "SB-19, T12: audit sửa mã vận đơn quên ghi mã cũ",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102133722",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "before: { status: s.status, tracking_number: s.tracking_number }, after: { status: r.status, tracking_number: r.tracking_number },\n        });\n        await this.events.publish(tx, { type: 'ShipmentTrackingChanged'",
+   "replace": "before: { status: s.status }, after: { status: r.status, tracking_number: r.tracking_number },\n        });\n        await this.events.publish(tx, { type: 'ShipmentTrackingChanged'",
+   "test": "node scripts/run-jest.mjs test/shipping/tracking.spec.ts -t \"SHP-TC-20261006-102133722\""
+  },
+  {
+   "id": "SB-20, T21: 409 mã vận đơn trùng kèm giá trị của vận đơn khác",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "throw new DomainError('tracking-number-taken'); // unique index ở CSDL phân xử",
+   "replace": "throw new DomainError('tracking-number-taken', { detail: String((e as Error).message) }); // unique index ở CSDL phân xử",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133602\""
+  },
+  {
+   "id": "SB-23, T5: ngưỡng miễn phí dùng > thay cho >=",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133333",
+   "file": "src/modules/shipping/fee.ts",
+   "find": "subtotal >= rule.free_over",
+   "replace": "subtotal > rule.free_over",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133333\""
+  },
+  {
+   "id": "SB-23, T5: phụ thuộc phụ thu bị bỏ khỏi phí",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133284",
+   "file": "src/modules/shipping/fee.ts",
+   "find": "return { fee: baseFee + (surcharged ? rule.surcharge : 0), free_shipping: false };",
+   "replace": "return { fee: baseFee, free_shipping: false };",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133284\""
+  },
+  {
+   "id": "SB-23, T5: phụ thu áp cả khi không khớp thành phố",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133333",
+   "file": "src/modules/shipping/fee.ts",
+   "find": "const surcharged = rule.surcharge > 0 && rule.surcharge_cities.some((x) => normalizeCity(x) === c);",
+   "replace": "const surcharged = rule.surcharge > 0;",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133333\""
+  },
+  {
+   "id": "SB-23, T5: so khớp thành phố theo chứa chuỗi (Hà khớp Hà Giang)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133333",
+   "file": "src/modules/shipping/fee.ts",
+   "find": "normalizeCity(x) === c);",
+   "replace": "normalizeCity(x).includes(c));",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133333\""
+  },
+  {
+   "id": "SB-23: chuẩn hóa tên thành phố không bỏ dấu",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133333",
+   "file": "src/modules/shipping/fee.ts",
+   "find": ".normalize('NFD').replace(/\\p{M}/gu, '')",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133333\""
+  },
+  {
+   "id": "SB-23: chuẩn hóa tên thành phố không đổi đ thành d",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133333",
+   "file": "src/modules/shipping/fee.ts",
+   "find": ".replace(/đ/gu, 'd')",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133333\""
+  },
+  {
+   "id": "SB-23: chuẩn hóa tên thành phố không gộp khoảng trắng",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133284",
+   "file": "src/modules/shipping/fee.ts",
+   "find": ".replace(/\\s+/gu, ' ')",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133284\""
+  },
+  {
+   "id": "SB-23: chuẩn hóa tên thành phố không chuyển chữ thường",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133333",
+   "file": "src/modules/shipping/fee.ts",
+   "find": ".toLowerCase()",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133333\""
+  },
+  {
+   "id": "SB-23, T23: báo phí bỏ kiểm phương thức đã tắt",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133308",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "if (!m.is_active) return { ok: false, reason: 'inactive' };",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133308\""
+  },
+  {
+   "id": "SB-23, T23: danh sách của customer gồm cả phương thức đã tắt",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133211",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "FROM shipping_methods WHERE is_active ORDER BY base_fee, lower(name), id",
+   "replace": "FROM shipping_methods ORDER BY base_fee, lower(name), id",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133211\""
+  },
+  {
+   "id": "SB-23: danh sách của customer sắp theo tên thay cho phí",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133211",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "ORDER BY base_fee, lower(name), id",
+   "replace": "ORDER BY lower(name), id",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133211\""
+  },
+  {
+   "id": "SB-23: danh sách của customer không phân biệt hoa thường khi cùng phí (bỏ lower)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133259",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "ORDER BY base_fee, lower(name), id",
+   "replace": "ORDER BY base_fee, name COLLATE \"C\", id",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133259\""
+  },
+  {
+   "id": "SB-23, T6: rule đọc từ CSDL không qua schema",
+   "sb": [
+    "SB-23",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133308",
+   "file": "src/modules/shipping/fee.ts",
+   "find": "export const readRule = (json: unknown): StoredRule => stored.parse(json);",
+   "replace": "export const readRule = (json: unknown): StoredRule => json as StoredRule;",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T6, T22\""
+  },
+  {
+   "id": "SB-23: số tiền thu hộ của đơn COD bằng 0",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133407",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "const cod = o.payment_method === 'cod' ? o.grand_total : 0;",
+   "replace": "const cod = 0;",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133407\""
+  },
+  {
+   "id": "SB-23: đơn online cũng thu hộ",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133407",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "const cod = o.payment_method === 'cod' ? o.grand_total : 0;",
+   "replace": "const cod = o.grand_total;",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133407\""
+  },
+  {
+   "id": "SB-23, T5: giao diện nội bộ trả phí 0 khi phương thức tắt",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133308",
+   "file": "src/modules/shipping/shipping.api.ts",
+   "find": "if (!r.ok) throw new DomainError('method-unavailable');",
+   "replace": "if (!r.ok) return { fee: 0, free_shipping: true };",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133308\""
+  },
+  {
+   "id": "SB-23: giao diện nội bộ nhận subtotal âm",
+   "sb": [
+    "SB-23",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133308",
+   "file": "src/modules/shipping/shipping.api.ts",
+   "find": "if (!Number.isSafeInteger(subtotal) || subtotal < 0 || subtotal > SUBTOTAL_MAX)",
+   "replace": "if (!Number.isSafeInteger(subtotal) || subtotal > SUBTOTAL_MAX)",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133308\""
+  },
+  {
+   "id": "SB-23: giao diện nội bộ nhận subtotal thực",
+   "sb": [
+    "SB-23",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133308",
+   "file": "src/modules/shipping/shipping.api.ts",
+   "find": "if (!Number.isSafeInteger(subtotal) || subtotal < 0",
+   "replace": "if (!Number.isFinite(subtotal) || subtotal < 0",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133308\""
+  },
+  {
+   "id": "SB-23: giao diện nội bộ nhận thành phố rỗng",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133308",
+   "file": "src/modules/shipping/shipping.api.ts",
+   "find": "[...city].length < 1 ||",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/catalog.spec.ts -t \"SHP-TC-20261006-102133308\""
+  },
+  {
+   "id": "SB-24, T7: bàn giao nhận cả vận đơn đã shipped",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133650",
+   "file": "src/modules/shipping/config.ts",
+   "find": "ship: { from: ['pending'],",
+   "replace": "ship: { from: ['pending', 'shipped'],",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133650\""
+  },
+  {
+   "id": "SB-24, T7: giao xong nhận cả vận đơn failed",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133868",
+   "file": "src/modules/shipping/config.ts",
+   "find": "deliver: { from: ['shipped'],",
+   "replace": "deliver: { from: ['shipped', 'failed'],",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133868\""
+  },
+  {
+   "id": "SB-24, T7: thất bại nhận cả vận đơn pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133868",
+   "file": "src/modules/shipping/config.ts",
+   "find": "fail: { from: ['shipped'],",
+   "replace": "fail: { from: ['shipped', 'pending'],",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133868\""
+  },
+  {
+   "id": "SB-24, T7: hoàn hàng nhận cả vận đơn shipped (bỏ qua failed)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133893",
+   "file": "src/modules/shipping/config.ts",
+   "find": "return: { from: ['failed'],",
+   "replace": "return: { from: ['failed', 'shipped'],",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133893\""
+  },
+  {
+   "id": "SB-24, T7: hoàn hàng nhận cả vận đơn delivered",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133868",
+   "file": "src/modules/shipping/config.ts",
+   "find": "return: { from: ['failed'],",
+   "replace": "return: { from: ['failed', 'delivered'],",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133868\""
+  },
+  {
+   "id": "SB-24, T20: bảng chuyển cho phép hủy vận đơn shipped (nguồn duy nhất của hủy theo event)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133480",
+   "file": "src/modules/shipping/config.ts",
+   "find": "cancel: { from: ['pending'],",
+   "replace": "cancel: { from: ['pending', 'shipped'],",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T18, T7\""
+  },
+  {
+   "id": "SB-24, T7: bỏ kiểm trạng thái hiện tại trong bảng chuyển",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133868",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "if (!(TRANSITIONS[name].from as readonly string[]).includes(s.status)) throw new DomainError('shipment-invalid-transition');",
+   "replace": "if (false) throw new DomainError('shipment-invalid-transition');",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133868\""
+  },
+  {
+   "id": "SB-24, T7: bàn giao đích sai (shipped thành delivered)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133529",
+   "file": "src/modules/shipping/config.ts",
+   "find": "ship: { from: ['pending'], to: 'shipped',",
+   "replace": "ship: { from: ['pending'], to: 'delivered',",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133529\""
+  },
+  {
+   "id": "SB-24, T20: bỏ lockForHandoff khỏi giao dịch bàn giao",
+   "sb": [
+    "SB-24",
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133626",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "await this.orders.lockForHandoff(o.order_id, tx);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133626\""
+  },
+  {
+   "id": "SB-24, T20: lỗi nghiệp vụ của lockForHandoff bị nuốt (vẫn bàn giao đơn đã hủy)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133626",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "if (e instanceof OrderBusinessError) throw new DomainError(e.code === 'order_not_found' ? 'not-found' : 'order-not-shippable');",
+   "replace": "if (e instanceof OrderBusinessError) { /* nuốt lỗi */ }",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133626\""
+  },
+  {
+   "id": "SB-24, T20: lỗi order_not_found của ORD thành order-not-shippable",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133626",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "e.code === 'order_not_found' ? 'not-found' : 'order-not-shippable'",
+   "replace": "'order-not-shippable'",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133626\""
+  },
+  {
+   "id": "SB-24, T8: unique mã vận đơn không đổi thành 409 (500)",
+   "sb": [
+    "SB-24",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "if (isUnique(e, /shipments_tracking_number_key|\\(tracking_number\\)=/)) throw new DomainError('tracking-number-taken'); // unique index ở CSDL",
+   "replace": "if (false) throw new DomainError('tracking-number-taken'); // unique index ở CSDL",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133602\""
+  },
+  {
+   "id": "SB-24, T8: sửa mã trùng mã khác không đổi thành 409",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133746",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "if (isUnique(e, /shipments_tracking_number_key|\\(tracking_number\\)=/)) throw new DomainError('tracking-number-taken');\n      throw e;\n    }\n  }\n\n  /** `shipped` sang `delivered`",
+   "replace": "if (false) throw new DomainError('tracking-number-taken');\n      throw e;\n    }\n  }\n\n  /** `shipped` sang `delivered`",
+   "test": "node scripts/run-jest.mjs test/shipping/tracking.spec.ts -t \"SHP-TC-20261006-102133746\""
+  },
+  {
+   "id": "SB-24, T7: sửa mã không kiểm trạng thái shipped",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133746",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "if (s.status !== 'shipped') throw new DomainError('shipment-invalid-transition');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/tracking.spec.ts -t \"SHP-TC-20261006-102133746\""
+  },
+  {
+   "id": "SB-30, T7: sửa mã không kiểm version",
+   "sb": [
+    "SB-30",
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133770",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "if (s.version !== b.version) throw new DomainError('version-conflict');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/tracking.spec.ts -t \"SHP-TC-20261006-102133770\""
+  },
+  {
+   "id": "SB-24: sửa mã trùng mã hiện tại (chỉ khác hoa thường) không bị từ chối",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133770",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "if (s.tracking_number === b.tracking_number) throw new DomainError('tracking-number-unchanged');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/tracking.spec.ts -t \"SHP-TC-20261006-102133770\""
+  },
+  {
+   "id": "SB-24, T7: sửa mã không tăng version",
+   "sb": [
+    "SB-24",
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133722",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "UPDATE shipments SET tracking_number = ${b.tracking_number}, version = version + 1, updated_at",
+   "replace": "UPDATE shipments SET tracking_number = ${b.tracking_number}, version = version, updated_at",
+   "test": "node scripts/run-jest.mjs test/shipping/tracking.spec.ts -t \"SHP-TC-20261006-102133722\""
+  },
+  {
+   "id": "SB-24, T7: chuyển trạng thái không tăng version",
+   "sb": [
+    "SB-24",
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133529",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "status = ${t.to}::shipment_status, version = version + 1, updated_at",
+   "replace": "status = ${t.to}::shipment_status, version = version, updated_at",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133529\""
+  },
+  {
+   "id": "SB-24, T7: bỏ khóa dòng vận đơn (FOR UPDATE) khi đọc",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133770",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "AND status <> 'cancelled'::shipment_status FOR UPDATE`;",
+   "replace": "AND status <> 'cancelled'::shipment_status`;",
+   "test": "node scripts/run-jest.mjs test/shipping/tracking.spec.ts -t \"SHP-TC-20261006-102133770\""
+  },
+  {
+   "id": "SB-24, T7: lock bỏ điều kiện status <> cancelled (có vận đơn cancelled cũ thì thao tác nhầm dòng cũ)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102147270",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "WHERE order_id = ${orderId}::uuid AND status <> 'cancelled'::shipment_status FOR UPDATE`;",
+   "replace": "WHERE order_id = ${orderId}::uuid ORDER BY (status = 'cancelled'::shipment_status) DESC LIMIT 1 FOR UPDATE`;",
+   "test": "node scripts/run-jest.mjs test/shipping/cancel.spec.ts -t \"SHP-TC-20261006-102147270\""
+  },
+  {
+   "id": "SB-24: bỏ điều kiện status cũ ở câu UPDATE chuyển trạng thái (lớp bảo vệ thứ hai; còn khóa dòng)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133941",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "WHERE id = ${s.id}::uuid AND status = ${s.status}::shipment_status RETURNING ${SHIPMENT_COLS}`);",
+   "replace": "WHERE id = ${s.id}::uuid RETURNING ${SHIPMENT_COLS}`);",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133941\"",
+   "equivalent": "khi còn khóa dòng (lớp bảo vệ kép: khóa dòng FOR UPDATE và điều kiện status của UPDATE); bỏ cả hai thì SHP-TC-20261006-102133941 đỏ, đã thử tay, xem report"
+  },
+  {
+   "id": "SB-24, T7: restockable bị đảo (damaged vẫn nhập kho)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133844",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const NON_RESTOCKABLE: readonly FailReason[] = ['damaged'];",
+   "replace": "export const NON_RESTOCKABLE: readonly FailReason[] = [];",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133844\""
+  },
+  {
+   "id": "SB-24: restockable lấy dòng failed CŨ NHẤT thay cho mới nhất",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133844",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "AND status = 'failed'::shipment_status ORDER BY seq DESC LIMIT 1`;",
+   "replace": "AND status = 'failed'::shipment_status ORDER BY seq ASC LIMIT 1`;",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133844\""
+  },
+  {
+   "id": "SB-24: restockable luôn true",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133844",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "const restockable = !(last?.reason_code && NON_RESTOCKABLE.includes(last.reason_code));",
+   "replace": "const restockable = true;",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133844\""
+  },
+  {
+   "id": "SB-24, T18: tạo vận đơn cho cả đơn không còn paid hoặc confirmed",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133431",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "if (o.status !== 'paid' && o.status !== 'confirmed') {",
+   "replace": "if (false) {",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133431\""
+  },
+  {
+   "id": "SB-24, T18: tạo vận đơn bỏ ON CONFLICT DO NOTHING (hai event cùng đơn gây lỗi)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133480",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "ON CONFLICT DO NOTHING RETURNING id`;",
+   "replace": "RETURNING id`;",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133480\""
+  },
+  {
+   "id": "SB-24, T18: tạo vận đơn thiếu dòng lịch sử pending (sai trạng thái đầu)",
+   "sb": [
+    "SB-24",
+    "SB-32"
+   ],
+   "tc": "SHP-TC-20261006-102133407",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "'status_changed'::shipment_history_event, 'pending'::shipment_status, ${now}::timestamptz)`;",
+   "replace": "'status_changed'::shipment_history_event, 'shipped'::shipment_status, ${now}::timestamptz)`;",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133407\""
+  },
+  {
+   "id": "SB-24, T20: hủy theo event nhận cả vận đơn đã shipped",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102147299",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "if (!(TRANSITIONS.cancel.from as readonly string[]).includes(s.status)) {",
+   "replace": "if (false) {",
+   "test": "node scripts/run-jest.mjs test/shipping/cancel.spec.ts -t \"SHP-TC-20261006-102147299\""
+  },
+  {
+   "id": "SB-24: hủy theo event không tăng version",
+   "sb": [
+    "SB-24",
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102147270",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "UPDATE shipments SET status = 'cancelled'::shipment_status, version = version + 1,",
+   "replace": "UPDATE shipments SET status = 'cancelled'::shipment_status, version = version,",
+   "test": "node scripts/run-jest.mjs test/shipping/cancel.spec.ts -t \"SHP-TC-20261006-102147270\""
+  },
+  {
+   "id": "SB-24: hủy theo event bỏ dòng lịch sử cancelled",
+   "sb": [
+    "SB-24",
+    "SB-32"
+   ],
+   "tc": "SHP-TC-20261006-102147270",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "'status_changed'::shipment_history_event, 'cancelled'::shipment_status, ${now}::timestamptz)`;",
+   "replace": "'status_changed'::shipment_history_event, 'pending'::shipment_status, ${now}::timestamptz)`;",
+   "test": "node scripts/run-jest.mjs test/shipping/cancel.spec.ts -t \"SHP-TC-20261006-102147270\""
+  },
+  {
+   "id": "SB-24: tạo vận đơn chọn sai phương thức (bỏ shipping_method_id của đơn)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133407",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "VALUES (${o.order_id}::uuid, ${o.shipping_method_id}::uuid, ${cod},",
+   "replace": "VALUES (${o.order_id}::uuid, (SELECT id FROM shipping_methods ORDER BY id LIMIT 1), ${cod},",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133407\""
+  },
+  {
+   "id": "SB-27, T19: chuyển trạng thái không ghi event vào outbox",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133529",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "if (t.event) await this.events.publish(",
+   "replace": "if (false && t.event) await this.events.publish(",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133529\""
+  },
+  {
+   "id": "SB-27, T19: ShipmentShipped dùng sai loại event",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133529",
+   "file": "src/modules/shipping/config.ts",
+   "find": "event: 'ShipmentShipped' }",
+   "replace": "event: 'ShipmentShippd' }",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133529\""
+  },
+  {
+   "id": "SB-27, T19: ShipmentDelivered dùng sai loại event",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133795",
+   "file": "src/modules/shipping/config.ts",
+   "find": "event: 'ShipmentDelivered' }",
+   "replace": "event: 'ShipmentDeliverd' }",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133795\""
+  },
+  {
+   "id": "SB-27, T19: ShipmentFailed dùng sai loại event",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133819",
+   "file": "src/modules/shipping/config.ts",
+   "find": "event: 'ShipmentFailed' }",
+   "replace": "event: 'ShipmentFail' }",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133819\""
+  },
+  {
+   "id": "SB-27, T19: ShipmentReturned dùng sai loại event",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133844",
+   "file": "src/modules/shipping/config.ts",
+   "find": "event: 'ShipmentReturned' }",
+   "replace": "event: 'ShipmentReturn' }",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133844\""
+  },
+  {
+   "id": "SB-27: sửa mã phát ShipmentShipped thay cho ShipmentTrackingChanged",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133722",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "{ type: 'ShipmentTrackingChanged', aggregate_type",
+   "replace": "{ type: 'ShipmentShipped', aggregate_type",
+   "test": "node scripts/run-jest.mjs test/shipping/tracking.spec.ts -t \"SHP-TC-20261006-102133722\""
+  },
+  {
+   "id": "SB-27, T19: event gắn vào mã đơn thay cho mã vận đơn (aggregate_id)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133529",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "aggregate_type: 'shipment', aggregate_id: s.id, payload: { shipment_id: s.id, order_id: s.order_id, ...(o.payload ?? {}) } });",
+   "replace": "aggregate_type: 'shipment', aggregate_id: s.order_id, payload: { shipment_id: s.id, order_id: s.order_id, ...(o.payload ?? {}) } });",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133529\""
+  },
+  {
+   "id": "SB-27: ShipmentShipped không mang mã vận đơn",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133529",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "payload: { tracking_number: b.tracking_number },",
+   "replace": "payload: {},",
+   "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133529\""
+  },
+  {
+   "id": "SB-27: ShipmentFailed không mang order_code",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133819",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "payload: { order_code: o.code, user_id: owner.user_id, reason: b.reason_code }",
+   "replace": "payload: { user_id: owner.user_id, reason: b.reason_code }",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133819\""
+  },
+  {
+   "id": "SB-27: ShipmentFailed lấy user_id sai (id đơn)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133819",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "user_id: owner.user_id, reason: b.reason_code }",
+   "replace": "user_id: o.order_id, reason: b.reason_code }",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133819\""
+  },
+  {
+   "id": "SB-27: ShipmentReturned thiếu restockable",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133844",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "{ now: this.clock.now(), payload: { restockable } }",
+   "replace": "{ now: this.clock.now() }",
+   "test": "node scripts/run-jest.mjs test/shipping/result.spec.ts -t \"SHP-TC-20261006-102133844\""
+  },
+  {
+   "id": "SB-27: sửa mã không phát ShipmentTrackingChanged",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133722",
+   "file": "src/modules/shipping/shipment.service.ts",
+   "find": "await this.events.publish(tx, { type: 'ShipmentTrackingChanged'",
+   "replace": "await Promise.resolve({ type: 'ShipmentTrackingChanged'",
+   "test": "node scripts/run-jest.mjs test/shipping/tracking.spec.ts -t \"SHP-TC-20261006-102133722\""
+  },
+  {
+   "id": "SB-27: consumer sai tên (chống trùng không cùng khóa với event_id đã xử lý)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "SHP-TC-20261006-102133407",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "const CONSUMER = 'shipping'; // tên module làm",
+   "replace": "const CONSUMER = 'ship'; // tên module làm",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133407\""
+  },
+  {
+   "id": "SB-30, T24: tạo phương thức bỏ khóa advisory (vượt trần 20)",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133162",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('shipping_methods_create'))`;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133162\""
+  },
+  {
+   "id": "SB-30, T24: trần phương thức 20 -> 21",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133162",
+   "file": "src/modules/shipping/config.ts",
+   "find": "export const MAX_METHODS = 20;",
+   "replace": "export const MAX_METHODS = 21;",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133162\""
+  },
+  {
+   "id": "SB-30, T24: trần phương thức so sánh > thay cho >=",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133162",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "if (n >= MAX_METHODS) throw new DomainError",
+   "replace": "if (n > MAX_METHODS) throw new DomainError",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133162\""
+  },
+  {
+   "id": "SB-30, T24: sửa phương thức không tăng version",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133028",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "version = version + 1, updated_at = ${this.clock.now()}::timestamptz\n          WHERE id = ${m.id}::uuid AND version = ${b.version} RETURNING",
+   "replace": "version = version, updated_at = ${this.clock.now()}::timestamptz\n          WHERE id = ${m.id}::uuid AND version = ${b.version} RETURNING",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133028\""
+  },
+  {
+   "id": "SB-30, T24: bật lại phương thức đang bật không bị từ chối",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133186",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "if (m.is_active === active) throw new DomainError('method-state-unchanged');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133186\""
+  },
+  {
+   "id": "SB-30, T24: sửa phương thức không kiểm version ở câu UPDATE (khóa lạc quan)",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133136",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "WHERE id = ${m.id}::uuid AND version = ${b.version} RETURNING ${METHOD_COLS}`;\n        if (!r) throw new DomainError('version-conflict'); // khóa lạc quan",
+   "replace": "WHERE id = ${m.id}::uuid RETURNING ${METHOD_COLS}`;\n        if (!r) throw new DomainError('version-conflict'); // khóa lạc quan",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133136\""
+  },
+  {
+   "id": "SB-30, T24: bật tắt không kiểm version ở câu UPDATE (khóa lạc quan)",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133186",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "WHERE id = ${m.id}::uuid AND version = ${versionIn} AND is_active = ${!active} RETURNING",
+   "replace": "WHERE id = ${m.id}::uuid AND is_active = ${!active} RETURNING",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133186\""
+  },
+  {
+   "id": "SB-24: tạo vận đơn không kiểm phương thức của đơn có ở SHP (khóa ngoại làm ném lỗi và relay giao lại tới hết lượt)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133431",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "    if (!method) { this.log.error('không tạo vận đơn: phương thức vận chuyển của đơn không có', { code: 'shipping-method-missing', event_type: e.type, order_code: o.code }); return; }\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133431\""
+  },
+  {
+   "id": "SB-30: bật tắt không tăng version",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133054",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "UPDATE shipping_methods SET is_active = ${active}, version = version + 1,",
+   "replace": "UPDATE shipping_methods SET is_active = ${active}, version = version,",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133054\""
+  },
+  {
+   "id": "SB-30: tên phương thức trùng không đổi thành 409 (tạo)",
+   "sb": [
+    "SB-30",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "if (isUnique(e, /shipping_methods_name_key|btrim\\(name/)) throw new DomainError('shipping-method-name-taken'); // unique(lower",
+   "replace": "if (false) throw new DomainError('shipping-method-name-taken'); // unique(lower",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133111\""
+  },
+  {
+   "id": "SB-30: sửa tên trùng không đổi thành 409",
+   "sb": [
+    "SB-30",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133136",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "      if (isUnique(e, /shipping_methods_name_key|btrim\\(name/)) throw new DomainError('shipping-method-name-taken');\n      throw e;\n    }\n  }\n\n  /** Bật",
+   "replace": "      if (false) throw new DomainError('shipping-method-name-taken');\n      throw e;\n    }\n  }\n\n  /** Bật",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133136\""
+  },
+  {
+   "id": "SB-30: danh sách quản trị sắp cũ nhất trước",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133000",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "ORDER BY created_at DESC, id DESC LIMIT ${take} OFFSET ${skip}",
+   "replace": "ORDER BY created_at ASC, id ASC LIMIT ${take} OFFSET ${skip}",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133000\""
+  },
+  {
+   "id": "SB-30: phương thức không tồn tại khi tắt không 404 (id sai định dạng)",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133136",
+   "file": "src/modules/shipping/method.service.ts",
+   "find": "if (!UUID_RE.test(id)) throw new DomainError('not-found');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/methods.spec.ts -t \"SHP-TC-20261006-102133136\""
+  },
+  {
+   "id": "SB-24: chi tiết lấy vận đơn cancelled mới nhất thay cho vận đơn còn hiệu lực",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "ORDER BY (s.status <> 'cancelled'::shipment_status) DESC, s.created_at DESC",
+   "replace": "ORDER BY s.created_at DESC",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-32, R-05: lịch sử sắp theo created_at giảm dần thay cho seq",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "SHP-TC-20261006-102147421",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "ORDER BY seq ASC LIMIT ${HISTORY_MAX}",
+   "replace": "ORDER BY created_at DESC, id LIMIT ${HISTORY_MAX}",
+   "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147421\""
+  },
+  {
+   "id": "SB-32, R-05: lịch sử sắp theo id (không có thứ tự ghi)",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "SHP-TC-20261006-102147421",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "ORDER BY seq ASC LIMIT ${HISTORY_MAX}",
+   "replace": "ORDER BY id ASC LIMIT ${HISTORY_MAX}",
+   "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147421\""
+  },
+  {
+   "id": "SB-11: danh sách sắp ngược (oldest thành newest)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133988",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "q.sort === 'oldest' ? 'ASC' : 'DESC'",
+   "replace": "q.sort === 'oldest' ? 'DESC' : 'ASC'",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
+  },
+  {
+   "id": "SB-11: danh sách bỏ bộ lọc trạng thái",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133988",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "if (q.status) where.push(",
+   "replace": "if (false && q.status) where.push(",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
+  },
+  {
+   "id": "SB-11: danh sách bỏ bộ lọc mã đơn",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "where.push(Prisma.sql`s.order_id = ${o.order_id}::uuid`);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-11: danh sách không phân trang (OFFSET 0)",
+   "sb": [
+    "SB-11",
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "LIMIT ${take} OFFSET ${skip}`;",
+   "replace": "LIMIT ${take} OFFSET 0`;",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-11: tổng danh sách đếm không theo điều kiện lọc",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133988",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "FROM shipments s ${cond}`;\n",
+   "replace": "FROM shipments s`;\n",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
+  },
+  {
+   "id": "SB-11: tie-break của danh sách theo id bỏ",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "ORDER BY s.created_at ${d}, s.id ${d} LIMIT",
+   "replace": "ORDER BY s.created_at ${d} LIMIT",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-11: mã đơn của dòng danh sách rỗng",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102134063",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "(await this.orders.getSummary(id))?.code ?? ''",
+   "replace": "''",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
+  },
+  {
+   "id": "SB-11, T6: bỏ CHECK tên phương thức 2..80",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"shipping_methods_name_len\" CHECK (char_length(btrim(name)) BETWEEN 2 AND 80),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipping_methods\""
+  },
+  {
+   "id": "SB-11, T6: bỏ CHECK phí cơ bản 0..1.000.000",
+   "sb": [
+    "SB-11",
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"shipping_methods_base_fee_range\" CHECK (base_fee BETWEEN 0 AND 1000000),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipping_methods\""
+  },
+  {
+   "id": "SB-11, T6: bỏ CHECK rule là đối tượng",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": ",\n  ADD CONSTRAINT \"shipping_methods_rule_object\" CHECK (jsonb_typeof(rule) = 'object');",
+   "replace": ";",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipping_methods\""
+  },
+  {
+   "id": "SB-30: tên phương thức duy nhất thành không duy nhất",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"shipping_methods_name_key\"",
+   "replace": "CREATE INDEX \"shipping_methods_name_key\"",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipping_methods\""
+  },
+  {
+   "id": "SB-30: tên phương thức duy nhất không phân biệt hoa thường thành phân biệt",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-TC-20261006-102133111",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "ON \"shipping_methods\" (lower(btrim(name)));",
+   "replace": "ON \"shipping_methods\" (btrim(name));",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipping_methods\""
+  },
+  {
+   "id": "SB-11, T8: bỏ CHECK định dạng mã vận đơn",
+   "sb": [
+    "SB-11",
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"shipments_tracking_format\" CHECK (tracking_number ~ '^[A-Z0-9-]{8,30}$'),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipments\""
+  },
+  {
+   "id": "SB-24, T8: định dạng mã vận đơn cho chữ thường",
+   "sb": [
+    "SB-11",
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "'^[A-Z0-9-]{8,30}$'",
+   "replace": "'^[A-Za-z0-9-]{8,30}$'",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipments\""
+  },
+  {
+   "id": "SB-24, T8, T20: bỏ CHECK mã vận đơn gắn với trạng thái (pending, cancelled không có mã)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"shipments_tracking_status\" CHECK ((status IN ('pending', 'cancelled')) = (tracking_number IS NULL)),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipments\""
+  },
+  {
+   "id": "SB-23: bỏ CHECK tiền thu hộ không âm",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"shipments_cod_nonneg\" CHECK (cod_amount >= 0),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipments\""
+  },
+  {
+   "id": "SB-24: bỏ CHECK delivered phải có delivered_at",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": ",\n  ADD CONSTRAINT \"shipments_delivered_at\" CHECK (status <> 'delivered' OR delivered_at IS NOT NULL);",
+   "replace": ";",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipments\""
+  },
+  {
+   "id": "SB-24, T8: mã vận đơn duy nhất thành không duy nhất",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"shipments_tracking_number_key\"",
+   "replace": "CREATE INDEX \"shipments_tracking_number_key\"",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipments\""
+  },
+  {
+   "id": "SB-24, T18: một vận đơn còn hiệu lực mỗi đơn thành không duy nhất",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"shipments_order_active_key\"",
+   "replace": "CREATE INDEX \"shipments_order_active_key\"",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipments\""
+  },
+  {
+   "id": "SB-24, T18: unique vận đơn còn hiệu lực bỏ điều kiện status <> cancelled (vận đơn hủy cũng chặn tạo mới)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133602",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "ON \"shipments\" (order_id) WHERE status <> 'cancelled';",
+   "replace": "ON \"shipments\" (order_id);",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipments\""
+  },
+  {
+   "id": "SB-32, SB-19: bỏ CHECK lý do chỉ ở dòng failed",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "SHP-TC-20261006-102147397",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "  ADD CONSTRAINT \"shipment_status_history_reason_scope\" CHECK (reason_code IS NULL OR status = 'failed'),\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipment_status_history\""
+  },
+  {
+   "id": "SB-32, SB-12: ghi chú tối đa 300 -> 3000 ở CSDL",
+   "sb": [
+    "SB-32",
+    "SB-12"
+   ],
+   "tc": "SHP-TC-20261006-102147397",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "char_length(note) <= 300",
+   "replace": "char_length(note) <= 3000",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipment_status_history\""
+  },
+  {
+   "id": "SB-32, SB-12: ghi chú không còn gắn với dòng failed ở CSDL",
+   "sb": [
+    "SB-32",
+    "SB-12"
+   ],
+   "tc": "SHP-TC-20261006-102147397",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "CHECK (note IS NULL OR (status = 'failed' AND char_length(note) <= 300))",
+   "replace": "CHECK (note IS NULL OR char_length(note) <= 300)",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipment_status_history\""
+  },
+  {
+   "id": "SB-32, R-05: seq thành cột thường (không identity)",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "SHP-TC-20261006-102147397",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "\"seq\" BIGINT GENERATED ALWAYS AS IDENTITY NOT NULL,",
+   "replace": "\"seq\" BIGSERIAL NOT NULL,",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: shipment_status_history\""
+  },
+  {
+   "id": "SB-32, T13: bỏ trigger chặn UPDATE, DELETE lịch sử",
+   "sb": [
+    "SB-32",
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102147397",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "CREATE TRIGGER \"shipment_status_history_append_only\"\n  BEFORE UPDATE OR DELETE ON \"shipment_status_history\"\n  FOR EACH ROW EXECUTE FUNCTION shipment_status_history_guard();\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147397\""
+  },
+  {
+   "id": "SB-32, T13: trigger chỉ chặn UPDATE, không chặn DELETE",
+   "sb": [
+    "SB-32",
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102147397",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "BEFORE UPDATE OR DELETE ON \"shipment_status_history\"",
+   "replace": "BEFORE UPDATE ON \"shipment_status_history\"",
+   "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147397\""
+  },
+  {
+   "id": "SB-32, T13: không thu quyền UPDATE, DELETE, TRUNCATE của vai trò ứng dụng",
+   "sb": [
+    "SB-32",
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261006-102147397",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "REVOKE UPDATE, DELETE, TRUNCATE ON \"shipment_status_history\" FROM PUBLIC, app_runtime;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147397\""
+  },
+  {
+   "id": "SB-32, T13: thu quyền thiếu TRUNCATE",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "SHP-TC-20261006-102147397",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "REVOKE UPDATE, DELETE, TRUNCATE ON \"shipment_status_history\" FROM PUBLIC, app_runtime;",
+   "replace": "REVOKE UPDATE, DELETE ON \"shipment_status_history\" FROM PUBLIC, app_runtime;",
+   "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147397\"",
+   "equivalent": "vai trò app_runtime không được cấp TRUNCATE ngay từ đầu (quyền mặc định của nền chỉ SELECT, INSERT, UPDATE, DELETE nên TRUNCATE bị từ chối kể cả khi bỏ dòng REVOKE); dòng REVOKE chỉ phòng khi nền đổi quyền mặc định"
+  },
+  {
+   "id": "SB-24, T18: bỏ khóa ngoại vận đơn tới đơn",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133480",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "ALTER TABLE \"shipments\" ADD CONSTRAINT \"shipments_order_id_fkey\" FOREIGN KEY (\"order_id\") REFERENCES \"orders\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: khóa ngoại\""
+  },
+  {
+   "id": "SB-24, T18: khóa ngoại vận đơn tới đơn thành CASCADE",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133480",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "\"shipments_order_id_fkey\" FOREIGN KEY (\"order_id\") REFERENCES \"orders\"(\"id\") ON DELETE RESTRICT",
+   "replace": "\"shipments_order_id_fkey\" FOREIGN KEY (\"order_id\") REFERENCES \"orders\"(\"id\") ON DELETE CASCADE",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: khóa ngoại\""
+  },
+  {
+   "id": "SB-24: bỏ khóa ngoại vận đơn tới phương thức",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133480",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "ALTER TABLE \"shipments\" ADD CONSTRAINT \"shipments_shipping_method_id_fkey\" FOREIGN KEY (\"shipping_method_id\") REFERENCES \"shipping_methods\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: khóa ngoại\""
+  },
+  {
+   "id": "SB-24: khóa ngoại vận đơn tới phương thức thành CASCADE",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261006-102133480",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "\"shipments_shipping_method_id_fkey\" FOREIGN KEY (\"shipping_method_id\") REFERENCES \"shipping_methods\"(\"id\") ON DELETE RESTRICT",
+   "replace": "\"shipments_shipping_method_id_fkey\" FOREIGN KEY (\"shipping_method_id\") REFERENCES \"shipping_methods\"(\"id\") ON DELETE CASCADE",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: khóa ngoại\""
+  },
+  {
+   "id": "SB-32: bỏ khóa ngoại lịch sử tới vận đơn",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "SHP-TC-20261006-102133480",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "ALTER TABLE \"shipment_status_history\" ADD CONSTRAINT \"shipment_status_history_shipment_id_fkey\" FOREIGN KEY (\"shipment_id\") REFERENCES \"shipments\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: khóa ngoại\""
+  },
+  {
+   "id": "SB-32: khóa ngoại lịch sử tới vận đơn thành CASCADE (xóa vận đơn kéo xóa lịch sử)",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "SHP-TC-20261006-102133480",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "\"shipment_status_history_shipment_id_fkey\" FOREIGN KEY (\"shipment_id\") REFERENCES \"shipments\"(\"id\") ON DELETE RESTRICT",
+   "replace": "\"shipment_status_history_shipment_id_fkey\" FOREIGN KEY (\"shipment_id\") REFERENCES \"shipments\"(\"id\") ON DELETE CASCADE",
+   "test": "node scripts/run-jest.mjs test/shipping/db.spec.ts -t \"Migration 2: khóa ngoại\""
+  },
+  {
+   "id": "SB-14, T17: bỏ index (status, created_at, id) của danh sách vận đơn",
+   "sb": [
+    "SB-14",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102134039",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "CREATE INDEX \"shipments_status_created_at_id_idx\" ON \"shipments\"(\"status\", \"created_at\" DESC, \"id\" DESC);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134039\""
+  },
+  {
+   "id": "SB-14, T17: bỏ index (created_at, id) của danh sách vận đơn",
+   "sb": [
+    "SB-14",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261006-102134039",
+   "file": "prisma/migrations/20261007001200_shipping_tables/migration.sql",
+   "find": "CREATE INDEX \"shipments_created_at_id_idx\" ON \"shipments\"(\"created_at\" DESC, \"id\" DESC);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134039\""
+  },
+  {
+   "id": "SB-08, T10 (web): nút \"Đã chép\" không về lại chữ cũ (trạng thái có thời hạn không có đường thoát)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-E2E-20261006-102134197",
+   "file": "../web/app/orders/[code]/shipment/page.tsx",
+   "find": "setTimeout(() => setState('idle'), 2000)",
+   "replace": "setTimeout(() => setState('idle'), 2000000)",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261006-102134197:\""
+  },
+  {
+   "id": "SB-06, T2 (web): 404 của customer hiện khối lỗi chung thay cho khối không tìm thấy (tách được đơn người khác)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "SHP-E2E-20261006-102134197",
+   "file": "../web/app/orders/[code]/shipment/page.tsx",
+   "find": "else if (r.status === 404) setView('notfound');",
+   "replace": "else if (r.status === 404) setView('error');",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261006-102134197:\""
+  },
+  {
+   "id": "SB-24, T7 (web): vận đơn pending có nút Giao xong",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-E2E-20261006-102134118",
+   "file": "../web/app/admin/shipments/[code]/page.tsx",
+   "find": "s.status === 'pending' ? [['ship', 'Bàn giao']]",
+   "replace": "s.status === 'pending' ? [['ship', 'Bàn giao'], ['deliver', 'Giao xong']]",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261006-102134118:\""
+  },
+  {
+   "id": "SB-11 (web): nút xác nhận thất bại không khóa khi chưa chọn lý do hoặc ghi chú quá dài",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-E2E-20261006-102134145",
+   "file": "../web/app/admin/shipments/[code]/page.tsx",
+   "find": "disabled={busy || (kind === 'fail' && (!reason || over))}",
+   "replace": "disabled={busy}",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261006-102134145:\""
+  },
+  {
+   "id": "SB-11, T8 (web): ô mã vận đơn không tự đổi chữ hoa",
+   "sb": [
+    "SB-11",
+    "SB-24"
+   ],
+   "tc": "SHP-E2E-20261006-102134118",
+   "file": "../web/lib/shipping.ts",
+   "find": "export const upperTracking = (s: string): string => s.toUpperCase();",
+   "replace": "export const upperTracking = (s: string): string => s;",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261006-102134118:\""
+  },
+  {
+   "id": "SB-08 (web): quay lại danh sách mất bộ lọc",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-E2E-20261006-102134172",
+   "file": "../web/lib/shipping.ts",
+   "find": "export const listHref = (back: string | null): string => `/admin/shipments${back ? `?${back}` : ''}`;",
+   "replace": "export const listHref = (back: string | null): string => '/admin/shipments';",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261006-102134172:\""
+  },
+  {
+   "id": "SB-30 (web): biểu mẫu sửa phương thức làm mất ngưỡng miễn phí (ô nhập độ phân giải thấp cắt dữ liệu)",
+   "sb": [
+    "SB-30",
+    "SB-11"
+   ],
+   "tc": "SHP-E2E-20261006-102134090",
+   "file": "../web/app/admin/shipping-methods/page.tsx",
+   "find": "free_over: m.rule?.free_over == null ? '' : String(m.rule.free_over),",
+   "replace": "free_over: '',",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261006-102134090:\""
+  },
+  {
+   "id": "SB-30 (web): tắt phương thức không gửi version (khóa lạc quan)",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "SHP-E2E-20261006-102134090",
+   "file": "../web/app/admin/shipping-methods/page.tsx",
+   "find": "{ method: 'POST', body: { version: m.version } }",
+   "replace": "{ method: 'POST', body: {} }",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261006-102134090:\""
+  },
+  {
+   "id": "SB-12, T14 (web): tên phương thức hiện bằng HTML thô (XSS)",
+   "sb": [
+    "SB-12",
+    "SB-11"
+   ],
+   "tc": "SHP-E2E-20261006-102134145",
+   "file": "../web/app/admin/shipping-methods/page.tsx",
+   "find": "<td data-label=\"Tên\" data-testid={`${P}-name`}>{m.name}</td>",
+   "replace": "<td data-label=\"Tên\" data-testid={`${P}-name`} dangerouslySetInnerHTML={{ __html: m.name }} />",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-WEB-01\""
+  },
+  {
+   "id": "SB-12, T14 (web): ghi chú thất bại hiện bằng HTML thô (XSS)",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "SHP-E2E-20261006-102134145",
+   "file": "../web/app/admin/shipments/[code]/page.tsx",
+   "find": "<span className=\"pre\" data-testid={`${P}-history-reason`}>{[h.reason_code ? failReasonText(h.reason_code) : '', h.note ?? ''].filter(Boolean).join(' · ')}</span>",
+   "replace": "<span className=\"pre\" data-testid={`${P}-history-reason`} dangerouslySetInnerHTML={{ __html: [h.reason_code ? failReasonText(h.reason_code) : '', h.note ?? ''].filter(Boolean).join(' · ') }} />",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-WEB-01\""
+  }
+ ]
+}

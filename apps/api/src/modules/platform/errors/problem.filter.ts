@@ -5,7 +5,7 @@ import { isDbUnavailable } from '../db/db-errors';
 import { AppLogger } from '../logging/logger';
 import { DEFAULT_INTERNAL, DEFAULT_REJECT, SystemSignatureError, type SystemEndpointOptions } from '../http/session';
 import { buildProblem, traceIdOf } from './problem';
-import { DomainError, errorRegistry } from './registry';
+import { DomainError, errorRegistry, type ProblemExtra } from './registry';
 import { zodItems } from '../http/validation';
 
 const HTTP_TO_CODE: Record<number, string> = {
@@ -37,7 +37,7 @@ export class ProblemFilter implements ExceptionFilter {
     }
 
     let code = 'internal-error';
-    let opts: { detail?: string; errors?: { field: string; code: string }[]; headers?: Record<string, string>; extra?: Record<string, string | number | boolean> } = {};
+    let opts: { detail?: string; errors?: { field: string; code: string }[]; headers?: Record<string, string>; extra?: Record<string, ProblemExtra> } = {};
 
     if (exception instanceof DomainError) {
       if (errorRegistry.get(exception.code)) { code = exception.code; opts = exception.options; }
