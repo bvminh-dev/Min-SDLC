@@ -15,7 +15,7 @@ export interface RateLimitOptions {
   windowSeconds: number;
   /** Khóa đếm; mặc định: người dùng đã đăng nhập hoặc IP. */
   key?: (req: Request, session: SessionContext | null) => string;
-  /** Nhiều endpoint chung một bộ đếm (ví dụ ghi sổ địa chỉ, hai endpoint tra cứu khách): cùng `group` thì cùng bucket; mặc định mỗi route một bucket. */
+  /** Nhiều endpoint chung một bộ đếm (ví dụ ghi sổ địa chỉ, hai endpoint tra cứu khách): cùng `group` (và cùng `windowSeconds`) thì cùng bucket; mặc định mỗi route (method cộng đường dẫn mẫu) một bucket. */
   group?: string;
 }
 export const RATE_LIMIT = 'platform:rate-limit';
@@ -110,8 +110,10 @@ export class RateLimitGuard implements CanActivate {
     // Người đã đăng nhập đếm theo người, còn lại theo IP; hệ thống luôn theo IP.
     const session = system ? null : await this.sessions.get(req);
     const who = declared?.key?.(req, session) ?? (session ? `u:${session.user_id}` : `ip:${clientIp(req, this.config.get('TRUST_PROXY_HOPS'))}`);
-    const route = req.route?.path ?? req.path;
-    const { count, retryAfter } = await this.limiter.hit(tier, `${tier}:${declared?.group ?? route}:${who}`, windowSeconds);
+    // Khóa bộ đếm (ADR-014): bậc, phạm vi (`group`, hoặc method cộng đường dẫn mẫu), ĐỘ DÀI CỬA SỔ rồi chủ thể. Bộ đếm duy nhất theo (bucket, window_start) nên thiếu method hoặc độ dài cửa sổ thì PUT 3600 giây và DELETE 60 giây
+    // cùng đường dẫn dùng chung một dòng ở đầu mỗi giờ (REV-REV-15, L133). Các route chung `group` phải chung cả độ dài cửa sổ.
+    const scope = declared?.group ?? `${req.method} ${req.route?.path ?? req.path}`;
+    const { count, retryAfter } = await this.limiter.hit(tier, `${tier}:${scope}:${windowSeconds}s:${who}`, windowSeconds);
     if (count > limit) throw new DomainError('rate-limited', { headers: { 'Retry-After': String(retryAfter) } });
     return true;
   }

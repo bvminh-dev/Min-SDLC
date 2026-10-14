@@ -1,0 +1,1555 @@
+{
+ "test": "node scripts/run-jest.mjs test/dashboard",
+ "mutations": [
+  {
+   "id": "T1 SB-05, SB-07: endpoint revenue mở cho staff (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110330080",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('dashboard/revenue') @Action('Xem tổng doanh thu và hoàn tiền thất bại cần xử lý') @Roles('admin')",
+   "replace": "@Get('dashboard/revenue') @Action('Xem tổng doanh thu và hoàn tiền thất bại cần xử lý') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330080\""
+  },
+  {
+   "id": "T1 SB-05, SB-07: endpoint orders mở cho customer (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110330309",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('dashboard/orders') @Action('Xem tổng số đơn theo trạng thái') @Roles('admin')",
+   "replace": "@Get('dashboard/orders') @Action('Xem tổng số đơn theo trạng thái') @Roles('admin', 'customer')",
+   "test": "node scripts/run-jest.mjs test/dashboard/orders.spec.ts -t \"DSH-TC-20261006-110330309\""
+  },
+  {
+   "id": "T1 SB-05, SB-07: endpoint customers mở cho staff (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110330511",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('dashboard/customers') @Action('Xem tổng số khách hàng') @Roles('admin')",
+   "replace": "@Get('dashboard/customers') @Action('Xem tổng số khách hàng') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/dashboard/customers.spec.ts -t \"DSH-TC-20261006-110330511\""
+  },
+  {
+   "id": "T1 SB-05, SB-07: endpoint products mở cho staff (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110330708",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('dashboard/products') @Action('Xem tổng số sản phẩm theo trạng thái') @Roles('admin')",
+   "replace": "@Get('dashboard/products') @Action('Xem tổng số sản phẩm theo trạng thái') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/dashboard/products.spec.ts -t \"DSH-TC-20261006-110330708\""
+  },
+  {
+   "id": "T1 SB-05, SB-07: endpoint low-stock mở cho staff (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110330922",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('dashboard/low-stock') @Action('Xem sản phẩm tồn thấp trên dashboard') @Roles('admin')",
+   "replace": "@Get('dashboard/low-stock') @Action('Xem sản phẩm tồn thấp trên dashboard') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/dashboard/products.spec.ts -t \"DSH-TC-20261006-110330922\""
+  },
+  {
+   "id": "T1 SB-05, SB-07: endpoint recent-orders mở cho customer (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110331101",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('dashboard/recent-orders') @Action('Xem đơn hàng gần đây trên dashboard') @Roles('admin')",
+   "replace": "@Get('dashboard/recent-orders') @Action('Xem đơn hàng gần đây trên dashboard') @Roles('admin', 'customer')",
+   "test": "node scripts/run-jest.mjs test/dashboard/recent.spec.ts -t \"DSH-TC-20261006-110331101\""
+  },
+  {
+   "id": "T1 SB-05, SB-07: endpoint report-revenue mở cho customer (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110331410",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('reports/revenue') @Action('Xem báo cáo doanh thu theo khoảng ngày') @Roles('admin')",
+   "replace": "@Get('reports/revenue') @Action('Xem báo cáo doanh thu theo khoảng ngày') @Roles('admin', 'customer')",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331410\""
+  },
+  {
+   "id": "T1 SB-05, SB-07: endpoint report-orders mở cho staff (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110331642",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('reports/orders') @Action('Xem báo cáo đơn hàng theo khoảng ngày') @Roles('admin')",
+   "replace": "@Get('reports/orders') @Action('Xem báo cáo đơn hàng theo khoảng ngày') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-orders.spec.ts -t \"DSH-TC-20261006-110331642\""
+  },
+  {
+   "id": "T1 SB-05, SB-07: endpoint report-products mở cho customer (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110331903",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('reports/products') @Action('Xem báo cáo sản phẩm bán chạy') @Roles('admin')",
+   "replace": "@Get('reports/products') @Action('Xem báo cáo sản phẩm bán chạy') @Roles('admin', 'customer')",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110331903\""
+  },
+  {
+   "id": "T1 SB-05: guard giới hạn tần suất của DSH chạy trước kiểm quyền không còn là việc của controller (bỏ @UseGuards)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-TC-20261006-110332248",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@UseGuards(DashboardRateGuard)\n",
+   "replace": "\n",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332248\""
+  },
+  {
+   "id": "T1 SB-07: yêu cầu bị 403 vẫn ghi audit (đặt audit trước kiểm... ) - bỏ @Validate khai báo route",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('dashboard/low-stock') @Action('Xem sản phẩm tồn thấp trên dashboard') @Roles('admin') @Header('Cache-Control', NO_STORE) @Validate({ query: ANY_QUERY })",
+   "replace": "@Get('dashboard/low-stock') @Action('Xem sản phẩm tồn thấp trên dashboard') @Roles('admin') @Header('Cache-Control', NO_STORE)",
+   "test": "node scripts/run-jest.mjs test/dashboard/guard.spec.ts -t \"T1 \\(SB-05, SB-07\\)\""
+  },
+  {
+   "id": "T1 SB-05: @Action của endpoint doanh thu trỏ sai hàng ma trận",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Action('Xem tổng doanh thu và hoàn tiền thất bại cần xử lý')",
+   "replace": "@Action('Xem tổng doanh thu')",
+   "test": "node scripts/run-jest.mjs test/dashboard/guard.spec.ts -t \"T1 \\(SB-05, SB-07\\)\""
+  },
+  {
+   "id": "T9 SB-20: bỏ Cache-Control no-store ở một endpoint tiền",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "DSH-TC-20261006-110329988",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('dashboard/revenue') @Action('Xem tổng doanh thu và hoàn tiền thất bại cần xử lý') @Roles('admin') @Header('Cache-Control', NO_STORE)",
+   "replace": "@Get('dashboard/revenue') @Action('Xem tổng doanh thu và hoàn tiền thất bại cần xử lý') @Roles('admin')",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110329988\""
+  },
+  {
+   "id": "T4 SB-14: yêu cầu vượt hạn mức vẫn được qua (allowed luôn đúng)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-TC-20261006-110332248",
+   "file": "src/modules/dashboard/guard.ts",
+   "find": "if (!r.allowed) throw",
+   "replace": "if (false) throw",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332248\""
+  },
+  {
+   "id": "T4 SB-14: hạn mức dùng chung một khóa cho mọi admin",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/guard.ts",
+   "find": "`dsh:${session.user_id}`",
+   "replace": "'dsh:all'",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"T4: 60 yêu cầu song song\""
+  },
+  {
+   "id": "T4 SB-14: cửa sổ đếm 600 giây thay vì 60",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-TC-20261006-110332248",
+   "file": "src/modules/dashboard/guard.ts",
+   "find": "this.config.get<number>('DASHBOARD_RATE_LIMIT_PER_MINUTE'), 60)",
+   "replace": "this.config.get<number>('DASHBOARD_RATE_LIMIT_PER_MINUTE'), 600)",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332248\""
+  },
+  {
+   "id": "T4 SB-14: Retry-After không gửi kèm 429",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-TC-20261006-110332248",
+   "file": "src/modules/dashboard/guard.ts",
+   "find": "throw new DomainError('rate-limited', { headers: { 'Retry-After': String(r.retryAfter) } });",
+   "replace": "throw new DomainError('rate-limited');",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332248\""
+  },
+  {
+   "id": "T4 SB-14: đếm không nguyên tử (kiểm check rồi hit, khe giữa hai lệnh): 60 yêu cầu song song đều qua",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/guard.ts",
+   "find": "const r = await this.limiter.take(`dsh:${session.user_id}`, this.config.get<number>('DASHBOARD_RATE_LIMIT_PER_MINUTE'), 60);\n    if (!r.allowed)",
+   "replace": "const c = await this.limiter.check(`dsh:${session.user_id}`, this.config.get<number>('DASHBOARD_RATE_LIMIT_PER_MINUTE'), 60);\n    await new Promise((res) => setTimeout(res, 30));\n    await this.limiter.hitCounter(`dsh:${session.user_id}`, 60);\n    const r = { allowed: c.allowed, retryAfter: c.retryAfter };\n    if (!r.allowed)",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"T4: 60 yêu cầu song song\""
+  },
+  {
+   "id": "T4 SB-14: guard không có phiên thì cho qua (không đóng khi lỗi)",
+   "sb": [
+    "SB-14",
+    "SB-05"
+   ],
+   "tc": "DSH-TC-20261006-110332248",
+   "file": "src/modules/dashboard/guard.ts",
+   "find": "if (!session) throw new DomainError('forbidden');",
+   "replace": "if (!session) return true;",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332248\"",
+   "equivalent": "guard toàn cục AuthGuard luôn đặt `req.session` trước khi tới guard của DSH (đã chặn 401, 403), nên nhánh `!session` không tới được từ HTTP; chỉ là lớp phòng thủ khi cấu hình guard thay đổi"
+  },
+  {
+   "id": "T4 SB-14: mặc định hạn mức 30 thành 31",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "DASHBOARD_RATE_LIMIT_PER_MINUTE: cfg.int({ default: 30,",
+   "replace": "DASHBOARD_RATE_LIMIT_PER_MINUTE: cfg.int({ default: 31,",
+   "test": "node scripts/run-jest.mjs test/dashboard/guard.spec.ts -t \"DSH-API mục Biến môi trường\""
+  },
+  {
+   "id": "T4: mặc định hạn nguồn 5000 ms thành 6000",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "DASHBOARD_SOURCE_TIMEOUT_MS: cfg.int({ default: 5000,",
+   "replace": "DASHBOARD_SOURCE_TIMEOUT_MS: cfg.int({ default: 6000,",
+   "test": "node scripts/run-jest.mjs test/dashboard/guard.spec.ts -t \"DSH-API mục Biến môi trường\""
+  },
+  {
+   "id": "T4: mặc định đệm 60 giây thành 120",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "DASHBOARD_CACHE_TTL_SECONDS: cfg.int({ default: 60,",
+   "replace": "DASHBOARD_CACHE_TTL_SECONDS: cfg.int({ default: 120,",
+   "test": "node scripts/run-jest.mjs test/dashboard/guard.spec.ts -t \"DSH-API mục Biến môi trường\""
+  },
+  {
+   "id": "T4 SB-11: tối đa 366 ngày thành 367",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331438",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "MAX_RANGE_DAYS = 366;",
+   "replace": "MAX_RANGE_DAYS = 367;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331438\""
+  },
+  {
+   "id": "T4: mỗi đoạn gọi nguồn 960 giờ thành 1100 (vượt trần 1000 mốc)",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-TC-20261006-110331351",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "CHUNK_HOURS = 960;",
+   "replace": "CHUNK_HOURS = 1100;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331351\""
+  },
+  {
+   "id": "T4 SB-39: trần lời gọi đang chạy của một nguồn 6 thành 60 (không còn chặn dồn truy vấn vào nguồn chậm)",
+   "sb": [
+    "SB-39",
+    "SB-14"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "MAX_INFLIGHT_PER_SOURCE = 6;",
+   "replace": "MAX_INFLIGHT_PER_SOURCE = 60;",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"T4: nguồn treo không rò\""
+  },
+  {
+   "id": "T3: độ mịn ngày tối đa 31 thành 32",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331495",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "GRANULARITY_DAY_MAX = 31;",
+   "replace": "GRANULARITY_DAY_MAX = 32;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331495\""
+  },
+  {
+   "id": "T3: độ mịn tuần tối đa 92 thành 93",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331495",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "GRANULARITY_WEEK_MAX = 92;",
+   "replace": "GRANULARITY_WEEK_MAX = 93;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331495\""
+  },
+  {
+   "id": "T5: múi giờ Việt Nam UTC+7 thành UTC+6",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330197",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "TZ_OFFSET_MS = 7 * 3_600_000;",
+   "replace": "TZ_OFFSET_MS = 6 * 3_600_000;",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330197\""
+  },
+  {
+   "id": "T3: giới hạn sớm nhất 1970 bị dời",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330109",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "MIN_DATE_NUM = 0;",
+   "replace": "MIN_DATE_NUM = -400000;",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330109\""
+  },
+  {
+   "id": "T2 SB-08: số đơn gần đây 10 thành 11",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "DSH-TC-20261006-110331071",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "RECENT_LIMIT = 10;",
+   "replace": "RECENT_LIMIT = 11;",
+   "test": "node scripts/run-jest.mjs test/dashboard/recent.spec.ts -t \"DSH-TC-20261006-110331071\""
+  },
+  {
+   "id": "T2: số tồn thấp hiển thị 5 thành 6",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "DSH-TC-20261006-110330892",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "LOW_STOCK_LIMIT = 5;",
+   "replace": "LOW_STOCK_LIMIT = 6;",
+   "test": "node scripts/run-jest.mjs test/dashboard/products.spec.ts -t \"DSH-TC-20261006-110330892\""
+  },
+  {
+   "id": "T3: limit mặc định 10 thành 20",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331842",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "TOP_LIMIT_DEFAULT = 10;",
+   "replace": "TOP_LIMIT_DEFAULT = 20;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110331842\""
+  },
+  {
+   "id": "T7: số mục đệm tối đa 500 thành 5000",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "CACHE_MAX_ENTRIES = 500;",
+   "replace": "CACHE_MAX_ENTRIES = 5000;",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"T7: bộ nhớ đệm có hạn kích thước\""
+  },
+  {
+   "id": "T3 SB-11: tham số lạ không còn bị từ chối",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330735",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "if (!allowed.includes(k)) errors.push",
+   "replace": "if (false) errors.push",
+   "test": "node scripts/run-jest.mjs test/dashboard/products.spec.ts -t \"DSH-TC-20261006-110330735\""
+  },
+  {
+   "id": "T3 SB-11: endpoint tồn thấp nhận from, to",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330735",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "products: [], 'low-stock': [],",
+   "replace": "products: [], 'low-stock': ['from', 'to'],",
+   "test": "node scripts/run-jest.mjs test/dashboard/products.spec.ts -t \"DSH-TC-20261006-110330735\""
+  },
+  {
+   "id": "T3 SB-11: sort nhận thêm giá trị price",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331936",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "if (s === 'units' || s === 'amount') out.sort = s;",
+   "replace": "if (s === 'units' || s === 'amount' || s === 'price') out.sort = s as never;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110331936\""
+  },
+  {
+   "id": "T3 SB-11: limit tối đa 50 thành 100",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331936",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "TOP_LIMIT_MAX = 50;",
+   "replace": "TOP_LIMIT_MAX = 100;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110331936\""
+  },
+  {
+   "id": "T3 SB-11: limit 0 được nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331936",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "Number(l) < 1 ||",
+   "replace": "Number(l) < 0 ||",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110331936\""
+  },
+  {
+   "id": "T3 SB-11: limit số thập phân hoặc có số 0 đầu được nhận (regex nới)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331936",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "/^(0|[1-9]\\d*)$/.test(l)",
+   "replace": "/^\\d+$/.test(l)",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110331936\""
+  },
+  {
+   "id": "T3 SB-11: limit chuỗi dài vô hạn không còn bị chặn bằng độ dài",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331936",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "l.length > 3 || ",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110331936\"",
+   "equivalent": "`Number(l) > TOP_LIMIT_MAX` đã chặn mọi chuỗi số dài (Number của chuỗi rất dài là Infinity hoặc rất lớn); phép kiểm độ dài chỉ để tránh chuyển đổi số lớn không cần thiết, kết quả 400 như nhau"
+  },
+  {
+   "id": "T3 SB-11: khóa đệm bỏ tham số to",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110332347",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "p.range?.to ?? '-', ",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332347\""
+  },
+  {
+   "id": "T3 SB-05: khóa đệm bỏ tham số from",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-TC-20261006-110332347",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "p.range?.from ?? '-', ",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332347\""
+  },
+  {
+   "id": "T7 SB-05: khóa đệm bỏ sort",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-TC-20261006-110332347",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "p.sort ?? '-', ",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332347\""
+  },
+  {
+   "id": "T7 SB-05: khóa đệm bỏ limit",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-TC-20261006-110332347",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": ", p.limit ?? '-']",
+   "replace": ", '-']",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332347\""
+  },
+  {
+   "id": "T7 SB-05: khóa đệm bỏ tên khối",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-TC-20261006-110332347",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "[block, p.range?.from",
+   "replace": "['x', p.range?.from",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332347\""
+  },
+  {
+   "id": "T3 SB-11: ngày sau hôm nay được nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330539",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "if (t !== undefined && toNum > today)",
+   "replace": "if (t !== undefined && toNum > today + 1)",
+   "test": "node scripts/run-jest.mjs test/dashboard/customers.spec.ts -t \"DSH-TC-20261006-110330539\""
+  },
+  {
+   "id": "T3 SB-11: hôm nay bị từ chối (> thành >=)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110329988",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "toNum > today)",
+   "replace": "toNum >= today)",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110329988\""
+  },
+  {
+   "id": "T3 SB-11: khoảng đảo ngược được nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330341",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "if (fromNum > toNum)",
+   "replace": "if (fromNum > toNum + 1000)",
+   "test": "node scripts/run-jest.mjs test/dashboard/orders.spec.ts -t \"DSH-TC-20261006-110330341\""
+  },
+  {
+   "id": "T3 SB-11: khoảng một ngày bị từ chối (> thành >=)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331524",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "if (fromNum > toNum)",
+   "replace": "if (fromNum >= toNum)",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331524\""
+  },
+  {
+   "id": "T3 SB-11: 367 ngày được nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330109",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "toNum - fromNum + 1 > MAX_RANGE_DAYS",
+   "replace": "toNum - fromNum + 1 > MAX_RANGE_DAYS + 1",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330109\""
+  },
+  {
+   "id": "T3 SB-11: 366 ngày bị từ chối (> thành >=)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330109",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "toNum - fromNum + 1 > MAX_RANGE_DAYS",
+   "replace": "toNum - fromNum + 1 >= MAX_RANGE_DAYS",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330109\""
+  },
+  {
+   "id": "T3 SB-11: ngày không số 0 đầu (2026-9-1) được nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110331671",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "const DATE_RE = /^(\\d{4})-(\\d{2})-(\\d{2})$/;",
+   "replace": "const DATE_RE = /^(\\d{4})-(\\d{1,2})-(\\d{1,2})$/;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-orders.spec.ts -t \"DSH-TC-20261006-110331671\""
+  },
+  {
+   "id": "T3 SB-11: không kiểm ngày theo lịch (2026-02-30 được nhận)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330109",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "d < 1 || d > daysIn(y, mo)",
+   "replace": "d < 1 || d > 31",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330109\""
+  },
+  {
+   "id": "T3 SB-11: năm nhuận 400 không nhuận (2000-02-29 bị từ chối)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "(y % 4 === 0 && y % 100 !== 0) || y % 400 === 0",
+   "replace": "(y % 4 === 0 && y % 100 !== 0)",
+   "test": "node scripts/run-jest.mjs test/dashboard/range.spec.ts -t \"parseDate chỉ nhận\""
+  },
+  {
+   "id": "T3 SB-11: ngày quá sớm (trước 1970) được nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330109",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "if (n < MIN_DATE_NUM) { errors.push(paramError(field, 'too_early')); return null; }",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330109\"",
+   "equivalent": "phép kiểm thứ hai `fromNum < MIN_DATE_NUM` sau khi ghép mặc định vẫn chặn mọi from hoặc to trước 1970 (to trước 1970 làm from mặc định rơi trước 1970), kết quả 400 như nhau; phép kiểm ở từng tham số chỉ để báo đúng tên tham số khi to sai, và tên ấy đã được kiểm ở range.spec"
+  },
+  {
+   "id": "T3 SB-11: from mặc định không kiểm cận dưới",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "if (fromNum < MIN_DATE_NUM) { errors.push(paramError('from', 'too_early')); return null; }",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/range.spec.ts -t \"resolveRange từ chối từng lỗi\""
+  },
+  {
+   "id": "T5: tuần bắt đầu Chủ nhật thay vì thứ Hai",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331351",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "return n - mod(n + 3, 7);",
+   "replace": "return n - mod(n + 4, 7);",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331351\""
+  },
+  {
+   "id": "T5: mốc tuần cách 6 ngày thay vì 7",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331351",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "const step = g === 'day' ? 1 : 7;",
+   "replace": "const step = g === 'day' ? 1 : 6;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331351\""
+  },
+  {
+   "id": "T5: mốc tháng dùng ngày 2 thay vì ngày 1",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331552",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "for (let s = dayNum(y, m, 1); s <= toNum; s = dayNum(y, m, 1))",
+   "replace": "for (let s = dayNum(y, m, 2); s <= toNum; s = dayNum(y, m, 2))",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331552\""
+  },
+  {
+   "id": "T5: ranh giới ngày tính theo UTC (không cộng 7 giờ khi đổi thời điểm ra ngày)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "Math.floor((ms + TZ_OFFSET_MS) / DAY_MS)",
+   "replace": "Math.floor(ms / DAY_MS)",
+   "test": "node scripts/run-jest.mjs test/dashboard/load.spec.ts -t \"báo cáo doanh thu từ\""
+  },
+  {
+   "id": "T5: 00:00 giờ Việt Nam của ngày n tính nhầm bằng 00:00 UTC",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330197",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "n * DAY_MS - TZ_OFFSET_MS",
+   "replace": "n * DAY_MS",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330197\""
+  },
+  {
+   "id": "T3: khoảng mặc định 30 ngày thành 29 ngày",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330022",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "DEFAULT_RANGE_DAYS = 30;",
+   "replace": "DEFAULT_RANGE_DAYS = 29;",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330022\""
+  },
+  {
+   "id": "T5: khoảng UTC kết thúc không cộng thêm một ngày (đóng thay vì nửa mở tới ngày sau)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330197",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "toUtc: new Date(dayStartUtcMs(toNum + 1))",
+   "replace": "toUtc: new Date(dayStartUtcMs(toNum))",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330197\""
+  },
+  {
+   "id": "T5: hôm nay lấy theo UTC thay vì giờ Việt Nam",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "export const todayNum = (now: Date): number => ictDayOf(now.getTime());",
+   "replace": "export const todayNum = (now: Date): number => Math.floor(now.getTime() / DAY_MS);",
+   "test": "node scripts/run-jest.mjs test/dashboard/range.spec.ts -t \"ranh giới ngày theo giờ Việt Nam\""
+  },
+  {
+   "id": "T5: as_of in ra có .000",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110329988",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "replace(/\\.000Z$/, 'Z')",
+   "replace": "replace(/\\.0000Z$/, 'Z')",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110329988\""
+  },
+  {
+   "id": "T5 SB-23: net = gross + refunded",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110329988",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "net: t.gross - t.refunded,",
+   "replace": "net: t.gross + t.refunded,",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110329988\""
+  },
+  {
+   "id": "T5 SB-23: payment_count lấy theo gross",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110329988",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "payment_count: t.payment_count });\nconst addMoney",
+   "replace": "payment_count: t.gross });\nconst addMoney",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110329988\""
+  },
+  {
+   "id": "T5 SB-23: failed_refund_count không lấy từ PAY",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330051",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "failed_refund_count: failed }",
+   "replace": "failed_refund_count: 0 }",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330051\""
+  },
+  {
+   "id": "T5 SB-23: ô doanh thu chỉ lấy totals của PAY từ đầu khoảng + 1 giờ (sai khoảng UTC)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330197",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "this.payments.getRevenue({ from: r.fromUtc, to: r.toUtc }), this.payments.countFailedRefunds()",
+   "replace": "this.payments.getRevenue({ from: new Date(r.fromUtc.getTime() + 3_600_000), to: r.toUtc }), this.payments.countFailedRefunds()",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330197\""
+  },
+  {
+   "id": "T5 SB-23: báo cáo doanh thu bỏ cộng các mốc",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331320",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "for (const h of rev.series) addMoney(this.at(buckets, g, h.bucket_start), h);",
+   "replace": "for (const h of rev.series) this.at(buckets, g, h.bucket_start);",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331320\""
+  },
+  {
+   "id": "T5 SB-23: báo cáo doanh thu totals không cộng các đoạn",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331380",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "addMoney(totals, rev.totals); addMoney(by.vnpay",
+   "replace": "addMoney(by.vnpay",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331380\""
+  },
+  {
+   "id": "T5 SB-23: by_method đổi chỗ VNPay và COD",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331320",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "by_method: { vnpay: money(by.vnpay), cod: money(by.cod) }",
+   "replace": "by_method: { vnpay: money(by.cod), cod: money(by.vnpay) }",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-revenue.spec.ts -t \"DSH-TC-20261006-110331320\""
+  },
+  {
+   "id": "T5 SB-23: báo cáo doanh thu chỉ gọi đoạn đầu (bỏ lặp các đoạn)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "for (const c of hourChunks(r.fromUtc, r.toUtc)) {\n        const rev = await this.payments.getRevenue(c, 'hour');",
+   "replace": "for (const c of hourChunks(r.fromUtc, r.toUtc).slice(0, 1)) {\n        const rev = await this.payments.getRevenue(c, 'hour');",
+   "test": "node scripts/run-jest.mjs test/dashboard/load.spec.ts -t \"báo cáo doanh thu từ\""
+  },
+  {
+   "id": "T5: tổng đơn tính hiệu lực không loại returned",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330281",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "total - by_status.cancelled - by_status.expired - by_status.returned",
+   "replace": "total - by_status.cancelled - by_status.expired",
+   "test": "node scripts/run-jest.mjs test/dashboard/orders.spec.ts -t \"DSH-TC-20261006-110330281\""
+  },
+  {
+   "id": "T5: tổng đơn bỏ khóa expired khỏi hiệu lực",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330281",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "total - by_status.cancelled - by_status.expired - by_status.returned",
+   "replace": "total - by_status.cancelled - by_status.returned",
+   "test": "node scripts/run-jest.mjs test/dashboard/orders.spec.ts -t \"DSH-TC-20261006-110330281\""
+  },
+  {
+   "id": "T5: tỷ lệ làm tròn xuống thay vì nửa lên",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331785",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "Math.floor((part * 2000 + total) / (2 * total)) / 10",
+   "replace": "Math.floor((part * 2000) / (2 * total)) / 10",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-orders.spec.ts -t \"DSH-TC-20261006-110331785\""
+  },
+  {
+   "id": "T5: tỷ lệ khi không có đơn là 0 thay vì null",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331728",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "(total === 0 ? null :",
+   "replace": "(total === 0 ? 0 :",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-orders.spec.ts -t \"DSH-TC-20261006-110331728\""
+  },
+  {
+   "id": "T5: giá trị đơn trung bình làm tròn gần nhất thay vì xuống",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331813",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "Math.floor(paidTotal / paidOrders)",
+   "replace": "Math.round(paidTotal / paidOrders)",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-orders.spec.ts -t \"DSH-TC-20261006-110331813\""
+  },
+  {
+   "id": "T5: giá trị đơn trung bình khi không có đơn là 0 thay vì null",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331728",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "average_order_value: paidOrders === 0 ? null :",
+   "replace": "average_order_value: paidOrders === 0 ? 0 :",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-orders.spec.ts -t \"DSH-TC-20261006-110331728\""
+  },
+  {
+   "id": "T5: giá trị đơn trung bình chia cho tổng đơn thay vì số đơn đã thu",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331757",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "Math.floor(paidTotal / paidOrders)",
+   "replace": "Math.floor(paidTotal / total)",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-orders.spec.ts -t \"DSH-TC-20261006-110331757\""
+  },
+  {
+   "id": "T5: báo cáo đơn không cộng số đơn đã thu của từng mốc",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331609",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "paidOrders += h.paid_orders; paidTotal += h.paid_total;",
+   "replace": "paidTotal += h.paid_total;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-orders.spec.ts -t \"DSH-TC-20261006-110331609\""
+  },
+  {
+   "id": "T5: báo cáo đơn bỏ cộng một trạng thái vào mốc",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331609",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "for (const s of ORDER_STATUSES) b[s] += h.orders[s] ?? 0;",
+   "replace": "for (const s of ORDER_STATUSES) if (s !== 'returned') b[s] += h.orders[s] ?? 0;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-orders.spec.ts -t \"DSH-TC-20261006-110331609\""
+  },
+  {
+   "id": "T5: báo cáo sản phẩm đảo cách xếp",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331871",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "sort === 'units' ? 'quantity' : 'amount'",
+   "replace": "sort === 'units' ? 'amount' : 'quantity'",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110331871\""
+  },
+  {
+   "id": "T5: tổng số lượng toàn khoảng lấy từ danh sách đã cắt",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110332035",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "units_total: totals.units_total, distinct_products: totals.distinct_products,",
+   "replace": "units_total: rows.reduce((s, x) => s + x.quantity, 0), distinct_products: rows.length,",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110332035\""
+  },
+  {
+   "id": "T5: báo cáo sản phẩm bỏ tên từ PRD",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331842",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "name: names.get(x.product_id) ?? ''",
+   "replace": "name: ''",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110331842\""
+  },
+  {
+   "id": "T5: báo cáo sản phẩm không cắt theo limit",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110332035",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "items: rows.slice(0, limit).map",
+   "replace": "items: rows.slice(0, limit + 5).map",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-products.spec.ts -t \"DSH-TC-20261006-110332035\"",
+   "equivalent": "`OrderApi.getTopProducts(range, sort, limit)` đã cắt đúng `limit` dòng ở truy vấn nên `slice` ở DSH là lớp phòng thủ khi nguồn trả thừa; không dựng được nguồn trả thừa mà không giả OrderApi (test của ORD kiểm cắt ở nguồn)"
+  },
+  {
+   "id": "T5: ô sản phẩm tổng không cộng nháp",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330680",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "total: by_status.active + by_status.draft + by_status.archived",
+   "replace": "total: by_status.active + by_status.archived",
+   "test": "node scripts/run-jest.mjs test/dashboard/products.spec.ts -t \"DSH-TC-20261006-110330680\""
+  },
+  {
+   "id": "T2 SB-08: đơn gần đây trả nguyên bản ghi nguồn (không danh sách trắng)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "DSH-TC-20261006-110331071",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "items: rows.slice(0, RECENT_LIMIT).map((o) => ({ code: o.code, created_at: isoZ(o.created_at), status: o.status, grand_total: o.grand_total, payment_method: o.payment_method, payment_status: o.payment_status, item_count: o.item_count })) };",
+   "replace": "items: rows.slice(0, RECENT_LIMIT) as never };",
+   "test": "node scripts/run-jest.mjs test/dashboard/recent.spec.ts -t \"DSH-TC-20261006-110331071\""
+  },
+  {
+   "id": "T2 SB-08: tồn thấp trả nguyên bản ghi nguồn (không danh sách trắng)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "DSH-TC-20261006-110330892",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "items: s.items.slice(0, LOW_STOCK_LIMIT).map((i) => ({ product_id: i.product_id, name: i.name, sku: i.sku, available: i.available, low_stock_threshold: i.low_stock_threshold })) };",
+   "replace": "items: s.items.slice(0, LOW_STOCK_LIMIT) as never };",
+   "test": "node scripts/run-jest.mjs test/dashboard/products.spec.ts -t \"DSH-TC-20261006-110330892\"",
+   "equivalent": "InventoryApi.getLowStockSummary đã trả đúng năm trường nên danh sách trắng ở DSH là lớp phòng thủ thứ hai: không có test nào dựng được nguồn trả thừa trường mà không giả InventoryApi (test của INV kiểm bộ trường ở nguồn)"
+  },
+  {
+   "id": "T5: tồn thấp count lấy số mục thay vì tổng thật",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330892",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "count: s.count, items",
+   "replace": "count: s.items.length, items",
+   "test": "node scripts/run-jest.mjs test/dashboard/products.spec.ts -t \"DSH-TC-20261006-110330892\""
+  },
+  {
+   "id": "T5: khách trả total thành new_in_range",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330483",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "total: c.total, locked: c.locked",
+   "replace": "total: c.new_in_range, locked: c.locked",
+   "test": "node scripts/run-jest.mjs test/dashboard/customers.spec.ts -t \"DSH-TC-20261006-110330483\""
+  },
+  {
+   "id": "T11 SB-39: nguồn lỗi hoặc quá hạn trả undefined thay vì 503 (khối hiện số 0)",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-TC-20261006-110330139",
+   "file": "src/modules/dashboard/sources.service.ts",
+   "find": "      throw this.unavailable(source);\n    } finally {",
+   "replace": "      return undefined as T;\n    } finally {",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330139\""
+  },
+  {
+   "id": "T11 SB-39: hạn nguồn nhân 100 (quá hạn không còn tới)",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-TC-20261006-110330370",
+   "file": "src/modules/dashboard/sources.service.ts",
+   "find": "reject(new Error(`quá hạn ${ms} ms`)), ms)",
+   "replace": "reject(new Error(`quá hạn ${ms} ms`)), ms * 100)",
+   "test": "node scripts/run-jest.mjs test/dashboard/orders.spec.ts -t \"DSH-TC-20261006-110330370\""
+  },
+  {
+   "id": "T9 SB-20: 503 kèm chi tiết lỗi của nguồn (detail)",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "DSH-TC-20261006-110330139",
+   "file": "src/modules/dashboard/sources.service.ts",
+   "find": "      throw this.unavailable(source);\n    } finally {",
+   "replace": "      throw new DomainError('dashboard-source-unavailable', { extra: { source }, detail: String(err) });\n    } finally {",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330139\""
+  },
+  {
+   "id": "T9 SB-20: 503 kèm stack của lỗi nguồn (extra)",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "DSH-TC-20261006-110330139",
+   "file": "src/modules/dashboard/sources.service.ts",
+   "find": "private unavailable(source: Source): DomainError { return new DomainError('dashboard-source-unavailable', { extra: { source } }); }",
+   "replace": "private unavailable(source: Source): DomainError { return new DomainError('dashboard-source-unavailable', { extra: { source, stack: new Error().stack ?? '' } }); }",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330139\""
+  },
+  {
+   "id": "T11 SB-39: nguồn trong 503 sai tên",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-TC-20261006-110330139",
+   "file": "src/modules/dashboard/sources.service.ts",
+   "find": "{ extra: { source } }); }\n}",
+   "replace": "{ extra: { source: 'ORD' } }); }\n}",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330139\""
+  },
+  {
+   "id": "T11: bộ đếm lời gọi đang chạy không giảm khi truy vấn xong (rò chỗ)",
+   "sb": [
+    "SB-39",
+    "SB-14"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/sources.service.ts",
+   "find": "work.then(() => { this.inflight[source] -= 1; }, () => { this.inflight[source] -= 1; });",
+   "replace": "work.then(() => undefined, () => undefined);",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"T4: nguồn treo không rò\""
+  },
+  {
+   "id": "T11: bộ đếm lời gọi đang chạy giảm khi quá hạn thay vì khi truy vấn xong",
+   "sb": [
+    "SB-39",
+    "SB-14"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/sources.service.ts",
+   "find": "      if (timer) clearTimeout(timer);",
+   "replace": "      if (timer) clearTimeout(timer);\n      this.inflight[source] = Math.max(0, this.inflight[source] - 1);",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"T4: nguồn treo không rò\""
+  },
+  {
+   "id": "T11: lỗi muộn của nguồn thành unhandled rejection (bỏ then hai nhánh)",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/sources.service.ts",
+   "find": "work.then(() => { this.inflight[source] -= 1; }, () => { this.inflight[source] -= 1; });",
+   "replace": "work.then(() => { this.inflight[source] -= 1; });",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"T4: nguồn treo không rò\""
+  },
+  {
+   "id": "T7 SB-05: không lưu đệm (bỏ store)",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-TC-20261006-110332155",
+   "file": "src/modules/dashboard/cache.service.ts",
+   "find": "      this.store(key, value);\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332155\""
+  },
+  {
+   "id": "T7: đệm sống 6 giây thay vì 60 (nhân 100 thay vì 1000)",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-TC-20261006-110332155",
+   "file": "src/modules/dashboard/cache.service.ts",
+   "find": "get<number>('DASHBOARD_CACHE_TTL_SECONDS') * 1000",
+   "replace": "get<number>('DASHBOARD_CACHE_TTL_SECONDS') * 100",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332155\""
+  },
+  {
+   "id": "T7: đúng 60 giây vẫn dùng đệm (> thành >=)",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/cache.service.ts",
+   "find": "if (hit && hit.expires > now)",
+   "replace": "if (hit && hit.expires >= now)",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"T7: đúng 60 giây\""
+  },
+  {
+   "id": "T7: không chống dồn đàn (bỏ dùng chung lần đọc)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/cache.service.ts",
+   "find": "    if (running) return running;\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"T4: nhiều yêu cầu cùng khóa\""
+  },
+  {
+   "id": "T7: as_of lấy lúc ghi vào đệm thay vì lúc bắt đầu đọc nguồn",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-TC-20261006-110332310",
+   "file": "src/modules/dashboard/cache.service.ts",
+   "find": "const asOf = isoZ(this.clock.now());\n      const body = await load();\n      const value = { ...body, as_of: asOf };",
+   "replace": "const body = await load();\n      const value = { ...body, as_of: isoZ(new Date(this.clock.now().getTime() + 1000)) };",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332310\""
+  },
+  {
+   "id": "T7: lỗi nguồn được lưu đệm (lưu cả khi load ném lỗi)",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-TC-20261006-110330139",
+   "file": "src/modules/dashboard/cache.service.ts",
+   "find": "      const body = await load();\n      const value",
+   "replace": "      const body = await load().catch((e) => { this.store(key, { error: true }); throw e; });\n      const value",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330139\""
+  },
+  {
+   "id": "T6 SB-19: audit gộp bị bỏ (mỗi yêu cầu một dòng)",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110332125",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "if (this.marks.get(session.user_id) === minute) return;",
+   "replace": "if (false) return;",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332125\""
+  },
+  {
+   "id": "T6 SB-19: không đặt dấu gộp trước khi ghi",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261006-110332125",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "    this.marks.set(session.user_id, minute); // đặt TRƯỚC khi ghi: các khối song song cùng phút thấy dấu ngay\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332125\""
+  },
+  {
+   "id": "T6 SB-19: dấu gộp theo 10 phút thay vì 1 phút",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261006-120001002",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "Math.floor(now.getTime() / 60_000)",
+   "replace": "Math.floor(now.getTime() / 600_000)",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-120001002\""
+  },
+  {
+   "id": "T6 SB-19: audit ghi vai trò staff",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261006-110332125",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "actor_role: 'admin',",
+   "replace": "actor_role: 'staff',",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332125\""
+  },
+  {
+   "id": "T6 SB-19: audit không có actor_id",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261006-110332125",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "actor_id: session.user_id, actor_role",
+   "replace": "actor_id: null, actor_role",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332125\""
+  },
+  {
+   "id": "T6 SB-19: audit chứa nội dung số liệu",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261006-110332125",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "after: { block, from: p.range?.from ?? null, to: p.range?.to ?? null },",
+   "replace": "after: { block, from: p.range?.from ?? null, to: p.range?.to ?? null, data: body },",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332125\""
+  },
+  {
+   "id": "T6 SB-19: ghi audit lỗi làm hỏng việc xem (không bắt lỗi)",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261006-110332377",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "this.log.error('audit-write-failed', { err,",
+   "replace": "throw err; this.log.error('audit-write-failed', { err,",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332377\""
+  },
+  {
+   "id": "T6 SB-19: audit ghi cả khi nguồn 503 (ghi trước khi đọc nguồn)",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261006-110330139",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "    const body = await this.cache.get(cacheKey(block, p), () => this.load(block, p));\n    await this.record(session, block, p);",
+   "replace": "    await this.record(session, block, p);\n    const body = await this.cache.get(cacheKey(block, p), () => this.load(block, p));",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330139\""
+  },
+  {
+   "id": "T6 SB-19: log lỗi audit không có trace_id",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261006-110332377",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "action: AUDIT_ACTION, trace_id: currentCorrelationId() ?? 'none' });",
+   "replace": "action: AUDIT_ACTION });",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332377\""
+  },
+  {
+   "id": "T6 SB-19: tên hành động audit sai",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261006-110332125",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "AUDIT_ACTION = 'dashboard.view';",
+   "replace": "AUDIT_ACTION = 'dashboard.open';",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332125\""
+  },
+  {
+   "id": "T2 SB-08: kiểm tham số chạy sau khi gọi nguồn (đảo bước)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330109",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "const p = parseParams(block, rawQuery, this.clock.now());",
+   "replace": "const p = (() => { try { return parseParams(block, rawQuery, this.clock.now()); } catch { return { range: undefined } as never; } })();",
+   "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330109\""
+  },
+  {
+   "id": "T8: DSH khai thiếu ValidationInterceptor... bỏ DashboardRateGuard khỏi providers",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-TC-20261006-110332248",
+   "file": "src/modules/dashboard/dashboard.module.ts",
+   "find": "providers: [SourceGate, BlockCache, BlocksService, DashboardService, DashboardRateGuard],",
+   "replace": "providers: [SourceGate, BlockCache, BlocksService, DashboardService],",
+   "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332248\"",
+   "equivalent": "bỏ DashboardRateGuard khỏi providers làm Nest không khởi tạo được controller (lỗi phụ thuộc lúc nạp module): mọi test của DSH đỏ ở bước khởi động, tức là cổng bắt được nhưng báo là hỏng biên dịch chứ không phải khẳng định; giữ để bảng phủ module"
+  },
+  {
+   "id": "T5 nền ORD: getProductSalesTotals không loại đơn returned",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110332035 (nền ORD)",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "AND o.status NOT IN ('cancelled', 'expired', 'returned')`;\n    return { units_total",
+   "replace": "AND o.status NOT IN ('cancelled', 'expired')`;\n    return { units_total",
+   "test": "node scripts/run-jest.mjs test/order/dsh.spec.ts -t \"DSH-TC-20261006-110332035 \\(nền ORD\\)\""
+  },
+  {
+   "id": "T5 nền ORD: getProductSalesTotals đếm dòng thay vì sản phẩm khác nhau",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110332035 (nền ORD)",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "count(DISTINCT i.product_id) AS n",
+   "replace": "count(i.product_id) AS n",
+   "test": "node scripts/run-jest.mjs test/order/dsh.spec.ts -t \"DSH-TC-20261006-110332035 \\(nền ORD\\)\""
+  },
+  {
+   "id": "T5 nền ORD: getProductSalesTotals tính đơn chưa thu tiền",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110332035 (nền ORD)",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "WHERE o.payment_status = 'succeeded' AND o.paid_at >= ${range.from}::timestamptz AND o.paid_at < ${range.to}::timestamptz AND o.status NOT IN ('cancelled', 'expired', 'returned')`;\n    return { units_total",
+   "replace": "WHERE o.paid_at >= ${range.from}::timestamptz AND o.paid_at < ${range.to}::timestamptz AND o.status NOT IN ('cancelled', 'expired', 'returned')`;\n    return { units_total",
+   "test": "node scripts/run-jest.mjs test/order/dsh.spec.ts -t \"DSH-TC-20261006-110332035 \\(nền ORD\\)\""
+  },
+  {
+   "id": "T5 nền ORD: getProductSalesTotals khoảng đóng (<= to)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110332035 (nền ORD)",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "o.paid_at < ${range.to}::timestamptz AND o.status NOT IN ('cancelled', 'expired', 'returned')`;\n    return { units_total",
+   "replace": "o.paid_at <= ${range.to}::timestamptz AND o.status NOT IN ('cancelled', 'expired', 'returned')`;\n    return { units_total",
+   "test": "node scripts/run-jest.mjs test/order/dsh.spec.ts -t \"DSH-TC-20261006-110332035 \\(nền ORD\\)\""
+  },
+  {
+   "id": "T2 nền ORD: listRecent không trả payment_method",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "DSH-TC-20261006-110331071 (nền ORD)",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "payment_method: r.payment_method, payment_status: r.payment_status, item_count: r.item_count }));",
+   "replace": "payment_status: r.payment_status, item_count: r.item_count }));",
+   "test": "node scripts/run-jest.mjs test/order/dsh.spec.ts -t \"DSH-TC-20261006-110331071 \\(nền ORD\\)\""
+  },
+  {
+   "id": "T5 nền AUTH: countCustomerStats đếm khóa theo trạng thái active",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330483 (nền AUTH)",
+   "file": "src/modules/auth/auth.api.ts",
+   "find": "count(*) FILTER (WHERE status = 'locked') AS locked",
+   "replace": "count(*) FILTER (WHERE status = 'active') AS locked",
+   "test": "node scripts/run-jest.mjs test/auth/dsh.spec.ts -t \"DSH-TC-20261006-110330483 \\(nền AUTH\\)\""
+  },
+  {
+   "id": "T5 nền AUTH: countCustomerStats khoảng đóng (<= to)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330483 (nền AUTH)",
+   "file": "src/modules/auth/auth.api.ts",
+   "find": "AND created_at < ${range.to}::timestamptz) AS fresh",
+   "replace": "AND created_at <= ${range.to}::timestamptz) AS fresh",
+   "test": "node scripts/run-jest.mjs test/auth/dsh.spec.ts -t \"DSH-TC-20261006-110330483 \\(nền AUTH\\)\""
+  },
+  {
+   "id": "T5 nền AUTH: countCustomerStats đếm cả staff và admin",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330483 (nền AUTH)",
+   "file": "src/modules/auth/auth.api.ts",
+   "find": "FROM users WHERE role = 'customer'`;\n    return { total: Number(r.total)",
+   "replace": "FROM users`;\n    return { total: Number(r.total)",
+   "test": "node scripts/run-jest.mjs test/auth/dsh.spec.ts -t \"DSH-TC-20261006-110330483 \\(nền AUTH\\)\""
+  },
+  {
+   "id": "T5 nền AUTH: countCustomerStats không kiểm khoảng (nhận from sau to)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261006-110330595 (nền AUTH)",
+   "file": "src/modules/auth/auth.api.ts",
+   "find": "|| !okDate(range.to) || range.to < range.from) throw",
+   "replace": "|| !okDate(range.to)) throw",
+   "test": "node scripts/run-jest.mjs test/auth/dsh.spec.ts -t \"DSH-TC-20261006-110330595 \\(nền AUTH\\)\""
+  },
+  {
+   "id": "T5 nền USR: countCustomers truyền sai khoảng sang AUTH",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330483 (nền USR)",
+   "file": "src/modules/user/user.api.ts",
+   "find": "return this.auth.countCustomerStats(range);",
+   "replace": "return this.auth.countCustomerStats({ from: range.to, to: range.to });",
+   "test": "node scripts/run-jest.mjs test/user/dsh.spec.ts -t \"DSH-TC-20261006-110330483 \\(nền USR\\)\""
+  },
+  {
+   "id": "T5 web: hôm nay tính theo UTC thay vì giờ Việt Nam",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330022 (giao diện)",
+   "file": "../web/lib/dashboard-format.ts",
+   "find": "export const todayYmd = (now: number = Date.now()): string => ymdOf(new Date(now + VN_MS));",
+   "replace": "export const todayYmd = (now: number = Date.now()): string => ymdOf(new Date(now));",
+   "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110330022 \\(giao diện\\)\""
+  },
+  {
+   "id": "T5 web: 30 ngày qua thành 29",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110330022 (giao diện)",
+   "file": "../web/lib/dashboard-format.ts",
+   "find": "from: addDays(to, -29)",
+   "replace": "from: addDays(to, -28)",
+   "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110330022 \\(giao diện\\)\""
+  },
+  {
+   "id": "T5 web: giờ Cập nhật lúc theo UTC",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-E2E-20261006-110407878 (giao diện)",
+   "file": "../web/lib/dashboard-format.ts",
+   "find": "const d = new Date(new Date(iso).getTime() + VN_MS);\n  return `Cập nhật",
+   "replace": "const d = new Date(new Date(iso).getTime());\n  return `Cập nhật",
+   "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110407878 \\(giao diện\\)\""
+  },
+  {
+   "id": "T11 web: tỷ lệ null hiện 0,0% thay vì —",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-TC-20261006-110331728 (giao diện)",
+   "file": "../web/lib/dashboard-format.ts",
+   "find": "(v == null ? '—' : `${v.toFixed(1)",
+   "replace": "(v == null ? '0,0%' : `${v.toFixed(1)",
+   "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110331728 \\(giao diện\\)\""
+  },
+  {
+   "id": "T11 web: giá trị trung bình null hiện 0 đ thay vì —",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-TC-20261006-110329988 (giao diện)",
+   "file": "../web/lib/dashboard-format.ts",
+   "find": "export const moneyOrDash = (v: number | null | undefined): string => (v == null ? '—' : money(v));",
+   "replace": "export const moneyOrDash = (v: number | null | undefined): string => (v == null ? money(0) : money(v));",
+   "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110329988 \\(giao diện\\)\""
+  },
+  {
+   "id": "T11 web: khối lỗi vẫn coi là có số",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-TC-20261006-110330139 (giao diện)",
+   "file": "../web/lib/dashboard-format.ts",
+   "find": "b.status === 'error' || (b.status === 'limited' && !b.data)",
+   "replace": "(b.status === 'limited' && !b.data)",
+   "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110330139 \\(giao diện\\)\""
+  },
+  {
+   "id": "T11 web: 429 lần đầu (chưa có số) không coi là lỗi",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-TC-20261006-110330139 (giao diện)",
+   "file": "../web/lib/dashboard-format.ts",
+   "find": "b.status === 'error' || (b.status === 'limited' && !b.data)",
+   "replace": "b.status === 'error'",
+   "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110330139 \\(giao diện\\)\""
+  },
+  {
+   "id": "T5 web: nhãn mốc tháng thiếu bỏ ngày",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-TC-20261006-110331351 (giao diện)",
+   "file": "../web/lib/dashboard-format.ts",
+   "find": "formatYmd(start).slice(3)",
+   "replace": "formatYmd(start)",
+   "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110331351 \\(giao diện\\)\""
+  },
+  {
+   "id": "T5 web: dải 429 mặc định 30 giây thay vì 60",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-TC-20261006-110332248 (giao diện)",
+   "file": "../web/lib/dashboard-format.ts",
+   "find": "retryAfter ?? 60",
+   "replace": "retryAfter ?? 30",
+   "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110332248 \\(giao diện\\)\""
+  },
+  {
+   "id": "T7 review: report-orders mất Cache-Control private, no-store (kiểm cả chín endpoint)",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Roles('admin') @Header('Cache-Control', NO_STORE) @Validate({ query: ANY_QUERY })\n  reportOrders",
+   "replace": "@Roles('admin') @Validate({ query: ANY_QUERY })\n  reportOrders",
+   "test": "node scripts/run-jest.mjs test/dashboard/review.spec.ts -t \"Cache-Control\""
+  },
+  {
+   "id": "T5 review: báo cáo 366 ngày gọi nguồn với đoạn chồng một giờ (đếm trùng ở ranh giới đoạn)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "DSH-SEC-20261006-105535103",
+   "file": "src/modules/dashboard/range.ts",
+   "find": "to: new Date(Math.min(s + step, to.getTime())) })",
+   "replace": "to: new Date(Math.min(s + step + HOUR_MS, to.getTime())) })",
+   "test": "node scripts/run-jest.mjs test/dashboard/review.spec.ts -t \"ranh giới đoạn\""
+  },
+  {
+   "id": "T11 review web: khoảng đang áp dụng thiếu from lấy hôm nay trừ 29 thay vì to trừ 29 (ô nhập lệch máy chủ)",
+   "sb": [
+    "SB-39"
+   ],
+   "tc": "DSH-TC-20261006-110330022 (giao diện)",
+   "file": "../web/lib/dashboard-format.ts",
+   "find": "from: from || addDays(end, -29), to: end",
+   "replace": "from: from || addDays(todayYmd(now), -29), to: end",
+   "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110330022 \\(giao diện\\)\""
+  }
+ ]
+}

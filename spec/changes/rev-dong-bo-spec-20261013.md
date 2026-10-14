@@ -1,0 +1,44 @@
+# Tác động của đợt đồng bộ spec REV 2026-10-13 (review REV: REV-REV-11, 12, 15, 16, 17, 18; bài học L61, L121, L130, L131, L132, L133, L135)
+
+- **Thay đổi:** (a) REV-API: `images[].id` (chỉ phản hồi của chủ) và `product.status` ở `GET /me/reviews` và `/me/reviews/{id}`; mã lỗi `service-unavailable` (503) và `internal-error` (500, kho ảnh); cột Lỗi có 429 ở mọi endpoint kèm bậc giới hạn tần suất (xóa B 30 mỗi giờ, eligibility C 120, "của tôi" C 120 chung, admin D 60 chung); mục Giao tiếp giữa module thêm `OrderApi.hasUndeliveredItems(user_id, product_id)` và hai job. (b) REV-DB: mục 8 job dọn dùng khóa advisory của `JobRunner` (không `SKIP LOCKED`), xóa object trước rồi dòng; job mới `rev.sweep-orphan-objects` (liệt kê kho theo tiền tố, xóa object không có dòng quá 24 giờ, trần 500 mỗi lượt, đóng khi không chắc) ở mục 7 và 8 (REV-REV-16); mục 10 các bậc thật; mục 1 và Ghi chú tên `OrderApi.`; Migration 4 đăng ký hai job. (c) REV-REQ ...296: BR3 ca hai bước cùng đúng (`not_delivered` đứng trước `window_expired`), BR9 (v1: đơn hoàn trả hoặc hủy sau khi đã đánh giá không gỡ nhãn "Đã mua hàng"), hai kịch bản mới; ...566 BR9: bộ đếm bậc C theo người dùng đã đăng nhập, guest theo IP. (d) REV-SEC: T5, T9 theo job mới, T11 và Rủi ro còn lại (ảnh của đánh giá `hidden` còn tải được bằng URL cũ, chấp nhận theo ADR-018, khuyến nghị CDN purge), T17. (e) TC ...123 (bậc C theo người dùng), ...234 và ...936 (bỏ chữ "CSRF token", ADR-016); ui/product-reviews (liên kết "Xem đánh giá" cạnh dòng điểm). (f) ORD-API ...780 thêm phương thức thứ 16 `hasUndeliveredItems`. (g) TC mới: ORD-TC-20261013-223014153, REV-TC-20261013-223014272, ...373, ...474, ...571, ...665, ...766, ...868, ...967, ...5066. Mã: job `rev.sweep-orphan-objects` (`image.service.ts`, `review.module.ts`, `config.ts`), hook web dùng chung `useQueryGo` cho mười trang còn dùng cách cũ (REV-REV-12), test và bảng đột biến `mutations-rev.json`.
+- **Lý do:** review REV (REV-REV-11 đến 18) và bài học L61, L121, L130 đến L133, L135 (loại `spec` và `code`); nền đã đồng bộ ở `spec/changes/nen-dong-bo-20261013.md` (bảng Giao diện module có hàng REV gọi ORD, ADR-014, ADR-016, SB-18), không sửa lại ở đây.
+- **Người yêu cầu:** người dùng ("chạy tiếp đi"; quyết định (1) đến (8) chốt khi giao việc); phân tích do Claude
+
+Tài liệu bị đổi: REV-DB-20261006-103618216
+Cụm từ xuyên module: "hasUndeliveredItems"
+
+Hàng ghi "Đã sửa và duyệt lại" là việc đã làm trong đợt này (sửa bằng Edit: hạ `draft`, sửa, duyệt lại một lần). Hàng `cần xem lại` là tài liệu ngoài danh sách được ủy quyền sửa.
+
+| ID bị ảnh hưởng | Loại | Mức | Lý do | Việc cần làm |
+|---|---|---|---|---|
+| REV-DB-20261006-103618216 | phải dựng lại | MEDIUM | Mục 8 nói `FOR UPDATE SKIP LOCKED` trong khi mã dùng khóa advisory của `JobRunner`; mục 7 hứa job dọn object mồ côi mà mã chỉ quét bảng (REV-REV-16); mục 10 thiếu các bậc thật | Đã sửa và duyệt lại: mục 1, 7, 8 (hai job), 10, Migration 4, tên `OrderApi.` |
+| REV-API-20261006-103618306 | phải dựng lại | MEDIUM | Phản hồi của chủ có `images[].id` và `product.status` ngoài hợp đồng; thiếu mã `service-unavailable`, `internal-error`; thiếu `hasUndeliveredItems`; cột Lỗi thiếu 429 và 503 (L121) | Đã sửa và duyệt lại: Endpoint (Lỗi và bậc), Hợp đồng dữ liệu, Giao tiếp giữa module, Job nội bộ |
+| REV-SEC-20261006-103618395 | phải dựng lại | LOW | T9 chỉ nói một job; T11 chưa ghi ảnh của đánh giá `hidden` còn tải được; T17 nói "mỗi địa chỉ hoặc người dùng"; T5 chưa nêu `hasUndeliveredItems` | Đã sửa và duyệt lại: T5, T9, T11, T17, Rủi ro còn lại (CDN purge, cửa đua 24 giờ, hành vi sau hoàn trả) |
+| REV-REQ-20261006-103135296 | phải dựng lại | MEDIUM | BR3 "xét theo thứ tự" không có kịch bản ca hai bước cùng đúng (L132, mã trả sai thứ tự ở REV-REV-11); chưa chốt hành vi khi đơn hoàn trả hoặc hủy sau khi đã đánh giá (REV-REV-18) | Đã sửa và duyệt lại: BR3, BR6, BR9 mới, hai kịch bản mới, tên `OrderApi.` |
+| REV-REQ-20261006-103135566 | phải dựng lại | LOW | BR9 ghi "mỗi địa chỉ hoặc người dùng", nền đếm theo người dùng đã đăng nhập (ADR-014, REV-REV-17) | Đã sửa và duyệt lại: BR9 |
+| REV-TC-20261006-104527123 | phải dựng lại | LOW | TC chỉ kiểm bộ đếm theo IP của guest | Đã sửa và duyệt lại: guest theo IP, người dùng đã đăng nhập theo người dùng; test `public.spec.ts` |
+| REV-TC-20261006-104528234 | phải dựng lại | LOW | Tiêu đề nói "CSRF token" trái ADR-016 (kiểm `Origin`) | Đã sửa và duyệt lại: tiêu đề |
+| REV-TC-20261006-104523936 | phải dựng lại | LOW | Given nói "CSRF token hợp lệ" trái ADR-016 | Đã sửa và duyệt lại: Given |
+| spec/epics/REV/ui/product-reviews.md | phải dựng lại | LOW | Chưa ghi chỗ đặt liên kết "Xem đánh giá" ở chi tiết sản phẩm PRD (report mục 15) | Đã sửa và duyệt lại: đoạn mở đầu |
+| ORD-API-20261006-092703780 | phải dựng lại | MEDIUM | Bảng Giao diện module thiếu phương thức thứ 16 `OrderApi.hasUndeliveredItems` mà REV gọi (REV-REV-17) | Đã sửa và duyệt lại: hàng REV mới. Lưu ý: `getProductSalesTotals` của DSH cũng chưa có trong bảng này (việc của lượt DSH, xem ghi chú bên dưới) |
+| ORD-TC-20261013-223014153 | không đổi | - | TC mới cho `OrderApi.hasUndeliveredItems` (bốn trạng thái chưa giao, bốn trạng thái không tính, đơn người khác, id sai dạng, chỉ đọc) | Đã duyệt; test `apps/api/test/order/rev-undelivered.spec.ts` |
+| REV-TC-20261013-223014272 | không đổi | - | TC mới cho ca hai bước cùng đúng (đơn giao quá 90 ngày cộng đơn mới đang giao trả `not_delivered`) | Đã duyệt; test `mutants.spec.ts` (REV-REV-11) |
+| REV-TC-20261013-223014373 | không đổi | - | TC mới cho hành vi v1: đơn hoàn trả hoặc hủy sau khi đã đánh giá không gỡ đánh giá và nhãn "Đã mua hàng" | Đã duyệt; test `eligibility.spec.ts` |
+| REV-TC-20261013-223014474 | không đổi | - | TC mới cho job `rev.sweep-orphan-images` (khóa advisory, object trước rồi dòng, giới hạn lô, hạn thời gian, idempotent; L61) | Đã duyệt; test `jobs-limits.spec.ts` |
+| REV-TC-20261013-223014571 | không đổi | - | TC mới cho job `rev.sweep-orphan-objects` (object không có dòng quá 24 giờ, trần 500, đóng khi không chắc, độc lập URL công khai; L61) | Đã duyệt; test `jobs-limits.spec.ts` |
+| REV-TC-20261013-223014665 | không đổi | - | TC mới: xóa đánh giá bậc B 30 mỗi giờ | Đã duyệt; test `jobs-limits.spec.ts` |
+| REV-TC-20261013-223014766 | không đổi | - | TC mới: "của tôi" chung bộ đếm bậc C 120 mỗi phút | Đã duyệt; test `jobs-limits.spec.ts` |
+| REV-TC-20261013-223014868 | không đổi | - | TC mới: admin chung bộ đếm bậc D 60 mỗi phút | Đã duyệt; test `jobs-limits.spec.ts` |
+| REV-TC-20261013-223014967 | không đổi | - | TC mới: `review-eligibility` bậc C 120 mỗi phút | Đã duyệt; test `jobs-limits.spec.ts` |
+| REV-TC-20261013-223015066 | không đổi | - | TC mới: PRD, ORD hay AUTH không trả lời thì 503 `service-unavailable` | Đã duyệt; test `jobs-limits.spec.ts` |
+| REV-REQ-20261006-103134939 | cần xem lại | LOW | Mục Dữ liệu và sự kiện còn chữ `ORD.getDeliveredItems` (tên lớp là `OrderApi`) và chưa nêu `hasUndeliveredItems` (tài liệu ngoài danh sách được ủy quyền sửa) | Đổi tên lớp và thêm `OrderApi.hasUndeliveredItems` ở dòng "Entity đọc/ghi" |
+| ORD-REQ-20261006-120227681 | cần xem lại | LOW | BR5 nêu `getDeliveredItems` cho REV nhưng chưa nêu `hasUndeliveredItems` (tài liệu ngoài danh sách được ủy quyền sửa) | Bổ sung `hasUndeliveredItems` vào BR5 và kịch bản; `getProductSalesTotals` của DSH cùng việc (nền đồng bộ đã ghi) |
+| REV-E2E-20261006-104528550 | không đổi | - | E2E hai lần đổi bộ lọc liền nhau trên ba trang REV: hook chuyển sang `useQueryGo` dùng chung, hành vi và testid không đổi | - |
+
+## Chưa chắc / rủi ro
+- `getProductSalesTotals` (DSH) có trong `OrderApi` và bảng Giao diện module của `architecture.md` nhưng chưa có ở bảng ORD-API (tài liệu này): lượt DSH hay ORD cần thêm; không làm ở đợt REV vì không thuộc quyết định REV.
+- Job `rev.sweep-orphan-objects` báo lỗi mỗi giờ nếu kho có object mồ côi quá 24 giờ mà bảng `review_images` rỗng (đóng khi không chắc, giống PRD): người vận hành xác nhận bằng tay (xóa object hay nạp lại bảng). Tham chiếu là `storage_key` nên đổi `STORAGE_PUBLIC_BASE_URL` không gây xóa nhầm ảnh đang dùng.
+- Cửa đua hẹp của job dọn ảnh ở mốc đúng 24 giờ (REV-DB mục 8, REV-SEC Rủi ro còn lại) chưa đóng hẳn: ảnh gắn trong lúc job đã xóa object và chưa xóa dòng thì đánh giá giữ dòng ảnh mà object đã mất.
+- ORD v1 coi `delivered` là trạng thái cuối nên tình huống "đơn hoàn trả hoặc hủy sau khi đã đánh giá" (BR9) chỉ xảy ra khi ORD thêm chuyển trạng thái sau giao hoặc dữ liệu bị sửa tay; test dựng bằng sửa thẳng CSDL.
+- Ảnh của đánh giá `hidden` còn tải được bằng URL cũ tới khi đánh giá bị xóa (ADR-018): khuyến nghị đặt CDN có quy trình purge khi go-live; việc người vận hành.
+- Mười trang web dùng hook `useQueryGo` mới thay cách dựng URL cũ (không có E2E riêng cho từng trang): kiểm bằng hàm thuần `query-go.spec.ts` và bài quét mã; nên chạy tay một lượt đổi hai bộ lọc liền nhau ở một trang admin trước go-live.

@@ -9,6 +9,8 @@ roles: [admin]
 
 Màn tổng quan để admin **bắt tay làm việc**: nhìn bốn số chính, thấy việc cần xử lý (hoàn tiền thất bại, sản phẩm tồn thấp), mở đơn mới. Xem xu hướng theo thời gian thuộc các màn báo cáo (`analytics-revenue`, `analytics-orders`, `analytics-products`), không nhét biểu đồ vào đây. Chỉ admin; staff và customer mở `/admin/dashboard` thấy màn không có quyền chung của AUTH (`access-denied`), không phải màn này.
 
+Đường dẫn web: `/admin/dashboard` (liên kết "Dashboard" ở thanh đầu trang chỉ hiện với admin; trang bọc kiểm role admin). Khi URL chỉ có `to` hoặc chỉ có `from`, ô còn lại hiện đúng giá trị máy chủ đã dùng (thiếu `to` là hôm nay, thiếu `from` là `to` trừ 29 ngày), không phải "hôm nay trừ 29".
+
 ## Wireframe
 Phương án đã chọn: **A** (hàng số liệu một khối chia kẻ, dưới là hai widget: đơn gần đây chiếm gấp đôi, tồn thấp ở cột phụ). **Đây là lựa chọn mặc định** (khuyến nghị theo `U3` và mẫu Dashboard A của evon), chưa có người dùng chọn. Không dựng HTML hay chạy probe ở phase này (việc của implement). Vùng quản trị cho nhân viên thuộc nhóm "app quản lý", không phải "cửa hàng online phía người mua", nên luật evon áp dụng đủ.
 

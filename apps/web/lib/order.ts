@@ -26,7 +26,7 @@ export interface OrderRow { code: string; created_at: string; status: OrderStatu
 export interface OrderDetail {
   code: string; status: OrderStatus; created_at: string; items: { name: string; unit_price: number; quantity: number; line_total: number }[];
   items_total: number; discount: number; shipping_fee: number; grand_total: number; payment_method: 'vnpay' | 'cod'; payment_status: PaymentStatus;
-  tracking_number?: string; payment_expires_at?: string; shipping_address?: { receiver: string; phone: string; line1: string; ward: string; city: string }; can_cancel: boolean;
+  tracking_number?: string; payment_expires_at?: string; shipping_address?: { receiver: string; phone: string; line1: string; ward: string; district?: string | null; city: string }; can_cancel: boolean;
 }
 export interface HistoryItem { at: string; status: OrderStatus; reason?: string }
 

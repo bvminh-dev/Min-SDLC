@@ -92,6 +92,7 @@ describe('SHP tạo vận đơn theo event của ORD', () => {
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatchObject({ event_id: id5, attempts: 10 });
     expect(errors[0].correlation_id).toBeTruthy();
+    expect(t.logs.records.filter((r) => r.level === 'warn' && r.code === 'order-read-failed' && r.order_id === o5.id)).toHaveLength(10); // mỗi lần giao lỗi, handler ghi một dòng warn mang order_id (không có mã đơn: ORD đang lỗi)
     expect(await relay.stuckCount()).toBe(1);
     expect(backoffMsOf(1)).toBe(5000); // hằng của nền: 5 giây cho lần lỗi đầu
   }, 120_000);

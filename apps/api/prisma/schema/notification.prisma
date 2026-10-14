@@ -1,0 +1,108 @@
+// Module notification (epic NTF, NTF-DB-20261006-103815422): Notification (trong ứng dụng) và EmailDelivery (trạng thái gửi email).
+// Phần Prisma không biểu diễn được (CHECK, chỉ mục một phần và theo biểu thức, trigger vòng đời) nằm trong migration SQL.
+// Khóa ngoại chỉ tới `users` của AUTH (ON DELETE CASCADE); mã đơn, thanh toán, sản phẩm của module khác là cột trơn hoặc nằm trong `data` (P7). Chống trùng theo event_id dùng `processed_events` của platform.
+
+enum NotificationChannel {
+  in_app
+
+  @@map("notification_channel")
+}
+
+enum NotificationType {
+  order_created
+  order_confirmed
+  payment_succeeded
+  payment_failed
+  order_cancelled
+  refund_succeeded
+  order_shipped
+  shipment_failed
+  order_delivered
+  order_returned
+  order_expired
+  welcome
+  password_changed
+  low_stock
+  refund_failed
+
+  @@map("notification_type")
+}
+
+enum NotificationStatus {
+  unread
+  read
+
+  @@map("notification_status")
+}
+
+enum EmailType {
+  order_created
+  payment_succeeded
+  order_cancelled
+  refund_succeeded
+  order_shipped
+  shipment_failed
+  order_delivered
+  order_returned
+  password_changed
+  account_locked
+  email_verification
+  password_reset
+
+  @@map("email_type")
+}
+
+enum EmailDeliveryStatus {
+  pending
+  sent
+  failed
+  skipped
+
+  @@map("email_delivery_status")
+}
+
+model Notification {
+  id        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String              @map("user_id") @db.Uuid
+  channel   NotificationChannel @default(in_app)
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  data      Json                @default("{}")
+  status    NotificationStatus  @default(unread)
+  readAt    DateTime?           @map("read_at") @db.Timestamptz(6)
+  eventId   String              @map("event_id") @db.Uuid
+  dedupeKey String              @map("dedupe_key")
+  createdAt DateTime            @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model EmailDelivery {
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String              @map("user_id") @db.Uuid
+  type           EmailType
+  deliveryStatus EmailDeliveryStatus @default(pending) @map("delivery_status")
+  deliveryReason String?             @map("delivery_reason")
+  attempts       Int                 @default(0) @db.SmallInt
+  nextAttemptAt  DateTime?           @map("next_attempt_at") @db.Timestamptz(6)
+  sentAt         DateTime?           @map("sent_at") @db.Timestamptz(6)
+  eventId        String              @map("event_id") @db.Uuid
+  dedupeKey      String              @map("dedupe_key")
+  data           Json                @default("{}")
+  createdAt      DateTime            @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, dedupeKey])
+  @@index([createdAt])
+  @@map("email_deliveries")
+}

@@ -34,16 +34,17 @@ export interface AuthApp {
 }
 
 /** Ứng dụng thật (PlatformModule + AuthModule), PostgreSQL thật, đồng hồ giả; không thay SESSION_RESOLVER (dùng bộ giải phiên của AUTH). */
-export async function createAuthApp(o: { env?: Record<string, string>; level?: string; controllers?: any[]; imports?: any[] } = {}): Promise<AuthApp> {
+export async function createAuthApp(o: { env?: Record<string, string>; level?: string; controllers?: any[]; imports?: any[]; overrides?: { provide: any; useValue: unknown }[] } = {}): Promise<AuthApp> {
   const config = testConfig(o.env);
   const logs = new LogCapture();
   const logger = AppLogger.create({ level: o.level ?? 'info', env: 'dev', destination: logs });
   const clock = new FakeClock();
-  const moduleRef = await Test.createTestingModule({ imports: o.imports ?? [PlatformModule, AuthModule], controllers: o.controllers ?? [ProbeController, StubOrdController] })
+  let builder = Test.createTestingModule({ imports: o.imports ?? [PlatformModule, AuthModule], controllers: o.controllers ?? [ProbeController, StubOrdController] })
     .overrideProvider(ConfigService).useValue(config)
     .overrideProvider(AppLogger).useValue(logger)
-    .overrideProvider(Clock).useValue(clock)
-    .compile();
+    .overrideProvider(Clock).useValue(clock);
+  for (const ov of o.overrides ?? []) builder = builder.overrideProvider(ov.provide).useValue(ov.useValue); // thay phụ thuộc ngoài (ví dụ cổng VNPay) bằng bộ giả lập
+  const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false, logger: false });
   configureApp(app, { config, logger });
   await app.init();

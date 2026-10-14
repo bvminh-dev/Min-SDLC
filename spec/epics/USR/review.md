@@ -3,7 +3,7 @@ epic: USR
 status: draft
 kit_version: 3
 reviewed_commit: e87647e     # HEAD; mã USR, AUTH và phần nền đi kèm nằm trong working tree (chưa commit) nên có reviewed_tree
-reviewed_tree: f45e4412588a5f06d42c1fbbe9517941a06bd0e2
+reviewed_tree: c35d774c588534e431899496cc1f921eabe95103
 ---
 # Review: USR
 
@@ -96,7 +96,7 @@ Mỗi yêu cầu `SB-nn` của `spec/security-baseline.md` có epic liên quan l
 | SB-11 schema đầu vào, truy vấn tham số hóa | SB-11 | đạt | apps/api/src/modules/user/policy.ts:44, apps/api/src/modules/user/policy.ts:68, apps/api/src/modules/user/address.service.ts:32, eslint.config.mjs:5 | - |
 | SB-12 escape nội dung người dùng | SB-12 | đạt | apps/api/src/modules/user/policy.ts:6, apps/web/components/Avatar.tsx:6, apps/web/components/CustomerCard.tsx:14, apps/api/test/e2e/usr.e2e.spec.ts:258 | C1 và ký tự điều khiển hai chiều (U+0080 đến U+009F, U+202E) không bị từ chối: đúng chữ của spec (U+0000 đến U+001F, U+007F), React escape nên không phải XSS; LOW |
 | SB-13 chống CSRF | SB-13 | đạt | apps/api/src/modules/platform/http/csrf.guard.ts:32, apps/api/src/modules/platform/http/app-setup.ts:70, apps/api/src/modules/platform/http/multipart.ts:15, apps/api/test/user/avatar.spec.ts:171 | - |
-| SB-14 giới hạn tần suất | SB-14 | đạt | apps/api/src/modules/user/http.ts:19, apps/api/src/modules/user/http.ts:21, apps/api/src/modules/platform/http/rate-limit.ts:101, apps/api/src/modules/auth/auth.api.ts:147, apps/api/test/platform/rate-limit.spec.ts:38 | Đã sửa test nền trong lượt review: thêm ca group và bộ đếm riêng mỗi route (đột biến lọt) |
+| SB-14 giới hạn tần suất | SB-14 | đạt | apps/api/src/modules/user/http.ts:19, apps/api/src/modules/user/http.ts:21, apps/api/src/modules/platform/http/rate-limit.ts:101, apps/api/src/modules/auth/auth.api.ts:161, apps/api/test/platform/rate-limit.spec.ts:38 | Đã sửa test nền trong lượt review: thêm ca group và bộ đếm riêng mỗi route (đột biến lọt) |
 | SB-19 audit truy cập dữ liệu người khác | SB-19 | đạt | apps/api/src/modules/user/lookup.service.ts:34, apps/api/src/modules/auth/auth.api.ts:181, apps/api/test/user/lookup.spec.ts:52, apps/api/test/user/lookup.spec.ts:78 | LOW: `target_id` khi không thấy là sha256 không muối của email đã chuẩn hóa (đúng BR5), người đọc audit có thể thử ngược danh sách email |
 | SB-33 giới hạn tài nguyên mỗi người | SB-33 | đạt | apps/api/src/modules/user/address.service.ts:27, apps/api/src/modules/user/address.service.ts:54, apps/api/prisma/migrations/20261006000700_user_addresses/migration.sql:33, apps/api/test/user/address.spec.ts:138 | - |
 | SB-41 số điện thoại chỉ kiểm định dạng | SB-41 | đạt | apps/api/src/modules/user/policy.ts:7, apps/api/test/user/profile.spec.ts:52 | Rủi ro chấp nhận có chủ đích |

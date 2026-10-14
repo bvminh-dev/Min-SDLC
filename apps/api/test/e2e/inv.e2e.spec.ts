@@ -1,5 +1,5 @@
 import type { Page } from 'playwright-core';
-import { alignWindow, advance, count, eventually, hasText, id, loginUi, reset, see, seedCategory, seedMovement, seedProduct, seedStock, seedUser, startE2e, stockState, textOf, withPage, type E2eEnv } from './support';
+import { alignWindow, advance, count, eventually, hasText, id, loginUi, reset, see, seedCategory, seedMovement, seedProduct, seedStock, seedUser, startE2e, stockState, textOf, withPage, type E2eEnv, API } from './support';
 
 // E2E của INV chạy bằng Jest và playwright-core điều khiển Chromium thật: API thật (AppModule) trên PostgreSQL thật (`ecom_e2e`), bản build production của web.
 // Giới hạn tần suất dùng đồng hồ của API do cổng điều khiển tua (không chờ 60 giây thật). Mỗi test: CSDL sạch, ngữ cảnh trình duyệt mới.
@@ -8,7 +8,6 @@ beforeAll(async () => { env = await startE2e(); }, 420_000);
 afterAll(async () => { await env?.stop(); });
 beforeEach(async () => { await reset(); });
 const e2e = (name: string, fn: (page: Page) => Promise<void>) => it(name, () => withPage(env.browser, fn), 150_000);
-const API = 'http://localhost:3101/api/v1';
 
 /** Sản phẩm Áo thun cotton (AT-001) với bản ghi kho đã dựng. */
 async function atShirt(stock: { on_hand: number; reserved?: number; threshold?: number; version?: number }): Promise<string> {

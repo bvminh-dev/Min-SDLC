@@ -29,12 +29,12 @@ describe('ORD giao diện tạo đơn cho CHK', () => {
     expect(ev.map((e) => e.type)).toEqual(['OrderCreated', 'OrderConfirmed']);
     expect(ev[0].payload).toMatchObject({ payment_method: 'cod', payment_expires_at: null });
     expect(ev[1].payload).toEqual({ order_id: r.order_id, order_code: r.code, user_id: a.id, confirmed_at: t.clock.now().toISOString() });
-    await q(t, 'TRUNCATE shipment_status_history, shipments, order_status_history, order_items, orders, outbox_events'); // bảng của SHP có khóa ngoại tới orders: TRUNCATE phải gồm cả hai
+    await q(t, 'TRUNCATE review_images, reviews, refunds, payment_attempts, payment_webhook_logs, payments, shipment_status_history, shipments, checkout_sessions, order_status_history, order_items, orders, outbox_events'); // bảng của SHP và PAY có khóa ngoại tới orders: TRUNCATE phải gồm cả hai
     await expect(t.tx.run(async (tx) => { const c = await t.ord.createPending(cod(a.id, { grand_total: 380000 }), tx); await t.ord.confirmCod(c.order_id, tx); throw new Error('INV hết hàng ở bước sau'); })).rejects.toThrow('INV hết hàng');
     await nothing();
   });
 
-  it('ORD-TC-20261006-120227769 ORD-TC-20261007-182433278: createPending đơn VNPay lưu hạn thanh toán, địa chỉ năm khóa, hai dòng hàng, một dòng lịch sử pending (actor là khách) và OrderCreated đầy đủ cùng giao dịch; hai lần đặt song song cho hai mã khác nhau', async () => {
+  it('ORD-TC-20261006-120227769 ORD-TC-20261007-182433278: createPending đơn VNPay lưu hạn thanh toán, địa chỉ sáu khóa, hai dòng hàng, một dòng lịch sử pending (actor là khách) và OrderCreated đầy đủ cùng giao dịch; hai lần đặt song song cho hai mã khác nhau', async () => {
     const { a } = await people(t);
     const expires = new Date(Date.now() + 900_000), input = baseInput(a.id, { payment_expires_at: expires });
     const { order_id, code } = await createPending(t, input);
@@ -43,7 +43,7 @@ describe('ORD giao diện tạo đơn cho CHK', () => {
     expect(o).toMatchObject({ status: 'pending', payment_status: 'pending', payment_method: 'vnpay', grand_total: '380000' });
     expect(o.payment_expires_at).toEqual(expires);
     const [row] = await q<{ shipping_address: Record<string, string>; shipping_method_id: string }>(t, `SELECT shipping_address, shipping_method_id FROM orders WHERE id = '${order_id}'`);
-    expect(Object.keys(row.shipping_address).sort()).toEqual(['city', 'line1', 'phone', 'receiver', 'ward']);
+    expect(Object.keys(row.shipping_address).sort()).toEqual(['city', 'district', 'line1', 'phone', 'receiver', 'ward']);
     expect(row.shipping_method_id).toBe(input.shipping_method_id);
     expect((await q<{ name_snapshot: string; unit_price: string; quantity: number; position: number }>(t, `SELECT name_snapshot, unit_price::text, quantity, position FROM order_items WHERE order_id = '${order_id}' ORDER BY position`)).map((i) => [i.name_snapshot, i.unit_price, i.quantity, i.position])).toEqual([['Áo thun cổ tròn', '100000', 2, 1], ['Quần jean', '150000', 1, 2]]); // position 1, 2 theo thứ tự items (ORD-TC-20261007-182433278)
     expect(await historyOf(t, order_id)).toMatchObject([{ from_status: null, to_status: 'pending', actor_id: a.id, actor_role: 'customer' }]);
@@ -55,6 +55,26 @@ describe('ORD giao diện tạo đơn cho CHK', () => {
     const [x, y] = await Promise.all([createPending(t, baseInput(a.id)), createPending(t, baseInput(a.id))]);
     expect(x.code).not.toBe(y.code);
     expect(new Set([x.order_id, y.order_id]).size).toBe(2);
+  });
+
+  it('ORD-TC-20261013-211722071: createPending nhận district làm khóa thứ sáu (chuỗi hoặc null, khóa luôn có mặt) và bác địa chỉ thiếu district, district rỗng, district không phải chuỗi, khóa lạ: không ghi gì', async () => {
+    const { a } = await people(t);
+    const addr = { receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi', ward: 'Bến Nghé', city: 'TP.HCM' };
+    for (const district of ['Quận 1', null]) {
+      const { order_id } = await createPending(t, baseInput(a.id, { shipping_address: { ...addr, district } }));
+      const [row] = await q<{ shipping_address: Record<string, unknown> }>(t, `SELECT shipping_address FROM orders WHERE id = '${order_id}'`);
+      expect(Object.keys(row.shipping_address).sort()).toEqual(['city', 'district', 'line1', 'phone', 'receiver', 'ward']);
+      expect(row.shipping_address.district).toBe(district);
+    }
+    const before = [await countRows(t, 'orders'), await countRows(t, 'order_items'), await countRows(t, 'order_status_history'), await countRows(t, 'outbox_events')];
+    const bad: [string, unknown][] = [
+      ['a: thiếu district (năm khóa cũ)', addr], ['b: district chỉ khoảng trắng', { ...addr, district: '  ' }], ['c: district là số', { ...addr, district: 5 }], ['d: thêm khóa lạ', { ...addr, district: 'Quận 1', country: 'VN' }],
+    ];
+    for (const [why, shipping_address] of bad) {
+      const err = await createPending(t, baseInput(a.id, { shipping_address: shipping_address as never })).catch((e) => e);
+      expect([why, err instanceof OrderBusinessError && err.code]).toEqual([why, 'invalid_input']);
+    }
+    expect([await countRows(t, 'orders'), await countRows(t, 'order_items'), await countRows(t, 'order_status_history'), await countRows(t, 'outbox_events')]).toEqual(before);
   });
 
   it('ORD-TC-20261006-120227861 ORD-TC-20261007-182433085: createPending từ chối chín đầu vào sai (công thức, thiếu hạn, COD có hạn, hạn quá khứ, quantity 0, rỗng, giá âm, 0 đồng, âm) và confirmCod sai trạng thái: lỗi nghiệp vụ, không để lại gì; CHECK ở CSDL là lớp hai (23514)', async () => {
@@ -71,7 +91,8 @@ describe('ORD giao diện tạo đơn cho CHK', () => {
       ['h: đơn 0 đồng (R-03)', { items: [{ ...one[0], unit_price: 100000 }], items_total: 100000, discount: 130000, shipping_fee: 30000, grand_total: 0 }],
       ['i: grand_total âm', { items: one, items_total: 300000, discount: 400000, shipping_fee: 30000, grand_total: -70000 }],
       ['j: items_total không bằng tổng dòng hàng', { items_total: 340000, grand_total: 370000 }],
-      ['k: địa chỉ có thêm khóa district', { shipping_address: { receiver: 'A', phone: '0901234567', line1: '1', ward: 'w', city: 'c', district: 'Q1' } as never }],
+      ['k: địa chỉ thiếu khóa district (bản năm khóa cũ)', { shipping_address: { receiver: 'A', phone: '0901234567', line1: '1', ward: 'w', city: 'c' } as never }],
+      ['l: district rỗng (phải là chuỗi có chữ hoặc null)', { shipping_address: { receiver: 'A', phone: '0901234567', line1: '1', ward: 'w', district: '  ', city: 'c' } }],
     ];
     for (const [why, over] of bad) {
       const err = await createPending(t, baseInput(a.id, over)).catch((e) => e);

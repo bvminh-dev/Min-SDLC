@@ -1,0 +1,70 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { API_DIR } from '../support/db';
+import { run } from '../support/sh';
+import { mkTmp } from '../support/tmp';
+
+// Cổng kiểm của bảng đột biến NTF (`scripts/mutations-ntf.json`, chạy bằng script chung `.claude/skills/sdlc-review/scripts/mutate.mjs`): mỗi SB `Kiểm bằng: test` của NTF-SEC có ít nhất một đột biến,
+// đoạn cần phá còn đúng một lần trong mã, test và ID có thật. Mang ID tài liệu NTF-SEC vì chưa có TC riêng cho công cụ. Ca "công cụ hỏng thì đỏ" và ca dương tính từng mẫu lỗi.
+const SEC = resolve(API_DIR, '../../spec/epics/NTF/design/NTF-SEC-20261006-103815605.md');
+const TABLE = resolve(API_DIR, 'scripts/mutations-ntf.json');
+const ID = 'NTF-SEC-20261006-103815605';
+
+describe(`Bảng đột biến NTF được kiểm lại bằng \`check-mutations.mjs\` (${ID})`, () => {
+  const dir = mkTmp('mut-ntf-');
+  const real = (): { test: string; mutations: any[] } => JSON.parse(readFileSync(TABLE, 'utf8'));
+  const check = (table: unknown, args: string[] = ['--sec', SEC]) => {
+    const f = join(dir, `t${Math.random().toString(36).slice(2)}.json`);
+    writeFileSync(f, JSON.stringify(table));
+    return run(process.execPath, ['scripts/check-mutations.mjs', f, ...args], { cwd: API_DIR });
+  };
+  const withFirst = (patch: object) => { const t = real(); t.mutations[0] = { ...t.mutations[0], ...patch }; return t; };
+
+  it(`${ID}: bảng thật hợp lệ và phủ mọi SB kiểm bằng test của NTF-SEC`, () => {
+    const r = run(process.execPath, ['scripts/check-mutations.mjs', TABLE, '--sec', SEC], { cwd: API_DIR });
+    expect([r.status, r.stderr]).toEqual([0, '']);
+    for (const sb of ['SB-03', 'SB-05', 'SB-06', 'SB-07', 'SB-08', 'SB-11', 'SB-12', 'SB-13', 'SB-14', 'SB-18', 'SB-26', 'SB-27', 'SB-31', 'SB-34']) expect(r.stdout).toContain(sb);
+    const t = real();
+    expect(t.mutations.length).toBeGreaterThanOrEqual(90);
+    for (const m of t.mutations) { expect(m.tc).toMatch(/^NTF-(TC|E2E|SEC|DB)-\d{8}-\d{9}$/); expect(m.test).toMatch(/-t "/); } // lệnh chạy đúng một TC hoặc một test, không chạy rộng
+    expect(t.mutations.filter((m) => m.equivalent).length).toBeLessThanOrEqual(3); // tương đương là ngoại lệ có lý do, không phải lối thoát
+    for (const m of t.mutations.filter((x) => x.equivalent)) expect(String(m.equivalent).length).toBeGreaterThan(40);
+    expect(t.mutations.some((m) => m.file.startsWith('src/modules/platform/'))).toBe(true); // phủ cả nền sửa kèm (EventsService, CSRF)
+    expect(t.mutations.filter((m) => m.file.startsWith('prisma/migrations/')).length).toBeGreaterThanOrEqual(15); // từng CHECK, unique, khóa ngoại, trigger của migration
+    expect(t.mutations.some((m) => m.file.startsWith('../web/'))).toBe(true); // phủ giao diện (hàm thuần và trạng thái lỗi)
+    for (const f of ['read.service.ts', 'email.service.ts', 'templates.ts', 'consumer.service.ts', 'mail.ts', 'policy.ts', 'notification.controller.ts', 'render.ts']) expect(t.mutations.some((m) => m.file === `src/modules/notification/${f}`)).toBe(true);
+    const sec = readFileSync(SEC, 'utf8');
+    expect((sec.match(/^\| T\d+ /gm) ?? []).length).toBe(18); // dương tính: NTF-SEC thật có 18 mối đe dọa
+  });
+
+  it(`${ID}: đỏ khi một SB kiểm bằng test không còn đột biến nào`, () => {
+    const t = real();
+    const r = check({ ...t, mutations: t.mutations.filter((m: any) => !m.sb.includes('SB-31')) });
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/SB-31: SB `Kiểm bằng: test` chưa có đột biến nào/);
+    expect(r.stderr).not.toMatch(/SB-05:/); // chỉ báo SB thiếu
+  });
+
+  it(`${ID}: đỏ khi đoạn cần phá đã đổi, mơ hồ, vô tác dụng hoặc test, tệp hay ID không có`, () => {
+    expect(check(withFirst({ find: 'đoạn này không tồn tại trong mã' })).stderr).toMatch(/không thấy đoạn cần phá/);
+    expect(check(withFirst({ file: 'src/modules/notification/templates.ts', find: 'const user = owner(), oid = orderId();' })).stderr).toMatch(/xuất hiện \d+ lần .*mơ hồ/);
+    expect(check(withFirst({ replace: real().mutations[0].find })).stderr).toMatch(/không đổi gì/);
+    expect(check(withFirst({ tc: 'NTF-TC-20990101-000000000' })).stderr).toMatch(/không chứa ID NTF-TC-20990101-000000000/);
+    expect(check(withFirst({ test: 'node scripts/run-jest.mjs test/notification/khong-co.spec.ts -t "x"' })).stderr).toMatch(/không có tệp test/);
+    expect(check(withFirst({ file: 'src/khong-co.ts' })).stderr).toMatch(/không có tệp src\/khong-co\.ts/);
+  });
+
+  it(`${ID}: đỏ khi không đọc được NTF-SEC hoặc bảng (không im lặng coi là "không cần đột biến")`, () => {
+    const empty = join(dir, 'empty-sec.md');
+    writeFileSync(empty, '# không có bảng mối đe dọa\n');
+    const r = check(real(), ['--sec', empty]);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/không tìm thấy SB nào có Kiểm bằng `test`/);
+    const missing = check(real(), ['--sec', join(dir, 'khong-co.md')]);
+    expect(missing.status).toBe(1);
+    expect(missing.stderr).toMatch(/không đọc được tài liệu SEC/);
+    const broken = run(process.execPath, ['scripts/check-mutations.mjs', join(dir, 'khong-co.json'), '--sec', SEC], { cwd: API_DIR });
+    expect(broken.status).toBe(1);
+    expect(broken.stderr).toMatch(/không đọc được bảng đột biến/);
+  });
+});

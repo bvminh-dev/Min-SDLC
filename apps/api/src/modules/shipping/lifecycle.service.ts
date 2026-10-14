@@ -35,7 +35,7 @@ export class LifecycleService {
   private async created(tx: Tx, e: EventEnvelope): Promise<void> {
     const orderId = uuidOf(e.payload?.order_id);
     if (!orderId) return this.skip(e, 'order_id không hợp lệ');
-    const o = await this.orders.findForShipment(orderId).catch((err) => { // ngoài giao dịch của SHP, không khóa; lỗi thì ném, rollback hết và relay giao lại (ADR-011)
+    const o = await this.orders.findForShipment(orderId).catch((err) => { // không `tx`, không khóa: kết nối thứ hai trong khi `tx` của giao dịch giao event còn giữ một kết nối (hold-and-wait, nên `DB_POOL_MAX` >= 2, SHP-DB mục Giao dịch và khóa 4); lỗi thì ném, rollback hết và relay giao lại (ADR-011)
       this.log.warn('không đọc được đơn, sẽ giao lại', { code: 'order-read-failed', event_type: e.type, order_id: orderId, err_code: String((err as { code?: unknown })?.code ?? 'unknown') });
       throw err;
     });
@@ -49,8 +49,8 @@ export class LifecycleService {
     const now = this.clock.now();
     const cod = o.payment_method === 'cod' ? o.grand_total : 0; // số tiền thu hộ do ORD cung cấp, không tính lại ở SHP
     const [row] = await tx.$queryRaw<{ id: string }[]>`
-      INSERT INTO shipments (order_id, shipping_method_id, cod_amount, created_at, updated_at)
-      VALUES (${o.order_id}::uuid, ${o.shipping_method_id}::uuid, ${cod}, ${now}::timestamptz, ${now}::timestamptz)
+      INSERT INTO shipments (order_id, order_code, shipping_method_id, cod_amount, created_at, updated_at)
+      VALUES (${o.order_id}::uuid, ${o.code}, ${o.shipping_method_id}::uuid, ${cod}, ${now}::timestamptz, ${now}::timestamptz)
       ON CONFLICT DO NOTHING RETURNING id`;
     if (!row) { this.log.info('đơn đã có vận đơn', { code: 'shipment-exists', event_type: e.type, order_code: o.code }); return; }
     await tx.$executeRaw`

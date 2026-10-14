@@ -1,9 +1,9 @@
 ---
 epic: ORD
 status: draft
-kit_version: 3               # bắt buộc giữ: bật kiểm cứng của check-review (Kết quả chạy lại, reviewed_tree, khớp [chưa làm], Kết quả sau sửa)
+kit_version: 4               # bắt buộc giữ: bật kiểm cứng của check-review (Kết quả chạy lại, reviewed_tree, khớp [chưa làm], Kết quả sau sửa; từ bản 4: không còn giá trị giữ chỗ TBD/TODO/0000000, ô Kết quả thật có số pass, bằng chứng không trỏ dòng trống hay chỉ `}`)
 reviewed_commit: abc1234     # git rev-parse --short HEAD của mã đã review
-reviewed_tree: 0000000       # khi mã bẩn hoặc chưa commit: node .claude/skills/sdlc-review/scripts/check-review.mjs --tree <gốc mã>; xóa dòng này nếu mã sạch
+reviewed_tree: <40 chữ số hex>  # khi mã bẩn hoặc chưa commit (bắt buộc đúng 40 chữ số hex, không dùng giá trị giữ chỗ): node .claude/skills/sdlc-review/scripts/check-review.mjs --tree <gốc mã>; xóa dòng này nếu mã sạch
 ---
 # Review: ORD
 

@@ -13,7 +13,7 @@ const STAFF_RECIPIENT: readonly ShipmentStatus[] = ['pending', 'shipped', 'faile
 export const listRowsSql = (cond: Prisma.Sql, dir: 'ASC' | 'DESC', take: number, skip: number): Prisma.Sql => {
   const d = dir === 'ASC' ? Prisma.sql`ASC` : Prisma.sql`DESC`;
   return Prisma.sql`
-    SELECT s.order_id, s.status::text AS status, s.tracking_number, m.name AS method_name, s.created_at, s.updated_at
+    SELECT s.order_code, s.status::text AS status, s.tracking_number, m.name AS method_name, s.created_at, s.updated_at
     FROM shipments s JOIN shipping_methods m ON m.id = s.shipping_method_id ${cond} ORDER BY s.created_at ${d}, s.id ${d} LIMIT ${take} OFFSET ${skip}`;
 };
 export const listCountSql = (cond: Prisma.Sql): Prisma.Sql => Prisma.sql`SELECT count(*)::int AS n FROM shipments s ${cond}`;
@@ -24,7 +24,7 @@ interface Current {
 
 /**
  * Đọc vận đơn (SHP-REQ ...927, ...972; SHP-DB mục Giao dịch và khóa 8). Quyền sở hữu do ORD quyết (`findOwned(code, user_id)` với `user_id` từ phiên, SB-06): đơn người khác, không có và mã
- * sai định dạng cùng là 404. SHP không SELECT bảng `orders` (SB-35): mã đơn của danh sách lấy qua `OrderApi`. Mỗi lần trả khối `recipient` cho staff, admin là một dòng audit ghi TRƯỚC khi trả
+ * sai định dạng cùng là 404. SHP không SELECT bảng `orders` (SB-35): mã đơn của danh sách lấy từ cột `order_code` của chính `shipments`. Mỗi lần trả khối `recipient` cho staff, admin là một dòng audit ghi TRƯỚC khi trả
  * (lỗi audit thì không trả và 500, SB-19).
  */
 @Injectable()
@@ -77,8 +77,9 @@ export class ReadService {
     const c = await this.current(o.order_id);
     if (!c) return { items: [] };
     const rows = await this.prisma.$queryRaw<{ created_at: Date; event: string; status: string; tracking_number: string | null; reason_code: string | null; note: string | null }[]>`
-      SELECT created_at, event::text AS event, status::text AS status, tracking_number, reason_code::text AS reason_code, note
-      FROM shipment_status_history WHERE shipment_id = ${c.id}::uuid ORDER BY seq ASC LIMIT ${HISTORY_MAX}`;
+      SELECT created_at, event, status, tracking_number, reason_code, note FROM (
+        SELECT seq, created_at, event::text AS event, status::text AS status, tracking_number, reason_code::text AS reason_code, note
+        FROM shipment_status_history WHERE shipment_id = ${c.id}::uuid ORDER BY seq DESC LIMIT ${HISTORY_MAX}) newest ORDER BY seq ASC`; // 100 dòng MỚI NHẤT rồi cũ nhất trước: trạng thái hiện tại luôn có mặt (SHP-API history, SHP-DB mục Giao dịch và khóa 8)
     const staff = s.role !== 'customer';
     return {
       items: rows.map((r) => ({
@@ -90,7 +91,7 @@ export class ReadService {
     };
   }
 
-  /** Danh sách cho staff, admin: không dữ liệu cá nhân, không tìm theo email, điện thoại (SB-08). `order_code` đổi thành `order_id` qua ORD; mã đơn của từng dòng cũng lấy qua ORD. */
+  /** Danh sách cho staff, admin: không dữ liệu cá nhân, không tìm theo email, điện thoại (SB-08). `order_code` của bộ lọc đổi thành `order_id` qua ORD; mã đơn của từng dòng đọc từ cột `shipments.order_code` (bản chụp bất biến lúc tạo, không còn gọi ORD từng dòng). */
   async list(q: ListQuery) {
     const where: Prisma.Sql[] = [];
     if (q.status) where.push(Prisma.sql`s.status = ${q.status}::shipment_status`);
@@ -103,13 +104,11 @@ export class ReadService {
     const cond = where.length ? Prisma.sql`WHERE ${Prisma.join(where, ' AND ')}` : Prisma.empty;
     const { skip, take } = paginate(q);
     const [rows, [{ n }]] = await Promise.all([
-      this.prisma.$queryRaw<{ order_id: string; status: string; tracking_number: string | null; method_name: string; created_at: Date; updated_at: Date }[]>(listRowsSql(cond, q.sort === 'oldest' ? 'ASC' : 'DESC', take, skip)),
+      this.prisma.$queryRaw<{ order_code: string | null; status: string; tracking_number: string | null; method_name: string; created_at: Date; updated_at: Date }[]>(listRowsSql(cond, q.sort === 'oldest' ? 'ASC' : 'DESC', take, skip)),
       this.prisma.$queryRaw<{ n: number }[]>(listCountSql(cond)),
     ]);
-    const codes = new Map<string, string>();
-    await Promise.all([...new Set(rows.map((r) => r.order_id))].map(async (id) => { codes.set(id, (await this.orders.getSummary(id))?.code ?? ''); }));
     return toPage(rows.map((r) => ({
-      order_code: codes.get(r.order_id) ?? '', status: r.status, tracking_number: r.tracking_number, method_name: r.method_name, created_at: r.created_at.toISOString(), updated_at: r.updated_at.toISOString(),
+      order_code: r.order_code ?? '', status: r.status, tracking_number: r.tracking_number, method_name: r.method_name, created_at: r.created_at.toISOString(), updated_at: r.updated_at.toISOString(),
     })), n, q);
   }
 }

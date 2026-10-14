@@ -2,4 +2,4 @@
 // `AddressService` (listAddresses, getAddress) cho CHK; `UserApi.countCustomers` cho DSH (architecture.md, bảng Giao diện module).
 export { UserModule } from './user.module';
 export { AddressService, type AddressForCheckout } from './address.service';
-export { UserApi } from './user.api';
+export { UserApi, type CustomerStats } from './user.api';

@@ -3,7 +3,7 @@ export type ShipmentStatus = 'pending' | 'shipped' | 'delivered' | 'failed' | 'r
 export const SHIPMENT_STATUSES: ShipmentStatus[] = ['pending', 'shipped', 'delivered', 'failed', 'returned', 'cancelled'];
 
 /** Tra bảng nhãn bằng giá trị từ API hoặc người nhập: `__proto__`, `constructor`, `toString` không được tra ra thuộc tính của Object.prototype. */
-const own = <T>(table: Record<string, T>, key: string): T | undefined => (Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined);
+export const own = <T>(table: Record<string, T>, key: string): T | undefined => (Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined);
 
 const STATUS_LABEL: Record<ShipmentStatus, string> = { pending: 'Chờ bàn giao', shipped: 'Đang giao', delivered: 'Đã giao', failed: 'Giao thất bại', returned: 'Đã hoàn', cancelled: 'Đã hủy' };
 export const shipmentStatusText = (s: string): string => own(STATUS_LABEL, s) ?? s;

@@ -1,5 +1,5 @@
-import type { Page } from 'playwright-core';
-import { advance, alignWindow, count, eventually, hasText, id, loginUi, reset, see, seedOrder, seedShipment, seedShippingMethod, seedUser, shipmentState, startE2e, textOf, urlIs, withPage, WEB, type E2eEnv } from './support';
+import type { Page, Route } from 'playwright-core';
+import { advance, alignWindow, count, eventually, hasText, id, loginUi, reset, see, seedOrder, seedShipment, sendEvent, seedShippingMethod, seedUser, shipmentState, startE2e, textOf, urlIs, withPage, WEB, type E2eEnv, API } from './support';
 
 // E2E của SHP chạy bằng Jest và playwright-core điều khiển Chromium thật: API thật (AppModule) trên PostgreSQL thật (`ecom_e2e`), bản build production của web.
 // Đơn, phương thức và vận đơn dựng thẳng qua cổng điều khiển (SHP không có endpoint tạo vận đơn: vận đơn do event của ORD, test dựng sẵn ở trạng thái cần). Giờ hiển thị là giờ Việt Nam (UTC+7).
@@ -8,13 +8,12 @@ beforeAll(async () => { env = await startE2e(); }, 420_000);
 afterAll(async () => { await env?.stop(); });
 beforeEach(async () => { await reset(); });
 const e2e = (name: string, fn: (page: Page) => Promise<void>) => it(name, () => withPage(env.browser, fn), 150_000);
-const API = 'http://localhost:3101/api/v1';
 
 /** Giờ Việt Nam `2026-10-06 09:59` thành ISO UTC. */
 const vn = (day: string, hhmm: string, plusMin = 0): string => new Date(Date.parse(`${day}T${hhmm}:00+07:00`) + plusMin * 60_000).toISOString();
 const D = '2026-10-06'; // fixed-clock: mốc của spec (bàn giao 06/10/2026 10:00), dữ liệu dựng tường minh theo mốc này, không trộn với now() của CSDL
 const ADDR = { receiver: 'Nguyễn Văn An', phone: '0901234567', line1: '12 Lê Lợi', ward: 'Bến Nghé', city: 'TP.HCM' };
-// Mã đơn "2N6R4T8W0KL" + "A" trong spec E2E có chữ L (ngoài bảng Crockford của mã đơn, API coi là sai định dạng và trả 404): test dùng "2N6R4T8W0KMA" ở mọi chỗ.
+// Mã đơn mẫu của spec E2E là "2N6R4T8W0KMA" (nằm trong bảng Crockford của mã đơn: bỏ I, L, O, U; spec cũ ghi mã có chữ L nên API coi là sai định dạng và trả 404, đã sửa qua sdlc-impact).
 const bodyText = (page: Page) => page.locator('body').innerText();
 const P = { list: 'shp-shipment-admin-list', det: 'shp-shipment-admin-detail', trk: 'shp-shipment-tracking', mth: 'shp-shipping-method-admin' };
 /** Tab trạng thái của danh sách vận đơn theo nhãn. */
@@ -25,6 +24,15 @@ const fromPage = (page: Page, path: string, times = 1, init?: { method: string; 
   for (let k = 0; k < n; k++) out.push((await fetch(`${api}${p}`, { method: i?.method ?? 'GET', credentials: 'include', headers: i ? { 'Content-Type': 'application/json' } : undefined, body: i ? JSON.stringify(i.body) : undefined })).status);
   return out;
 }, { api: API, p: path, n: times, i: init });
+/** Thay phản hồi của API bằng lỗi 500 (problem+json, kèm CORS để trình duyệt đọc được 5xx thật chứ không phải lỗi mạng) cho tới khi gọi hàm trả về. */
+const stub5xx = async (page: Page, re: RegExp): Promise<() => Promise<void>> => {
+  const handler = (route: Route) => route.fulfill({
+    status: 500, contentType: 'application/problem+json', headers: { 'Access-Control-Allow-Origin': WEB, 'Access-Control-Allow-Credentials': 'true' },
+    body: JSON.stringify({ type: 'urn:ecom:error:internal-error', title: 'Internal Server Error', status: 500, trace_id: 'e2e-5xx' }),
+  });
+  await page.route(re, handler);
+  return () => page.unroute(re, handler);
+};
 /** Đơn COD đã xác nhận (đủ điều kiện bàn giao) của khách `email`; tổng 380.000 đ (350.000 hàng và 30.000 phí). */
 const order = (email: string, code: string, status: 'confirmed' | 'shipped' | 'delivered' | 'returned' = 'confirmed') =>
   seedOrder({ email, code, status, method: 'cod', created_at: vn(D, '09:00'), address: ADDR, items: [{ price: 350000, qty: 1 }], shipping: 30000, tracking: status === 'confirmed' ? null : 'GHN12345678' });
@@ -381,6 +389,118 @@ describe('E2E SHP (trình duyệt thật, API thật)', () => {
     await urlIs(page, /\/orders\/7K3M9Q2XH4TB\/shipment$/);
     await hasText(id(page, `${P.trk}-status-badge`), 'Đang giao');
     await hasText(id(page, `${P.trk}-number`), 'GHN12345678');
+  });
+
+  // Mục 19 của report SHP (review SHP): lỗi 5xx ở màn quản trị, lỗi lịch sử riêng, 401 `session_expired`, bàn giao bị chặn. Web đã xử lý từ trước, nay có E2E.
+  e2e('SHP-E2E-20261008-091406629: admin gặp lỗi máy chủ (5xx) ở danh sách vận đơn, chi tiết vận đơn và danh sách phương thức rồi tải lại được', async (page) => {
+    await seedUser({ email: 'a1@shop.vn', role: 'admin' }); await seedUser({ email: 'c1@x.vn' });
+    await seedShippingMethod({ name: 'Giao tiêu chuẩn' });
+    await order('c1@x.vn', '7K3M9Q2XH4TB'); await seedShipment({ order_code: '7K3M9Q2XH4TB', status: 'pending', created_at: vn(D, '09:05') });
+    await loginUi(page, 'a1@shop.vn');
+
+    let off = await stub5xx(page, /\/api\/v1\/shipping\/shipments(\?.*)?$/);
+    await page.goto('/admin/shipments');
+    await hasText(id(page, `${P.list}-error`), /Không tải được danh sách vận đơn/);
+    await count(id(page, `${P.list}-row`), 0);
+    await off();
+    await id(page, `${P.list}-retry`).click();
+    await count(id(page, `${P.list}-error`), 0);
+    await count(id(page, `${P.list}-row`), 1);
+
+    off = await stub5xx(page, /\/api\/v1\/shipping\/orders\/7K3M9Q2XH4TB\/shipment$/);
+    await id(page, `${P.list}-row`).click();
+    await hasText(id(page, `${P.det}-error`), /Không tải được vận đơn/);
+    await count(id(page, `${P.det}-status-badge`), 0);
+    await off();
+    await id(page, `${P.det}-retry`).click();
+    await count(id(page, `${P.det}-error`), 0);
+    await hasText(id(page, `${P.det}-status-badge`), 'Chờ bàn giao');
+
+    off = await stub5xx(page, /\/api\/v1\/admin\/shipping\/methods(\?.*)?$/);
+    await page.goto('/admin/shipping-methods');
+    await hasText(id(page, `${P.mth}-error`), /Không tải được danh sách/);
+    await count(id(page, `${P.mth}-row`), 0);
+    await off();
+    await id(page, `${P.mth}-retry`).click();
+    await count(id(page, `${P.mth}-error`), 0);
+    await count(id(page, `${P.mth}-row`), 1);
+  });
+
+  e2e('SHP-E2E-20261008-091406726: lịch sử vận đơn lỗi riêng nên chi tiết vận đơn vẫn dùng được và lịch sử tải lại được', async (page) => {
+    await seedUser({ email: 's1@shop.vn', role: 'staff' }); await seedUser({ email: 'c1@x.vn' });
+    await order('c1@x.vn', '7K3M9Q2XH4TB', 'shipped'); await seedShipment({ order_code: '7K3M9Q2XH4TB', status: 'shipped', tracking: 'GHN12345678', created_at: vn(D, '09:05') });
+    await loginUi(page, 's1@shop.vn');
+    const off = await stub5xx(page, /\/api\/v1\/shipping\/orders\/7K3M9Q2XH4TB\/shipment\/history$/);
+    await page.goto('/admin/shipments/7K3M9Q2XH4TB');
+    await hasText(id(page, `${P.det}-status-badge`), 'Đang giao');
+    await hasText(id(page, `${P.det}-tracking`), 'GHN12345678');
+    await see(id(page, `${P.det}-deliver`));
+    await hasText(id(page, `${P.det}-history-error`), /Không tải được lịch sử/);
+    await count(id(page, `${P.det}-history-item`), 0);
+    await count(id(page, `${P.det}-error`), 0); // lỗi chỉ ở khối lịch sử, không phải cả màn
+    await off();
+    await id(page, `${P.det}-history-retry`).click();
+    await count(id(page, `${P.det}-history-error`), 0);
+    await count(id(page, `${P.det}-history-item`), 2);
+    await hasText(id(page, `${P.det}-status-badge`), 'Đang giao');
+  });
+
+  e2e('SHP-E2E-20261008-091406820: phiên hết hạn khi nhân viên đang xem chi tiết vận đơn thì hộp thoại chặn thao tác và dẫn về đăng nhập', async (page) => {
+    await seedUser({ email: 's1@shop.vn', role: 'staff' }); await seedUser({ email: 'c1@x.vn' });
+    await order('c1@x.vn', '7K3M9Q2XH4TB', 'shipped'); await seedShipment({ order_code: '7K3M9Q2XH4TB', status: 'shipped', tracking: 'GHN12345678', created_at: vn(D, '09:05') });
+    await loginUi(page, 's1@shop.vn');
+    await page.goto('/admin/shipments/7K3M9Q2XH4TB');
+    await hasText(id(page, `${P.det}-status-badge`), 'Đang giao');
+    await advance(31 * 60_000); // đồng hồ giả của API: 31 phút không thao tác
+    await id(page, `${P.det}-deliver`).click();
+    await id(page, `${P.det}-deliver-confirm`).click();
+    await see(id(page, `${P.det}-session-expired`));
+    expect((await shipmentState('7K3M9Q2XH4TB'))?.status).toBe('shipped'); // thao tác bị chặn ở máy chủ, không có ShipmentDelivered
+    expect((await shipmentState('7K3M9Q2XH4TB'))?.outbox).toEqual([]);
+    await id(page, 'auth-account-menu-session-expired-login').click();
+    await urlIs(page, /\/login\?next=%2Fadmin%2Fshipments%2F7K3M9Q2XH4TB&reason=expired/);
+  });
+
+  e2e('SHP-E2E-20261008-091406911: bàn giao bị chặn vì đơn đã hủy hoặc vận đơn vừa đổi trạng thái, nhân viên tải lại để thấy trạng thái mới', async (page) => {
+    await seedUser({ email: 's1@shop.vn', role: 'staff' }); await seedUser({ email: 's2@shop.vn', role: 'staff' }); await seedUser({ email: 'c1@x.vn' });
+    // đơn đã hủy ở ORD nhưng OrderCancelled chưa tới SHP: vận đơn còn `pending`
+    await seedOrder({ email: 'c1@x.vn', code: '7K3M9Q2XH4TB', status: 'cancelled', method: 'cod', created_at: vn(D, '09:00'), address: ADDR, items: [{ price: 350000, qty: 1 }], shipping: 30000, tracking: null });
+    await seedShipment({ order_code: '7K3M9Q2XH4TB', status: 'pending', cod_amount: 380000, created_at: vn(D, '09:05') });
+    await order('c1@x.vn', '5FQ2H8B7C1ZD'); await seedShipment({ order_code: '5FQ2H8B7C1ZD', status: 'pending', cod_amount: 380000, created_at: vn(D, '09:10') });
+    await loginUi(page, 's1@shop.vn');
+
+    await page.goto('/admin/shipments/7K3M9Q2XH4TB');
+    await id(page, `${P.det}-ship`).click();
+    await id(page, `${P.det}-ship-tracking-input`).fill('ghn12345678');
+    await id(page, `${P.det}-ship-confirm`).click();
+    await hasText(id(page, `${P.det}-ship-blocked`), /Đơn đã bị hủy hoặc không còn sẵn sàng giao/);
+    await see(id(page, `${P.det}-result-reload`));
+    await see(id(page, `${P.det}-ship-form`));
+    await hasText(id(page, `${P.det}-status-badge`), 'Chờ bàn giao');
+    await count(id(page, `${P.det}-toast-shipped`), 0);
+    expect((await shipmentState('7K3M9Q2XH4TB'))?.status).toBe('pending');
+    await sendEvent('OrderCancelled', '7K3M9Q2XH4TB', { order_code: '7K3M9Q2XH4TB', reason: 'customer_request' });
+    await id(page, `${P.det}-result-reload`).click();
+    await count(id(page, `${P.det}-ship-form`), 0);
+    await hasText(id(page, `${P.det}-status-badge`), 'Đã hủy');
+    await count(id(page, `${P.det}-ship`), 0);
+
+    await page.goto('/admin/shipments/5FQ2H8B7C1ZD');
+    await id(page, `${P.det}-ship`).click();
+    await id(page, `${P.det}-ship-tracking-input`).fill('vtp99887766');
+    await withPage(env.browser, async (other) => { // nhân viên khác bàn giao trước (API thật, cùng đường với màn chi tiết)
+      await loginUi(other, 's2@shop.vn');
+      expect(await fromPage(other, '/shipping/orders/5FQ2H8B7C1ZD/shipment/ship', 1, { method: 'POST', body: { tracking_number: 'GHN11112222' } })).toEqual([200]);
+    });
+    await id(page, `${P.det}-ship-confirm`).click();
+    await hasText(id(page, `${P.det}-ship-blocked`), /Vận đơn đã đổi trạng thái/);
+    await see(id(page, `${P.det}-result-reload`));
+    const s = await shipmentState('5FQ2H8B7C1ZD');
+    expect([s?.status, s?.tracking_number, s?.outbox]).toEqual(['shipped', 'GHN11112222', ['ShipmentShipped']]); // đúng một lần bàn giao, mã của người đến trước
+    await id(page, `${P.det}-result-reload`).click();
+    await count(id(page, `${P.det}-ship-form`), 0);
+    await hasText(id(page, `${P.det}-status-badge`), 'Đang giao');
+    await hasText(id(page, `${P.det}-tracking`), 'GHN11112222');
   });
 
   // Trạng thái có thời hạn (429, bậc D) phải có đường thoát: banner kèm thử lại sau N giây rồi tải lại được khi hết giờ chờ (đồng hồ API do cổng điều khiển tua).

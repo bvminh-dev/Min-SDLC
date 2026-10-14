@@ -1,0 +1,48 @@
+// Module checkout (epic CHK, CHK-DB-20261006-105800565): CheckoutSession. CHK không lưu tiền như nguồn sự thật (SB-23): `price_snapshot` chỉ để chẩn đoán.
+// Phần Prisma không biểu diễn được (CHECK, chỉ mục duy nhất một phần, chỉ mục một phần cho job) nằm trong migration SQL.
+// Khóa ngoại chỉ trỏ vào bảng của CHK hoặc của module trong cột Phụ thuộc (CRT `carts`, USR `addresses`, SHP `shipping_methods`, ORD `orders`); `user_id` là cột trơn (AUTH không nằm trong Phụ thuộc của CHK).
+// CHK không SELECT bảng của module khác (SB-35).
+
+enum CheckoutStatus {
+  open
+  completed
+  expired
+  cancelled
+
+  @@map("checkout_status")
+}
+
+enum CheckoutPaymentMethod {
+  vnpay
+  cod
+
+  @@map("checkout_payment_method")
+}
+
+model CheckoutSession {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String                 @map("user_id") @db.Uuid
+  cartId           String                 @map("cart_id") @db.Uuid
+  addressId        String?                @map("address_id") @db.Uuid
+  shippingMethodId String?                @map("shipping_method_id") @db.Uuid
+  orderId          String?                @map("order_id") @db.Uuid
+  paymentMethod    CheckoutPaymentMethod? @map("payment_method")
+  couponCode       String?                @map("coupon_code")
+  addressSnapshot  Json?                  @map("address_snapshot")
+  priceSnapshot    Json?                  @map("price_snapshot")
+  status           CheckoutStatus         @default(open)
+  expiresAt        DateTime               @map("expires_at") @db.Timestamptz(6)
+  lastActivityAt   DateTime               @default(now()) @map("last_activity_at") @db.Timestamptz(6)
+  createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime               @default(now()) @map("updated_at") @db.Timestamptz(6)
+  completedAt      DateTime?              @map("completed_at") @db.Timestamptz(6)
+
+  cart           Cart            @relation(fields: [cartId], references: [id], onDelete: Restrict)
+  address        Address?        @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  shippingMethod ShippingMethod? @relation(fields: [shippingMethodId], references: [id], onDelete: SetNull)
+  order          Order?          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([cartId])
+  @@map("checkout_sessions")
+}

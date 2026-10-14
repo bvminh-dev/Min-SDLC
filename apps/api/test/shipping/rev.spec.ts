@@ -101,10 +101,20 @@ describe('SHP bẫy bổ sung của review (mã mới, test mới)', () => {
     expect(await countOf(t, 'shipping_methods')).toBe(methods0);
     const v = await seedShipment(t, { status: 'shipped', tracking: 'GHN00000001', version: 2 });
     await q(t, `INSERT INTO shipment_status_history (shipment_id, event, status, tracking_number) SELECT '${v.id}', 'tracking_changed', 'shipped', 'GHN00000001' FROM generate_series(1, 150)`);
+    await q(t, `INSERT INTO shipment_status_history (shipment_id, event, status, tracking_number) VALUES ('${v.id}', 'tracking_changed', 'shipped', 'GHN00000999')`);
     t.clock.advance(61_000);
     const h = await call(t, 'get', `/shipping/orders/${v.order.code}/shipment/history`, { cookie: s1.cookie });
     expect(h.body.items).toHaveLength(100);
-    expect(h.body.items[0].status).toBe('pending'); // cũ nhất trước (theo seq): 100 dòng đầu, không phải 100 dòng cuối
+    expect(h.body.items[0].status).toBe('shipped'); // 152 dòng: bỏ các dòng CŨ nhất (pending, shipped đầu tiên), giữ 100 dòng MỚI NHẤT
+    expect(h.body.items[0].event).toBe('tracking_changed');
+    expect(h.body.items[99].tracking_number).toBe('GHN00000999'); // trạng thái hiện tại luôn có mặt, cuối danh sách (cũ nhất trước)
+    const customer = await who(t, 'customer', 'c9@x.vn');
+    const own = await seedOrderFor(t, { user: customer.id, status: 'shipped' });
+    const mine = await seedShipment(t, { status: 'shipped', order: own, tracking: 'GHN00000555', version: 2 });
+    await q(t, `INSERT INTO shipment_status_history (shipment_id, event, status, tracking_number) SELECT '${mine.id}', 'tracking_changed', 'shipped', 'GHN00000555' FROM generate_series(1, 120)`);
+    await q(t, `INSERT INTO shipment_status_history (shipment_id, event, status, tracking_number) VALUES ('${mine.id}', 'tracking_changed', 'shipped', 'GHN00000777')`);
+    const mineH = await call(t, 'get', `/shipping/orders/${own.code}/shipment/history`, { cookie: customer.cookie });
+    expect([mineH.status, mineH.body.items.length, mineH.body.items[99].tracking_number]).toEqual([200, 100, 'GHN00000777']); // customer cũng thấy trạng thái mới nhất dù lịch sử dài
   });
 
   it(`SHP-TC-20261006-102134039 ${SEC} T16, T25 (L72): đếm giới hạn bậc D chạy song song: 40 yêu cầu cùng lúc của một staff chỉ qua đúng 30 (đếm nguyên tử), 10 yêu cầu còn lại nhận 429`, async () => {
@@ -248,7 +258,7 @@ describe('SHP bẫy bổ sung của review (mã mới, test mới)', () => {
     expect((await call(t, 'get', '/shipping/methods', { cookie: c1.cookie })).body.items[0].name).toBe('__proto__');
   });
 
-  it(`SHP-TC-20261006-102133455 ${SEC} T20, T11 (L71): pool kết nối nhỏ (2) vẫn đủ cho relay giao OrderPaid lần lượt (handler giữ một kết nối của giao dịch giao event và đọc ORD bằng kết nối thứ hai); 8 event xử lý xong trong hạn, không treo`, async () => {
+  it(`SHP-TC-20261008-091406542 ${SEC} T20, T11 (L71): pool kết nối nhỏ (2) vẫn đủ cho relay giao OrderPaid lần lượt (handler giữ một kết nối của giao dịch giao event và đọc ORD bằng kết nối thứ hai); 8 event xử lý xong trong hạn, không treo`, async () => {
     const small = await createShpApp({ env: { DB_POOL_MAX: '2' } });
     try {
       const m = await seedMethod(small);

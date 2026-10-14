@@ -94,6 +94,14 @@ export class FixtureController {
   @Get('limited-a') @Public() @RateLimit({ tier: 'A', limit: 3, windowSeconds: 60 }) @Validate({})
   limitedA() { return { ok: true }; }
 
+  // review REV (REV-REV-15, L133): cùng đường dẫn, khác method và khác độ dài cửa sổ (như PUT và DELETE `/me/avatar` của USR): khóa bộ đếm phải gồm method và độ dài cửa sổ
+  @Get('limited-w') @Roles('customer') @RateLimit({ tier: 'B', limit: 3, windowSeconds: 3600 }) @Validate({})
+  limitedWGet() { return { ok: true }; }
+  @Put('limited-w') @Roles('customer') @RateLimit({ tier: 'B', limit: 3, windowSeconds: 3600 }) @Validate({})
+  limitedWPut() { return { ok: true }; }
+  @Delete('limited-w') @Roles('customer') @RateLimit({ tier: 'B', limit: 100, windowSeconds: 60 }) @Validate({})
+  limitedWDelete() { return { ok: true }; }
+
   /** Thứ tự kiểm của nền (PRJ-TC-20261006-180338418): ghi, chỉ admin, schema đóng, bậc A một yêu cầu mỗi cửa sổ. */
   @Post('ordered') @Roles('admin') @RateLimit({ tier: 'A', limit: 1, windowSeconds: 60 }) @Validate({ body: strictBody })
   ordered(@ValidBody() b: { name: string }) { return { name: b.name }; }

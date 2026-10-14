@@ -15,7 +15,9 @@ model Address {
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  // Phía ngược của khóa ngoại checkout_sessions.address_id (ON DELETE SET NULL, CHK phụ thuộc USR): USR không đọc bảng này.
+  checkoutSessions CheckoutSession[]
 
   @@map("addresses")
 }

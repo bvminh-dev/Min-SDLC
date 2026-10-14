@@ -1,0 +1,1102 @@
+{
+ "test": "node scripts/run-jest.mjs test/notification",
+ "mutations": [
+  {
+   "id": "T1, T9 SB-06, SB-08: người nhận không tồn tại không bị bỏ qua (FK lỗi, event giao lại mãi)",
+   "sb": [
+    "SB-06",
+    "SB-08"
+   ],
+   "tc": "NTF-TC-20261006-104222664",
+   "file": "src/modules/notification/consumer.service.ts",
+   "find": "      if (!contact) {",
+   "replace": "      if (contact === undefined) {",
+   "test": "node scripts/run-jest.mjs test/notification/consume.spec.ts -t \"NTF-TC-20261006-104222664\""
+  },
+  {
+   "id": "T8 SB-27: bỏ ON CONFLICT ở INSERT notifications (khóa tự nhiên payment_id không còn chặn)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "NTF-TC-20261006-104224270",
+   "file": "src/modules/notification/consumer.service.ts",
+   "find": "          ON CONFLICT DO NOTHING RETURNING id`;",
+   "replace": "          RETURNING id`;",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104224270\""
+  },
+  {
+   "id": "T10 SB-05, SB-07: cảnh báo tồn thấp gửi cả customer",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "NTF-TC-20261006-104226204",
+   "file": "src/modules/notification/templates.ts",
+   "find": "audience: { kind: 'roles', roles: ['staff', 'admin'] }",
+   "replace": "audience: { kind: 'roles', roles: ['customer', 'staff', 'admin'] }",
+   "test": "node scripts/run-jest.mjs test/notification/alerts.spec.ts -t \"NTF-TC-20261006-104226204\""
+  },
+  {
+   "id": "T10 SB-05, SB-07: hoàn tiền thất bại gửi cả staff",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "NTF-TC-20261006-104226272",
+   "file": "src/modules/notification/templates.ts",
+   "find": "audience: { kind: 'roles', roles: ['admin'] }",
+   "replace": "audience: { kind: 'roles', roles: ['staff', 'admin'] }",
+   "test": "node scripts/run-jest.mjs test/notification/alerts.spec.ts -t \"NTF-TC-20261006-104226272\""
+  },
+  {
+   "id": "SB-34: trần người nhận 200 thành 201",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104301770",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const MAX_RECIPIENTS = 200;",
+   "replace": "export const MAX_RECIPIENTS = 201;",
+   "test": "node scripts/run-jest.mjs test/notification/alerts.spec.ts -t \"NTF-TC-20261006-104301770\""
+  },
+  {
+   "id": "T7 SB-18: log event token kèm payload (token thô vào log)",
+   "sb": [
+    "SB-18",
+    "SB-03"
+   ],
+   "tc": "NTF-TC-20261006-104225796",
+   "file": "src/modules/notification/email.service.ts",
+   "find": "{ code: planned.code, event_type: env.type, event_id: env.event_id, user_id: planned.userId }",
+   "replace": "{ code: planned.code, event_type: env.type, event_id: env.event_id, user_id: planned.userId, ref: env.payload.token_ref }",
+   "test": "node scripts/run-jest.mjs test/notification/account-events.spec.ts -t \"NTF-TC-20261006-104225796\""
+  },
+  {
+   "id": "T15, BR5 SB-11: order_code không kiểm khuôn (liên kết lấy từ dữ liệu event)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-122800705",
+   "file": "src/modules/notification/templates.ts",
+   "find": "if (typeof v === 'string' && ORDER_CODE_RE.test(v)) return v;",
+   "replace": "if (typeof v === 'string' && v.length > 0) return v;",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-122800705\""
+  },
+  {
+   "id": "T4 SB-12: mã vận đơn 31 ký tự lọt khuôn",
+   "sb": [
+    "SB-12",
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104224734",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const TRACKING_RE = /^[A-Z0-9-]{8,30}$/;",
+   "replace": "export const TRACKING_RE = /^[A-Z0-9-]{1,31}$/;",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104224734\""
+  },
+  {
+   "id": "T4 SB-12: mã vận đơn tối thiểu 8 thành 9",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "NTF-TC-20261006-104224668",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const TRACKING_RE = /^[A-Z0-9-]{8,30}$/;",
+   "replace": "export const TRACKING_RE = /^[A-Z0-9-]{9,30}$/;",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104224668\""
+  },
+  {
+   "id": "BR2: was_paid không phải boolean cũng nêu hoàn tiền",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104225139",
+   "file": "src/modules/notification/templates.ts",
+   "find": "${f.was_paid === true ? ' Số tiền đã thanh toán sẽ được hoàn lại.' : ''}",
+   "replace": "${f.was_paid !== false ? ' Số tiền đã thanh toán sẽ được hoàn lại.' : ''}",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104225139\""
+  },
+  {
+   "id": "BR1 K-03: is_final chuỗi cũng coi là cuối",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104225469",
+   "file": "src/modules/notification/templates.ts",
+   "find": "if (p.is_final === true) f.final = true;",
+   "replace": "if (p.is_final) f.final = true;",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104225469\""
+  },
+  {
+   "id": "T18 SB-34: reason giao thất bại tự do được đưa vào mẫu",
+   "sb": [
+    "SB-34",
+    "SB-08"
+   ],
+   "tc": "NTF-TC-20261006-104224598",
+   "file": "src/modules/notification/templates.ts",
+   "find": "const reason = (FAIL_REASONS as readonly unknown[]).includes(p.reason) ? (p.reason as FailReason) : 'other';",
+   "replace": "const reason = p.reason as FailReason;",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104224598\""
+  },
+  {
+   "id": "BR3: amount 0 của PaymentSucceeded được nhận",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "NTF-TC-20261006-104224202",
+   "file": "src/modules/notification/templates.ts",
+   "find": "if (!user || !oid || !pid || !isMoney(p.amount) || p.amount <= 0) return refs();",
+   "replace": "if (!user || !oid || !pid || !isMoney(p.amount) || p.amount < 0) return refs();",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104224202\""
+  },
+  {
+   "id": "BR3: số thực được coi là số tiền hợp lệ",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "NTF-TC-20261006-104223940",
+   "file": "src/modules/notification/templates.ts",
+   "find": "typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;",
+   "replace": "typeof v === 'number' && v >= 0;",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104223940\""
+  },
+  {
+   "id": "BR3: định dạng tiền mất dấu chấm ngăn nghìn",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104223757",
+   "file": "src/modules/notification/templates.ts",
+   "find": "String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.')",
+   "replace": "String(n)",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104223757\""
+  },
+  {
+   "id": "BR8: giờ Việt Nam lệch một giờ",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104223817",
+   "file": "src/modules/notification/templates.ts",
+   "find": "Date.parse(iso) + 7 * 3600_000",
+   "replace": "Date.parse(iso) + 6 * 3600_000",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104223817\""
+  },
+  {
+   "id": "BR7: hạn thanh toán đã qua vẫn được nhắc",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104223817",
+   "file": "src/modules/notification/templates.ts",
+   "find": "Date.parse(p.payment_expires_at) > now.getTime()",
+   "replace": "Date.parse(p.payment_expires_at) > 0",
+   "test": "node scripts/run-jest.mjs test/notification/customer-events.spec.ts -t \"NTF-TC-20261006-104223817\""
+  },
+  {
+   "id": "T18 BR7: lý do khóa của admin đi thẳng vào mẫu",
+   "sb": [
+    "SB-34",
+    "SB-08"
+   ],
+   "tc": "NTF-TC-20261006-104225928",
+   "file": "src/modules/notification/templates.ts",
+   "find": "const lock_reason = p.reason === 'too_many_attempts' ? 'too_many_attempts' : 'admin';",
+   "replace": "const lock_reason = p.reason as 'admin';",
+   "test": "node scripts/run-jest.mjs test/notification/account-events.spec.ts -t \"NTF-TC-20261006-104225928\""
+  },
+  {
+   "id": "BR1: dùng on_hand thay available",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104226204",
+   "file": "src/modules/notification/templates.ts",
+   "find": "available: p.available, threshold: p.threshold };",
+   "replace": "available: p.on_hand, threshold: p.threshold };",
+   "test": "node scripts/run-jest.mjs test/notification/alerts.spec.ts -t \"NTF-TC-20261006-104226204\""
+  },
+  {
+   "id": "BR1: 8 ký tự đầu thành 9",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104226204",
+   "file": "src/modules/notification/templates.ts",
+   "find": "name || pid.slice(0, 8)",
+   "replace": "name || pid.slice(0, 9)",
+   "test": "node scripts/run-jest.mjs test/notification/alerts.spec.ts -t \"NTF-TC-20261006-104226204\""
+  },
+  {
+   "id": "T9 SB-08: UserRegistered ghi email của payload vào data thông báo",
+   "sb": [
+    "SB-08",
+    "SB-18"
+   ],
+   "tc": "NTF-TC-20261006-104226068",
+   "file": "src/modules/notification/templates.ts",
+   "find": "...notificationContent('welcome', {}), data: {}, dedupeKey: key('welcome') }",
+   "replace": "...notificationContent('welcome', {}), data: { email: p.email }, dedupeKey: key('welcome') }",
+   "test": "node scripts/run-jest.mjs test/notification/account-events.spec.ts -t \"NTF-TC-20261006-104226068\""
+  },
+  {
+   "id": "BR3 token: token_ref tới 129 ký tự",
+   "sb": [
+    "SB-03",
+    "SB-18"
+   ],
+   "tc": "NTF-TC-20261006-104225796",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const TOKEN_RE = /^[A-Za-z0-9_-]{43,128}$/;",
+   "replace": "export const TOKEN_RE = /^[A-Za-z0-9_-]{43,129}$/;",
+   "test": "node scripts/run-jest.mjs test/notification/account-events.spec.ts -t \"NTF-TC-20261006-104225796\""
+  },
+  {
+   "id": "BR4: expires_at đúng lúc xử lý vẫn gửi",
+   "sb": [
+    "SB-26"
+   ],
+   "tc": "NTF-TC-20261006-104226136",
+   "file": "src/modules/notification/templates.ts",
+   "find": "if (expiresAt.getTime() <= now.getTime())",
+   "replace": "if (expiresAt.getTime() < now.getTime())",
+   "test": "node scripts/run-jest.mjs test/notification/account-events.spec.ts -t \"NTF-TC-20261006-104226136\""
+  },
+  {
+   "id": "T4 SB-12: HTML không escape < và >",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "NTF-TC-20261006-104223630",
+   "file": "src/modules/notification/render.ts",
+   "find": ".replace(/</g, '&lt;').replace(/>/g, '&gt;')",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223630\""
+  },
+  {
+   "id": "T3 BR7: lời chào dài 51 ký tự",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "NTF-TC-20261006-104223630",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const GREETING_NAME_MAX = 50;",
+   "replace": "export const GREETING_NAME_MAX = 51;",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223630\""
+  },
+  {
+   "id": "T3 SB-11: họ tên vào tiêu đề thư",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "NTF-TC-20261006-104223630",
+   "file": "src/modules/notification/render.ts",
+   "find": "return { subject: c.title, text, html };",
+   "replace": "return { subject: `${c.title} ${name}`, text, html };",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223630\""
+  },
+  {
+   "id": "T15 BR8: liên kết email không dùng APP_BASE_URL",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104223060",
+   "file": "src/modules/notification/render.ts",
+   "find": "const url = c.link ? `${ctx.baseUrl}${c.link}` : null;",
+   "replace": "const url = c.link ? c.link : null;",
+   "test": "node scripts/run-jest.mjs test/notification/consume.spec.ts -t \"NTF-TC-20261006-104223060\""
+  },
+  {
+   "id": "T3 SB-11: ký tự xuống dòng trong họ tên không bị thay",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "NTF-TC-20261006-104223630",
+   "file": "src/modules/notification/templates.ts",
+   "find": ".replace(CONTROL_G, ' ')",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223630\""
+  },
+  {
+   "id": "T4 SB-12: dữ liệu email hỏng được chèn nguyên (order_code không kiểm lại)",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "NTF-TC-20261006-104225530",
+   "file": "src/modules/notification/templates.ts",
+   "find": "if (typeof d.order_code === 'string' && ORDER_CODE_RE.test(d.order_code)) f.order_code = d.order_code;",
+   "replace": "if (typeof d.order_code === 'string') f.order_code = d.order_code;",
+   "test": "node scripts/run-jest.mjs test/notification/review.spec.ts -t \"NTF-TC-20261006-104225530 \\(SB-12\\)\""
+  },
+  {
+   "id": "L113 SB-11: nửa cặp thay thế lẻ không bị bỏ",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104222599",
+   "file": "src/modules/notification/templates.ts",
+   "find": "s.replace(LONE_SURROGATE, '')",
+   "replace": "s",
+   "test": "node scripts/run-jest.mjs test/notification/review.spec.ts -t \"NTF-TC-20261006-104222599 \\(JSON\""
+  },
+  {
+   "id": "T11 SB-26: email giao dịch gửi cả địa chỉ chưa xác minh",
+   "sb": [
+    "SB-26"
+   ],
+   "tc": "NTF-TC-20261006-104223377",
+   "file": "src/modules/notification/email.service.ts",
+   "find": "if (!contact.email_verified) { await this.finish(row.id, 'skipped', 'unverified'); return 'skipped'; }",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223377\""
+  },
+  {
+   "id": "T5 SB-14: hạn mức email thường 30 thành 31",
+   "sb": [
+    "SB-14",
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104223500",
+   "file": "src/modules/notification/email.service.ts",
+   "find": "if (n >= NORMAL_CAP) {",
+   "replace": "if (n > NORMAL_CAP) {",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223500\""
+  },
+  {
+   "id": "T5 SB-14: cửa sổ 24 giờ thành 25 giờ",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "NTF-TC-20261006-104223500",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const NORMAL_CAP_WINDOW_MS = 24 * 3600_000;",
+   "replace": "export const NORMAL_CAP_WINDOW_MS = 25 * 3600_000;",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223500\""
+  },
+  {
+   "id": "T5 SB-14: hạn mức email đặt lại 10 thành 11",
+   "sb": [
+    "SB-14",
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104223567",
+   "file": "src/modules/notification/email.service.ts",
+   "find": "const capped = n >= SECRET_CAP;",
+   "replace": "const capped = n > SECRET_CAP;",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223567\""
+  },
+  {
+   "id": "T5 SB-14: cửa sổ 1 giờ của email đặt lại thành 2 giờ",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "NTF-TC-20261006-104223567",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const SECRET_CAP_WINDOW_MS = 3600_000;",
+   "replace": "export const SECRET_CAP_WINDOW_MS = 7200_000;",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223567\""
+  },
+  {
+   "id": "T17 SB-34: lần thử lại thứ hai sau 1 phút thay vì 5 phút",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104223250",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const RETRY_DELAYS_MS = [60_000, 5 * 60_000] as const;",
+   "replace": "export const RETRY_DELAYS_MS = [60_000, 60_000] as const;",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223250\""
+  },
+  {
+   "id": "T17 SB-34: lỗi vĩnh viễn vẫn thử lại",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104223313",
+   "file": "src/modules/notification/email.service.ts",
+   "find": "if (err.permanent || attempts >= MAX_SEND_ATTEMPTS) {",
+   "replace": "if (attempts >= MAX_SEND_ATTEMPTS) {",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223313\""
+  },
+  {
+   "id": "T17 SB-34: không thuê dòng khi nhận việc (hai job gửi trùng)",
+   "sb": [
+    "SB-34",
+    "SB-27"
+   ],
+   "tc": "NTF-TC-20261006-104223696",
+   "file": "src/modules/notification/email.service.ts",
+   "find": "UPDATE email_deliveries e SET next_attempt_at = ${lease}::timestamptz, updated_at = ${now}::timestamptz",
+   "replace": "UPDATE email_deliveries e SET updated_at = ${now}::timestamptz",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223696\""
+  },
+  {
+   "id": "L102 SB-34: lô 50 thành 500 dòng",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104223696",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const SEND_BATCH = 50;",
+   "replace": "export const SEND_BATCH = 500;",
+   "test": "node scripts/run-jest.mjs test/notification/review.spec.ts -t \"NTF-TC-20261006-104223696\""
+  },
+  {
+   "id": "BR6 T17: thử lại email bí mật 2 giây rồi 2 giây",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104223436",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const SECRET_RETRY_DELAYS_MS = [0, 2_000, 5_000] as const;",
+   "replace": "export const SECRET_RETRY_DELAYS_MS = [0, 2_000, 2_000] as const;",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223436\""
+  },
+  {
+   "id": "T2 SB-03, SB-18: token vào log khi gửi bí mật thất bại",
+   "sb": [
+    "SB-03",
+    "SB-18"
+   ],
+   "tc": "NTF-TC-20261006-104223436",
+   "file": "src/modules/notification/email.service.ts",
+   "find": "reason: last?.code, attempts: SECRET_RETRY_DELAYS_MS.length });",
+   "replace": "reason: last?.code, attempts: SECRET_RETRY_DELAYS_MS.length, ref: token });",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223436\""
+  },
+  {
+   "id": "T2 SB-03, SB-26: token đi vào dedupe_key của bản ghi",
+   "sb": [
+    "SB-03",
+    "SB-26"
+   ],
+   "tc": "NTF-TC-20261006-104223184",
+   "file": "src/modules/notification/email.service.ts",
+   "find": "${`${type}:${env.event_id}`}, ${capped ? 'skipped' : 'pending'}",
+   "replace": "${`${type}:${token}`}, ${capped ? 'skipped' : 'pending'}",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223184\""
+  },
+  {
+   "id": "BR6: bản ghi bí mật kẹt chỉ chờ 1 phút",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104223436",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const SECRET_LOST_MS = 5 * 60_000;",
+   "replace": "export const SECRET_LOST_MS = 1 * 60_000;",
+   "test": "node scripts/run-jest.mjs test/notification/email.spec.ts -t \"NTF-TC-20261006-104223436\""
+  },
+  {
+   "id": "T14: ký SigV4 sai dịch vụ (s3 thay ses)",
+   "sb": [
+    "SB-15"
+   ],
+   "tc": "NTF-SEC-20261006-103815605",
+   "file": "src/modules/notification/mail.ts",
+   "find": "service: 'ses', accessKey: this.o.accessKey",
+   "replace": "service: 's3', accessKey: this.o.accessKey",
+   "test": "node scripts/run-jest.mjs test/notification/ses.spec.ts -t \"vectơ HẰNG SỐ\""
+  },
+  {
+   "id": "T17: throttling coi là lỗi vĩnh viễn",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-SEC-20261006-103815605",
+   "file": "src/modules/notification/mail.ts",
+   "find": "throw new MailError('ses_throttled', false);",
+   "replace": "throw new MailError('ses_throttled', true);",
+   "test": "node scripts/run-jest.mjs test/notification/ses.spec.ts -t \"phân loại lỗi SES\""
+  },
+  {
+   "id": "T14: lỗi chữ ký coi là tạm thời",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-SEC-20261006-103815605",
+   "file": "src/modules/notification/mail.ts",
+   "find": "throw new MailError('ses_auth', true);",
+   "replace": "throw new MailError('ses_auth', false);",
+   "test": "node scripts/run-jest.mjs test/notification/ses.spec.ts -t \"yêu cầu thật tới SES giả\""
+  },
+  {
+   "id": "T15 SB-09: APP_BASE_URL http được chấp nhận ngoài dev",
+   "sb": [
+    "SB-09",
+    "SB-11"
+   ],
+   "tc": "NTF-SEC-20261006-103815605",
+   "file": "src/modules/notification/mail.ts",
+   "find": "if (!dev && !v.APP_BASE_URL.startsWith('https://'))",
+   "replace": "if (false)",
+   "test": "node scripts/run-jest.mjs test/notification/ses.spec.ts -t \"bộ chuyển thư theo cấu hình\""
+  },
+  {
+   "id": "T15 SB-16: gốc URL có đường dẫn con được chấp nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-SEC-20261006-103815605",
+   "file": "src/modules/notification/config.ts",
+   "find": "&& u.pathname === '/' &&",
+   "replace": "&& true &&",
+   "test": "node scripts/run-jest.mjs test/notification/ses.spec.ts -t \"bộ chuyển thư theo cấu hình\""
+  },
+  {
+   "id": "T1 SB-06: UPDATE đánh dấu đọc không ràng buộc user_id",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "NTF-TC-20261006-104302157",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "WHERE id = ${id}::uuid AND user_id = ${userId}::uuid AND status = 'unread'::notification_status AND ${WINDOW} RETURNING ${COLS}",
+   "replace": "WHERE id = ${id}::uuid AND status = 'unread'::notification_status AND ${WINDOW} RETURNING ${COLS}",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302157\""
+  },
+  {
+   "id": "T1 SB-06: SELECT phân biệt đã đọc không ràng buộc user_id",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "NTF-TC-20261006-104302157",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "SELECT ${COLS} FROM notifications WHERE id = ${id}::uuid AND user_id = ${userId}::uuid AND ${WINDOW}",
+   "replace": "SELECT ${COLS} FROM notifications WHERE id = ${id}::uuid AND ${WINDOW}",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302157\""
+  },
+  {
+   "id": "T1 SB-06: read-all đánh dấu cả thông báo người khác",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "NTF-TC-20261006-104302026",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "WHERE user_id = ${userId}::uuid AND status = 'unread'::notification_status AND created_at <= LEAST",
+   "replace": "WHERE status = 'unread'::notification_status AND created_at <= LEAST",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302026\""
+  },
+  {
+   "id": "T1 SB-06: danh sách không lọc theo người gọi",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "NTF-TC-20261006-104303037",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "const where: Prisma.Sql[] = [Prisma.sql`user_id = ${userId}::uuid`, WINDOW];",
+   "replace": "const where: Prisma.Sql[] = [WINDOW];",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104303037\""
+  },
+  {
+   "id": "T1 SB-06: đếm chưa đọc tính cả người khác",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "NTF-TC-20261006-104302026",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "count(*)::int AS n FROM notifications WHERE user_id = ${userId}::uuid AND status = 'unread'::notification_status AND ${WINDOW}",
+   "replace": "count(*)::int AS n FROM notifications WHERE status = 'unread'::notification_status AND ${WINDOW}",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302026\""
+  },
+  {
+   "id": "BR4: đếm chưa đọc tính cả đã đọc",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104301925",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "count(*)::int AS n FROM notifications WHERE user_id = ${userId}::uuid AND status = 'unread'::notification_status AND ${WINDOW}",
+   "replace": "count(*)::int AS n FROM notifications WHERE user_id = ${userId}::uuid AND ${WINDOW}",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104301925\""
+  },
+  {
+   "id": "BR1: sắp cũ nhất trước",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104302787",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "ORDER BY created_at DESC, id DESC LIMIT ${take}",
+   "replace": "ORDER BY created_at ASC, id ASC LIMIT ${take}",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302787\""
+  },
+  {
+   "id": "T1 SB-06: id sai dạng không đi cùng đường (500 thay vì 404)",
+   "sb": [
+    "SB-06",
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104302157",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "const id = isUuid(rawId) ? rawId : NIL;",
+   "replace": "const id = rawId;",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302157\""
+  },
+  {
+   "id": "T15 REV-NTF-04: CHECK link quay về biểu thức cũ cho qua // đầu",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104223060",
+   "file": "prisma/migrations/20261013000300_notification_link_hardening/migration.sql",
+   "find": "link ~ '^/([A-Za-z0-9_-][A-Za-z0-9/_-]*)?$'",
+   "replace": "link ~ '^/[A-Za-z0-9/_-]*$'",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-TC-20261006-104223060\""
+  },
+  {
+   "id": "T1 REV-NTF-11: id sai dạng trả 404 ngay không chạy câu SQL nào (khác dãy câu SQL của hai nhánh kia)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "NTF-TC-20261006-104302157",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "const id = isUuid(rawId) ? rawId : NIL;",
+   "replace": "if (!isUuid(rawId)) throw new DomainError('not-found');\n    const id = rawId;",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302157\""
+  },
+  {
+   "id": "BR3: up_to ở tương lai không bị kẹp",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104302542",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "LEAST(COALESCE(${upTo}::timestamptz, now()), now())",
+   "replace": "COALESCE(${upTo}::timestamptz, now())",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302542\""
+  },
+  {
+   "id": "BR4: hạn lưu hiển thị 180 thành 182 ngày",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104303212",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const NOTIFICATION_RETENTION_DAYS = 180;",
+   "replace": "export const NOTIFICATION_RETENTION_DAYS = 182;",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104303212\""
+  },
+  {
+   "id": "BR2: bỏ lọc theo type",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104302866",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "if (q.type) where.push(Prisma.sql`type = ${q.type}::notification_type`);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302866\""
+  },
+  {
+   "id": "BR2: bỏ lọc theo status",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104302866",
+   "file": "src/modules/notification/read.service.ts",
+   "find": "if (q.status) where.push(Prisma.sql`status = ${q.status}::notification_status`);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302866\""
+  },
+  {
+   "id": "T1, T10 SB-05, SB-07: staff và admin bị chặn khỏi lịch sử (code lệch ma trận)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "NTF-SEC-20261006-103815605",
+   "file": "src/modules/notification/notification.controller.ts",
+   "find": "@Get() @Action('Xem lịch sử thông báo của mình (lọc đọc hoặc chưa đọc, theo loại)') @Roles('customer', 'staff', 'admin')",
+   "replace": "@Get() @Action('Xem lịch sử thông báo của mình (lọc đọc hoặc chưa đọc, theo loại)') @Roles('customer')",
+   "test": "node scripts/run-jest.mjs test/notification/guard.spec.ts -t \"T1, T10 \\(SB-05, SB-07\\): mọi route\""
+  },
+  {
+   "id": "T12 SB-14: read-all không giới hạn tần suất",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "NTF-TC-20261006-104303133",
+   "file": "src/modules/notification/notification.controller.ts",
+   "find": "@Post('read-all') @Action('Đánh dấu tất cả thông báo đã đọc') @HttpCode(200) @Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.all)",
+   "replace": "@Post('read-all') @Action('Đánh dấu tất cả thông báo đã đọc') @HttpCode(200) @Roles('customer', 'staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104303133\""
+  },
+  {
+   "id": "BR2: POST read trả 201 thay vì 200",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104301925",
+   "file": "src/modules/notification/notification.controller.ts",
+   "find": "@Post(':id/read') @Action('Đánh dấu một thông báo đã đọc') @HttpCode(200)",
+   "replace": "@Post(':id/read') @Action('Đánh dấu một thông báo đã đọc')",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104301925\""
+  },
+  {
+   "id": "T1 SB-11: trường lạ trong body không bị từ chối",
+   "sb": [
+    "SB-11",
+    "SB-05"
+   ],
+   "tc": "NTF-TC-20261006-104302379",
+   "file": "src/modules/notification/policy.ts",
+   "find": "for (const k of Object.keys(o)) if (!known.has(k)) ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302379\""
+  },
+  {
+   "id": "T1 SB-11: tham số lạ user_id ở danh sách không bị từ chối",
+   "sb": [
+    "SB-11",
+    "SB-06"
+   ],
+   "tc": "NTF-TC-20261006-104303037",
+   "file": "src/modules/notification/policy.ts",
+   "find": "export const listQuery = paginationQuery.extend({",
+   "replace": "export const listQuery = paginationQuery.passthrough().extend({",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104303037\""
+  },
+  {
+   "id": "T12 SB-11: type không kiểm theo 15 loại",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104302943",
+   "file": "src/modules/notification/policy.ts",
+   "find": "type: enumOf([...NOTIFICATION_TYPES] as [string, ...string[]]).optional()",
+   "replace": "type: z.string().optional()",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302943\""
+  },
+  {
+   "id": "BR3 SB-11: up_to không kiểm dạng ISO có múi giờ",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104302379",
+   "file": "src/modules/notification/policy.ts",
+   "find": "const real = ISO_TZ.test(v) && !Number.isNaN(ms) && mo >= 1 && mo <= 12 && d >= 1 && d <= new Date(Date.UTC(y, mo, 0)).getUTCDate();",
+   "replace": "const real = !Number.isNaN(ms);",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302379\""
+  },
+  {
+   "id": "T13 SB-13: CSRF không kiểm Origin",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "NTF-TC-20261006-104302303",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "if (!origin || !this.allowed.has(origin)) throw new DomainError('csrf_failed');",
+   "replace": "if (false) throw new DomainError('csrf_failed');",
+   "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104302303\""
+  },
+  {
+   "id": "ADR-022: hạn lưu email 90 thành 92 ngày",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104222999",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const EMAIL_RETENTION_DAYS = 90;",
+   "replace": "export const EMAIL_RETENTION_DAYS = 92;",
+   "test": "node scripts/run-jest.mjs test/notification/consume.spec.ts -t \"NTF-TC-20261006-104222999\""
+  },
+  {
+   "id": "ADR-022: lô dọn 1000 thành 2000",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "NTF-TC-20261006-104222999",
+   "file": "src/modules/notification/config.ts",
+   "find": "export const CLEANUP_BATCH = 1000;",
+   "replace": "export const CLEANUP_BATCH = 2000;",
+   "test": "node scripts/run-jest.mjs test/notification/consume.spec.ts -t \"NTF-TC-20261006-104222999\""
+  },
+  {
+   "id": "SB-27: SKIP không được coi là đã xử lý (platform)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "NTF-TC-20261006-104222664",
+   "file": "src/modules/platform/events/events.service.ts",
+   "find": "if (prepared === SKIP) return 'skipped' as const;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/platform/events.spec.ts -t \"NTF-TC-20261006-104222664: prepare trả SKIP\""
+  },
+  {
+   "id": "SB-31, L71: pha chuẩn bị chạy TRONG giao dịch (hold-and-wait ở pool nhỏ)",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "NTF-TC-20261006-104222863",
+   "file": "src/modules/platform/events/events.service.ts",
+   "find": "      const prepared = sub.prepared ? await sub.prepared.prepare(env) : undefined;\n      if (prepared === SKIP) return 'skipped' as const;\n      return this.transactions.run(async (tx) => {",
+   "replace": "      return this.transactions.run(async (tx) => {\n        const prepared = sub.prepared ? await sub.prepared.prepare(env) : undefined;\n        if (prepared === SKIP) return 'skipped' as const;",
+   "test": "node scripts/run-jest.mjs test/notification/review.spec.ts -t \"NTF-TC-20261006-104222863 \\(L71\""
+  },
+  {
+   "id": "SB-27, K-14: handler raw của event token không chạy",
+   "sb": [
+    "SB-27",
+    "SB-03"
+   ],
+   "tc": "NTF-TC-20261006-104223184",
+   "file": "src/modules/platform/events/events.service.ts",
+   "find": "if (sub.raw) await sub.raw(env);",
+   "replace": "if (sub.raw && false) await sub.raw(env);",
+   "test": "node scripts/run-jest.mjs test/platform/events.spec.ts -t \"NTF-TC-20261006-104223184: subscribeRaw\""
+  },
+  {
+   "id": "K-14: subscribeRaw nhận cả event đi outbox",
+   "sb": [
+    "SB-03",
+    "SB-27"
+   ],
+   "tc": "NTF-TC-20261006-104223184",
+   "file": "src/modules/platform/events/events.service.ts",
+   "find": "if (!TOKEN_EVENTS.has(type)) throw new ProgrammingError(`subscribeRaw chỉ nhận",
+   "replace": "if (false) throw new ProgrammingError(`subscribeRaw chỉ nhận",
+   "test": "node scripts/run-jest.mjs test/platform/events.spec.ts -t \"NTF-TC-20261006-104223184: subscribeRaw\""
+  },
+  {
+   "id": "NTF-DB: title tối đa 120 thành 121",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CHECK (char_length(title) BETWEEN 1 AND 120)",
+   "replace": "CHECK (char_length(title) BETWEEN 1 AND 121)",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "NTF-DB: body tối đa 500 thành 501",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CHECK (char_length(body) BETWEEN 1 AND 500)",
+   "replace": "CHECK (char_length(body) BETWEEN 1 AND 501)",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "T15 SB-11: CHECK link cho phép https và //",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261013000300_notification_link_hardening/migration.sql",
+   "find": "link ~ '^/([A-Za-z0-9_-][A-Za-z0-9/_-]*)?$'",
+   "replace": "link ~ '^[A-Za-z0-9/_:.-]*$'",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "NTF-DB: CHECK data là đối tượng bị gỡ",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"notifications_data_object\" CHECK (jsonb_typeof(data) = 'object'),",
+   "replace": "ADD CONSTRAINT \"notifications_data_object\" CHECK (true),",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "SB-24: CHECK status và read_at bị gỡ",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CHECK ((status = 'read') = (read_at IS NOT NULL))",
+   "replace": "CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "NTF-DB: độ dài dedupe_key 120 thành 121 (notifications)",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "\"notifications_dedupe_key_len\" CHECK (char_length(dedupe_key) <= 120)",
+   "replace": "\"notifications_dedupe_key_len\" CHECK (char_length(dedupe_key) <= 121)",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "NTF-DB: attempts tối đa 3 thành 4",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CHECK (attempts BETWEEN 0 AND 3)",
+   "replace": "CHECK (attempts BETWEEN 0 AND 4)",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "NTF-DB: delivery_reason 50 thành 51",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CHECK (char_length(delivery_reason) <= 50)",
+   "replace": "CHECK (char_length(delivery_reason) <= 51)",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "T2 SB-03: CHECK email bí mật không có data bị gỡ",
+   "sb": [
+    "SB-03",
+    "SB-26"
+   ],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CHECK (type NOT IN ('email_verification', 'password_reset') OR data = '{}'::jsonb)",
+   "replace": "CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "T8 SB-27: unique (user_id, dedupe_key) thành chỉ mục thường",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "NTF-TC-20261006-104222863",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"notifications_user_id_dedupe_key_key\"",
+   "replace": "CREATE INDEX \"notifications_user_id_dedupe_key_key\"",
+   "test": "node scripts/run-jest.mjs test/notification/consume.spec.ts -t \"NTF-TC-20261006-104222863 \\(T8\""
+  },
+  {
+   "id": "T8 SB-27: unique email (user_id, type, dedupe_key) thành chỉ mục thường",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"email_deliveries_user_id_type_dedupe_key_key\"",
+   "replace": "CREATE INDEX \"email_deliveries_user_id_type_dedupe_key_key\"",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "BR4 SB-27: unique một phần low_stock thành chỉ mục thường",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "NTF-TC-20261006-104301655",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"notifications_low_stock_unread_key\"",
+   "replace": "CREATE INDEX \"notifications_low_stock_unread_key\"",
+   "test": "node scripts/run-jest.mjs test/notification/alerts.spec.ts -t \"NTF-TC-20261006-104301655\""
+  },
+  {
+   "id": "BR4 SB-27: unique một phần refund_failed thành chỉ mục thường",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "NTF-TC-20261006-104301655",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"notifications_refund_failed_unread_key\"",
+   "replace": "CREATE INDEX \"notifications_refund_failed_unread_key\"",
+   "test": "node scripts/run-jest.mjs test/notification/alerts.spec.ts -t \"NTF-TC-20261006-104301655\""
+  },
+  {
+   "id": "NTF-DB: khóa ngoại notifications CASCADE thành RESTRICT",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "REFERENCES \"users\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"email_deliveries\"",
+   "replace": "REFERENCES \"users\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"email_deliveries\"",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "SB-24: trigger thông báo cho phép read quay lại unread",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "IF OLD.status = 'read' AND (NEW.status IS DISTINCT FROM OLD.status OR NEW.read_at IS DISTINCT FROM OLD.read_at) THEN",
+   "replace": "IF FALSE THEN",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "SB-24: trigger thông báo cho phép sửa nội dung",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "RAISE EXCEPTION 'notification content is immutable' USING ERRCODE = 'integrity_constraint_violation';",
+   "replace": "NULL;",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "SB-24: trigger email cho phép đổi trạng thái cuối",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "IF OLD.delivery_status <> 'pending' THEN",
+   "replace": "IF FALSE THEN",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "NTF-DB: enum kênh có thêm email",
+   "sb": [],
+   "tc": "NTF-DB-20261006-103815422",
+   "file": "prisma/migrations/20261009000300_notification_tables/migration.sql",
+   "find": "CREATE TYPE \"notification_channel\" AS ENUM ('in_app');",
+   "replace": "CREATE TYPE \"notification_channel\" AS ENUM ('in_app', 'email');",
+   "test": "node scripts/run-jest.mjs test/notification/db.spec.ts -t \"NTF-DB-20261006-103815422\""
+  },
+  {
+   "id": "UI: huy hiệu hiện \"99+\" từ 99",
+   "sb": [],
+   "tc": "NTF-TC-20261006-104302702",
+   "file": "../web/lib/notification-const.ts",
+   "find": "export const badgeText = (n: number): string => (n > 99 ? '99+' : n > 0 ? String(n) : '');",
+   "replace": "export const badgeText = (n: number): string => (n >= 99 ? '99+' : n > 0 ? String(n) : '');",
+   "test": "node scripts/run-jest.mjs test/notification/web.spec.ts -t \"NTF-TC-20261006-104302702\""
+  },
+  {
+   "id": "T10 UI: customer thấy loại tồn kho",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "NTF-TC-20261006-104303290",
+   "file": "../web/lib/notification-const.ts",
+   "find": ": CUSTOMER_TYPES;",
+   "replace": ": [...CUSTOMER_TYPES, 'low_stock'];",
+   "test": "node scripts/run-jest.mjs test/notification/web.spec.ts -t \"NTF-TC-20261006-104303290\""
+  },
+  {
+   "id": "T15 UI: liên kết ngoài được điều hướng",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "NTF-TC-20261006-104223060",
+   "file": "../web/lib/notification-const.ts",
+   "find": "/^\\/(?!\\/)[A-Za-z0-9/_-]*$/.test(l)",
+   "replace": "/^.*$/.test(l)",
+   "test": "node scripts/run-jest.mjs test/notification/web.spec.ts -t \"NTF-TC-20261006-104223060\""
+  },
+  {
+   "id": "UI 429: trang danh sách không nêu \"Thử lại sau ít giây\"",
+   "sb": [],
+   "tc": "NTF-E2E-20261006-104226604",
+   "file": "../web/app/notifications/page.tsx",
+   "find": "r.status === 429 ? 'Thử lại sau ít giây' : r.status === 400",
+   "replace": "r.status === 429 ? 'Lỗi' : r.status === 400",
+   "test": "node scripts/run-jest.mjs test/e2e/ntf.e2e.spec.ts -t \"NTF-E2E-20261006-104226604\""
+  },
+  {
+   "id": "UI 500: khung chuông không nêu thông điệp lỗi tải",
+   "sb": [],
+   "tc": "NTF-E2E-20261006-104226604",
+   "file": "../web/components/NotificationBell.tsx",
+   "find": "setErrText(r.status === 429 ? 'Thử lại sau ít giây' : 'Không tải được thông báo.'); setView('error'); }\n  }, []);",
+   "replace": "setErrText('Lỗi'); setView('error'); }\n  }, []);",
+   "test": "node scripts/run-jest.mjs test/e2e/ntf.e2e.spec.ts -t \"NTF-E2E-20261006-104226604\""
+  },
+  {
+   "id": "UI: Esc không đóng khung (esc handler bỏ)",
+   "sb": [],
+   "tc": "NTF-E2E-20261006-104226408",
+   "file": "../web/components/NotificationBell.tsx",
+   "find": "const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };",
+   "replace": "const esc = (_e: KeyboardEvent) => { /* bỏ */ };",
+   "test": "node scripts/run-jest.mjs test/e2e/ntf.e2e.spec.ts -t \"NTF-E2E-20261006-104226408\""
+  }
+ ]
+}

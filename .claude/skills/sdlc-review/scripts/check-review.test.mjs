@@ -1,7 +1,7 @@
 // Kiểm nhanh check-review.mjs: node check-review.test.mjs
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -93,4 +93,38 @@ const l48 = run({ sb: SB2, fm: F2, rerun: RR(), perm: FIXED }, { report: REPORT(
 assert.equal(l48.status, 0, l48.stderr);
 assert.match(l48.stdout, /Lưu ý: .*Kết quả sau sửa/);
 assert.equal(f3({ perm: row('Xem đơn của tôi'), rerun: RR() }).status, 0, 'không có dòng Đã sửa thì không cần mục');
+
+// ---- L93 (kit_version: 4): review bị ngắt giữa chừng còn chữ giữ chỗ vẫn không được qua; kit_version 3 chỉ cảnh báo
+const F4 = 'kit_version: 4\n';
+const f4 = (o, rep = REPORT()) => run({ sb: SB2, fm: F4, rerun: RR(), ...o }, { report: rep });
+const f4bad = (o, re) => { const x = f4(o); assert.equal(x.status, 1, String(re)); assert.match(x.stderr, re); };
+assert.equal(f4().status, 0, f4().stderr);
+f4bad({ rerun: RR('TBD_TEST_RESULT', 'TBD_TEST_COMPARE') }, /giữ chỗ|TBD/);
+f4bad({ rerun: RR('Tests: chạy xong, xanh') }, /số pass/);
+f4bad({ rerun: RR('Tests: ... passed') }, /giữ chỗ|\.\.\./);
+f4bad({ fm: `${F4}reviewed_tree: 0000000\n` }, /reviewed_tree.*40/);
+f4bad({ sb: SB2.replace('src/a.ts:2', 'TBD_EVIDENCE') }, /giữ chỗ|TBD/);
+const PH = { rerun: RR('TBD_TEST_RESULT', 'TBD_TEST_COMPARE'), fm: `${F3}reviewed_tree: 0000000\n` };
+const w93 = run({ sb: SB2, ...PH }, { report: REPORT() });
+assert.equal(w93.status, 0, 'kit_version 3 chỉ cảnh báo, không làm đỏ review đã có\n' + w93.stderr);
+assert.match(w93.stdout, /Lưu ý: .*(giữ chỗ|TBD)/);
+assert.match(w93.stdout, /Lưu ý: .*reviewed_tree/);
+assert.equal(run({ sb: SB2, rerun: RR(), fm: F4 }, { report: REPORT() }).status, 0);
+
+// ---- L65: review trên cây sạch tại reviewed_commit, mã đổi sau đó: nói dòng bằng chứng nào lệch và dòng cũ nay ở đâu; dòng bằng chứng trống hoặc chỉ `}` là cảnh báo (kit_version 4: lỗi)
+const D = run({ sb: SB2, fm: F3, rerun: RR(), api: row('GET /api/v1/orders', 'đạt', 'src/a.ts:2') }, { git: true, report: REPORT() });
+const gitIn = (...a) => spawnSync('git', a, { cwd: D.r, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' } });
+rmSync(join(D.r, 'src/dirty.ts'));
+put(D.r, 'spec/epics/ORD/review.md', review({ sb: SB2, fm: F3, rerun: RR(), commit: D.o2.commit, api: row('GET /api/v1/orders', 'đạt', 'src/a.ts:2') }));
+put(D.r, 'src/a.ts', 'X\na\nb\nc\n');
+gitIn('commit', '-qam', 'chèn một dòng');
+const drift = spawnSync('node', [script, join(D.r, 'spec'), D.r, '--epic', 'ORD'], { encoding: 'utf8' });
+assert.equal(drift.status, 0, drift.stderr);
+assert.match(drift.stdout, /Lưu ý: .*dòng 2 của src\/a\.ts đã đổi; dòng cũ nay ở 3/);
+const eof = run({ sb: SB2, fm: F4, rerun: RR(), api: row('GET /api/v1/orders', 'đạt', 'src/a.ts:4') }, { report: REPORT() }); // dòng 4 của 'a\nb\nc\n' là dòng rỗng cuối
+assert.equal(eof.status, 1, 'kit_version 4: bằng chứng trỏ dòng trống phải lỗi');
+assert.match(eof.stderr, /dòng trống|chỉ gồm/);
+const eof3 = run({ sb: SB2, fm: F3, rerun: RR(), api: row('GET /api/v1/orders', 'đạt', 'src/a.ts:4') }, { report: REPORT() });
+assert.equal(eof3.status, 0, eof3.stderr);
+assert.match(eof3.stdout, /Lưu ý: .*dòng trống|Lưu ý: .*chỉ gồm/);
 console.log('OK: check-review.mjs');

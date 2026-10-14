@@ -121,6 +121,27 @@ describe('Trường phụ của problem+json (DomainError.options.extra, dùng b
   });
 });
 
+describe('Status riêng của một lần ném (DomainError.options.status, dùng bởi CRT: product-unavailable 404 khi thêm, 409 khi tăng số lượng dòng ngừng bán)', () => {
+  it('CRT-TC-20261006-104452006 CRT-TC-20261006-104451131: status ghi đè chỉ nhận 4xx hay 5xx nguyên; ngoài khoảng, số thực hay vắng thì dùng status của sổ mã; mã `type` không đổi', () => {
+    expect(buildProblem('conflict', 't', { status: 404 })).toMatchObject({ type: 'urn:ecom:error:conflict', status: 404 });
+    expect(buildProblem('not-found', 't', { status: 409 })).toMatchObject({ type: 'urn:ecom:error:not-found', status: 409 });
+    for (const bad of [200, 399, 600, 409.5, Number.NaN, -1]) expect(buildProblem('conflict', 't', { status: bad }).status).toBe(409);
+    expect(buildProblem('conflict', 't', {}).status).toBe(409);
+    expect(buildProblem('conflict', 't', { extra: { status: 200 } }).status).toBe(409); // `extra` vẫn không đè khóa chuẩn
+  });
+});
+
+describe('Trường phụ dạng đối tượng và danh sách đối tượng (ProblemExtra, dùng bởi CHK: insufficient-stock.items, cart-has-unavailable-items.issues, price-changed.review, address-changed.address)', () => {
+  it('CHK-TC-20261006-110702693 CHK-TC-20261006-110702421 (sửa nền): extra nhận đối tượng và danh sách đối tượng, giữ nguyên cấu trúc trong JSON; vẫn không đè khóa chuẩn và status do sổ mã quyết định', () => {
+    const items = [{ product_id: 'p1', name: 'Tất', requested: 3, available: 2, reason: 'insufficient_stock' }];
+    const review = { items_subtotal: 370000, lines: [{ product_id: 'p1', quantity: 2 }], note: null as string | null };
+    const b = buildProblem('conflict', 'trace-9', { extra: { items, review, status: { x: 1 } as never } });
+    expect(b).toMatchObject({ type: 'urn:ecom:error:conflict', status: 409, trace_id: 'trace-9', items, review });
+    expect(JSON.parse(JSON.stringify(b)).items[0].available).toBe(2);
+    expect(JSON.parse(JSON.stringify(b)).review.lines).toEqual([{ product_id: 'p1', quantity: 2 }]);
+  });
+});
+
 describe('Log có cấu trúc và che dữ liệu (PRJ-REQ-20261006-095422908)', () => {
   let t: TestApp;
   beforeAll(async () => { t = await createTestApp({ controllers: [FixtureController], env: { RATE_LIMIT_PER_MINUTE: '100000' } }); });

@@ -8,6 +8,8 @@ Cùng khung với `sdlc-research/evals/README.md`. Phủ và tham chiếu (requi
 3. Mỗi lần: `check-tests.mjs spec/ --strict` phải qua, `check-spec.mjs` qua, md5 các file fixture không đổi.
 4. Chấm `golden.md` và `traps.md` bằng subagent độc lập, không cho xem `SKILL.md`.
 
+`evals/traps.md` (T1..) là bẫy hồi quy từ bài học code, không gắn một fixture: chấm bằng cách đưa cho subagent bộ TC của một epic có yếu tố tương ứng (bảng quy tắc, job nền, trần, URL...) cùng hàng bẫy. Bẫy riêng của ca `ordering` (X1..) ở `ordering/traps.md`.
+
 ## Tiêu chí đạt
 - Hai script qua ở cả 3 lần. 100% MUST ở ít nhất 2/3 lần. Mọi bẫy bị bắt ở cả 3 lần.
 

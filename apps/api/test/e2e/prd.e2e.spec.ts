@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import type { Page, Route } from 'playwright-core';
-import { count, eventually, hasText, id, loginUi, productState, reset, s3Keys, see, seedCategory, seedProduct, seedUser, startE2e, textOf, withPage, type E2eEnv } from './support';
+import { count, eventually, hasText, id, loginUi, productState, reset, s3Keys, see, seedCategory, seedProduct, seedUser, startE2e, textOf, withPage, type E2eEnv, API } from './support';
 
 // E2E của PRD chạy bằng Jest và playwright-core điều khiển Chromium thật: API thật trên PostgreSQL thật (CSDL `ecom_e2e`), kho ảnh là dịch vụ S3 giả trong tiến trình của máy chủ E2E
 // (client S3 thật của platform nói chuyện với nó qua HTTP; có STORAGE_TEST_ENDPOINT thì là MinIO thật), bản build production của web. INV chưa có code: web gọi
@@ -241,7 +241,7 @@ describe('E2E PRD (trình duyệt thật, API thật)', () => {
     await hasText(id(page, 'prd-product-detail-stock'), 'Còn hàng');
     expect(inv.calls).toEqual([[ids[0]], [ids[5]]]);
     // API của PRD không có trường tồn kho
-    const api = await (await fetch('http://localhost:3101/api/v1/products?limit=100')).text();
+    const api = await (await fetch(`${API}/products?limit=100`)).text();
     expect(api).not.toMatch(/in_stock|available|on_hand|quantity|stock/);
     // INV lỗi: PRD vẫn đủ, không nhãn, không banner lỗi
     await page.unroute('**/inventory/availability**');

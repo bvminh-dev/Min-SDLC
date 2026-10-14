@@ -42,7 +42,7 @@ describe('ORD ca của reviewer', () => {
       expect([name, err?.name, err?.code]).toEqual([name, 'OrderBusinessError', 'invalid_input']);
     }
     expect([await countRows(t, 'orders'), await countRows(t, 'order_items'), await countRows(t, 'order_status_history'), await countRows(t, 'outbox_events')]).toEqual([0, 0, 0, 0]);
-    expect((await createPending(t, baseInput(a.id, { shipping_address: { receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi\nTầng 3', ward: 'Bến Nghé', city: 'TP.HCM' } }))).code).toMatch(/^[0-9A-Z]{12}$/); // xuống dòng vẫn hợp lệ
+    expect((await createPending(t, baseInput(a.id, { shipping_address: { receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi\nTầng 3', ward: 'Bến Nghé', district: 'Quận 1', city: 'TP.HCM' } }))).code).toMatch(/^[0-9A-Z]{12}$/); // xuống dòng vẫn hợp lệ
   });
 
   it('REV-ORD-03 (hồi quy của reviewer): getOrderSeries với khoảng khổng lồ theo giờ bị từ chối ngay bằng RangeError (không chạy tới hạn thời gian của câu lệnh), khoảng vừa đủ 1000 mốc vẫn chạy; khoảng ngoài miền ngày của countByStatus và getTopProducts là RangeError', async () => {
@@ -307,7 +307,7 @@ describe('ORD ca của reviewer', () => {
     const cases: [string, (i: any) => void][] = [
       ['user_id không uuid', (i) => { i.user_id = 'x'; }], ['product_id không uuid', (i) => { i.items[0].product_id = 'x'; }], ['shipping_method_id không uuid', (i) => { i.shipping_method_id = 'x'; }],
       ['tên toàn khoảng trắng', (i) => { i.items[0].name_snapshot = '   '; }], ['receiver toàn khoảng trắng', (i) => { i.shipping_address.receiver = ' \t '; }], ['địa chỉ thiếu city', (i) => { delete i.shipping_address.city; }],
-      ['địa chỉ thừa district', (i) => { i.shipping_address.district = 'Quận 1'; }], ['line1 chứa NUL', (i) => { i.shipping_address.line1 = 'a\u0000b'; }], ['ward nửa cặp thay thế lẻ', (i) => { i.shipping_address.ward = 'a\uD83D'; }],
+      ['địa chỉ thiếu district', (i) => { delete i.shipping_address.district; }], ['district không phải chuỗi hay null', (i) => { i.shipping_address.district = 5; }], ['địa chỉ thừa khóa lạ', (i) => { i.shipping_address.country = 'VN'; }], ['district nửa cặp thay thế lẻ', (i) => { i.shipping_address.district = 'a\uD83D'; }], ['line1 chứa NUL', (i) => { i.shipping_address.line1 = 'a\u0000b'; }], ['ward nửa cặp thay thế lẻ', (i) => { i.shipping_address.ward = 'a\uD83D'; }],
       ['phone dài 501 ký tự', (i) => { i.shipping_address.phone = '0'.repeat(501); }], ['địa chỉ null', (i) => { i.shipping_address = null; }], ['đơn giá không an toàn', (i) => { i.items = [{ ...i.items[0], unit_price: 2 ** 53, quantity: 1 }]; i.items_total = 2 ** 53; i.grand_total = 2 ** 53 + 30000; }],
       ['quantity vượt int32', (i) => { i.items = [{ ...i.items[0], unit_price: 1, quantity: 2 ** 31 }]; i.items_total = 2 ** 31; i.grand_total = 2 ** 31 + 30000; }], ['quantity 0', (i) => { i.items[0].quantity = 0; }], ['quantity thập phân', (i) => { i.items[0].quantity = 1.5; }], ['đơn giá âm', (i) => { i.items[0].unit_price = -1; }],
       ['phương thức lạ', (i) => { i.payment_method = 'momo'; }], ['không có dòng hàng', (i) => { i.items = []; }], ['đầu vào rỗng', (i) => { Object.keys(i).forEach((k) => delete i[k]); }],
@@ -323,7 +323,7 @@ describe('ORD ca của reviewer', () => {
     }
     expect([await countRows(t, 'orders'), await countRows(t, 'order_items'), await countRows(t, 'outbox_events')]).toEqual([0, 0, 0]);
     const ok = await createPending(t, baseInput(a.id)); // đúng năm khóa thì nhận
-    expect(Object.keys((await q<{ shipping_address: object }>(t, `SELECT shipping_address FROM orders WHERE id = '${ok.order_id}'`))[0].shipping_address).sort()).toEqual(['city', 'line1', 'phone', 'receiver', 'ward']);
+    expect(Object.keys((await q<{ shipping_address: object }>(t, `SELECT shipping_address FROM orders WHERE id = '${ok.order_id}'`))[0].shipping_address).sort()).toEqual(['city', 'district', 'line1', 'phone', 'receiver', 'ward']);
   });
 
   it('REV-ORD-18 ORD-TC-20261007-182433278 (hồi quy của reviewer): CHECK và unique của CSDL (lớp hai): tiền thành phần không âm, mã vận đơn chỉ từ shipped, cặp hủy, confirmed_at, số lượng và đơn giá dòng hàng, (order_id, position) duy nhất; xóa người dùng còn đơn bị chặn', async () => {

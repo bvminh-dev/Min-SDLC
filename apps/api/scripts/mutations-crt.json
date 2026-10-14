@@ -1,0 +1,1483 @@
+{
+ "test": "node scripts/run-jest.mjs test/cart",
+ "mutations": [
+  {
+   "id": "SB-06, T1: tìm dòng để sửa không lọc theo người dùng (IDOR PATCH)",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "CRT-TC-20261006-104451802",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "AND c.user_id = ${userId}::uuid AND c.status = 'active'`;\n    return r;",
+   "replace": "AND c.status = 'active'`;\n    return r;",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104451802\""
+  },
+  {
+   "id": "SB-06, T1: xóa dòng không lọc theo người dùng (IDOR DELETE)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "CRT-TC-20261006-104452215",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "WHERE i.id = ${itemId.toLowerCase()}::uuid AND c.user_id = ${userId}::uuid AND c.status = 'active' FOR UPDATE OF c",
+   "replace": "WHERE i.id = ${itemId.toLowerCase()}::uuid AND c.status = 'active' FOR UPDATE OF c",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452215\""
+  },
+  {
+   "id": "SB-06, T1: xóa dòng của giỏ không còn active",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "CRT-TC-20261006-104451802",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "WHERE i.id = ${itemId.toLowerCase()}::uuid AND c.user_id = ${userId}::uuid AND c.status = 'active' FOR UPDATE OF c",
+   "replace": "WHERE i.id = ${itemId.toLowerCase()}::uuid AND c.user_id = ${userId}::uuid FOR UPDATE OF c",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104451802\""
+  },
+  {
+   "id": "SB-06, T13: giao dịch sửa số lượng không kiểm giỏ còn active (job bỏ dở đua)",
+   "sb": [
+    "SB-06",
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104455235",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "AND user_id = ${userId}::uuid AND status = 'active' FOR UPDATE`;\n      if (!c) throw itemGone();",
+   "replace": "AND user_id = ${userId}::uuid FOR UPDATE`;\n      if (!c) throw itemGone();",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-104455235\""
+  },
+  {
+   "id": "SB-05, T4: staff được làm trống giỏ",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "CRT-TC-20261006-104452493",
+   "file": "src/modules/cart/cart.controller.ts",
+   "find": "@Delete() @Action('Làm trống giỏ') @HttpCode(204) @Roles('customer')",
+   "replace": "@Delete() @Action('Làm trống giỏ') @HttpCode(204) @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452493\""
+  },
+  {
+   "id": "SB-05, T4: staff được xem giỏ",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "CRT-TC-20261006-104452823",
+   "file": "src/modules/cart/cart.controller.ts",
+   "find": "@Get() @Action('Xem giỏ, tạm tính, huy hiệu giỏ và cập nhật giá') @Roles('customer')",
+   "replace": "@Get() @Action('Xem giỏ, tạm tính, huy hiệu giỏ và cập nhật giá') @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104452823\""
+  },
+  {
+   "id": "SB-05, T4: staff được xem huy hiệu giỏ",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "CRT-TC-20261006-104452823",
+   "file": "src/modules/cart/cart.controller.ts",
+   "find": "@Get('summary') @Action('Xem giỏ, tạm tính, huy hiệu giỏ và cập nhật giá') @Roles('customer')",
+   "replace": "@Get('summary') @Action('Xem giỏ, tạm tính, huy hiệu giỏ và cập nhật giá') @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104452823\""
+  },
+  {
+   "id": "SB-05, T4: staff được thêm vào giỏ",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "CRT-TC-20261006-104451291",
+   "file": "src/modules/cart/cart.controller.ts",
+   "find": "@Post('items') @Action('Thêm sản phẩm vào giỏ') @Roles('customer')",
+   "replace": "@Post('items') @Action('Thêm sản phẩm vào giỏ') @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451291\""
+  },
+  {
+   "id": "SB-05, T4: staff được xóa một dòng",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "CRT-TC-20261006-104452215",
+   "file": "src/modules/cart/cart.controller.ts",
+   "find": "@Delete('items/:item_id') @Action('Xóa một sản phẩm khỏi giỏ') @HttpCode(204) @Roles('customer')",
+   "replace": "@Delete('items/:item_id') @Action('Xóa một sản phẩm khỏi giỏ') @HttpCode(204) @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452215\""
+  },
+  {
+   "id": "SB-05, T4: admin được áp mã (sai ma trận, kiểm quyền trên AppModule)",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "CRT-TC-20261006-104451291",
+   "file": "src/modules/cart/cart.controller.ts",
+   "find": "@Put('coupon') @Action('Áp và gỡ mã giảm giá trên giỏ') @Roles('customer')",
+   "replace": "@Put('coupon') @Action('Áp và gỡ mã giảm giá trên giỏ') @Roles('customer', 'admin')",
+   "test": "node scripts/run-jest.mjs test/cart/guard.spec.ts -t \"CRT-TC-20261006-104451291\""
+  },
+  {
+   "id": "SB-05, T4: staff được chọn vận chuyển (sai ma trận)",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "CRT-TC-20261006-104451291",
+   "file": "src/modules/cart/cart.controller.ts",
+   "find": "@Put('shipping') @Action('Chọn phương thức vận chuyển và xem phí trên giỏ') @Roles('customer')",
+   "replace": "@Put('shipping') @Action('Chọn phương thức vận chuyển và xem phí trên giỏ') @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/cart/guard.spec.ts -t \"CRT-TC-20261006-104451291\""
+  },
+  {
+   "id": "SB-11, T2: endpoint thêm vào giỏ mất schema kiểm",
+   "sb": [
+    "SB-11",
+    "SB-05"
+   ],
+   "tc": "CRT-TC-20261006-104451291",
+   "file": "src/modules/cart/cart.controller.ts",
+   "find": "@Roles('customer') @RateLimit(LIMITS.write) @Validate({ body: addBody })",
+   "replace": "@Roles('customer') @RateLimit(LIMITS.write)",
+   "test": "node scripts/run-jest.mjs test/cart/guard.spec.ts -t \"CRT-TC-20261006-104451291\""
+  },
+  {
+   "id": "SB-23, T2: schema không còn từ chối trường lạ (unit_price, total, discount, fee)",
+   "sb": [
+    "SB-23",
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104454073",
+   "file": "src/modules/cart/policy.ts",
+   "find": "for (const k of Object.keys(o)) if (!known.has(k)) ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "replace": "void known;",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454073\""
+  },
+  {
+   "id": "SB-11, T3: số lượng không còn trần 99 ở schema",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451178",
+   "file": "src/modules/cart/policy.ts",
+   "find": ".max(MAX_QUANTITY, { message: 'out_of_range' });",
+   "replace": ";",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451178\""
+  },
+  {
+   "id": "SB-11, T3: số lượng 0 qua được schema",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451178",
+   "file": "src/modules/cart/policy.ts",
+   "find": ".min(1, { message: 'out_of_range' })",
+   "replace": ".min(0, { message: 'out_of_range' })",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451178\""
+  },
+  {
+   "id": "SB-11, T3: số thực qua được schema",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451178",
+   "file": "src/modules/cart/policy.ts",
+   "find": ".int({ message: 'invalid_format' })",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451178\""
+  },
+  {
+   "id": "SB-11: khóa __proto__ không còn bị từ chối",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451178",
+   "file": "src/modules/cart/policy.ts",
+   "find": "Object.prototype.hasOwnProperty.call(v, '__proto__')) ctx.addIssue",
+   "replace": "false) ctx.addIssue",
+   "test": "node scripts/run-jest.mjs test/cart/rev.spec.ts -t \"CRT-TC-20261006-104451178\""
+  },
+  {
+   "id": "SB-11: ký tự điều khiển NUL qua được schema của mã và thành phố",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104453359",
+   "file": "src/modules/cart/policy.ts",
+   "find": "const CONTROL = /[\\u0000-\\u001F\\u007F]/;",
+   "replace": "const CONTROL = /[\\u0001-\\u001F\\u007F]/;",
+   "test": "node scripts/run-jest.mjs test/cart/coupon.spec.ts -t \"CRT-TC-20261006-104453359\""
+  },
+  {
+   "id": "SB-11: product_id dài vô hạn qua được schema",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451178",
+   "file": "src/modules/cart/config.ts",
+   "find": "export const PRODUCT_ID_MAX = 100;",
+   "replace": "export const PRODUCT_ID_MAX = 100000000;",
+   "test": "node scripts/run-jest.mjs test/cart/rev.spec.ts -t \"CRT-TC-20261006-104451178\""
+  },
+  {
+   "id": "SB-23, T2, T11: tiền tính theo giá đã lưu thay vì giá hiện hành",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104452775",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "price: product ? BigInt(product.price) : item.unit_price,",
+   "replace": "price: item.unit_price,",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104452775\""
+  },
+  {
+   "id": "SB-23: tạm tính cộng cả dòng ngừng bán",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104452994",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "(l.sellable ? s + l.price * BigInt(l.item.quantity) : s)",
+   "replace": "s + l.price * BigInt(l.item.quantity)",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104452994\""
+  },
+  {
+   "id": "SB-23: tổng cộng giảm giá thay vì trừ",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104453932",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "total: num(subtotal - discount + (fee ?? 0n)),",
+   "replace": "total: num(subtotal + discount + (fee ?? 0n)),",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104453932\""
+  },
+  {
+   "id": "SB-23: cờ tổng ước tính luôn false",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104454222",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "total_is_estimate: fee === null,",
+   "replace": "total_is_estimate: false,",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454222\""
+  },
+  {
+   "id": "SB-23: giảm giá có thể vượt tạm tính (tổng âm)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104454175",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "if (discount > subtotal) discount = subtotal;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454175\""
+  },
+  {
+   "id": "SB-23: thêm vào giỏ lưu giá sai thay vì giá hiện hành",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104451036",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "VALUES (${cart.id}::uuid, ${pid}::uuid, ${b.quantity}, ${p.price})",
+   "replace": "VALUES (${cart.id}::uuid, ${pid}::uuid, ${b.quantity}, 1)",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451036\""
+  },
+  {
+   "id": "SB-23, T11: đổi số lượng trả thành tiền theo giá đã lưu",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104452063",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "const price = p ? BigInt(p.price) : it.unit_price;",
+   "replace": "const price = it.unit_price;",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452063\""
+  },
+  {
+   "id": "SB-23, T11: cập nhật giá không đổi gì",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104452775",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "const changed = lines.filter((l) => l.sellable && l.price !== l.item.unit_price);",
+   "replace": "const changed = lines.filter(() => false);",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104452775\""
+  },
+  {
+   "id": "SB-23: ngưỡng miễn phí tính trên tạm tính đã bị giảm một đồng",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104453780",
+   "file": "src/modules/cart/read.service.ts",
+   "find": "const q = await this.deps.quote({ method_id: methodId, city, subtotal: num(subtotal) });",
+   "replace": "const q = await this.deps.quote({ method_id: methodId, city, subtotal: num(subtotal > 0n ? subtotal - 1n : 0n) });",
+   "test": "node scripts/run-jest.mjs test/cart/shipping.spec.ts -t \"CRT-TC-20261006-104453780\""
+  },
+  {
+   "id": "SB-23: gộp vào dòng cũ không làm mới giá lúc thêm",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104451601",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "unit_price = EXCLUDED.unit_price, unavailable_reason = NULL,",
+   "replace": "unavailable_reason = NULL,",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451601\""
+  },
+  {
+   "id": "SB-23: gộp vào dòng cũ không mở lại dòng đã đánh dấu ngừng bán",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104451601",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "unit_price = EXCLUDED.unit_price, unavailable_reason = NULL,",
+   "replace": "unit_price = EXCLUDED.unit_price,",
+   "test": "node scripts/run-jest.mjs test/cart/rev.spec.ts -t \"CRT-TC-20261006-104451601\""
+  },
+  {
+   "id": "SB-23: mã lưu theo chuỗi khách gõ thay vì mã chuẩn hóa của PRM",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104453162",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "UPDATE carts SET coupon_code = ${r.code} WHERE",
+   "replace": "UPDATE carts SET coupon_code = ${b.code} WHERE",
+   "test": "node scripts/run-jest.mjs test/cart/coupon.spec.ts -t \"CRT-TC-20261006-104453162\""
+  },
+  {
+   "id": "SB-23: thành phố bị đổi chữ hoa khi lưu",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104453829",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "shipping_city = ${b.city} WHERE",
+   "replace": "shipping_city = ${b.city.toUpperCase()} WHERE",
+   "test": "node scripts/run-jest.mjs test/cart/shipping.spec.ts -t \"CRT-TC-20261006-104453829\""
+  },
+  {
+   "id": "SB-23: số mã giảm giá báo thiếu bằng 0 khi chưa đủ đơn tối thiểu",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104453207",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "shortfall: Number(r.shortfall) } });",
+   "replace": "shortfall: 0 } });",
+   "test": "node scripts/run-jest.mjs test/cart/coupon.spec.ts -t \"CRT-TC-20261006-104453207\""
+  },
+  {
+   "id": "SB-23: hết lượt mỗi người không kèm limit và used",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-113000440",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "extra: { limit: Number(r.limit), used: Number(r.used) } });",
+   "replace": "extra: { limit: 0, used: 0 } });",
+   "test": "node scripts/run-jest.mjs test/cart/coupon.spec.ts -t \"CRT-TC-20261006-113000440\""
+  },
+  {
+   "id": "SB-05, T5: mã không có trả sai mã lỗi (phân biệt với mã đã tắt)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104453261",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "case 'coupon_not_found': return new DomainError('coupon-not-found');",
+   "replace": "case 'coupon_not_found': return new DomainError('coupon-expired');",
+   "test": "node scripts/run-jest.mjs test/cart/coupon.spec.ts -t \"CRT-TC-20261006-104453261\""
+  },
+  {
+   "id": "SB-11, T3: trần số lượng của cấu hình nâng lên 100",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451335",
+   "file": "src/modules/cart/config.ts",
+   "find": "export const MAX_QUANTITY = 99;",
+   "replace": "export const MAX_QUANTITY = 100;",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451335\""
+  },
+  {
+   "id": "SB-11, T3: trần số dòng của cấu hình nâng lên 51",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451389",
+   "file": "src/modules/cart/config.ts",
+   "find": "export const MAX_LINES = 50;",
+   "replace": "export const MAX_LINES = 51;",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451389\""
+  },
+  {
+   "id": "SB-11, T3: dòng thứ 51 qua được kiểm trần",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451389",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (n >= MAX_LINES) throw",
+   "replace": "if (n > MAX_LINES) throw",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451389\""
+  },
+  {
+   "id": "SB-11, T3: gộp vượt 99 không bị chặn ở câu INSERT",
+   "sb": [
+    "SB-11",
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104451335",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "\n        WHERE cart_items.quantity + EXCLUDED.quantity <= ${MAX_QUANTITY}",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451335\""
+  },
+  {
+   "id": "SB-38, T9: gộp ghi đè số lượng thay vì cộng",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104451082",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "DO UPDATE SET quantity = cart_items.quantity + EXCLUDED.quantity,",
+   "replace": "DO UPDATE SET quantity = EXCLUDED.quantity,",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451082\""
+  },
+  {
+   "id": "SB-37, T8: kiểm tồn chỉ so số thêm, bỏ số đã có trong giỏ",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "CRT-TC-20261006-104451226",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (inCart + b.quantity > available) throw",
+   "replace": "if (b.quantity > available) throw",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451226\""
+  },
+  {
+   "id": "SB-06, T1: sản phẩm không bán được vẫn thêm được",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "CRT-TC-20261006-104451131",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (!p?.sellable) throw productGone();\n    const inv = await this.deps.availability([pid])",
+   "replace": "const inv = await this.deps.availability([pid])",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451131\""
+  },
+  {
+   "id": "SB-37: giảm số lượng cũng bị kiểm tồn",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "CRT-TC-20261006-104451945",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "const increase = quantity > it.quantity;",
+   "replace": "const increase = quantity !== it.quantity;",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104451945\""
+  },
+  {
+   "id": "SB-37: tăng lên đúng bằng tồn bị từ chối",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "CRT-TC-20261006-104454589",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (quantity > available) throw new DomainError('insufficient-stock', { extra: { available: cap(available), in_cart: it.quantity } });",
+   "replace": "if (quantity >= available) throw new DomainError('insufficient-stock', { extra: { available: cap(available), in_cart: it.quantity } });",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454589\""
+  },
+  {
+   "id": "SB-11: dòng ngừng bán cũng không giảm được",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104452006",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (increase && it.unavailable_reason !== null) throw productGoneConflict();",
+   "replace": "if (it.unavailable_reason !== null) throw productGoneConflict();",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452006\""
+  },
+  {
+   "id": "SB-30, T9: đổi số lượng bằng số cũ vẫn tăng version",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "CRT-TC-20261006-104451945",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "AND cart_id = ${c.id}::uuid AND quantity <> ${quantity}`",
+   "replace": "AND cart_id = ${c.id}::uuid`",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104451945\""
+  },
+  {
+   "id": "SB-30, T9: thao tác sửa không tăng version",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "CRT-TC-20261006-104452418",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "UPDATE carts SET version = version + 1, last_activity_at = now(), updated_at = now() WHERE",
+   "replace": "UPDATE carts SET version = version, last_activity_at = now(), updated_at = now() WHERE",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452418\""
+  },
+  {
+   "id": "SB-30, T9: thao tác sửa không ghi last_activity_at",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "CRT-TC-20261006-104451945",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "UPDATE carts SET version = version + 1, last_activity_at = now(), updated_at = now() WHERE",
+   "replace": "UPDATE carts SET version = version + 1, updated_at = now() WHERE",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104451945\""
+  },
+  {
+   "id": "SB-38, T9: làm trống không bỏ mã và vận chuyển",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104452418",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "return;\n      await tx.$executeRaw`UPDATE carts SET coupon_code = NULL, shipping_method_id = NULL, shipping_city = NULL WHERE id = ${c.id}::uuid`;",
+   "replace": "return;\n      await tx.$executeRaw`UPDATE carts SET updated_at = updated_at WHERE id = ${c.id}::uuid`;",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452418\""
+  },
+  {
+   "id": "SB-30, T9: làm trống giỏ trống vẫn tăng version",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "CRT-TC-20261006-104452550",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (!del && c.coupon_code === null && c.shipping_method_id === null) return;",
+   "replace": "if (false) return;",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452550\""
+  },
+  {
+   "id": "SB-38, T9: xóa dòng cuối không bỏ mã và vận chuyển",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104452267",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (n === 0) await tx.$executeRaw`UPDATE carts SET coupon_code",
+   "replace": "if (n === -1) await tx.$executeRaw`UPDATE carts SET coupon_code",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452267\""
+  },
+  {
+   "id": "SB-38, T9: khóa giỏ khi thêm bị bỏ (trần 50 dòng đua nhau)",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104451389",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "status = 'active' FOR UPDATE`.then((r) => r[0]);",
+   "replace": "status = 'active'`.then((r) => r[0]);",
+   "test": "node scripts/run-jest.mjs test/cart/rev.spec.ts -t \"CRT-TC-20261006-104451389\""
+  },
+  {
+   "id": "SB-38, T9: tạo giỏ không dùng ON CONFLICT (hai giỏ active)",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104451453",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "ON CONFLICT (user_id) WHERE status = 'active' DO NOTHING`",
+   "replace": "`",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451453\""
+  },
+  {
+   "id": "SB-38, T9: giao dịch khóa của CHK không khóa dòng giỏ",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104454280",
+   "file": "src/modules/cart/cart.api.ts",
+   "find": "AND EXISTS (SELECT 1 FROM cart_items i WHERE i.cart_id = c.id) FOR UPDATE OF c`",
+   "replace": "AND EXISTS (SELECT 1 FROM cart_items i WHERE i.cart_id = c.id)`",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454280\""
+  },
+  {
+   "id": "SB-38: giỏ trống cũng bị khóa trong giao dịch của CHK",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104454027",
+   "file": "src/modules/cart/cart.api.ts",
+   "find": "AND EXISTS (SELECT 1 FROM cart_items i WHERE i.cart_id = c.id) FOR UPDATE OF c`",
+   "replace": "FOR UPDATE OF c`",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454027\""
+  },
+  {
+   "id": "SB-23: snapshot trả cả dòng ngừng bán trong tạm tính",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104454120",
+   "file": "src/modules/cart/cart.api.ts",
+   "find": "const sellable = lines.filter((l) => l.sellable);",
+   "replace": "const sellable = lines;",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454120\""
+  },
+  {
+   "id": "SB-23: snapshot luôn cho phép thanh toán",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104454120",
+   "file": "src/modules/cart/cart.api.ts",
+   "find": "can_checkout: issues.length === 0 && subtotal <= SUBTOTAL_MAX,",
+   "replace": "can_checkout: true,",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454120\""
+  },
+  {
+   "id": "SB-30: snapshot trả cart_version sai",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "CRT-TC-20261006-104453980",
+   "file": "src/modules/cart/cart.api.ts",
+   "find": "cart_id: head.id, cart_version: head.version,",
+   "replace": "cart_id: head.id, cart_version: 0,",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104453980\""
+  },
+  {
+   "id": "SB-14, T5: áp mã không tính lượt sai (count_attempt false)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104453306",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "items_subtotal: num(subtotal), count_attempt: true })",
+   "replace": "items_subtotal: num(subtotal), count_attempt: false })",
+   "test": "node scripts/run-jest.mjs test/cart/coupon.spec.ts -t \"CRT-TC-20261006-104453306\""
+  },
+  {
+   "id": "SB-14, T6: xem giỏ tính lượt sai của mã (count_attempt true)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104453444",
+   "file": "src/modules/cart/read.service.ts",
+   "find": "items_subtotal: num(subtotal), count_attempt: false })",
+   "replace": "items_subtotal: num(subtotal), count_attempt: true })",
+   "test": "node scripts/run-jest.mjs test/cart/coupon.spec.ts -t \"CRT-TC-20261006-104453444\""
+  },
+  {
+   "id": "SB-14, T5: áp mã giới hạn nâng lên 11 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104453546",
+   "file": "src/modules/cart/config.ts",
+   "find": "coupon: { tier: 'A', limit: 10, windowSeconds: 60 },",
+   "replace": "coupon: { tier: 'A', limit: 11, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/cart/coupon.spec.ts -t \"CRT-TC-20261006-104453546\""
+  },
+  {
+   "id": "SB-14, T7: ghi giỏ nâng lên 121 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-113000550",
+   "file": "src/modules/cart/config.ts",
+   "find": "write: { tier: 'B', limit: 120, windowSeconds: 60, group: 'crt-write' },",
+   "replace": "write: { tier: 'B', limit: 121, windowSeconds: 60, group: 'crt-write' },",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-113000550\""
+  },
+  {
+   "id": "SB-14, T7: ghi giỏ không dùng chung bộ đếm",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-113000550",
+   "file": "src/modules/cart/config.ts",
+   "find": "write: { tier: 'B', limit: 120, windowSeconds: 60, group: 'crt-write' },",
+   "replace": "write: { tier: 'B', limit: 120, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-113000550\""
+  },
+  {
+   "id": "SB-14, T7: xem giỏ nâng lên 121 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-113000550",
+   "file": "src/modules/cart/config.ts",
+   "find": "view: { tier: 'C', limit: 120, windowSeconds: 60 },",
+   "replace": "view: { tier: 'C', limit: 121, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-113000550\""
+  },
+  {
+   "id": "SB-14, T7: chọn vận chuyển nâng lên 61 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104453603",
+   "file": "src/modules/cart/config.ts",
+   "find": "shipping: { tier: 'B', limit: 60, windowSeconds: 60 },",
+   "replace": "shipping: { tier: 'B', limit: 61, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/cart/shipping.spec.ts -t \"CRT-TC-20261006-104453603\""
+  },
+  {
+   "id": "SB-14, T7: xem giỏ gọi PRD từng sản phẩm thay vì một lời gọi theo lô",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104453050",
+   "file": "src/modules/cart/read.service.ts",
+   "find": "this.deps.products(ids).catch((e) => { throw e instanceof DependencyError ? new DomainError('service-unavailable') : e; }),",
+   "replace": "Promise.all(ids.map((i) => this.deps.products([i]))).then((ms) => new Map(ms.flatMap((m) => [...m]))).catch((e) => { throw e instanceof DependencyError ? new DomainError('service-unavailable') : e; }),",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104453050\""
+  },
+  {
+   "id": "SB-14: hạn lời gọi mô-đun khác nâng lên 20 giây",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104454713",
+   "file": "src/modules/cart/config.ts",
+   "find": "export const DEP_TIMEOUT_MS = 2000;",
+   "replace": "export const DEP_TIMEOUT_MS = 20000;",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454713\""
+  },
+  {
+   "id": "SB-14, T7: xem giỏ không thể xảy ra khi PRD lỗi vẫn trả 200",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104452875",
+   "file": "src/modules/cart/read.service.ts",
+   "find": "this.deps.products(ids).catch((e) => { throw e instanceof DependencyError ? new DomainError('service-unavailable') : e; }),",
+   "replace": "this.deps.products(ids).catch(() => new Map()),",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104452875\""
+  },
+  {
+   "id": "SB-14: INV lỗi làm hỏng cả giỏ thay vì dòng unknown",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104454713",
+   "file": "src/modules/cart/read.service.ts",
+   "find": "this.deps.availability(ids).catch((e) => { if (e instanceof DependencyError) return null; throw e; }),",
+   "replace": "this.deps.availability(ids).catch((e) => { throw e; }),",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454713\""
+  },
+  {
+   "id": "SB-14: phương thức vận chuyển bị tắt sau khi chọn làm hỏng xem giỏ",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104453875",
+   "file": "src/modules/cart/read.service.ts",
+   "find": "if (e instanceof DomainError && e.code === 'method-unavailable') return { method_id: methodId, city, fee: null, error: 'method_unavailable' };",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/shipping.spec.ts -t \"CRT-TC-20261006-104453875\""
+  },
+  {
+   "id": "SB-14: lỗi method-unavailable của SHP thành 503 khi chọn",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104453658",
+   "file": "src/modules/cart/deps.service.ts",
+   "find": "if (e instanceof DomainError) throw e; // lỗi nghiệp vụ có mã của bên kia",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/shipping.spec.ts -t \"CRT-TC-20261006-104453658\""
+  },
+  {
+   "id": "SB-18, T14: log lỗi phụ thuộc ghi thông điệp của bên kia (mã giảm giá, email)",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "CRT-TC-20261006-104453359",
+   "file": "src/modules/cart/deps.service.ts",
+   "find": "err_name: (e as Error)?.name ?? 'unknown', timeout: (e as Error)?.message === 'timeout' });",
+   "replace": "err_name: (e as Error)?.name ?? 'unknown', err_message: String((e as Error)?.message ?? '') });",
+   "test": "node scripts/run-jest.mjs test/cart/rev.spec.ts -t \"CRT-TC-20261006-104453359\""
+  },
+  {
+   "id": "SB-37, T8: dòng đủ hàng kèm số còn lại thật",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "CRT-TC-20261006-104454655",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "if (quantity <= a) return { status: 'ok' };",
+   "replace": "if (quantity <= a) return { status: 'ok', available: a } as Availability;",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454655\""
+  },
+  {
+   "id": "SB-37: đúng bằng tồn bị coi là thiếu",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "CRT-TC-20261006-104454589",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "if (quantity <= a) return { status: 'ok' };",
+   "replace": "if (quantity < a) return { status: 'ok' };",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454589\""
+  },
+  {
+   "id": "SB-37: hết hàng hẳn bị coi là thiếu một phần",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "CRT-TC-20261006-104454533",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "return a > 0 ? {",
+   "replace": "return a >= 0 ? {",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454533\""
+  },
+  {
+   "id": "SB-37: dòng ngừng bán không thành blocker",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "CRT-TC-20261006-104452317",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "if (lines.some((l) => l.availability.status === 'unavailable')) out.push('unavailable_item');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452317\""
+  },
+  {
+   "id": "SB-37, T8: số còn lại hiển thị không chặn 99 (tương đương: available luôn nhỏ hơn số lượng yêu cầu tối đa 99)",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "CRT-TC-20261006-104454655",
+   "file": "src/modules/cart/config.ts",
+   "find": "export const AVAILABLE_CAP = 99;",
+   "replace": "export const AVAILABLE_CAP = 100000;",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454655\"",
+   "equivalent": "available chỉ xuất hiện khi thiếu hàng nên luôn nhỏ hơn số lượng yêu cầu (tối đa 99): trần 99 là phòng thủ, không có đầu vào nào chạm tới"
+  },
+  {
+   "id": "SB-37, T8: hàm cap số còn lại ở lỗi insufficient-stock (tương đương như trần 99)",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "CRT-TC-20261006-104454655",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "const cap = (n: number): number => Math.min(n, AVAILABLE_CAP);",
+   "replace": "const cap = (n: number): number => n;",
+   "test": "node scripts/run-jest.mjs test/cart/view.spec.ts -t \"CRT-TC-20261006-104454655\"",
+   "equivalent": "insufficient-stock chỉ phát khi tổng sau khi thêm lớn hơn tồn, mà tổng không vượt 99 nên available luôn dưới 99: cap là phòng thủ, không có đầu vào nào chạm tới"
+  },
+  {
+   "id": "SB-27, T13: CheckoutCompleted đổi cả giỏ không còn active (event khác event_id)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CRT-TC-20261006-104455293",
+   "file": "src/modules/cart/lifecycle.service.ts",
+   "find": "WHERE id = ${cartId}::uuid AND status = 'active'::cart_status`;",
+   "replace": "WHERE id = ${cartId}::uuid`;",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-104455293\""
+  },
+  {
+   "id": "SB-27, T13: CheckoutCompleted ghi converted_order_id sai",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CRT-TC-20261006-104454824",
+   "file": "src/modules/cart/lifecycle.service.ts",
+   "find": "converted_order_id = ${orderId}::uuid",
+   "replace": "converted_order_id = ${cartId}::uuid",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-104454824\""
+  },
+  {
+   "id": "SB-27, T13: consumer ghi ProcessedEvent dưới tên khác",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CRT-TC-20261006-104454824",
+   "file": "src/modules/cart/lifecycle.service.ts",
+   "find": "const CONSUMER = 'cart';",
+   "replace": "const CONSUMER = 'cart2';",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-104454824\""
+  },
+  {
+   "id": "SB-27, T12: ProductArchived đánh dấu cả dòng của giỏ converted",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CRT-TC-20261006-104454878",
+   "file": "src/modules/cart/lifecycle.service.ts",
+   "find": "AND c.status = 'active'::cart_status ORDER BY i.id LIMIT",
+   "replace": "ORDER BY i.id LIMIT",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-104454878\""
+  },
+  {
+   "id": "SB-27: ProductArchived chỉ xử lý lô đầu",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CRT-TC-20261006-104454878",
+   "file": "src/modules/cart/lifecycle.service.ts",
+   "find": "if (n < ARCHIVE_BATCH) break;",
+   "replace": "break;",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-104454878\""
+  },
+  {
+   "id": "SB-27: event payload sai hình dạng làm CheckoutCompleted ném lỗi",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CRT-TC-20261006-104454936",
+   "file": "src/modules/cart/lifecycle.service.ts",
+   "find": "if (!cartId || !orderId) {",
+   "replace": "if (false) {",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-104454936\""
+  },
+  {
+   "id": "SB-34, T9: job bỏ dở không dùng SKIP LOCKED (xử lý trùng giữa hai bản)",
+   "sb": [
+    "SB-27",
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-113000330",
+   "file": "src/modules/cart/jobs.service.ts",
+   "find": "ORDER BY last_activity_at, id LIMIT ${batch} FOR UPDATE SKIP LOCKED",
+   "replace": "ORDER BY last_activity_at, id LIMIT ${batch}",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-113000330\""
+  },
+  {
+   "id": "SB-34: job bỏ dở không giới hạn lô",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "CRT-TC-20261006-113000330",
+   "file": "src/modules/cart/jobs.service.ts",
+   "find": "ORDER BY last_activity_at, id LIMIT ${batch} FOR UPDATE SKIP LOCKED",
+   "replace": "ORDER BY last_activity_at, id FOR UPDATE SKIP LOCKED",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-113000330\""
+  },
+  {
+   "id": "SB-34: mốc 30 ngày của job nới thành 29 ngày",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "CRT-TC-20261006-104455112",
+   "file": "src/modules/cart/config.ts",
+   "find": "export const ABANDON_DAYS = 30;",
+   "replace": "export const ABANDON_DAYS = 29;",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-104455112\""
+  },
+  {
+   "id": "SB-34: job đánh dấu giỏ MỚI hơn mốc thay vì cũ hơn",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "CRT-TC-20261006-104455112",
+   "file": "src/modules/cart/jobs.service.ts",
+   "find": "last_activity_at < COALESCE(",
+   "replace": "last_activity_at > COALESCE(",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-104455112\""
+  },
+  {
+   "id": "SB-27: job đánh dấu lại cả giỏ đã abandoned hay converted",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CRT-TC-20261006-104455112",
+   "file": "src/modules/cart/jobs.service.ts",
+   "find": "SELECT id FROM carts WHERE status = 'active'::cart_status AND last_activity_at",
+   "replace": "SELECT id FROM carts WHERE last_activity_at",
+   "test": "node scripts/run-jest.mjs test/cart/lifecycle.spec.ts -t \"CRT-TC-20261006-104455112\""
+  },
+  {
+   "id": "SB-11, T3: CHECK số lượng cho phép 0 ở CSDL",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451335",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CHECK (quantity BETWEEN 1 AND 99)",
+   "replace": "CHECK (quantity BETWEEN 0 AND 99)",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451335\""
+  },
+  {
+   "id": "SB-11, T3: CHECK số lượng cho phép 100 ở CSDL",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451335",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CHECK (quantity BETWEEN 1 AND 99)",
+   "replace": "CHECK (quantity BETWEEN 1 AND 100)",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451335\""
+  },
+  {
+   "id": "SB-11, T3: CHECK giá lúc thêm cho phép 0",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451335",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CHECK (unit_price BETWEEN 1 AND 1000000000)",
+   "replace": "CHECK (unit_price BETWEEN 0 AND 1000000000)",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451335\""
+  },
+  {
+   "id": "SB-11, T3: CHECK giá lúc thêm bỏ trần 1 tỷ",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451335",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CHECK (unit_price BETWEEN 1 AND 1000000000)",
+   "replace": "CHECK (unit_price BETWEEN 1 AND 2000000000)",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451335\""
+  },
+  {
+   "id": "SB-11, T3: CHECK lý do không còn bán bị bỏ",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451335",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CHECK (unavailable_reason IS NULL OR unavailable_reason = 'product_archived')",
+   "replace": "CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451335\""
+  },
+  {
+   "id": "SB-11: CHECK độ dài mã giảm giá nới ra 60",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451453",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CHECK (coupon_code IS NULL OR char_length(coupon_code) BETWEEN 1 AND 50)",
+   "replace": "CHECK (coupon_code IS NULL OR char_length(coupon_code) BETWEEN 1 AND 60)",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451453\""
+  },
+  {
+   "id": "SB-11: CHECK độ dài thành phố nới ra 60",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451453",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CHECK (shipping_city IS NULL OR char_length(shipping_city) BETWEEN 1 AND 50)",
+   "replace": "CHECK (shipping_city IS NULL OR char_length(shipping_city) BETWEEN 1 AND 60)",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451453\""
+  },
+  {
+   "id": "SB-11: CHECK cặp phương thức và thành phố bị bỏ",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104451453",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CHECK ((shipping_method_id IS NULL) = (shipping_city IS NULL))",
+   "replace": "CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451453\""
+  },
+  {
+   "id": "SB-27: CHECK converted khi và chỉ khi có converted_order_id bị bỏ",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CRT-TC-20261006-104451453",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CHECK ((status = 'converted') = (converted_order_id IS NOT NULL))",
+   "replace": "CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451453\""
+  },
+  {
+   "id": "SB-30: CHECK version từ 1 bị nới",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "CRT-TC-20261006-104451453",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CHECK (version >= 1)",
+   "replace": "CHECK (version >= 0)",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451453\""
+  },
+  {
+   "id": "SB-38, T9: unique một giỏ active mỗi người bị bỏ",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104451453",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"carts_user_active_key\" ON \"carts\" (user_id) WHERE status = 'active';",
+   "replace": "CREATE INDEX \"carts_user_active_key\" ON \"carts\" (user_id) WHERE status = 'active';",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451453\""
+  },
+  {
+   "id": "SB-38, T9: unique (cart_id, product_id) bị bỏ",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104451082",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"cart_items_cart_id_product_id_key\" ON \"cart_items\"(\"cart_id\", \"product_id\");",
+   "replace": "CREATE INDEX \"cart_items_cart_id_product_id_key\" ON \"cart_items\"(\"cart_id\", \"product_id\");",
+   "test": "node scripts/run-jest.mjs test/cart/add.spec.ts -t \"CRT-TC-20261006-104451082\""
+  },
+  {
+   "id": "SB-38: xóa giỏ không còn kéo theo dòng (CASCADE thành RESTRICT)",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104451335",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "FOREIGN KEY (\"cart_id\") REFERENCES \"carts\"(\"id\") ON DELETE CASCADE",
+   "replace": "FOREIGN KEY (\"cart_id\") REFERENCES \"carts\"(\"id\") ON DELETE RESTRICT",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451335\""
+  },
+  {
+   "id": "SB-06: sản phẩm có trong giỏ xóa được (RESTRICT thành CASCADE)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "CRT-TC-20261006-104451335",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "FOREIGN KEY (\"product_id\") REFERENCES \"products\"(\"id\") ON DELETE RESTRICT",
+   "replace": "FOREIGN KEY (\"product_id\") REFERENCES \"products\"(\"id\") ON DELETE CASCADE",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451335\""
+  },
+  {
+   "id": "SB-06: phương thức vận chuyển đang dùng ở giỏ xóa được",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "CRT-TC-20261006-104451453",
+   "file": "prisma/migrations/20261009000100_cart_tables/migration.sql",
+   "find": "FOREIGN KEY (\"shipping_method_id\") REFERENCES \"shipping_methods\"(\"id\") ON DELETE RESTRICT",
+   "replace": "FOREIGN KEY (\"shipping_method_id\") REFERENCES \"shipping_methods\"(\"id\") ON DELETE SET NULL",
+   "test": "node scripts/run-jest.mjs test/cart/db.spec.ts -t \"CRT-TC-20261006-104451453\""
+  },
+  {
+   "id": "Nền (platform): status riêng của một lần ném bị bỏ qua",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104452006",
+   "file": "src/modules/platform/errors/problem.ts",
+   "find": "status: Number.isInteger(o.status) && o.status! >= 400 && o.status! <= 599 ? o.status! : def.status, trace_id: traceId };",
+   "replace": "status: def.status, trace_id: traceId };",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452006\""
+  },
+  {
+   "id": "Nền (platform): status riêng không kiểm khoảng 4xx, 5xx",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104452006",
+   "file": "src/modules/platform/errors/problem.ts",
+   "find": "Number.isInteger(o.status) && o.status! >= 400 && o.status! <= 599 ?",
+   "replace": "Number.isInteger(o.status) ?",
+   "test": "node scripts/run-jest.mjs test/platform/errors-logging.spec.ts -t \"CRT-TC-20261006-104452006\""
+  },
+  {
+   "id": "SB-12, T15: tên sản phẩm ở giỏ render dạng HTML thô",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "CRT-TC-20261006-104453118",
+   "file": "../web/app/cart/page.tsx",
+   "find": "<Link href={`/products/${line.product_id}`} className=\"strong\" data-testid=\"crt-cart-line-name\">{line.name}</Link>",
+   "replace": "<span className=\"strong\" data-testid=\"crt-cart-line-name\" dangerouslySetInnerHTML={{ __html: line.name }} />",
+   "test": "node scripts/run-jest.mjs test/e2e/crt.e2e.spec.ts -t \"CRT-TC-20261006-104453118\""
+  },
+  {
+   "id": "SB-23, T2: giỏ tính tạm tính ở trình duyệt thay vì lấy từ máy chủ",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-E2E-20261006-104523405",
+   "file": "../web/components/CartSummary.tsx",
+   "find": "<strong data-testid=\"crt-cart-summary-subtotal\">{formatPrice(cart.subtotal)}</strong>",
+   "replace": "<strong data-testid=\"crt-cart-summary-subtotal\">{formatPrice(cart.items.reduce((s, l) => s + l.unit_price * l.quantity, 0) + 1)}</strong>",
+   "test": "node scripts/run-jest.mjs test/e2e/crt.e2e.spec.ts -t \"CRT-E2E-20261006-104523405\""
+  },
+  {
+   "id": "SB-23, T2: tạm tính vượt miền của PRM bị coi là dịch vụ lỗi thay vì không có mức giảm (xem giỏ)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104453261",
+   "file": "src/modules/cart/read.service.ts",
+   "find": "case 'invalid_subtotal': return { code, applied: false, reason: 'no_discount' };",
+   "replace": "case 'invalid_subtotal': return { code, applied: false, reason: 'service_unavailable' };",
+   "test": "node scripts/run-jest.mjs test/cart/coupon.spec.ts -t \"CRT-TC-20261006-104453261\""
+  },
+  {
+   "id": "SB-23, T2: áp mã với tạm tính vượt miền của PRM thành 500 (lý do invalid_subtotal không đổi sang no-discount)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104453261",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "case 'no_discount': case 'invalid_subtotal': return new DomainError('no-discount');",
+   "replace": "case 'no_discount': return new DomainError('no-discount');",
+   "test": "node scripts/run-jest.mjs test/cart/coupon.spec.ts -t \"CRT-TC-20261006-104453261\""
+  },
+  {
+   "id": "SB-38, T9: giảm số lượng khi PRD lỗi vẫn thành công theo giá đã lưu (không 503)",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104452875",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "const p = (await this.deps.products([it.product_id]).catch((e) => { throw unavailable(e); })).get(it.product_id);\n    if (increase) {",
+   "replace": "const p = (await this.deps.products([it.product_id]).catch((e) => { if (increase) throw unavailable(e); return new Map<string, never>(); })).get(it.product_id);\n    if (increase) {",
+   "test": "node scripts/run-jest.mjs test/cart/edit.spec.ts -t \"CRT-TC-20261006-104452875\""
+  },
+  {
+   "id": "SB-30, T9 (REV-CRT-01): xóa một dòng không tăng version (CHK không thấy giỏ đã đổi)",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "CRT-TC-20261006-104452170",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "      await this.bump(tx, c.id);\n    });\n  }\n\n  /** Làm trống giỏ",
+   "replace": "    });\n  }\n\n  /** Làm trống giỏ",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-01\""
+  },
+  {
+   "id": "SB-30, T9 (REV-CRT-02): gỡ mã khi không có mã vẫn tăng version",
+   "sb": [
+    "SB-30"
+   ],
+   "tc": "CRT-TC-20261006-104453162",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (!c || c.coupon_code === null) return;",
+   "replace": "if (!c) return;",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-02\""
+  },
+  {
+   "id": "SB-38, T9 (REV-CRT-03): áp mã vào giỏ vừa bị làm trống trong lúc chờ PRM",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104453359",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (!c || n === 0) throw new DomainError('cart-empty'); // giỏ vừa bị làm trống hay đã bỏ dở trong lúc gọi PRM",
+   "replace": "if (!c) throw new DomainError('cart-empty');",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-03\""
+  },
+  {
+   "id": "SB-38, T9 (REV-CRT-04): chọn vận chuyển cho giỏ vừa bị làm trống trong lúc chờ SHP",
+   "sb": [
+    "SB-38"
+   ],
+   "tc": "CRT-TC-20261006-104453717",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (!c || n === 0) throw new DomainError('cart-empty');\n      await tx.$executeRaw`UPDATE carts SET shipping_method_id",
+   "replace": "if (!c) throw new DomainError('cart-empty');\n      await tx.$executeRaw`UPDATE carts SET shipping_method_id",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-04\""
+  },
+  {
+   "id": "SB-06, T1 (REV-CRT-05): huy hiệu giỏ cộng cả giỏ converted và abandoned",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "CRT-TC-20261006-104452935",
+   "file": "src/modules/cart/read.service.ts",
+   "find": "WHERE c.user_id = ${userId}::uuid AND c.status = 'active'`;\n    return r;",
+   "replace": "WHERE c.user_id = ${userId}::uuid`;\n    return r;",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-05\""
+  },
+  {
+   "id": "SB-23, T11 (REV-CRT-06): price_changed của giỏ dùng every thay vì some",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104452775",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "price_changed: views.some((v) => v.price_changed)",
+   "replace": "price_changed: views.every((v) => v.price_changed)",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-06\""
+  },
+  {
+   "id": "SB-23, T11 (REV-CRT-07): dòng ngừng bán cũng báo giá đổi",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261006-104452994",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "const changed = l.sellable && l.price !== l.item.unit_price;",
+   "replace": "const changed = l.price !== l.item.unit_price;",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-07\""
+  },
+  {
+   "id": "SB-14, T6 (REV-CRT-08): xem giỏ chỉ còn dòng ngừng bán vẫn gọi PRM với tạm tính 0",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CRT-TC-20261006-104452994",
+   "file": "src/modules/cart/read.service.ts",
+   "find": "if (subtotal <= 0n) return { code, applied: false, reason: 'no_discount' };",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-08\""
+  },
+  {
+   "id": "SB-11, T3 (REV-CRT-09): thành phố đo bằng đơn vị UTF-16 thay vì ký tự Unicode",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104453603",
+   "file": "src/modules/cart/policy.ts",
+   "find": "const len = (s: string): number => [...s].length;",
+   "replace": "const len = (s: string): number => s.length;",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-09\""
+  },
+  {
+   "id": "SB-11 (REV-CRT-10): lockForCheckout không kiểm user_id là uuid",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CRT-TC-20261006-104453980",
+   "file": "src/modules/cart/cart.api.ts",
+   "find": "if (typeof userId !== 'string' || !UUID_RE.test(userId)) throw new RangeError('lockForCheckout: user_id phải là uuid');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-10\""
+  },
+  {
+   "id": "SB-37 (REV-CRT-11): dòng hết hàng hẳn không thành issue của giao diện CHK",
+   "sb": [
+    "SB-37"
+   ],
+   "tc": "CRT-TC-20261006-104454533",
+   "file": "src/modules/cart/cart.api.ts",
+   "find": "else if (l.availability.status === 'out_of_stock') issues.push({ product_id: l.item.product_id, reason: 'insufficient_stock', available: 0 });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-11\""
+  },
+  {
+   "id": "Giao diện (REV-CRT-12): huy hiệu giỏ chỉ hiện 99+ khi trên 99",
+   "sb": [],
+   "tc": "CRT-E2E-20261006-104523348",
+   "file": "../web/lib/cart-const.ts",
+   "find": "n >= 99 ? '99+'",
+   "replace": "n > 99 ? '99+'",
+   "test": "node scripts/run-jest.mjs test/cart/review.spec.ts -t \"REV-CRT-12\""
+  },
+  {
+   "id": "Giao diện (REV-CRT-20): xóa dòng đã bị xóa ở tab khác (404) không đọc lại giỏ",
+   "sb": [],
+   "tc": "CRT-E2E-20261006-104523348",
+   "file": "../web/app/cart/page.tsx",
+   "find": "if (r.status === 204 || r.status === 404) await load(true);",
+   "replace": "if (r.status === 204) await load(true);",
+   "test": "node scripts/run-jest.mjs test/e2e/crt.e2e.spec.ts -t \"REV-CRT-20\""
+  },
+  {
+   "id": "Trần giỏ: thêm sản phẩm không kiểm trần tạm tính",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261013-205743594",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "    await this.assertUnderCap(userId, pid, inCart + b.quantity, BigInt(p.price));\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/limit.spec.ts -t \"CRT-TC-20261013-205743594\""
+  },
+  {
+   "id": "Trần giỏ: tăng số lượng không kiểm trần tạm tính",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261013-205743594",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "    if (increase) await this.assertUnderCap(userId, it.product_id, quantity, price);\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/limit.spec.ts -t \"CRT-TC-20261013-205743594\""
+  },
+  {
+   "id": "Trần giỏ: đúng trần 10 tỷ cũng bị chặn (> thành >=)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261013-205743594",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "if (rest + price * BigInt(quantity) > SUBTOTAL_MAX) throw overCap();",
+   "replace": "if (rest + price * BigInt(quantity) >= SUBTOTAL_MAX) throw overCap();",
+   "test": "node scripts/run-jest.mjs test/cart/limit.spec.ts -t \"CRT-TC-20261013-205743594\""
+  },
+  {
+   "id": "Trần giỏ: dòng đang sửa bị đếm hai lần (không loại dòng của chính sản phẩm đó)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261013-205743594",
+   "file": "src/modules/cart/write.service.ts",
+   "find": ".filter((i) => i.product_id !== productId);",
+   "replace": ";",
+   "test": "node scripts/run-jest.mjs test/cart/limit.spec.ts -t \"CRT-TC-20261013-205743594\""
+  },
+  {
+   "id": "Trần giỏ: dòng ngừng bán bị tính vào tạm tính của trần",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261013-205743594",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "subtotalOf(priceLines(others, await this.deps.products([...new Set(others.map((i) => i.product_id))]).catch((e) => { throw unavailable(e); }), {}))",
+   "replace": "others.reduce((s, i) => s + i.unit_price * BigInt(i.quantity), 0n)",
+   "test": "node scripts/run-jest.mjs test/cart/limit.spec.ts -t \"CRT-TC-20261013-205743594\""
+  },
+  {
+   "id": "Trần giỏ: chọn vận chuyển cho giỏ vượt trần vẫn gọi SHP (503 mãi)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261013-205743712",
+   "file": "src/modules/cart/write.service.ts",
+   "find": "    if (subtotal > SUBTOTAL_MAX) throw overCap(); // giá tăng",
+   "replace": "    // giá tăng",
+   "test": "node scripts/run-jest.mjs test/cart/limit.spec.ts -t \"CRT-TC-20261013-205743712\""
+  },
+  {
+   "id": "Trần giỏ: xem giỏ vượt trần vẫn hỏi SHP (báo service_unavailable mãi)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261013-205743712",
+   "file": "src/modules/cart/read.service.ts",
+   "find": "    if (subtotal > SUBTOTAL_MAX) return { method_id: methodId, city, fee: null, error: 'cart_limit_exceeded' };",
+   "replace": "    if (false as boolean) return { method_id: methodId, city, fee: null, error: 'cart_limit_exceeded' };",
+   "test": "node scripts/run-jest.mjs test/cart/limit.spec.ts -t \"CRT-TC-20261013-205743712\""
+  },
+  {
+   "id": "Trần giỏ: giỏ vượt trần không chặn thanh toán (không có blocker)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261013-205743712",
+   "file": "src/modules/cart/pricing.ts",
+   "find": "  if (subtotalOf(lines) > SUBTOTAL_MAX) out.push('cart_limit_exceeded');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/limit.spec.ts -t \"CRT-TC-20261013-205743712\""
+  },
+  {
+   "id": "Trần giỏ: lockForCheckout để giỏ vượt trần lọt sang CHK",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261013-205743812",
+   "file": "src/modules/cart/cart.api.ts",
+   "find": "    if (snap.ok && snap.items_subtotal > SUBTOTAL_MAX) throw new DomainError('cart-limit-exceeded', { extra: { max_subtotal: SUBTOTAL_MAX } });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/cart/limit.spec.ts -t \"CRT-TC-20261013-205743812\""
+  },
+  {
+   "id": "Trần giỏ: hằng trần đổi từ 10 tỷ thành 1 tỷ",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CRT-TC-20261013-205743594",
+   "file": "src/modules/cart/config.ts",
+   "find": "export const SUBTOTAL_MAX = 10_000_000_000;",
+   "replace": "export const SUBTOTAL_MAX = 1_000_000_000;",
+   "test": "node scripts/run-jest.mjs test/cart/limit.spec.ts -t \"CRT-TC-20261013-205743594\""
+  }
+ ]
+}

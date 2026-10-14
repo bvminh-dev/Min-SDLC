@@ -7,7 +7,7 @@ roles: [guest, customer, staff, admin]
 ---
 # Đánh giá của sản phẩm (danh sách công khai)
 
-Trang con của sản phẩm (`/products/{id}/reviews`), mở từ dòng "★ 4,5 (10 đánh giá)" ở chi tiết sản phẩm của PRD. **Báo trước theo skill evon:** skill giao diện chưa được dạy cho cửa hàng online phía người mua; trang này vẫn làm theo mẫu danh sách có bộ lọc và `timeline`, kết quả có thể chưa đẹp bằng màn trong app. Chạy tự động nên các cổng hỏi của `U1` đến `U3` (brief, chọn wireframe) được trả lời bằng phương án khuyến nghị và ghi là mặc định. Ở phase này chỉ có wireframe ASCII trong tài liệu, không dựng HTML hay chạy probe.
+Trang con của sản phẩm (`/products/{id}/reviews`), mở bằng liên kết "Xem đánh giá" đặt CẠNH dòng điểm "★ 4,5 (10 đánh giá)" (hay dòng "Chưa có đánh giá" khi chưa có) ở chi tiết sản phẩm của PRD, cùng một hàng với dòng điểm (bản thân dòng điểm là chữ, không phải liên kết; testid của PRD `prd-product-detail-rating` và `prd-product-detail-rating-empty` giữ nguyên, liên kết là phần tử của PRD không có testid riêng của REV). **Báo trước theo skill evon:** skill giao diện chưa được dạy cho cửa hàng online phía người mua; trang này vẫn làm theo mẫu danh sách có bộ lọc và `timeline`, kết quả có thể chưa đẹp bằng màn trong app. Chạy tự động nên các cổng hỏi của `U1` đến `U3` (brief, chọn wireframe) được trả lời bằng phương án khuyến nghị và ghi là mặc định. Ở phase này chỉ có wireframe ASCII trong tài liệu, không dựng HTML hay chạy probe.
 
 ## Wireframe
 Phương án đã chọn: **A** (cột trái tóm tắt và bộ lọc dính, cột phải danh sách đánh giá). **Chọn theo khuyến nghị** (theo `U3`; mặc định, người dùng ủy quyền 2026-10-06), không cần người dùng chọn.

@@ -14,15 +14,16 @@ const sc = '### Luồng chính\n' + gwt + '### Luồng lỗi\n' + gwt + '### Ca 
 const tc = (n, kind, extra = '', body = gwt, status = 'draft') => [`epics/ORD/tests/ORD-TC-20261006-12000000${n}.md`, `---\nid: ORD-TC-20261006-12000000${n}\nepic: ORD\nstatus: ${status}\ncovers: [${REQ}]\nkind: ${kind}\n${extra}---\n## Các bước\n${body}`];
 const e2e = (step, role = 'customer') => ['epics/ORD/tests/ORD-E2E-20261006-120000009.md', `---\nid: ORD-E2E-20261006-120000009\nepic: ORD\nstatus: draft\ncovers: [${REQ}]\nrole: ${role}\n---\n1. bấm ${step}\n`];
 
-function run({ tcs = [tc(1, 'chính', `threats: [${SEC}:T1]\n`), tc(2, 'lỗi'), tc(3, 'biên')], e = e2e('`ord-order-list-row`'), chk = 'test', strict = true, ui = null, api = null } = {}) {
+function run({ tcs = [tc(1, 'chính', `threats: [${SEC}:T1]\n`), tc(2, 'lỗi'), tc(3, 'biên')], e = e2e('`ord-order-list-row`'), chk = 'test', strict = true, ui = null, api = null, db = null, br = '' } = {}) {
   const r = mkdtempSync(join(tmpdir(), 'tests-'));
   put(r, 'roadmap.md', '| STT | Mã | Epic | Mục con |\n|---|---|---|---|\n| 01 | ORD | Order | x |\n');
   put(r, 'permissions-matrix.md', '| Hành động | Requirement | guest | customer | staff | admin |\n|---|---|---|---|---|---|\n');
-  put(r, `epics/ORD/requirements/${REQ}.md`, `---\nid: ${REQ}\nepic: ORD\nroles: [customer]\n---\n${sc}`);
+  put(r, `epics/ORD/requirements/${REQ}.md`, `---\nid: ${REQ}\nepic: ORD\nroles: [customer]\n---\n${br}${sc}`);
   put(r, `epics/ORD/design/${SEC}.md`, `---\nid: ${SEC}\nepic: ORD\n---\n## Mối đe dọa\n| Mã | STRIDE | Tài sản | Mối đe dọa | Biện pháp | SB | Kiểm bằng |\n|---|---|---|---|---|---|---|\n| T1 | E | đơn | IDOR | kiểm sở hữu | SB-06 | ${chk} |\n`);
   put(r, 'testids.md', '| testid | Màn | Epic | Phần tử | Role | Requirement |\n|---|---|---|---|---|---|\n| ord-order-list-row | order-list | ORD | Dòng | customer | x |\n| ord-order-manage-row | order-manage | ORD | Dòng | staff | x |\n| ord-order-list-rate-limited | order-list | ORD | Banner | customer | x |\n');
   if (ui) put(r, 'epics/ORD/ui/order-list.md', `---\nscreen: order-list\nepic: ORD\nstatus: approved\n---\n${ui}`);
   if (api) put(r, 'epics/ORD/design/ORD-API-20261006-110000002.md', `---\nid: ORD-API-20261006-110000002\nepic: ORD\nstatus: approved\n---\n${api}`);
+  if (db) put(r, 'epics/ORD/design/ORD-DB-20261006-110000004.md', `---\nid: ORD-DB-20261006-110000004\nepic: ORD\nstatus: approved\n---\n## Giao dịch và khóa\n${db}`);
   for (const [p, t] of [...tcs, e]) put(r, p, t);
   return spawnSync('node', [script, r, ...(strict ? ['--strict'] : [])], { encoding: 'utf8' });
 }
@@ -79,4 +80,21 @@ assert.equal(run({ api: IF2, tcs: tcSay('getOrderContact và listOrdersByUser') 
 const l50 = run({ api: IF2, strict: false });
 assert.equal(l50.status, 0);
 assert.match(l50.stdout, /Lưu ý: .*giao diện module.*getOrderContact/);
+
+// L61: mục đánh số của tài liệu DB/API nói về job nền phải có TC nhắc job; mỗi cụm "giới hạn lô", "hạn thời gian", "idempotent" của mục job phải có trong một Then (cảnh báo, lỗi ở --strict)
+const JOB = '1. **Giao dịch**: ghi đơn.\n2. **Job dọn đơn mồ côi** (ADR-013): job `ord.sweep-orphans` chạy mỗi giờ, có hạn thời gian và giới hạn lô, idempotent.\n';
+bad({ db: JOB }, /job.*ord\.sweep-orphans/);
+bad({ db: JOB, tcs: [tc(1, 'chính', T1, gwt + '- **Then** job `ord.sweep-orphans` chạy xong\n'), tc(2, 'lỗi'), tc(3, 'biên')] }, /giới hạn lô/);
+assert.equal(run({ db: JOB, tcs: [tc(1, 'chính', T1, gwt + '- **Then** job `ord.sweep-orphans` xử lý đủ giới hạn lô, trong hạn thời gian, idempotent khi chạy lại\n'), tc(2, 'lỗi'), tc(3, 'biên')] }).status, 0, 'đủ tên job và ba cụm thì qua');
+const l61 = run({ db: JOB, strict: false });
+assert.equal(l61.status, 0, 'không --strict chỉ cảnh báo');
+assert.match(l61.stdout, /Lưu ý: .*job.*ord\.sweep-orphans/);
+assert.equal(run({ db: '1. **Giao dịch**: ghi đơn, không có tác vụ nền.\n' }).status, 0, 'mục không nói về job thì không kiểm');
+// L132: BR "xét theo thứ tự" nhiều bước mà số TC của requirement ít hơn số bước (cảnh báo, lỗi ở --strict)
+const BR5 = '- BR3: Mã lý do, xét theo thứ tự: (1) a; (2) b; (3) c; (4) d; (5) e.\n\n';
+bad({ br: BR5 }, /xét theo thứ tự.*5 bước.*3 test case|3 test case.*5 bước/);
+const more = [tc(1, 'chính', T1), tc(2, 'lỗi'), tc(3, 'biên'), tc(4, 'lỗi'), tc(5, 'lỗi')];
+assert.equal(run({ br: BR5, tcs: more }).status, 0, 'số TC không ít hơn số bước thì qua');
+assert.equal(run({ br: BR5, strict: false }).status, 0);
+assert.match(run({ br: BR5, strict: false }).stdout, /Lưu ý: .*theo thứ tự/);
 console.log('OK: check-tests.mjs');

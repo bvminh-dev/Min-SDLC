@@ -75,10 +75,12 @@ model Order {
   createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  user    User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
-  items   OrderItem[]
-  history OrderStatusHistory[]
-  shipments Shipment[] // khóa ngoại của SHP (shipments.order_id): chỉ để ràng buộc toàn vẹn, ORD không truy vấn
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items            OrderItem[]
+  history          OrderStatusHistory[]
+  shipments        Shipment[] // khóa ngoại của SHP (shipments.order_id): chỉ để ràng buộc toàn vẹn, ORD không truy vấn
+  payment          Payment? // khóa ngoại của PAY (payments.order_id, unique): chỉ để ràng buộc toàn vẹn, ORD không truy vấn
+  checkoutSessions CheckoutSession[] // khóa ngoại của CHK (checkout_sessions.order_id, ON DELETE RESTRICT): chỉ để ràng buộc toàn vẹn, ORD không truy vấn
 
   @@index([userId, createdAt(sort: Desc), id(sort: Desc)])
   @@index([userId, status, createdAt(sort: Desc), id(sort: Desc)])
@@ -96,7 +98,8 @@ model OrderItem {
   quantity     Int
   position     Int // thứ tự dòng khi đặt (ORD-DB không có cột này: id là uuid ngẫu nhiên nên không khôi phục được thứ tự dòng)
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reviews Review[] // khóa ngoại của REV (reviews.order_item_id, ON DELETE RESTRICT): chỉ để ràng buộc toàn vẹn, ORD không truy vấn
 
   @@unique([orderId, position])
   @@index([orderId])

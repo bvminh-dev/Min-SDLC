@@ -6,7 +6,7 @@
 
 Quy tắc xuyên module (thứ tự kiểm, mã lỗi, giới hạn) bị chép lại ở epic khác: thêm dòng `Cụm từ xuyên module: "<cụm từ>"` (tìm bằng `find-refs.mjs spec/ --phrase`); `check-impact` đòi mọi tài liệu nhắc cụm đó có dòng trong bảng.
 
-Tên file là ID của tài liệu bị đổi: `spec/changes/<ID>.md`.
+Tên file là ID của tài liệu bị đổi: `spec/changes/<ID>.md`. Thay đổi chạm tài liệu không có ID (ADR, `architecture.md`, `events.md`): đặt tên file theo chủ đề và thêm dòng `Tài liệu bị đổi: <ID hoặc spec/đường-dẫn.md có thật>` (không có ID thì `check-impact` bỏ phủ tín hiệu cứng links/covers).
 
 | ID bị ảnh hưởng | Loại | Mức | Lý do | Việc cần làm |
 |---|---|---|---|---|

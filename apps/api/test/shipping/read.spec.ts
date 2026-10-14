@@ -114,14 +114,17 @@ describe('SHP xem vận đơn và danh sách', () => {
     // EXPLAIN đúng câu của danh sách trên 100000 dòng: lọc status dùng index (status, created_at, id)
     const owner = await who(t, 'customer', 'chu@x.vn');
     const m = await seedMethod(t, { name: 'Giao hàng' });
-    await t.prisma.$executeRaw`
+    await t.prisma.$transaction(async (tx) => { // dữ liệu mồi 100000 dòng không bị `statement_timeout` của ứng dụng (SB-31): trước đây đỏ chập chờn `57014` khi máy tải cao (review PAY)
+    await tx.$executeRaw`SET LOCAL statement_timeout = 0`;
+    await tx.$executeRaw`
       INSERT INTO orders (user_id, code, status, payment_status, items_total, discount, shipping_fee, grand_total, shipping_address, shipping_method_id, payment_method, created_at, updated_at)
       SELECT ${owner.id}::uuid, upper(substr(md5(g::text), 1, 12)), 'paid', 'pending', 100000, 0, 0, 100000, '{}'::jsonb, ${m}::uuid, 'cod', now(), now() FROM generate_series(1, 100000) g`;
-    await t.prisma.$executeRaw`
+    await tx.$executeRaw`
       INSERT INTO shipments (order_id, shipping_method_id, status, tracking_number, delivered_at, shipped_at, created_at, updated_at)
       SELECT o.id, ${m}::uuid, CASE WHEN n % 50 = 0 THEN 'pending' ELSE 'delivered' END::shipment_status, CASE WHEN n % 50 = 0 THEN NULL ELSE 'TRK' || lpad(n::text, 8, '0') END,
              CASE WHEN n % 50 = 0 THEN NULL ELSE now() END, CASE WHEN n % 50 = 0 THEN NULL ELSE now() END, now() - make_interval(secs => n), now()
       FROM (SELECT id, row_number() OVER () AS n FROM orders) o`;
+    }, { timeout: 180_000, maxWait: 30_000 });
     await t.prisma.$executeRaw(Prisma.raw('ANALYZE shipments'));
     const plan = JSON.stringify(await t.prisma.$queryRaw(Prisma.sql`EXPLAIN (FORMAT JSON) ${listRowsSql(Prisma.sql`WHERE s.status = ${'pending'}::shipment_status`, 'DESC', 20, 0)}`));
     expect(plan).toContain('shipments_status_created_at_id_idx');

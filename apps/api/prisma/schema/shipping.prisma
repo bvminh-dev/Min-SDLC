@@ -40,7 +40,11 @@ model ShippingMethod {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  shipments Shipment[]
+  shipments        Shipment[]
+  // Phía ngược của khóa ngoại carts.shipping_method_id (CRT phụ thuộc SHP, CRT-DB): SHP không đọc bảng này.
+  carts            Cart[]
+  // Phía ngược của khóa ngoại checkout_sessions.shipping_method_id (ON DELETE SET NULL, CHK phụ thuộc SHP): SHP không đọc bảng này.
+  checkoutSessions CheckoutSession[]
 
   @@index([createdAt(sort: Desc), id(sort: Desc)])
   @@map("shipping_methods")
@@ -52,6 +56,7 @@ model Shipment {
   shippingMethodId String         @map("shipping_method_id") @db.Uuid
   status           ShipmentStatus @default(pending)
   trackingNumber   String?        @map("tracking_number")
+  orderCode        String?        @map("order_code") // bản chụp bất biến của mã đơn lúc tạo (migration 20261008000100; NOT NULL ở bước thu hẹp sau)
   codAmount        BigInt         @default(0) @map("cod_amount")
   shippedAt        DateTime?      @map("shipped_at") @db.Timestamptz(6)
   deliveredAt      DateTime?      @map("delivered_at") @db.Timestamptz(6)

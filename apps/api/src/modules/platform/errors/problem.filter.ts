@@ -37,7 +37,7 @@ export class ProblemFilter implements ExceptionFilter {
     }
 
     let code = 'internal-error';
-    let opts: { detail?: string; errors?: { field: string; code: string }[]; headers?: Record<string, string>; extra?: Record<string, ProblemExtra> } = {};
+    let opts: { detail?: string; errors?: { field: string; code: string }[]; headers?: Record<string, string>; extra?: Record<string, ProblemExtra>; status?: number } = {};
 
     if (exception instanceof DomainError) {
       if (errorRegistry.get(exception.code)) { code = exception.code; opts = exception.options; }

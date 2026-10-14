@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { AddToCart } from '../../components/AddToCart';
 import { CategoryTree } from '../../components/CategoryTree';
 import { Pager } from '../../components/Pager';
 import { StockLabel } from '../../components/StockLabel';
@@ -10,6 +11,7 @@ import { api } from '../../lib/api';
 import { formatPrice, formatRating, parseMoney } from '../../lib/format';
 import { fetchStock } from '../../lib/inventory';
 import { rateLimitedText, useCategories } from '../../lib/prd';
+import { useQueryGo } from '../../components/useQueryGo';
 
 interface Card { id: string; name: string; price: number; image_url: string | null; category: { id: string; name: string } | null; rating_avg: number | null; rating_count: number }
 interface Result { items: Card[]; page: number; limit: number; total: number }
@@ -44,13 +46,7 @@ function ProductList() {
 
   useEffect(() => { setSearch(q); setMin(minPrice); setMax(maxPrice); setPriceError(''); }, [q, minPrice, maxPrice]);
 
-  const go = useCallback((change: Record<string, string | null>, keepPage = false) => {
-    const n = new URLSearchParams(sp.toString());
-    for (const [k, v] of Object.entries(change)) { if (v) n.set(k, v); else n.delete(k); }
-    if (!keepPage) n.delete('page'); // đổi bộ lọc thì về trang 1
-    const s = n.toString();
-    router.push(s ? `/products?${s}` : '/products', { scroll: false });
-  }, [sp, router]);
+  const go = useQueryGo('/products'); // cộng dồn các lần đổi liền nhau (REV-REV-12)
 
   const load = useCallback(async () => {
     const id = ++seq.current;
@@ -147,6 +143,7 @@ function ProductList() {
                         <span className="hint" data-testid="prd-product-list-card-rating">{rating ?? 'Chưa có đánh giá'}</span>
                         <StockLabel inStock={stock?.get(c.id)} testId="prd-product-list-card-stock" />
                       </Link>
+                      <AddToCart productId={c.id} compact />
                     </li>
                   );
                 })}

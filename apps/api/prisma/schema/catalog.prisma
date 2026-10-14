@@ -51,11 +51,15 @@ model Product {
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  category Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  images   ProductImage[]
-  ratings  ProductReviewRating[]
+  category  Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images    ProductImage[]
+  ratings   ProductReviewRating[]
   // Phía ngược của khóa ngoại stock_items.product_id (INV phụ thuộc PRD, INV-DB): Prisma đòi hai phía, PRD không đọc bảng này.
   stockItem StockItem?
+  // Phía ngược của khóa ngoại cart_items.product_id (CRT phụ thuộc PRD, CRT-DB): PRD không đọc bảng này.
+  cartItems CartItem[]
+  // Phía ngược của khóa ngoại reviews.product_id (REV phụ thuộc PRD, REV-DB): PRD không đọc bảng này.
+  reviews   Review[]
 
   @@index([status, categoryId, publishedAt(sort: Desc), id(sort: Desc)])
   @@index([status, price, id])

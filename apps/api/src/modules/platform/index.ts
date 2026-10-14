@@ -5,11 +5,11 @@ export { currentCorrelationId, runWithCorrelation, newCorrelationId } from './co
 export { ConfigService, registerConfigSchema, cfg, loadConfig, loadConfigFromProcess, ConfigError, type CoreConfig, type ConfigFragment, type ConfigVar } from './config/config';
 export { AppLogger } from './logging/logger';
 export { redactDeep, REDACTED } from './logging/redact';
-export { DomainError, registerProblem, errorRegistry, ErrorRegistry, type ProblemDef, type ProblemExtra } from './errors/registry';
+export { DomainError, registerProblem, errorRegistry, ErrorRegistry, type ProblemDef, type ProblemExtra, type ProblemJson } from './errors/registry';
 export { PrismaService } from './db/prisma.service';
 export { TransactionService, type Tx } from './db/transaction.service';
 export { AuditService, type AuditEntry } from './audit/audit.service';
-export { EventsService, ProgrammingError, type DomainEventInput, type EventEnvelope, type EventHandler } from './events/events.service';
+export { EventsService, ProgrammingError, SKIP, type DomainEventInput, type EventEnvelope, type EventHandler, type PreparedHandler } from './events/events.service';
 export { OutboxRelay } from './events/outbox-relay';
 export { JobRunner, type JobDef } from './jobs/job-runner';
 export { RetentionService } from './jobs/retention.service';
@@ -20,7 +20,7 @@ export { Validate, ValidBody, ValidParams, ValidQuery } from './http/validation'
 export { Public, Roles, Action, SystemEndpoint, CurrentSession, SESSION_RESOLVER, SessionService, type SessionContext, type SessionResolver } from './http/session';
 export { auditRoutes, auditPermissions, parseMatrix, routeIds } from './http/route-audit';
 export { configureApp, nestLogger } from './http/app-setup';
-export { clientIp } from './http/client-ip';
+export { clientIp, normalizeIp } from './http/client-ip';
 export { allowMultipart } from './http/multipart';
 export { readSingleFile, UploadError, MULTIPART_SLACK, type UploadRead, type UploadReason } from './http/upload';
 export { OBJECT_STORAGE, UnconfiguredStorage, type ObjectStorage, type StoredObject } from './storage/storage';

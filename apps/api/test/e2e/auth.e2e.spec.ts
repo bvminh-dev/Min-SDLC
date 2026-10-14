@@ -1,5 +1,5 @@
 import type { Page } from 'playwright-core';
-import { PASSWORD, advance, count, ctl, eventually, hasText, id, loginUi, mailToken, reset, see, seedUser, startE2e, textOf, urlIs, withPage, type E2eEnv } from './support';
+import { PASSWORD, advance, alignWindow, count, ctl, eventually, hasText, id, loginUi, mailToken, reset, see, seedUser, startE2e, textOf, urlIs, withPage, type E2eEnv, API, API_ORIGIN, WEB_PORT } from './support';
 
 // E2E của AUTH chạy bằng Jest (công cụ test duy nhất) và `playwright-core` điều khiển Chromium thật: API thật trên PostgreSQL thật
 // (CSDL `ecom_e2e`) và bản build production của web. Mỗi test: CSDL sạch, đồng hồ API về thật, ngữ cảnh trình duyệt mới. Xem support.ts.
@@ -179,14 +179,14 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
     await seedUser({ email: 'u1@shop.vn' });
     await loginUi(page, 'u1@shop.vn');
     const apiCalls: string[] = [];
-    page.on('request', (r) => { if (r.url().includes(':3101/') && r.url().includes('/admin/users')) apiCalls.push(r.url()); });
+    page.on('request', (r) => { if (r.url().startsWith(API_ORIGIN + '/') && r.url().includes('/admin/users')) apiCalls.push(r.url()); });
     await page.goto('/admin/users');
     await see(id(page, 'auth-access-denied-container'));
     await hasText(id(page, 'auth-access-denied-message'), /Khách hàng/);
     await count(id(page, 'auth-admin-user-list-row'), 0);
     expect(apiCalls).toEqual([]); // không gọi API danh sách
     await id(page, 'auth-access-denied-home').click();
-    await urlIs(page, /localhost:3100\/$/);
+    await urlIs(page, new RegExp(`localhost:${WEB_PORT}/$`));
   });
 
   e2e('AUTH-E2E-20261006-100708184: admin tìm người dùng, đổi role, khóa rồi mở khóa', async (page) => {
@@ -269,6 +269,7 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
     expect(await ctl('/health')).toEqual({ ok: true });
   });
   e2e('AUTH-E2E-20261007-085336677 (review AUTH): đăng nhập vượt giới hạn 10 lần mỗi phút (429) khóa nút kèm banner, rồi mở lại khi hết Retry-After (ui/login: nút khóa tới hết giờ)', async (page) => {
+    await alignWindow(); // mười một lần đăng nhập sai nằm trọn một cửa sổ cố định 60 giây: không có thì đỏ chập chờn khi chạy qua ranh giới phút (review NTF, lượt chạy đầy đủ lần hai)
     await page.goto('/login');
     for (let i = 0; i < 11; i++) {
       await id(page, 'auth-login-email').fill(`ghost${i}@shop.vn`);
@@ -284,7 +285,6 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
   });
 
   // Ba màn còn lại có cửa sổ giới hạn 1 giờ: dùng đồng hồ giả của trình duyệt để tua giờ chờ của giao diện (máy chủ vẫn đếm giờ thật).
-  const API = 'http://localhost:3101/api/v1';
   const hammer = (page: Page, path: string, body: (i: number) => unknown, n: number) => page.evaluate(async ([url, bodies]) => {
     for (const b of bodies as unknown[]) await fetch(url as string, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
   }, [`${API}${path}`, Array.from({ length: n }, (_, i) => body(i))] as const);
@@ -298,7 +298,7 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
   };
 
   e2e('AUTH-E2E-20261007-085336711: đăng ký vượt 10 lần mỗi giờ (429) khóa nút kèm banner số phút, rồi mở lại khi hết Retry-After', async (page) => {
-    await page.goto('/register');
+    await alignWindow(3600); await page.goto('/register'); // alignWindow: cửa sổ giờ cố định, các lần gọi nằm trọn một cửa sổ, không đỏ khi chạy qua ranh giới giờ (REV-REV-14)
     await page.clock.install();
     await hammer(page, '/auth/register', (i) => ({ full_name: 'Nguyễn An', email: `rl${i}@shop.vn`, password: PASSWORD }), 10);
     await id(page, 'auth-register-full-name').fill('Nguyễn An');
@@ -310,7 +310,7 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
   });
 
   e2e('AUTH-E2E-20261007-085336746: quên mật khẩu vượt 20 lần mỗi giờ (429) khóa nút kèm banner số phút, rồi mở lại khi hết Retry-After', async (page) => {
-    await page.goto('/forgot-password');
+    await alignWindow(3600); await page.goto('/forgot-password'); // alignWindow: cửa sổ giờ cố định, các lần gọi nằm trọn một cửa sổ, không đỏ khi chạy qua ranh giới giờ (REV-REV-14)
     await page.clock.install();
     await hammer(page, '/auth/password/forgot', () => ({ email: 'a@shop.vn' }), 20);
     await id(page, 'auth-forgot-password-email').fill('a@shop.vn');
@@ -319,7 +319,7 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
   });
 
   e2e('AUTH-E2E-20261007-085336782: đặt lại mật khẩu vượt 10 lần mỗi giờ (429) khóa nút kèm banner số phút, rồi mở lại khi hết Retry-After', async (page) => {
-    await page.goto(`/reset-password#token=${'z'.repeat(43)}`);
+    await alignWindow(3600); await page.goto(`/reset-password#token=${'z'.repeat(43)}`); // alignWindow: cửa sổ giờ cố định, các lần gọi nằm trọn một cửa sổ, không đỏ khi chạy qua ranh giới giờ (REV-REV-14)
     await see(id(page, 'auth-reset-password-form'));
     await page.clock.install();
     await hammer(page, '/auth/password/reset', () => ({ token: 'z'.repeat(43), new_password: 'New-Pass-67890' }), 10);

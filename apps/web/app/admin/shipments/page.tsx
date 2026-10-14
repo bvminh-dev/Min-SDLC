@@ -12,6 +12,7 @@ import { formatOrderTime } from '../../../lib/order';
 import { useLoginRedirect } from '../../../lib/prd';
 import { SHIPMENT_STATUSES, TRACKING_RE, detailHref, shipmentStatusText, type ShipmentRow, type ShipmentStatus } from '../../../lib/shipping';
 import { limitedText } from '../../../lib/stock';
+import { useQueryGo } from '../../../components/useQueryGo';
 
 interface Result { items: ShipmentRow[]; page: number; limit: number; total: number }
 const LIMIT = 20;
@@ -40,13 +41,7 @@ function ShipmentListInner() {
   const wasLimited = useRef(false);
 
   useEffect(() => { setSearch(q); }, [q]);
-  const go = useCallback((change: Record<string, string | null>, keepPage = false) => {
-    const n = new URLSearchParams(sp.toString());
-    for (const [k, v] of Object.entries(change)) { if (v) n.set(k, v); else n.delete(k); }
-    if (!keepPage) n.delete('page');
-    const s = n.toString();
-    router.push(s ? `/admin/shipments?${s}` : '/admin/shipments', { scroll: false });
-  }, [sp, router]);
+  const go = useQueryGo('/admin/shipments'); // cộng dồn các lần đổi liền nhau (REV-REV-12)
   // Gõ rồi chờ 300 ms (hoặc Enter) mới tìm; khớp chính xác nên không cắt giá trị người nhập ngoài giới hạn 32 ký tự của API.
   useEffect(() => {
     if (search.trim() === q) return;

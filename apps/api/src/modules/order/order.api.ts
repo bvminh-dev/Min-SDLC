@@ -6,7 +6,7 @@ import { InternalService, type RangeUtc, type SeriesBucket, type TopSort } from 
 /**
  * Giao diện nội bộ ORD phơi ra cho module khác (ADR-012, bảng "Giao diện module" của architecture.md, ORD-API mục Giao diện module): phương thức trong tiến trình, không có endpoint HTTP.
  * Chữ ký là bản chốt của ORD; CHK (createPending, confirmCod, countOpenOrders, getSummary), PAY (findForPayment), SHP (findForShipment, findByCode, findOwned, getRecipient, lockForHandoff),
- * REV (getDeliveredItems), DSH (countByStatus, getOrderSeries, listRecent, getTopProducts) dùng đúng chữ ký này.
+ * REV (getDeliveredItems, hasUndeliveredItems), DSH (countByStatus, getOrderSeries, listRecent, getTopProducts, getProductSalesTotals) dùng đúng chữ ký này.
  */
 @Injectable()
 export class OrderApi {
@@ -29,9 +29,13 @@ export class OrderApi {
   lockForHandoff(orderId: string, tx: Tx) { return this.reads.lockForHandoff(orderId, tx); }
 
   getDeliveredItems(userId: string, productId: string) { return this.reads.getDeliveredItems(userId, productId); }
+  /** REV: có dòng đơn chứa sản phẩm ở đơn chưa giao xong (`pending`, `confirmed`, `paid`, `shipped`) không; để REV trả `not_delivered` thay `not_purchased`. */
+  hasUndeliveredItems(userId: string, productId: string) { return this.reads.hasUndeliveredItems(userId, productId); }
 
   countByStatus(range: RangeUtc) { return this.reads.countByStatus(range); }
   getOrderSeries(range: RangeUtc, bucket: SeriesBucket) { return this.reads.getOrderSeries(range, bucket); }
   listRecent(limit: number) { return this.reads.listRecent(limit); }
   getTopProducts(range: RangeUtc, sort: TopSort, limit: number) { return this.reads.getTopProducts(range, sort, limit); }
+  /** DSH: tổng số lượng bán và số sản phẩm khác nhau của toàn khoảng (cùng điều kiện với `getTopProducts`). */
+  getProductSalesTotals(range: RangeUtc) { return this.reads.getProductSalesTotals(range); }
 }

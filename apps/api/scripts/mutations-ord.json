@@ -205,8 +205,8 @@
    ],
    "tc": "ORD-TC-20261006-120228155",
    "file": "src/modules/order/internal.service.ts",
-   "find": "return rows.map((r) => ({ code: r.code, created_at: r.created_at.toISOString(), status: r.status, grand_total: Number(r.grand_total), payment_status: r.payment_status, item_count: r.item_count }));\n  }\n\n  /** DSH: dòng hàng nhóm",
-   "replace": "return rows.map((r) => ({ code: r.code, created_at: r.created_at.toISOString(), status: r.status, grand_total: Number(r.grand_total), payment_status: r.payment_status, item_count: r.item_count, user_id: 'x' }));\n  }\n\n  /** DSH: dòng hàng nhóm",
+   "find": "return rows.map((r) => ({ code: r.code, created_at: r.created_at.toISOString(), status: r.status, grand_total: Number(r.grand_total), payment_method: r.payment_method, payment_status: r.payment_status, item_count: r.item_count }));\n  }\n\n  /** DSH: dòng hàng nhóm",
+   "replace": "return rows.map((r) => ({ code: r.code, created_at: r.created_at.toISOString(), status: r.status, grand_total: Number(r.grand_total), payment_method: r.payment_method, payment_status: r.payment_status, item_count: r.item_count, user_id: 'x' }));\n  }\n\n  /** DSH: dòng hàng nhóm",
    "test": "node scripts/run-jest.mjs test/order/interfaces.spec.ts -t \"ORD-TC-20261006-120228155\""
   },
   {
@@ -882,8 +882,8 @@
    ],
    "tc": "ORD-TC-20261006-120228155",
    "file": "src/modules/order/internal.service.ts",
-   "find": " AND o.status NOT IN ('cancelled', 'expired', 'returned')",
-   "replace": "",
+   "find": " AND o.status NOT IN ('cancelled', 'expired', 'returned')\n      GROUP BY",
+   "replace": "\n      GROUP BY",
    "test": "node scripts/run-jest.mjs test/order/review.spec.ts -t \"ORD-TC-20261006-120228155\""
   },
   {
@@ -1089,6 +1089,33 @@
    "find": "<span data-testid=\"ord-order-detail-history-reason\">Lý do: {reasonText(h.status, h.reason, h.failed)}</span>",
    "replace": "<span data-testid=\"ord-order-detail-history-reason\" dangerouslySetInnerHTML={{ __html: `Lý do: ${reasonText(h.status, h.reason, h.failed)}` }} />",
    "test": "node scripts/run-jest.mjs test/e2e/ord.e2e.spec.ts -t \"ORD-TC-20261006-111720161\""
+  },
+  {
+   "id": "district (sáu khóa): ORD không đòi khóa district (bỏ khỏi ADDRESS_KEYS)",
+   "sb": [],
+   "tc": "ORD-TC-20261013-211722071",
+   "file": "src/modules/order/create.service.ts",
+   "find": "const ADDRESS_KEYS = ['receiver', 'phone', 'line1', 'ward', 'district', 'city'] as const;",
+   "replace": "const ADDRESS_KEYS = ['receiver', 'phone', 'line1', 'ward', 'city'] as const;",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261013-211722071\""
+  },
+  {
+   "id": "district (sáu khóa): ORD không nhận district null (khách không có quận, huyện)",
+   "sb": [],
+   "tc": "ORD-TC-20261013-211722071",
+   "file": "src/modules/order/create.service.ts",
+   "find": "!(k === 'district' && a[k] === null) && !text(a[k], 500)",
+   "replace": "!text(a[k], 500)",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261013-211722071\""
+  },
+  {
+   "id": "district (sáu khóa): ORD không kiểm nội dung district (khoảng trắng, số)",
+   "sb": [],
+   "tc": "ORD-TC-20261013-211722071",
+   "file": "src/modules/order/create.service.ts",
+   "find": "!(k === 'district' && a[k] === null) && !text(a[k], 500)",
+   "replace": "k !== 'district' && !text(a[k], 500)",
+   "test": "node scripts/run-jest.mjs test/order/create.spec.ts -t \"ORD-TC-20261013-211722071\""
   }
  ]
 }

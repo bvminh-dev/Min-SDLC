@@ -9,6 +9,8 @@ roles: [admin]
 
 Trang để đọc sản phẩm bán chạy nhất theo khoảng ngày, xếp theo số lượng hoặc giá trị hàng bán. Chỉ tính đơn đã thu tiền theo PAY, theo ngày thu tiền (`paid_at`), không tính đơn đã hủy, hết hạn hoặc hoàn về. "Giá trị hàng bán" **không phải doanh thu**. Chỉ admin; staff và customer thấy màn `access-denied` của AUTH.
 
+Đường dẫn web: `/admin/reports/products`. Khi URL chỉ có `to` hoặc chỉ có `from`, ô còn lại hiện đúng giá trị máy chủ đã dùng (thiếu `to` là hôm nay, thiếu `from` là `to` trừ 29 ngày). Tên sản phẩm là tên hiện tại ở PRD; sản phẩm không còn ở PRD hiện "—".
+
 ## Wireframe
 Phương án đã chọn: **A** (khoảng ngày, hai số tổng, một bảng xếp hạng có ô đổi cách xếp). **Đây là lựa chọn mặc định** (khuyến nghị theo `U3` và mẫu "Trang báo cáo" của evon: top mục là danh sách dòng), chưa có người dùng chọn. Không dựng HTML hay chạy probe ở phase này.
 

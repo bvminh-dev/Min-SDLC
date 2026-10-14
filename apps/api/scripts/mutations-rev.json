@@ -1,0 +1,1837 @@
+{
+ "test": "node scripts/run-jest.mjs test/review",
+ "mutations": [
+  {
+   "id": "T4 SB-11: điểm 0 được nhận (cận dưới 1 thành 0)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104524423",
+   "file": "src/modules/review/policy.ts",
+   "find": "v < 1 || v > 5) ctx.addIssue",
+   "replace": "v < 0 || v > 5) ctx.addIssue",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524423\""
+  },
+  {
+   "id": "T4 SB-11: điểm 6 được nhận (cận trên 5 thành 6)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104524423",
+   "file": "src/modules/review/policy.ts",
+   "find": "v < 1 || v > 5) ctx.addIssue",
+   "replace": "v < 1 || v > 6) ctx.addIssue",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524423\""
+  },
+  {
+   "id": "T4 SB-11: điểm thập phân 4.5 được nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104524423",
+   "file": "src/modules/review/policy.ts",
+   "find": "typeof v !== 'number' || !Number.isInteger(v) || v < 1",
+   "replace": "typeof v !== 'number' || v < 1",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524423\""
+  },
+  {
+   "id": "T4 SB-05, SB-11: trường lạ user_id, status, order_item_id không còn bị từ chối",
+   "sb": [
+    "SB-05",
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104523993",
+   "file": "src/modules/review/policy.ts",
+   "find": "if (!known.has(k)) ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "replace": "if (false) ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104523993\""
+  },
+  {
+   "id": "T4 SB-11: khóa __proto__ của JSON không còn bị bắt",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104523993",
+   "file": "src/modules/review/policy.ts",
+   "find": "Object.prototype.hasOwnProperty.call(v, '__proto__')",
+   "replace": "false",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104523993\""
+  },
+  {
+   "id": "T7 SB-11: bình luận 2001 ký tự được nhận",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "REV-TC-20261006-104524655",
+   "file": "src/modules/review/policy.ts",
+   "find": "len(v.normalize('NFC').trim()) > COMMENT_MAX",
+   "replace": "len(v.normalize('NFC').trim()) > COMMENT_MAX + 1",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524655\""
+  },
+  {
+   "id": "T7 SB-11: NUL trong bình luận không còn bị từ chối",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "REV-TC-20261006-104524655",
+   "file": "src/modules/review/policy.ts",
+   "find": "/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/;",
+   "replace": "/[\\u0001-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/;",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524655\""
+  },
+  {
+   "id": "T7 SB-12: bình luận không chuẩn hóa NFC",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "REV-TC-20261006-104524600",
+   "file": "src/modules/review/policy.ts",
+   "find": "v.normalize('NFC').trim() || null : null));",
+   "replace": "v.trim() || null : null));",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524600\""
+  },
+  {
+   "id": "T7 SB-12: bình luận không cắt khoảng trắng hai đầu",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "REV-TC-20261006-104524600",
+   "file": "src/modules/review/policy.ts",
+   "find": "v.normalize('NFC').trim() || null : null));",
+   "replace": "v.normalize('NFC') || null : null));",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524600\""
+  },
+  {
+   "id": "T7 SB-11: bình luận sai kiểu (số, mảng) được coi là không có",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104524655",
+   "file": "src/modules/review/policy.ts",
+   "find": "if (v === null || v === undefined) return;\n  if (typeof v !== 'string') { ctx.addIssue({ code: 'custom', message: 'invalid_type' }); return; }",
+   "replace": "if (v === null || v === undefined) return;\n  if (typeof v !== 'string') { return; }",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524655\""
+  },
+  {
+   "id": "T20 SB-06: 6 ảnh được nhận (trần 5 thành 6)",
+   "sb": [
+    "SB-06",
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525257",
+   "file": "src/modules/review/policy.ts",
+   "find": "if (v.length > IMAGE_MAX_COUNT) {",
+   "replace": "if (v.length > IMAGE_MAX_COUNT + 1) {",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525257\""
+  },
+  {
+   "id": "T20 SB-06: id ảnh sai định dạng chui vào truy vấn",
+   "sb": [
+    "SB-06",
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104525035",
+   "file": "src/modules/review/policy.ts",
+   "find": "typeof x !== 'string' || !UUID_RE.test(x) || seen.has(x.toLowerCase())",
+   "replace": "typeof x !== 'string' || seen.has(x.toLowerCase())",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525035\""
+  },
+  {
+   "id": "T14 SB-11: lý do rỗng được nhận khi từ chối, ẩn",
+   "sb": [
+    "SB-11",
+    "SB-19"
+   ],
+   "tc": "REV-TC-20261006-104528138",
+   "file": "src/modules/review/policy.ts",
+   "find": "if (len(t) === 0) ctx.addIssue",
+   "replace": "if (len(t) < 0) ctx.addIssue",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528138\""
+  },
+  {
+   "id": "T14 SB-11: lý do 501 ký tự được nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104528138",
+   "file": "src/modules/review/policy.ts",
+   "find": "else if (len(t) > REASON_MAX)",
+   "replace": "else if (len(t) > REASON_MAX + 1)",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528138\""
+  },
+  {
+   "id": "T4 SB-11: PATCH body rỗng được nhận",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104526059",
+   "file": "src/modules/review/policy.ts",
+   "find": "if (!('rating' in o) && !('comment' in o) && !('image_ids' in o))",
+   "replace": "if (false)",
+   "test": "node scripts/run-jest.mjs test/review/edit.spec.ts -t \"REV-TC-20261006-104526059\""
+  },
+  {
+   "id": "T17 SB-11: sắp xếp mặc định của danh sách công khai không còn newest",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104526681",
+   "file": "src/modules/review/policy.ts",
+   "find": ".transform((v) => v ?? 'newest')",
+   "replace": ".transform((v) => v ?? 'highest')",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104526681\""
+  },
+  {
+   "id": "T17 SB-11: lọc rating nhận cả 0 và 6",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104526852",
+   "file": "src/modules/review/policy.ts",
+   "find": "/^[1-5]$/, { message: 'invalid_rating' }",
+   "replace": "/^[0-6]$/, { message: 'invalid_rating' }",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104526852\""
+  },
+  {
+   "id": "T3 SB-05: hàng đợi admin mặc định không còn pending",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104527652",
+   "file": "src/modules/review/policy.ts",
+   "find": "status: status.optional().transform((v) => v ?? 'pending')",
+   "replace": "status: status.optional().transform((v) => v ?? 'published')",
+   "test": "node scripts/run-jest.mjs test/review/admin.spec.ts -t \"REV-TC-20261006-104527652\""
+  },
+  {
+   "id": "T1 SB-06: danh sách của tôi nhận status=deleted",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104527404",
+   "file": "src/modules/review/config.ts",
+   "find": "export const REVIEW_STATUSES = ['pending', 'published', 'rejected', 'hidden'] as const;",
+   "replace": "export const REVIEW_STATUSES = ['pending', 'published', 'rejected', 'hidden', 'deleted'] as const;",
+   "test": "node scripts/run-jest.mjs test/review/mine.spec.ts -t \"REV-TC-20261006-104527404\""
+  },
+  {
+   "id": "T6 SB-14: tạo 10 lần mỗi giờ thành 11",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104524095",
+   "file": "src/modules/review/config.ts",
+   "find": "create: { tier: 'B', limit: 10, windowSeconds: 3600 },",
+   "replace": "create: { tier: 'B', limit: 11, windowSeconds: 3600 },",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524095\""
+  },
+  {
+   "id": "T6 SB-14: cửa sổ 1 giờ của tạo thành 2 giờ",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104524095",
+   "file": "src/modules/review/config.ts",
+   "find": "create: { tier: 'B', limit: 10, windowSeconds: 3600 },",
+   "replace": "create: { tier: 'B', limit: 10, windowSeconds: 7200 },",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524095\""
+  },
+  {
+   "id": "T6 SB-14: sửa 30 lần mỗi giờ thành 31",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104524095 mở rộng",
+   "file": "src/modules/review/config.ts",
+   "find": "edit: { tier: 'B', limit: 30, windowSeconds: 3600 },",
+   "replace": "edit: { tier: 'B', limit: 31, windowSeconds: 3600 },",
+   "test": "node scripts/run-jest.mjs test/review/load.spec.ts -t \"REV-TC-20261006-104524095 mở rộng\""
+  },
+  {
+   "id": "T9 SB-14: tải ảnh 20 lần mỗi giờ thành 21",
+   "sb": [
+    "SB-14",
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104524095 mở rộng",
+   "file": "src/modules/review/config.ts",
+   "find": "upload: { tier: 'B', limit: 20, windowSeconds: 3600 },",
+   "replace": "upload: { tier: 'B', limit: 21, windowSeconds: 3600 },",
+   "test": "node scripts/run-jest.mjs test/review/load.spec.ts -t \"REV-TC-20261006-104524095 mở rộng\""
+  },
+  {
+   "id": "T17 SB-14: đọc công khai 120 mỗi phút thành 121",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104527123",
+   "file": "src/modules/review/config.ts",
+   "find": "publicRead: { tier: 'C', limit: 120, windowSeconds: 60 },",
+   "replace": "publicRead: { tier: 'C', limit: 121, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104527123\""
+  },
+  {
+   "id": "T5 SB-36: cửa sổ đánh giá 90 ngày thành 91",
+   "sb": [
+    "SB-36"
+   ],
+   "tc": "REV-TC-20261006-104525553",
+   "file": "src/modules/review/config.ts",
+   "find": "REVIEW_WINDOW_MS = 90 * 24 * 3600_000",
+   "replace": "REVIEW_WINDOW_MS = 91 * 24 * 3600_000",
+   "test": "node scripts/run-jest.mjs test/review/eligibility.spec.ts -t \"REV-TC-20261006-104525553\""
+  },
+  {
+   "id": "T9 SB-10: ảnh tối đa 5.242.880 byte thành 5.242.881",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525199",
+   "file": "src/modules/review/config.ts",
+   "find": "IMAGE_MAX_BYTES = 5_242_880",
+   "replace": "IMAGE_MAX_BYTES = 5_242_881",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525199\""
+  },
+  {
+   "id": "T8 SB-10: trần 25 megapixel thành 26 megapixel",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525319",
+   "file": "src/modules/review/config.ts",
+   "find": "IMAGE_MAX_PIXELS = 25_000_000",
+   "replace": "IMAGE_MAX_PIXELS = 26_000_000",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525319\""
+  },
+  {
+   "id": "T8 SB-10: cạnh dài sau xử lý 1600 thành 1700",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104524858",
+   "file": "src/modules/review/config.ts",
+   "find": "IMAGE_MAX_EDGE = 1600",
+   "replace": "IMAGE_MAX_EDGE = 1700",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104524858\""
+  },
+  {
+   "id": "T9 SB-10: hạn dọn ảnh 24 giờ thành 25 giờ",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525374",
+   "file": "src/modules/review/config.ts",
+   "find": "IMAGE_ORPHAN_AGE_MS = 24 * 3600_000",
+   "replace": "IMAGE_ORPHAN_AGE_MS = 25 * 3600_000",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525374\""
+  },
+  {
+   "id": "T12 SB-24: duyệt nhận cả đánh giá hidden",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104528104",
+   "file": "src/modules/review/config.ts",
+   "find": "approve: { from: ['pending'],",
+   "replace": "approve: { from: ['pending', 'hidden'],",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528104\""
+  },
+  {
+   "id": "T12 SB-24: ẩn nhận cả đánh giá pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104528104",
+   "file": "src/modules/review/config.ts",
+   "find": "hide: { from: ['published'],",
+   "replace": "hide: { from: ['published', 'pending'],",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528104\""
+  },
+  {
+   "id": "T12 SB-24: bỏ ẩn nhận cả đánh giá published",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104528104",
+   "file": "src/modules/review/config.ts",
+   "find": "unhide: { from: ['hidden'],",
+   "replace": "unhide: { from: ['hidden', 'published'],",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528104\""
+  },
+  {
+   "id": "T14 SB-19: từ chối không ghi lý do",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "REV-TC-20261006-104528036",
+   "file": "src/modules/review/config.ts",
+   "find": "reject: { from: ['pending'], to: 'rejected', event: null, reason: true },",
+   "replace": "reject: { from: ['pending'], to: 'rejected', event: null, reason: false },",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528036\""
+  },
+  {
+   "id": "T16 SB-27: bỏ ẩn không phát ReviewPublished",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-140000003",
+   "file": "src/modules/review/config.ts",
+   "find": "unhide: { from: ['hidden'], to: 'published', event: 'ReviewPublished',",
+   "replace": "unhide: { from: ['hidden'], to: 'published', event: null,",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-140000003\""
+  },
+  {
+   "id": "T16 SB-27: ẩn không phát ReviewHidden",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-104528071",
+   "file": "src/modules/review/config.ts",
+   "find": "event: 'ReviewHidden',",
+   "replace": "event: null,",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528071\""
+  },
+  {
+   "id": "T16 SB-27: duyệt không phát ReviewPublished",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-104527996",
+   "file": "src/modules/review/config.ts",
+   "find": "approve: { from: ['pending'], to: 'published', event: 'ReviewPublished',",
+   "replace": "approve: { from: ['pending'], to: 'published', event: null,",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104527996\""
+  },
+  {
+   "id": "T13 SB-24: kiểm duyệt trước mặc định tắt",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104523767",
+   "file": "src/modules/review/config.ts",
+   "find": "REVIEW_PRE_MODERATION: cfg.bool({ default: true }),",
+   "replace": "REVIEW_PRE_MODERATION: cfg.bool({ default: false }),",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104523767\""
+  },
+  {
+   "id": "T7 SB-11: bình luận tối đa 2000 thành 2001 (hằng số cấu hình)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104524722",
+   "file": "src/modules/review/config.ts",
+   "find": "COMMENT_MAX = 2000",
+   "replace": "COMMENT_MAX = 2001",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524722\""
+  },
+  {
+   "id": "T6 SB-14: eligibility không còn báo already_reviewed",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104525777",
+   "file": "src/modules/review/review.service.ts",
+   "find": "if (alreadyReviewed) return { ok: false, reason: 'already_reviewed' };",
+   "replace": "if (false) return { ok: false, reason: 'already_reviewed' };",
+   "test": "node scripts/run-jest.mjs test/review/eligibility.spec.ts -t \"REV-TC-20261006-104525777\""
+  },
+  {
+   "id": "T5 SB-36: not_delivered và not_purchased đổi chỗ",
+   "sb": [
+    "SB-36"
+   ],
+   "tc": "REV-TC-20261006-104525491",
+   "file": "src/modules/review/review.service.ts",
+   "find": "f.undelivered ? 'not_delivered' : 'not_purchased'",
+   "replace": "f.undelivered ? 'not_purchased' : 'not_delivered'",
+   "test": "node scripts/run-jest.mjs test/review/eligibility.spec.ts -t \"REV-TC-20261006-104525491\""
+  },
+  {
+   "id": "T5 SB-36: biên 90 ngày không bao gồm",
+   "sb": [
+    "SB-36"
+   ],
+   "tc": "REV-TC-20261006-104525678",
+   "file": "src/modules/review/review.service.ts",
+   "find": "d.delivered_at.getTime() + REVIEW_WINDOW_MS >= now.getTime()",
+   "replace": "d.delivered_at.getTime() + REVIEW_WINDOW_MS > now.getTime()",
+   "test": "node scripts/run-jest.mjs test/review/eligibility.spec.ts -t \"REV-TC-20261006-104525678\""
+  },
+  {
+   "id": "T5 SB-36: chọn dòng đơn giao xa nhất thay vì gần nhất",
+   "sb": [
+    "SB-36"
+   ],
+   "tc": "REV-TC-20261006-104525730",
+   "file": "src/modules/review/review.service.ts",
+   "find": "b.delivered_at.getTime() - a.delivered_at.getTime() ||",
+   "replace": "a.delivered_at.getTime() - b.delivered_at.getTime() ||",
+   "test": "node scripts/run-jest.mjs test/review/eligibility.spec.ts -t \"REV-TC-20261006-104525730\""
+  },
+  {
+   "id": "T11 SB-06: sản phẩm archived vẫn được đánh giá",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "REV-TC-20261006-104524045",
+   "file": "src/modules/review/review.service.ts",
+   "find": "if (!pid || !facts.product || facts.product.status !== 'active') throw",
+   "replace": "if (!pid || !facts.product) throw",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524045\""
+  },
+  {
+   "id": "T6 SB-14: vi phạm unique không đổi thành 409 already_reviewed",
+   "sb": [
+    "SB-14",
+    "SB-40"
+   ],
+   "tc": "REV-TC-20261006-104524227",
+   "file": "src/modules/review/review.service.ts",
+   "find": "if (isUnique(e)) throw conflict('already_reviewed');",
+   "replace": "if (false) throw conflict('already_reviewed');",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524227\""
+  },
+  {
+   "id": "T6 SB-14: deleted vẫn giữ chỗ khi tạo",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104524159",
+   "file": "src/modules/review/review.service.ts",
+   "find": "AND product_id = ${pid}::uuid AND status <> 'deleted'::review_status LIMIT 1",
+   "replace": "AND product_id = ${pid}::uuid LIMIT 1",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524159\""
+  },
+  {
+   "id": "T13 SB-24: tắt kiểm duyệt trước mà vẫn không tự công bố",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104523823",
+   "file": "src/modules/review/review.service.ts",
+   "find": "if (!this.preModeration) {\n      const [pub]",
+   "replace": "if (this.preModeration) {\n      const [pub]",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104523823\""
+  },
+  {
+   "id": "T1 SB-06: sửa đánh giá không kiểm chủ",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104525946",
+   "file": "src/modules/review/review.service.ts",
+   "find": "const [cur] = await tx.$queryRaw<ReviewRow[]>`SELECT ${REVIEW_COLS} FROM reviews WHERE id = ${id}::uuid AND user_id = ${s.user_id}::uuid FOR UPDATE`;\n      if (!cur || cur.status === 'deleted') throw new DomainError('not-found');\n      if (cur.status !== 'pending'",
+   "replace": "const [cur] = await tx.$queryRaw<ReviewRow[]>`SELECT ${REVIEW_COLS} FROM reviews WHERE id = ${id}::uuid FOR UPDATE`;\n      if (!cur || cur.status === 'deleted') throw new DomainError('not-found');\n      if (cur.status !== 'pending'",
+   "test": "node scripts/run-jest.mjs test/review/edit.spec.ts -t \"REV-TC-20261006-104525946\""
+  },
+  {
+   "id": "T1 SB-06: customer xóa đánh giá không kiểm chủ",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104526385",
+   "file": "src/modules/review/review.service.ts",
+   "find": ": await tx.$queryRaw<ReviewRow[]>`SELECT ${REVIEW_COLS} FROM reviews WHERE id = ${id}::uuid AND user_id = ${s.user_id}::uuid FOR UPDATE`;",
+   "replace": ": await tx.$queryRaw<ReviewRow[]>`SELECT ${REVIEW_COLS} FROM reviews WHERE id = ${id}::uuid FOR UPDATE`;",
+   "test": "node scripts/run-jest.mjs test/review/delete.spec.ts -t \"REV-TC-20261006-104526385\""
+  },
+  {
+   "id": "T3 SB-07: mọi người xóa như admin",
+   "sb": [
+    "SB-07",
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104526385",
+   "file": "src/modules/review/review.service.ts",
+   "find": "const admin = s.role === 'admin';",
+   "replace": "const admin = true;",
+   "test": "node scripts/run-jest.mjs test/review/delete.spec.ts -t \"REV-TC-20261006-104526385\""
+  },
+  {
+   "id": "T12 SB-24: sửa đánh giá hidden, rejected được nhận",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104526003",
+   "file": "src/modules/review/review.service.ts",
+   "find": "if (cur.status !== 'pending' && cur.status !== 'published') throw conflict('review_not_editable');",
+   "replace": "if (false) throw conflict('review_not_editable');",
+   "test": "node scripts/run-jest.mjs test/review/edit.spec.ts -t \"REV-TC-20261006-104526003\""
+  },
+  {
+   "id": "T13 SB-24: sửa đánh giá published khi bật kiểm duyệt vẫn giữ published",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-140000001",
+   "file": "src/modules/review/review.service.ts",
+   "find": "const toPending = wasPublished && this.preModeration;",
+   "replace": "const toPending = false;",
+   "test": "node scripts/run-jest.mjs test/review/edit.spec.ts -t \"REV-TC-20261006-140000001\""
+  },
+  {
+   "id": "T13 SB-24: đánh giá pending bị đặt edited_at khi sửa",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104525824",
+   "file": "src/modules/review/review.service.ts",
+   "find": "edited_at = ${wasPublished ? now : cur.edited_at}::timestamptz",
+   "replace": "edited_at = ${now}::timestamptz",
+   "test": "node scripts/run-jest.mjs test/review/edit.spec.ts -t \"REV-TC-20261006-104525824\""
+  },
+  {
+   "id": "T12 SB-24: sửa giá trị y hệt vẫn ghi và tăng updated_at",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104526165",
+   "file": "src/modules/review/review.service.ts",
+   "find": "if (rating === cur.rating && comment === cur.comment && !imagesChanged) return",
+   "replace": "if (false) return",
+   "test": "node scripts/run-jest.mjs test/review/edit.spec.ts -t \"REV-TC-20261006-104526165\""
+  },
+  {
+   "id": "T16 SB-27: ReviewUnpublished mang điểm mới thay vì điểm đã đăng",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-140000007",
+   "file": "src/modules/review/review.service.ts",
+   "find": "payload: { review_id: cur.id, product_id: cur.product_id, rating: cur.rating } }); // điểm của bản đã đăng",
+   "replace": "payload: { review_id: cur.id, product_id: cur.product_id, rating } }); // điểm của bản đã đăng",
+   "test": "node scripts/run-jest.mjs test/review/edit.spec.ts -t \"REV-TC-20261006-140000007\""
+  },
+  {
+   "id": "T16 SB-27: ReviewRatingChanged đảo old và new",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-140000002",
+   "file": "src/modules/review/review.service.ts",
+   "find": "old_rating: cur.rating, new_rating: rating",
+   "replace": "old_rating: rating, new_rating: cur.rating",
+   "test": "node scripts/run-jest.mjs test/review/edit.spec.ts -t \"REV-TC-20261006-140000002\""
+  },
+  {
+   "id": "T16 SB-27: sửa chỉ bình luận cũng phát ReviewRatingChanged",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-104525890",
+   "file": "src/modules/review/review.service.ts",
+   "find": "} else if (wasPublished && rating !== cur.rating) {",
+   "replace": "} else if (wasPublished) {",
+   "test": "node scripts/run-jest.mjs test/review/edit.spec.ts -t \"REV-TC-20261006-104525890\""
+  },
+  {
+   "id": "T14 SB-19: admin xóa ghi deleted_by_role customer",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "REV-TC-20261006-104526332",
+   "file": "src/modules/review/review.service.ts",
+   "find": "deleted_by_role = ${admin ? 'admin' : 'customer'}::review_actor_role",
+   "replace": "deleted_by_role = ${'customer'}::review_actor_role",
+   "test": "node scripts/run-jest.mjs test/review/delete.spec.ts -t \"REV-TC-20261006-104526332\""
+  },
+  {
+   "id": "T14 SB-19, SB-32: admin xóa không ghi audit",
+   "sb": [
+    "SB-19",
+    "SB-32"
+   ],
+   "tc": "REV-TC-20261006-104526332",
+   "file": "src/modules/review/review.service.ts",
+   "find": "      if (admin) {\n        await this.audit.record(tx, {",
+   "replace": "      if (false) {\n        await this.audit.record(tx, {",
+   "test": "node scripts/run-jest.mjs test/review/delete.spec.ts -t \"REV-TC-20261006-104526332\""
+  },
+  {
+   "id": "T16 SB-27: xóa không phát ReviewDeleted",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-104526283",
+   "file": "src/modules/review/review.service.ts",
+   "find": "type: 'ReviewDeleted', aggregate_type: 'review'",
+   "replace": "type: 'ReviewDeletedX', aggregate_type: 'review'",
+   "test": "node scripts/run-jest.mjs test/review/delete.spec.ts -t \"REV-TC-20261006-104526283\""
+  },
+  {
+   "id": "T9 SB-10: ảnh của đánh giá bị xóa không thành mồ côi",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104526283",
+   "file": "src/modules/review/review.service.ts",
+   "find": "await this.images.detachAll(tx, cur.id, true);",
+   "replace": "await this.images.detachAll(tx, cur.id, false);",
+   "test": "node scripts/run-jest.mjs test/review/delete.spec.ts -t \"REV-TC-20261006-104526283\""
+  },
+  {
+   "id": "T12 SB-24: kiểm duyệt không kiểm trạng thái hiện tại",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104528104",
+   "file": "src/modules/review/moderation.service.ts",
+   "find": "if (!(t.from as readonly string[]).includes(cur.status))",
+   "replace": "if (false)",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528104\""
+  },
+  {
+   "id": "T12 SB-24: duyệt đánh giá đã xóa trả 409 thay 404",
+   "sb": [
+    "SB-24",
+    "SB-06"
+   ],
+   "tc": "REV-TC-20261006-104528202",
+   "file": "src/modules/review/moderation.service.ts",
+   "find": "if (!cur || cur.status === 'deleted') throw new DomainError('not-found');",
+   "replace": "if (!cur) throw new DomainError('not-found');",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528202\""
+  },
+  {
+   "id": "T14 SB-19: audit ghi sai hành động",
+   "sb": [
+    "SB-19",
+    "SB-32"
+   ],
+   "tc": "REV-TC-20261006-104527996",
+   "file": "src/modules/review/moderation.service.ts",
+   "find": "action: `review.${name}`,",
+   "replace": "action: 'review.moderate',",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104527996\""
+  },
+  {
+   "id": "T16 SB-27: kiểm duyệt không phát event",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-104527996",
+   "file": "src/modules/review/moderation.service.ts",
+   "find": "if (t.event) await this.events.publish",
+   "replace": "if (false && t.event) await this.events.publish",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104527996\""
+  },
+  {
+   "id": "T14 SB-19: lý do kiểm duyệt không được ghi",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "REV-TC-20261006-104528036",
+   "file": "src/modules/review/moderation.service.ts",
+   "find": "const why = t.reason ? (reason ?? null) : null;",
+   "replace": "const why = null;",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528036\""
+  },
+  {
+   "id": "T16 SB-27: bỏ ẩn đặt lại published_at",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-140000003",
+   "file": "src/modules/review/moderation.service.ts",
+   "find": "THEN COALESCE(published_at, ${now}::timestamptz)",
+   "replace": "THEN ${now}::timestamptz",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-140000003\""
+  },
+  {
+   "id": "T12 SB-24: moderated_by không ghi admin",
+   "sb": [
+    "SB-19",
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104527996",
+   "file": "src/modules/review/moderation.service.ts",
+   "find": "moderated_by = ${s.user_id}::uuid,",
+   "replace": "moderated_by = NULL,",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104527996\""
+  },
+  {
+   "id": "T11 SB-05, SB-06: danh sách công khai lộ cả đánh giá chưa published",
+   "sb": [
+    "SB-05",
+    "SB-06"
+   ],
+   "tc": "REV-TC-20261006-104526681",
+   "file": "src/modules/review/read.service.ts",
+   "find": "WHERE product_id = ${pid}::uuid AND status = 'published'::review_status ${byRating} ORDER BY",
+   "replace": "WHERE product_id = ${pid}::uuid AND status <> 'deleted'::review_status ${byRating} ORDER BY",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104526681\""
+  },
+  {
+   "id": "T11 SB-05: summary tính cả đánh giá chưa published",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104524378",
+   "file": "src/modules/review/read.service.ts",
+   "find": "WHERE product_id = ${pid}::uuid AND status = 'published'::review_status GROUP BY rating",
+   "replace": "WHERE product_id = ${pid}::uuid GROUP BY rating",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104524378\""
+  },
+  {
+   "id": "T16 SB-27: điểm trung bình cắt thay vì làm tròn nửa lên",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-104524472",
+   "file": "src/modules/review/read.service.ts",
+   "find": "Math.floor((20 * sum + count) / (2 * count)) / 10",
+   "replace": "Math.floor((20 * sum) / (2 * count)) / 10",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104524472\""
+  },
+  {
+   "id": "T16 SB-27: sản phẩm chưa có đánh giá cho avg 0 thay vì null",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "REV-TC-20261006-104524515",
+   "file": "src/modules/review/read.service.ts",
+   "find": "count === 0 ? null : Math.floor",
+   "replace": "count === 0 ? 0 : Math.floor",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104524515\""
+  },
+  {
+   "id": "T17 SB-14: total không theo bộ lọc rating",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104526741",
+   "file": "src/modules/review/read.service.ts",
+   "find": "const total = q.rating ? distribution[String(q.rating)] : count;",
+   "replace": "const total = count;",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104526741\""
+  },
+  {
+   "id": "T17 SB-14: sắp xếp điểm cao không phụ thuộc mới nhất khi cùng điểm",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104526741",
+   "file": "src/modules/review/read.service.ts",
+   "find": "rating DESC, published_at DESC, id DESC`",
+   "replace": "rating DESC, published_at ASC, id DESC`",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104526741\""
+  },
+  {
+   "id": "T11 SB-06: sản phẩm draft, archived vẫn xem được đánh giá công khai",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104526797",
+   "file": "src/modules/review/read.service.ts",
+   "find": "if (!prod || prod.status !== 'active') throw new DomainError('not-found');\n    const dist",
+   "replace": "if (!prod) throw new DomainError('not-found');\n    const dist",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104526797\""
+  },
+  {
+   "id": "T17 SB-14: trang quá cuối chạy OFFSET khổng lồ",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104526974",
+   "file": "src/modules/review/read.service.ts",
+   "find": "if (skip < total) {",
+   "replace": "if (true) {",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104526974\"",
+   "equivalent": "PostgreSQL nhận OFFSET đến 9.2e18 (page tối đa 9e15 nhân limit 100 chưa tới) và trả rỗng; điều kiện skip < total chỉ bỏ một truy vấn thừa, không đổi kết quả"
+  },
+  {
+   "id": "T10 SB-08: danh sách công khai lộ user_id",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "REV-TC-20261006-104526681",
+   "file": "src/modules/review/read.service.ts",
+   "find": "verified_purchase: true, published_at: iso(r.published_at)",
+   "replace": "verified_purchase: true, user_id: r.user_id, published_at: iso(r.published_at)",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104526681\""
+  },
+  {
+   "id": "T1 SB-06: chi tiết của tôi không kiểm chủ",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104527298",
+   "file": "src/modules/review/read.service.ts",
+   "find": "WHERE id = ${id}::uuid AND user_id = ${s.user_id}::uuid AND status <> 'deleted'::review_status`",
+   "replace": "WHERE id = ${id}::uuid AND status <> 'deleted'::review_status`",
+   "test": "node scripts/run-jest.mjs test/review/mine.spec.ts -t \"REV-TC-20261006-104527298\""
+  },
+  {
+   "id": "T1 SB-06: tổng của danh sách của tôi đếm cả người khác",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "REV-TC-20261006-104527184",
+   "file": "src/modules/review/read.service.ts",
+   "find": "FROM reviews WHERE user_id = ${s.user_id}::uuid AND status <> 'deleted'::review_status ${byStatus}`);\n    const skip",
+   "replace": "FROM reviews WHERE status <> 'deleted'::review_status ${byStatus}`);\n    const skip",
+   "test": "node scripts/run-jest.mjs test/review/mine.spec.ts -t \"REV-TC-20261006-104527184\""
+  },
+  {
+   "id": "T1 SB-06: danh sách của tôi trả cả đánh giá của người khác",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "REV-TC-20261006-104527184",
+   "file": "src/modules/review/read.service.ts",
+   "find": "SELECT ${REVIEW_COLS} FROM reviews WHERE user_id = ${s.user_id}::uuid AND status <> 'deleted'::review_status ${byStatus}\n      ORDER BY",
+   "replace": "SELECT ${REVIEW_COLS} FROM reviews WHERE status <> 'deleted'::review_status ${byStatus}\n      ORDER BY",
+   "test": "node scripts/run-jest.mjs test/review/mine.spec.ts -t \"REV-TC-20261006-104527184\""
+  },
+  {
+   "id": "T10 SB-08: lý do kiểm duyệt trả cả cho đánh giá pending, published",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "REV-TC-20261006-104527184",
+   "file": "src/modules/review/read.service.ts",
+   "find": "r.status === 'rejected' || r.status === 'hidden' ? { moderation_reason: r.moderation_reason } : {}",
+   "replace": "true ? { moderation_reason: r.moderation_reason } : {}",
+   "test": "node scripts/run-jest.mjs test/review/mine.spec.ts -t \"REV-TC-20261006-104527184\""
+  },
+  {
+   "id": "T13 SB-24: edit_requires_review không theo trạng thái",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104527184",
+   "file": "src/modules/review/read.service.ts",
+   "find": "edit_requires_review: r.status === 'published' && this.preModeration",
+   "replace": "edit_requires_review: this.preModeration",
+   "test": "node scripts/run-jest.mjs test/review/mine.spec.ts -t \"REV-TC-20261006-104527184\""
+  },
+  {
+   "id": "T3 SB-05: hàng đợi pending xếp mới nhất trước",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104527652",
+   "file": "src/modules/review/read.service.ts",
+   "find": "q.status === 'pending' ? Prisma.sql`created_at ASC, id ASC`",
+   "replace": "q.status === 'pending' ? Prisma.sql`created_at DESC, id DESC`",
+   "test": "node scripts/run-jest.mjs test/review/admin.spec.ts -t \"REV-TC-20261006-104527652\""
+  },
+  {
+   "id": "T3 SB-05: pending_count đếm trạng thái khác",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104527717",
+   "file": "src/modules/review/read.service.ts",
+   "find": "count(*)::int AS p FROM reviews WHERE status = 'pending'::review_status",
+   "replace": "count(*)::int AS p FROM reviews WHERE status = 'published'::review_status",
+   "test": "node scripts/run-jest.mjs test/review/admin.spec.ts -t \"REV-TC-20261006-104527717\""
+  },
+  {
+   "id": "T3 SB-05: bộ lọc rating của hàng đợi bị bỏ",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104527717",
+   "file": "src/modules/review/read.service.ts",
+   "find": "${q.rating ? Prisma.sql` AND rating = ${q.rating}` : Prisma.empty}`;",
+   "replace": "`;",
+   "test": "node scripts/run-jest.mjs test/review/admin.spec.ts -t \"REV-TC-20261006-104527717\""
+  },
+  {
+   "id": "T10 SB-08: tên che dùng từ đầu thay vì từ cuối",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "REV-TC-20261006-104527032",
+   "file": "src/modules/review/deps.service.ts",
+   "find": "`${words[words.length - 1]} ${[...words[0]][0].toLocaleUpperCase()}.`",
+   "replace": "`${words[0]} ${[...words[words.length - 1]][0].toLocaleUpperCase()}.`",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104527032\""
+  },
+  {
+   "id": "T10 SB-08: một từ vẫn bị che",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "REV-TC-20261006-104527032",
+   "file": "src/modules/review/deps.service.ts",
+   "find": "if (words.length === 1) return words[0];",
+   "replace": "if (words.length === 1) return `${words[0]}.`;",
+   "test": "node scripts/run-jest.mjs test/review/public.spec.ts -t \"REV-TC-20261006-104527032\""
+  },
+  {
+   "id": "T19 SB-20: lý do ảnh quá lớn bị đổi thành corrupt",
+   "sb": [
+    "SB-20",
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525199",
+   "file": "src/modules/review/image.service.ts",
+   "find": "e.reason === 'too_large' ? 'size' : 'corrupt'",
+   "replace": "e.reason === 'too_large' ? 'corrupt' : 'size'",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525199\""
+  },
+  {
+   "id": "T8 SB-10: ảnh lưu với Content-Type jpeg",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104524858",
+   "file": "src/modules/review/image.service.ts",
+   "find": "{ contentType: 'image/webp', headers:",
+   "replace": "{ contentType: 'image/jpeg', headers:",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104524858\""
+  },
+  {
+   "id": "T20 SB-06: gắn ảnh không kiểm người tải",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104525035",
+   "file": "src/modules/review/image.service.ts",
+   "find": "WHERE id = ${id}::uuid AND user_id = ${userId}::uuid AND review_id IS NULL AND",
+   "replace": "WHERE id = ${id}::uuid AND review_id IS NULL AND",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525035\""
+  },
+  {
+   "id": "T20 SB-06: gắn ảnh đã gắn vào đánh giá khác",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "REV-TC-20261006-104525035",
+   "file": "src/modules/review/image.service.ts",
+   "find": "WHERE id = ${id}::uuid AND user_id = ${userId}::uuid AND review_id IS NULL AND",
+   "replace": "WHERE id = ${id}::uuid AND user_id = ${userId}::uuid AND",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525035\""
+  },
+  {
+   "id": "T9 SB-10: ảnh quá hạn vẫn gắn được (cửa đua với job dọn)",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525374",
+   "file": "src/modules/review/image.service.ts",
+   "find": "AND (id = ANY(${keep}::uuid[]) OR COALESCE(orphaned_at, created_at) >= ${cutoff}::timestamptz)`;",
+   "replace": "AND true`;",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525374\""
+  },
+  {
+   "id": "T9 SB-10: job dọn xóa cả ảnh đang gắn",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525374",
+   "file": "src/modules/review/image.service.ts",
+   "find": "WHERE review_id IS NULL AND COALESCE(orphaned_at, created_at) < ${cutoff}::timestamptz AND id > ${after}::uuid",
+   "replace": "WHERE COALESCE(orphaned_at, created_at) < ${cutoff}::timestamptz AND id > ${after}::uuid",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525374\""
+  },
+  {
+   "id": "T9 SB-10: ảnh gỡ khỏi đánh giá đã xóa không đặt orphaned_at",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104526283",
+   "file": "src/modules/review/image.service.ts",
+   "find": "orphaned_at = ${orphan ? now : null}::timestamptz",
+   "replace": "orphaned_at = ${null}::timestamptz",
+   "test": "node scripts/run-jest.mjs test/review/delete.spec.ts -t \"REV-TC-20261006-104526283\""
+  },
+  {
+   "id": "T9 SB-10: job dọn không báo lỗi khi kho lỗi",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525374",
+   "file": "src/modules/review/image.service.ts",
+   "find": "if (failed > 0) throw new Error(",
+   "replace": "if (false) throw new Error(",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525374\""
+  },
+  {
+   "id": "T19 SB-20: lỗi kho ảnh để lọt chi tiết (đổi sang 503 nhưng thân khác)",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "REV-TC-20261006-104525146",
+   "file": "src/modules/review/image.service.ts",
+   "find": "throw new DomainError('internal-error');\n    }\n    try {\n      const now",
+   "replace": "throw new DomainError('service-unavailable');\n    }\n    try {\n      const now",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525146\""
+  },
+  {
+   "id": "T8 SB-10: tệp không phải JPEG, PNG, WebP không bị từ chối theo magic bytes",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104524981",
+   "file": "src/modules/review/image.ts",
+   "find": "if (!sniff(input)) throw new ImageError('type');",
+   "replace": "if (false) throw new ImageError('type');",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104524981\""
+  },
+  {
+   "id": "T8 SB-10: đúng 25 megapixel bị từ chối",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525319",
+   "file": "src/modules/review/image.ts",
+   "find": "meta.width * meta.height > IMAGE_MAX_PIXELS",
+   "replace": "meta.width * meta.height >= IMAGE_MAX_PIXELS",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525319\""
+  },
+  {
+   "id": "T8 SB-10: ảnh nhỏ bị phóng to",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104524858",
+   "file": "src/modules/review/image.ts",
+   "find": "withoutEnlargement: true",
+   "replace": "withoutEnlargement: false",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104524858\""
+  },
+  {
+   "id": "T8 SB-10, T10 SB-08: kích thước đọc từ tiêu đề không còn chặn bom giải nén",
+   "sb": [
+    "SB-10",
+    "SB-08"
+   ],
+   "tc": "REV-TC-20261006-104525319",
+   "file": "src/modules/review/image.ts",
+   "find": "if (meta.width * meta.height > IMAGE_MAX_PIXELS) throw new ImageError('dimensions');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525319\""
+  },
+  {
+   "id": "T8 SB-10: ảnh hỏng báo sai lý do",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104524981",
+   "file": "src/modules/review/image.ts",
+   "find": "if (!input.length) throw new ImageError('corrupt');",
+   "replace": "if (!input.length) throw new ImageError('type');",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104524981\""
+  },
+  {
+   "id": "T3 SB-05, SB-07: staff được tạo đánh giá",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "REV-TC-20261006-104523936",
+   "file": "src/modules/review/review.controller.ts",
+   "find": "@Roles('customer') @RateLimit(LIMITS.create)",
+   "replace": "@Roles('customer', 'staff') @RateLimit(LIMITS.create)",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104523936\""
+  },
+  {
+   "id": "T3 SB-07: admin được sửa nội dung đánh giá",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "REV-TC-20261006-104526113",
+   "file": "src/modules/review/review.controller.ts",
+   "find": "@Roles('customer') @RateLimit(LIMITS.edit)",
+   "replace": "@Roles('customer', 'admin') @RateLimit(LIMITS.edit)",
+   "test": "node scripts/run-jest.mjs test/review/edit.spec.ts -t \"REV-TC-20261006-104526113\""
+  },
+  {
+   "id": "T3 SB-07: staff được xóa đánh giá",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "REV-TC-20261006-104526488",
+   "file": "src/modules/review/review.controller.ts",
+   "find": "@Roles('customer', 'admin') @RateLimit(LIMITS.remove)",
+   "replace": "@Roles('customer', 'admin', 'staff') @RateLimit(LIMITS.remove)",
+   "test": "node scripts/run-jest.mjs test/review/delete.spec.ts -t \"REV-TC-20261006-104526488\""
+  },
+  {
+   "id": "T3 SB-07: staff được duyệt đánh giá",
+   "sb": [
+    "SB-07",
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104528170",
+   "file": "src/modules/review/review.controller.ts",
+   "find": "@Action('Duyệt đánh giá chờ duyệt') @HttpCode(200) @Roles('admin')",
+   "replace": "@Action('Duyệt đánh giá chờ duyệt') @HttpCode(200) @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528170\""
+  },
+  {
+   "id": "T3 SB-07: customer được xem hàng đợi",
+   "sb": [
+    "SB-07",
+    "SB-05"
+   ],
+   "tc": "REV-TC-20261006-104527768",
+   "file": "src/modules/review/review.controller.ts",
+   "find": "@Get() @Action('Xem hàng đợi và danh sách đánh giá để kiểm duyệt') @Roles('admin')",
+   "replace": "@Get() @Action('Xem hàng đợi và danh sách đánh giá để kiểm duyệt') @Roles('admin', 'customer')",
+   "test": "node scripts/run-jest.mjs test/review/admin.spec.ts -t \"REV-TC-20261006-104527768\""
+  },
+  {
+   "id": "T3 SB-07: staff được tải ảnh",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "REV-TC-20261006-104525092",
+   "file": "src/modules/review/review.controller.ts",
+   "find": "@Action('Tải ảnh đính kèm đánh giá') @Roles('customer')",
+   "replace": "@Action('Tải ảnh đính kèm đánh giá') @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525092\""
+  },
+  {
+   "id": "T6 SB-40: Idempotency-Key 7 ký tự được nhận",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "REV-TC-20261006-140000004",
+   "file": "src/modules/review/http.ts",
+   "find": "{8,64}",
+   "replace": "{7,64}",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-140000004\""
+  },
+  {
+   "id": "T6 SB-40: Idempotency-Key 65 ký tự được nhận",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "REV-TC-20261006-140000004",
+   "file": "src/modules/review/http.ts",
+   "find": "{8,64}",
+   "replace": "{8,65}",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-140000004\""
+  },
+  {
+   "id": "T18 SB-08: phản hồi riêng tư cho phép lưu bộ nhớ đệm chung",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "REV-TC-20261006-104523767",
+   "file": "src/modules/review/http.ts",
+   "find": "setHeader('Cache-Control', 'no-store')",
+   "replace": "setHeader('Cache-Control', 'public, max-age=60')",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104523767\""
+  },
+  {
+   "id": "T5 SB-36: đơn đã giao tính là chưa giao",
+   "sb": [
+    "SB-36"
+   ],
+   "tc": "REV-TC-20261006-104525491",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "o.status IN ('pending', 'confirmed', 'paid', 'shipped') AND i.product_id",
+   "replace": "o.status IN ('pending', 'confirmed', 'paid', 'shipped', 'delivered') AND i.product_id",
+   "test": "node scripts/run-jest.mjs test/order/rev-undelivered.spec.ts -t \"REV-TC-20261006-104525491\""
+  },
+  {
+   "id": "T5 SB-36: đơn của người khác tính là chưa giao",
+   "sb": [
+    "SB-36",
+    "SB-06"
+   ],
+   "tc": "REV-TC-20261006-104525491",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "WHERE o.user_id = ${userId}::uuid AND o.status IN ('pending', 'confirmed', 'paid', 'shipped')",
+   "replace": "WHERE o.status IN ('pending', 'confirmed', 'paid', 'shipped')",
+   "test": "node scripts/run-jest.mjs test/order/rev-undelivered.spec.ts -t \"REV-TC-20261006-104525491\""
+  },
+  {
+   "id": "DB SB-11: CHECK điểm cho 0",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104524423",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "CHECK (\"rating\" BETWEEN 1 AND 5)",
+   "replace": "CHECK (\"rating\" BETWEEN 0 AND 5)",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104524423\""
+  },
+  {
+   "id": "DB SB-11: CHECK bình luận 2001",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104524655",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "BETWEEN 1 AND 2000",
+   "replace": "BETWEEN 1 AND 2001",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104524655\""
+  },
+  {
+   "id": "DB SB-11: CHECK lý do 501",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-TC-20261006-104528138",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "BETWEEN 1 AND 500",
+   "replace": "BETWEEN 1 AND 501",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104528138\""
+  },
+  {
+   "id": "DB SB-24: CHECK deleted đi cùng deleted_at bị bỏ",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "REV-TC-20261006-104524423",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "CONSTRAINT \"reviews_deleted_consistent\" CHECK ((\"status\" = 'deleted') = (\"deleted_at\" IS NOT NULL))",
+   "replace": "CONSTRAINT \"reviews_deleted_consistent\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104524423\""
+  },
+  {
+   "id": "DB SB-14: unique theo dòng đơn không còn một phần (deleted giữ chỗ)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104524159",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"reviews_order_item_live_key\" ON \"reviews\" (\"order_item_id\") WHERE \"status\" <> 'deleted';",
+   "replace": "CREATE UNIQUE INDEX \"reviews_order_item_live_key\" ON \"reviews\" (\"order_item_id\");",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104524159\""
+  },
+  {
+   "id": "DB SB-14: unique theo (người dùng, sản phẩm) bị bỏ",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261006-104524227",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"reviews_user_product_live_key\" ON \"reviews\" (\"user_id\", \"product_id\") WHERE \"status\" <> 'deleted';",
+   "replace": "CREATE INDEX \"reviews_user_product_live_key\" ON \"reviews\" (\"user_id\", \"product_id\") WHERE \"status\" <> 'deleted';",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104524227\""
+  },
+  {
+   "id": "DB SB-06: khóa ngoại tới sản phẩm thành CASCADE",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "REV-TC-20261006-104526283",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "FOREIGN KEY (\"product_id\") REFERENCES \"products\"(\"id\") ON DELETE RESTRICT",
+   "replace": "FOREIGN KEY (\"product_id\") REFERENCES \"products\"(\"id\") ON DELETE CASCADE",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104526283\""
+  },
+  {
+   "id": "DB SB-06: khóa ngoại tới người dùng thành CASCADE",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "REV-TC-20261006-104526283",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"reviews_user_id_fkey\" FOREIGN KEY (\"user_id\") REFERENCES \"users\"(\"id\") ON DELETE RESTRICT",
+   "replace": "ADD CONSTRAINT \"reviews_user_id_fkey\" FOREIGN KEY (\"user_id\") REFERENCES \"users\"(\"id\") ON DELETE CASCADE",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104526283\""
+  },
+  {
+   "id": "DB SB-10: khóa kho cho phép đuôi khác",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104524858",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "'^reviews/[0-9a-f-]{36}\\.webp$'",
+   "replace": "'^reviews/.*$'",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104524858\""
+  },
+  {
+   "id": "DB SB-10: ảnh thứ 6 được nhận (position 1 đến 6)",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525257",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "CHECK (\"position\" BETWEEN 1 AND 5)",
+   "replace": "CHECK (\"position\" BETWEEN 1 AND 6)",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104525257\""
+  },
+  {
+   "id": "DB SB-10: ảnh rộng 1601 được nhận",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104524858",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "\"width\" > 0 AND \"width\" <= 1600",
+   "replace": "\"width\" > 0 AND \"width\" <= 1601",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104524858\""
+  },
+  {
+   "id": "DB SB-10: review_id và position không còn đi cùng nhau",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525257",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "CHECK ((\"review_id\" IS NULL) = (\"position\" IS NULL))",
+   "replace": "CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104525257\""
+  },
+  {
+   "id": "DB SB-10: unique (review_id, position) bị bỏ",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525257",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"review_images_review_id_position_key\" ON \"review_images\"(\"review_id\", \"position\");",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/review/schema.spec.ts -t \"REV-TC-20261006-104525257\""
+  },
+  {
+   "id": "SB-12 (web): điểm trung bình hiển thị hai chữ số thập phân",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "REV-E2E-20261006-104528550",
+   "file": "../web/lib/review.ts",
+   "find": "avg.toFixed(1).replace('.', ',')",
+   "replace": "avg.toFixed(2).replace('.', ',')",
+   "test": "node scripts/run-jest.mjs test/e2e/rev.e2e.spec.ts -t \"REV-E2E-20261006-104528550\""
+  },
+  {
+   "id": "SB-12 (web): nhãn trạng thái Chờ duyệt đổi chữ",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "REV-E2E-20261006-104528360",
+   "file": "../web/lib/review.ts",
+   "find": "pending: 'Chờ duyệt'",
+   "replace": "pending: 'Đang chờ'",
+   "test": "node scripts/run-jest.mjs test/e2e/rev.e2e.spec.ts -t \"REV-E2E-20261006-104528360\""
+  },
+  {
+   "id": "T18 SB-08, SB-18: log tạo đánh giá ghi nội dung bình luận",
+   "sb": [
+    "SB-08",
+    "SB-18"
+   ],
+   "tc": "REV-TC-20261006-104524335",
+   "file": "src/modules/review/review.service.ts",
+   "find": "comment_length: body.comment === null ? 0 : [...body.comment].length });",
+   "replace": "comment_length: body.comment === null ? 0 : [...body.comment].length, text: body.comment });",
+   "test": "node scripts/run-jest.mjs test/review/create.spec.ts -t \"REV-TC-20261006-104524335\""
+  },
+  {
+   "id": "T18 SB-18: log kiểm duyệt ghi lý do",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "REV-TC-20261006-104528328",
+   "file": "src/modules/review/moderation.service.ts",
+   "find": "reason_length: why ? [...why].length : 0 });",
+   "replace": "reason_length: why ? [...why].length : 0, note: why });",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528328\""
+  },
+  {
+   "id": "T18 SB-18: log ảnh bị từ chối thiếu độ dài đã đọc",
+   "sb": [
+    "SB-18",
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261006-104525199",
+   "file": "src/modules/review/image.service.ts",
+   "find": "{ code: 'image-rejected', reason, bytes_read: bytes }",
+   "replace": "{ code: 'image-rejected', reason, bytes_read: 0 }",
+   "test": "node scripts/run-jest.mjs test/review/images.spec.ts -t \"REV-TC-20261006-104525199\""
+  },
+  {
+   "id": "T15 SB-13: Origin lạ không còn bị từ chối khi duyệt (nền CSRF)",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "REV-TC-20261006-104528234",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "if (!origin || !this.allowed.has(origin)) throw new DomainError('csrf_failed');",
+   "replace": "if (!origin) throw new DomainError('csrf_failed');",
+   "test": "node scripts/run-jest.mjs test/review/moderate.spec.ts -t \"REV-TC-20261006-104528234\""
+  },
+  {
+   "id": "REV-REV-01 SB-06: sản phẩm draft vẫn được đánh giá (chỉ archived bị 404)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/review.service.ts",
+   "find": "facts.product.status !== 'active') throw new DomainError('not-found'); // không tồn tại",
+   "replace": "facts.product.status === 'archived') throw new DomainError('not-found'); // không tồn tại",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-01\""
+  },
+  {
+   "id": "REV-REV-02 SB-06: eligibility coi đánh giá deleted là đã đánh giá",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/read.service.ts",
+   "find": "AND product_id = ${pid}::uuid AND status <> 'deleted'::review_status LIMIT 1",
+   "replace": "AND product_id = ${pid}::uuid LIMIT 1",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-02\""
+  },
+  {
+   "id": "REV-REV-03 SB-10: đổi thứ tự ảnh không được phát hiện",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/review.service.ts",
+   "find": "ids.length !== curIds.length || ids.some((x, i) => x !== curIds[i])",
+   "replace": "ids.length !== curIds.length",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-03\""
+  },
+  {
+   "id": "REV-REV-03 SB-10: ảnh trả không theo thứ tự position",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/view.service.ts",
+   "find": "ORDER BY review_id, position`",
+   "replace": "ORDER BY review_id`",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-03\""
+  },
+  {
+   "id": "REV-REV-04 SB-40: request_hash bỏ tham số đường dẫn (cùng khóa, khác sản phẩm nhận lại phản hồi cũ)",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/review.service.ts",
+   "find": "JSON.stringify(canonical({ params: { product_id: productId }, body }))",
+   "replace": "JSON.stringify(canonical({ body }))",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-04\""
+  },
+  {
+   "id": "REV-REV-05 SB-14: duyệt không khai giới hạn tần suất (rơi về bậc C mặc định)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/review.controller.ts",
+   "find": "@Action('Duyệt đánh giá chờ duyệt') @HttpCode(200) @Roles('admin') @RateLimit(LIMITS.admin)",
+   "replace": "@Action('Duyệt đánh giá chờ duyệt') @HttpCode(200) @Roles('admin')",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-05\""
+  },
+  {
+   "id": "REV-REV-05 SB-14: xóa đánh giá không khai giới hạn tần suất",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/review.controller.ts",
+   "find": "@Roles('customer', 'admin') @RateLimit(LIMITS.remove)",
+   "replace": "@Roles('customer', 'admin')",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-05\""
+  },
+  {
+   "id": "REV-REV-06 SB-10: job dọn xóa dòng ảnh không kiểm lại điều kiện chưa gắn và quá hạn",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/image.service.ts",
+   "find": "DELETE FROM review_images WHERE id = ANY(${gone}::uuid[]) AND review_id IS NULL AND COALESCE(orphaned_at, created_at) < ${cutoff}::timestamptz",
+   "replace": "DELETE FROM review_images WHERE id = ANY(${gone}::uuid[])",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-06\""
+  },
+  {
+   "id": "REV-REV-07 SB-10: ảnh không xoay theo EXIF orientation",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/image.ts",
+   "find": "      .rotate() // theo EXIF orientation trước khi metadata bị bỏ\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-07\""
+  },
+  {
+   "id": "REV-REV-08 SB-10, SB-20: sniff JPEG chỉ cần hai byte (reason corrupt thay vì type)",
+   "sb": [
+    "SB-10",
+    "SB-20"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/image.ts",
+   "find": "b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff",
+   "replace": "b[0] === 0xff && b[1] === 0xd8",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-08\""
+  },
+  {
+   "id": "REV-REV-09 SB-10: job dọn tính hạn 24 giờ chỉ từ created_at (bỏ orphaned_at)",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/image.service.ts",
+   "find": "WHERE review_id IS NULL AND COALESCE(orphaned_at, created_at) < ${cutoff}::timestamptz AND id >",
+   "replace": "WHERE review_id IS NULL AND created_at < ${cutoff}::timestamptz AND id >",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-09\""
+  },
+  {
+   "id": "REV-REV-09 SB-10: gắn ảnh tính hạn 24 giờ chỉ từ created_at (ảnh cũ vừa gỡ không gắn lại được)",
+   "sb": [
+    "SB-10"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/image.service.ts",
+   "find": "COALESCE(orphaned_at, created_at) >= ${cutoff}::timestamptz)",
+   "replace": "created_at >= ${cutoff}::timestamptz)",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-09\""
+  },
+  {
+   "id": "REV-REV-10 SB-06: khóa ngoại reviews.moderated_by thành SET NULL",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "FOREIGN KEY (\"moderated_by\") REFERENCES \"users\"(\"id\") ON DELETE RESTRICT",
+   "replace": "FOREIGN KEY (\"moderated_by\") REFERENCES \"users\"(\"id\") ON DELETE SET NULL",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-10\""
+  },
+  {
+   "id": "REV-REV-10 SB-06: khóa ngoại review_images.user_id thành CASCADE",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "prisma/migrations/20261010000100_review_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"review_images_user_id_fkey\" FOREIGN KEY (\"user_id\") REFERENCES \"users\"(\"id\") ON DELETE RESTRICT",
+   "replace": "ADD CONSTRAINT \"review_images_user_id_fkey\" FOREIGN KEY (\"user_id\") REFERENCES \"users\"(\"id\") ON DELETE CASCADE",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-10\""
+  },
+  {
+   "id": "REV-REV-11 SB-36: còn đơn chưa giao cùng đơn đã giao quá 90 ngày báo window_expired thay vì not_delivered",
+   "sb": [
+    "SB-36"
+   ],
+   "tc": "REV-SEC-20261006-103618395",
+   "file": "src/modules/review/review.service.ts",
+   "find": "f.undelivered ? 'not_delivered' : 'window_expired'",
+   "replace": "'window_expired'",
+   "test": "node scripts/run-jest.mjs test/review/mutants.spec.ts -t \"REV-REV-11\""
+  }
+,
+  {
+   "id": "REV-REV-16 SB-34: job quét object xóa cả object chưa quá 24 giờ",
+   "sb": [
+    "SB-34",
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261013-223014571",
+   "file": "src/modules/review/image.service.ts",
+   "find": "!keys.has(x.key) && x.lastModified.getTime() <= cutoff",
+   "replace": "!keys.has(x.key)",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014571\""
+  },
+  {
+   "id": "REV-REV-16 SB-34: job quét object xóa cả object đang có dòng review_images",
+   "sb": [
+    "SB-34",
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261013-223014571",
+   "file": "src/modules/review/image.service.ts",
+   "find": "!keys.has(x.key) && x.lastModified.getTime() <= cutoff",
+   "replace": "x.lastModified.getTime() <= cutoff",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014571\""
+  },
+  {
+   "id": "REV-REV-16 SB-34: job quét object xóa cả khóa không đúng dạng reviews/<uuid>.webp",
+   "sb": [
+    "SB-34",
+    "SB-10"
+   ],
+   "tc": "REV-TC-20261013-223014571",
+   "file": "src/modules/review/image.service.ts",
+   "find": ".filter((x) => IMAGE_KEY_RE.test(x.key))",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014571\""
+  },
+  {
+   "id": "REV-REV-16 SB-34: job quét object không có trần 500 mỗi lượt",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "REV-TC-20261013-223014571",
+   "file": "src/modules/review/image.service.ts",
+   "find": "orphans.slice(0, o.max ?? OBJECT_SWEEP_MAX)",
+   "replace": "orphans",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014571\""
+  },
+  {
+   "id": "REV-REV-16 SB-34: job quét object không đóng khi bảng tham chiếu rỗng hay sai kho",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "REV-TC-20261013-223014571",
+   "file": "src/modules/review/image.service.ts",
+   "find": "if (orphans.length && (keys.size === 0 || !listed.some((x) => keys.has(x.key)))) {",
+   "replace": "if (false) {",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014571\""
+  },
+  {
+   "id": "REV-REV-16 SB-34: job quét object chỉ đóng khi bảng rỗng, không đóng khi khóa không có trong kho",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "REV-TC-20261013-223014571",
+   "file": "src/modules/review/image.service.ts",
+   "find": "(keys.size === 0 || !listed.some((x) => keys.has(x.key)))",
+   "replace": "keys.size === 0",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014571\""
+  },
+  {
+   "id": "REV-REV-16 SB-34: job quét object không dừng lượt sau một lỗi xóa (đi tiếp mù thay vì báo lỗi)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "REV-TC-20261013-223014571",
+   "file": "src/modules/review/image.service.ts",
+   "find": "if (failed) throw new Error(`rev.sweep-orphan-objects:",
+   "replace": "if (false) throw new Error(`rev.sweep-orphan-objects:",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014571\""
+  },
+  {
+   "id": "REV-REV-16 SB-34: job quét object đăng ký chu kỳ 1 giây thay vì mỗi giờ",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "REV-TC-20261013-223014571",
+   "file": "src/modules/review/review.module.ts",
+   "find": "name: OBJECT_SWEEP_JOB_NAME, module: 'review', every: SWEEP_JOB_MS",
+   "replace": "name: OBJECT_SWEEP_JOB_NAME, module: 'review', every: 1000",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014571\""
+  },
+  {
+   "id": "REV-DB mục 8 SB-34: giới hạn lô của job ảnh 100 thành 1000",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "REV-TC-20261013-223014474",
+   "file": "src/modules/review/config.ts",
+   "find": "export const SWEEP_BATCH = 100;",
+   "replace": "export const SWEEP_BATCH = 1000;",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014474\""
+  },
+  {
+   "id": "REV-DB mục 8 SB-34: job ảnh xóa dòng dù object chưa xóa được khỏi kho",
+   "sb": [
+    "SB-34",
+    "SB-31"
+   ],
+   "tc": "REV-TC-20261013-223014474",
+   "file": "src/modules/review/image.service.ts",
+   "find": "try { await this.storage.delete(r.storage_key); gone.push(r.id); }",
+   "replace": "gone.push(r.id); try { await this.storage.delete(r.storage_key); }",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014474\""
+  },
+  {
+   "id": "REV-DB mục 10 SB-14: xóa đánh giá 30 thành 31 lần mỗi giờ",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261013-223014665",
+   "file": "src/modules/review/config.ts",
+   "find": "remove: { tier: 'B', limit: 30, windowSeconds: 3600, group: 'rev-delete' }",
+   "replace": "remove: { tier: 'B', limit: 31, windowSeconds: 3600, group: 'rev-delete' }",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014665\""
+  },
+  {
+   "id": "REV-DB mục 10 SB-14: danh sách và chi tiết của tôi không chung bộ đếm",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261013-223014766",
+   "file": "src/modules/review/config.ts",
+   "find": "mine: { tier: 'C', limit: 120, windowSeconds: 60, group: 'rev-mine' }",
+   "replace": "mine: { tier: 'C', limit: 120, windowSeconds: 60 }",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014766\""
+  },
+  {
+   "id": "REV-DB mục 10 SB-14: bộ đếm admin 60 thành 61 lần mỗi phút",
+   "sb": [
+    "SB-14",
+    "SB-07"
+   ],
+   "tc": "REV-TC-20261013-223014868",
+   "file": "src/modules/review/config.ts",
+   "find": "admin: { tier: 'D', limit: 60, windowSeconds: 60, group: 'rev-admin' }",
+   "replace": "admin: { tier: 'D', limit: 61, windowSeconds: 60, group: 'rev-admin' }",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014868\""
+  },
+  {
+   "id": "REV-DB mục 10 SB-14: hàng đợi và thao tác admin không chung bộ đếm",
+   "sb": [
+    "SB-14",
+    "SB-07"
+   ],
+   "tc": "REV-TC-20261013-223014868",
+   "file": "src/modules/review/config.ts",
+   "find": "admin: { tier: 'D', limit: 60, windowSeconds: 60, group: 'rev-admin' }",
+   "replace": "admin: { tier: 'D', limit: 60, windowSeconds: 60 }",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014868\""
+  },
+  {
+   "id": "REV-DB mục 10 SB-14: review-eligibility 120 thành 121 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "REV-TC-20261013-223014967",
+   "file": "src/modules/review/config.ts",
+   "find": "eligibility: { tier: 'C', limit: 120, windowSeconds: 60 }",
+   "replace": "eligibility: { tier: 'C', limit: 121, windowSeconds: 60 }",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223014967\""
+  },
+  {
+   "id": "REV-API SB-20: lỗi của PRD, ORD, AUTH ném nguyên lỗi gốc thay vì 503 service-unavailable",
+   "sb": [
+    "SB-20",
+    "SB-31"
+   ],
+   "tc": "REV-TC-20261013-223015066",
+   "file": "src/modules/review/deps.service.ts",
+   "find": "throw new DomainError('service-unavailable');",
+   "replace": "throw err;",
+   "test": "node scripts/run-jest.mjs test/review/jobs-limits.spec.ts -t \"REV-TC-20261013-223015066\""
+  }
+,
+  {
+   "id": "REV-REV-12 giao diện: lần đổi bộ lọc thứ hai dựng URL từ chuỗi cũ của lần render, sống lại bộ lọc vừa bỏ",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-E2E-20261006-104528550",
+   "file": "../web/lib/query-go.ts",
+   "find": "const s = nextQuery(this.queued ?? current, change, keepPage);",
+   "replace": "const s = nextQuery(current, change, keepPage);",
+   "test": "node scripts/run-jest.mjs test/review/query-go.spec.ts -t \"REV-REV-12\""
+  },
+  {
+   "id": "REV-REV-12 giao diện: go({ page }) bị xóa page vừa đặt",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "REV-E2E-20261006-104528550",
+   "file": "../web/lib/query-go.ts",
+   "find": "if (!keepPage && !('page' in change)) n.delete('page');",
+   "replace": "if (!keepPage) n.delete('page');",
+   "test": "node scripts/run-jest.mjs test/review/query-go.spec.ts -t \"REV-REV-12\""
+  }
+ ]
+}

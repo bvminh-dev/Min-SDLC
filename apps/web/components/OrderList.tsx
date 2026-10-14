@@ -9,6 +9,7 @@ import { useLoginRedirect } from '../lib/prd';
 import { limitedText } from '../lib/stock';
 import { Pager } from './Pager';
 import { useCountdown } from './useCountdown';
+import { useQueryGo } from './useQueryGo';
 
 interface Result { items: OrderRow[]; page: number; limit: number; total: number }
 const LIMIT = 20;
@@ -36,13 +37,7 @@ function OrderListInner({ admin }: { admin: boolean }) {
   const wasLimited = useRef(false);
 
   useEffect(() => { setSearch(code); }, [code]);
-  const go = useCallback((change: Record<string, string | null>, keepPage = false) => {
-    const n = new URLSearchParams(sp.toString());
-    for (const [k, v] of Object.entries(change)) { if (v) n.set(k, v); else n.delete(k); }
-    if (!keepPage) n.delete('page');
-    const s = n.toString();
-    router.push(s ? `${base}?${s}` : base, { scroll: false });
-  }, [sp, router, base]);
+  const go = useQueryGo(base); // cộng dồn các lần đổi liền nhau (REV-REV-12)
   // Gõ rồi chờ 300 ms (hoặc Enter) mới tìm; mã đơn chữ hoa, tối đa 32 ký tự (khớp schema của API).
   useEffect(() => {
     if (!admin || search.trim() === code) return;

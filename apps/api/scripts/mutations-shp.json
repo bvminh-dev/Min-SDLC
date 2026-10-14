@@ -348,8 +348,8 @@
    ],
    "tc": "SHP-TC-20261006-102133988",
    "file": "src/modules/shipping/read.service.ts",
-   "find": "    return toPage(rows.map((r) => ({\n      order_code: codes.get(r.order_id) ?? '',",
-   "replace": "    return toPage(rows.map((r) => ({\n      recipient: r.order_id, order_code: codes.get(r.order_id) ?? '',",
+   "find": "    return toPage(rows.map((r) => ({\n      order_code: r.order_code ?? '',",
+   "replace": "    return toPage(rows.map((r) => ({\n      recipient: r.order_code, order_code: r.order_code ?? '',",
    "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
   },
   {
@@ -1563,8 +1563,8 @@
    ],
    "tc": "SHP-TC-20261006-102133407",
    "file": "src/modules/shipping/lifecycle.service.ts",
-   "find": "VALUES (${o.order_id}::uuid, ${o.shipping_method_id}::uuid, ${cod},",
-   "replace": "VALUES (${o.order_id}::uuid, (SELECT id FROM shipping_methods ORDER BY id LIMIT 1), ${cod},",
+   "find": "VALUES (${o.order_id}::uuid, ${o.code}, ${o.shipping_method_id}::uuid, ${cod},",
+   "replace": "VALUES (${o.order_id}::uuid, ${o.code}, (SELECT id FROM shipping_methods ORDER BY id LIMIT 1), ${cod},",
    "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133407\""
   },
   {
@@ -1873,8 +1873,8 @@
    ],
    "tc": "SHP-TC-20261006-102147421",
    "file": "src/modules/shipping/read.service.ts",
-   "find": "ORDER BY seq ASC LIMIT ${HISTORY_MAX}",
-   "replace": "ORDER BY created_at DESC, id LIMIT ${HISTORY_MAX}",
+   "find": "newest ORDER BY seq ASC",
+   "replace": "newest ORDER BY created_at DESC, id",
    "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147421\""
   },
   {
@@ -1884,8 +1884,8 @@
    ],
    "tc": "SHP-TC-20261006-102147421",
    "file": "src/modules/shipping/read.service.ts",
-   "find": "ORDER BY seq ASC LIMIT ${HISTORY_MAX}",
-   "replace": "ORDER BY id ASC LIMIT ${HISTORY_MAX}",
+   "find": "newest ORDER BY seq ASC",
+   "replace": "newest ORDER BY id ASC",
    "test": "node scripts/run-jest.mjs test/shipping/history.spec.ts -t \"SHP-TC-20261006-102147421\""
   },
   {
@@ -1962,8 +1962,8 @@
    ],
    "tc": "SHP-TC-20261006-102134063",
    "file": "src/modules/shipping/read.service.ts",
-   "find": "(await this.orders.getSummary(id))?.code ?? ''",
-   "replace": "''",
+   "find": "order_code: r.order_code ?? '', status: r.status,",
+   "replace": "order_code: '', status: r.status,",
    "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
   },
   {
@@ -2408,6 +2408,196 @@
    "find": "<span className=\"pre\" data-testid={`${P}-history-reason`}>{[h.reason_code ? failReasonText(h.reason_code) : '', h.note ?? ''].filter(Boolean).join(' · ')}</span>",
    "replace": "<span className=\"pre\" data-testid={`${P}-history-reason`} dangerouslySetInnerHTML={{ __html: [h.reason_code ? failReasonText(h.reason_code) : '', h.note ?? ''].filter(Boolean).join(' · ') }} />",
    "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-WEB-01\""
+  },
+  {
+   "id": "SB-14, T17: danh sách gọi lại ORD cho từng dòng (N+1 trở lại)",
+   "sb": [
+    "SB-14",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261008-091406341",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "    return toPage(rows.map((r) => ({\n      order_code: r.order_code ?? '', status: r.status,",
+   "replace": "    await Promise.all(rows.map((r) => this.orders.getSummary(r.order_code ?? '')));\n    return toPage(rows.map((r) => ({\n      order_code: r.order_code ?? '', status: r.status,",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406341\""
+  },
+  {
+   "id": "SB-24, T18: tạo vận đơn không ghi order_code (cột chụp mã đơn rỗng)",
+   "sb": [
+    "SB-24",
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261008-091406341",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "INSERT INTO shipments (order_id, order_code, shipping_method_id, cod_amount, created_at, updated_at)\n      VALUES (${o.order_id}::uuid, ${o.code}, ",
+   "replace": "INSERT INTO shipments (order_id, shipping_method_id, cod_amount, created_at, updated_at)\n      VALUES (${o.order_id}::uuid, ",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406341\""
+  },
+  {
+   "id": "SB-11: bộ lọc mã đơn của danh sách không còn khớp (bỏ điều kiện order_id)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261008-091406341",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "      where.push(Prisma.sql`s.order_id = ${o.order_id}::uuid`);",
+   "replace": "      where.push(Prisma.sql`TRUE`);",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406341\""
+  },
+  {
+   "id": "SB-11, T6: bỏ CHECK khuôn order_code của vận đơn",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-TC-20261008-091406444",
+   "file": "prisma/migrations/20261008000100_shipping_order_code/migration.sql",
+   "find": "ALTER TABLE \"shipments\" ADD CONSTRAINT \"shipments_order_code_format\" CHECK (order_code ~ '^[0-9A-HJKMNP-TV-Z]{12}$');",
+   "replace": "SELECT 1;",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406444\""
+  },
+  {
+   "id": "SB-24: khuôn order_code cho phép chữ L (khác bảng Crockford của mã đơn)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261008-091406444",
+   "file": "prisma/migrations/20261008000100_shipping_order_code/migration.sql",
+   "find": "'^[0-9A-HJKMNP-TV-Z]{12}$'",
+   "replace": "'^[0-9A-Z]{12}$'",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406444\""
+  },
+  {
+   "id": "SB-24: order_code đổi được sau khi đã có mã (bỏ chặn bất biến)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261008-091406444",
+   "file": "prisma/migrations/20261008000100_shipping_order_code/migration.sql",
+   "find": "IF OLD.order_code IS NOT NULL AND NEW.order_code IS DISTINCT FROM OLD.order_code THEN",
+   "replace": "IF FALSE THEN",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406444\""
+  },
+  {
+   "id": "SB-24: trigger bất biến chặn cả lần điền đầu tiên từ rỗng",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261008-091406444",
+   "file": "prisma/migrations/20261008000100_shipping_order_code/migration.sql",
+   "find": "IF OLD.order_code IS NOT NULL AND NEW.order_code IS DISTINCT FROM OLD.order_code THEN",
+   "replace": "IF NEW.order_code IS DISTINCT FROM OLD.order_code THEN",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406444\""
+  },
+  {
+   "id": "SB-24: backfill nối sai khóa (shipping_method_id thay cho order_id)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261008-091406444",
+   "file": "prisma/migrations/20261008000100_shipping_order_code/migration.sql",
+   "find": "WHERE o.\"id\" = s.\"order_id\" AND s.\"order_code\" IS NULL;",
+   "replace": "WHERE o.\"id\" = s.\"shipping_method_id\" AND s.\"order_code\" IS NULL;",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406444\""
+  },
+  {
+   "id": "SB-24: backfill ghi đè cả dòng đã có mã (bỏ điều kiện IS NULL)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-TC-20261008-091406444",
+   "file": "prisma/migrations/20261008000100_shipping_order_code/migration.sql",
+   "find": " AND s.\"order_code\" IS NULL;",
+   "replace": ";",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406444\""
+  },
+  {
+   "id": "SB-31, T20 (L71): DB_POOL_MAX cho phép 1 kết nối (handler giữ một kết nối rồi đọc ORD bằng kết nối thứ hai nên treo)",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "SHP-TC-20261008-091406542",
+   "file": "src/modules/platform/config/config.ts",
+   "find": "DB_POOL_MAX: cfg.int({ default: 10, min: 2, max: 200 })",
+   "replace": "DB_POOL_MAX: cfg.int({ default: 10, min: 1, max: 200 })",
+   "test": "node scripts/run-jest.mjs test/shipping/review.spec.ts -t \"SHP-TC-20261008-091406542\""
+  },
+  {
+   "id": "SB-11 (web): lỗi 5xx của chi tiết vận đơn không hiện banner lỗi (coi như không tìm thấy)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-E2E-20261008-091406629",
+   "file": "../web/app/admin/shipments/[code]/page.tsx",
+   "find": "    else if (r.status === 429) { limit.start(r.retryAfter); setView('rate'); }\n    else setView('error');",
+   "replace": "    else if (r.status === 429) { limit.start(r.retryAfter); setView('rate'); }\n    else setView('notfound');",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261008-091406629:\""
+  },
+  {
+   "id": "SB-11 (web): lỗi tải lịch sử không hiện banner lỗi riêng (nuốt lỗi, coi như đã tải)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SHP-E2E-20261008-091406726",
+   "file": "../web/app/admin/shipments/[code]/page.tsx",
+   "find": "else if (!expired(r)) setHistView('error');",
+   "replace": "else if (!expired(r)) setHistView('ready');",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261008-091406726:\""
+  },
+  {
+   "id": "SB-05 (web): hộp thoại phiên hết hạn của chi tiết vận đơn mang sai testid",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SHP-E2E-20261008-091406820",
+   "file": "../web/lib/shipping.ts",
+   "find": "return 'shp-shipment-admin-detail-session-expired';",
+   "replace": "return undefined;",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261008-091406820:\""
+  },
+  {
+   "id": "SB-24, T20 (web): bàn giao bị order-not-shippable không có nút Tải lại vận đơn",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-E2E-20261008-091406911",
+   "file": "../web/app/admin/shipments/[code]/page.tsx",
+   "find": "{ text: 'Đơn đã bị hủy hoặc không còn sẵn sàng giao', reload: true }",
+   "replace": "{ text: 'Đơn đã bị hủy hoặc không còn sẵn sàng giao' }",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261008-091406911:\""
+  },
+  {
+   "id": "SB-24, T7 (web): bàn giao bị shipment-invalid-transition không có nút Tải lại vận đơn",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "SHP-E2E-20261008-091406911",
+   "file": "../web/app/admin/shipments/[code]/page.tsx",
+   "find": "{ text: 'Vận đơn đã đổi trạng thái', reload: true }",
+   "replace": "{ text: 'Vận đơn đã đổi trạng thái' }",
+   "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-E2E-20261008-091406911:\""
+  },
+  {
+   "id": "SB-18, T22: log lỗi đọc đơn của handler không mang order_id",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "SHP-TC-20261006-102133455",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "code: 'order-read-failed', event_type: e.type, order_id: orderId, err_code:",
+   "replace": "code: 'order-read-failed', event_type: e.type, err_code:",
+   "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133455\""
+  },
+  {
+   "id": "SB-11, T17: lịch sử lấy 100 dòng CŨ nhất thay cho 100 dòng mới nhất (mất trạng thái hiện tại khi lịch sử dài)",
+   "sb": [
+    "SB-11",
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261006-102134039",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "ORDER BY seq DESC LIMIT ${HISTORY_MAX}) newest ORDER BY seq ASC`;",
+   "replace": "ORDER BY seq ASC LIMIT ${HISTORY_MAX}) newest ORDER BY seq ASC`;",
+   "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T17 \\(L80\\)\""
   }
  ]
 }

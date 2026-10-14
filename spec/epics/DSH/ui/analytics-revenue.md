@@ -9,6 +9,8 @@ roles: [admin]
 
 Trang để **đọc số theo một khoảng ngày** (khác dashboard là nơi bắt tay làm). Số tiền lấy từ PAY: chỉ Payment thu thành công trừ hoàn tiền thành công. Chỉ admin; staff và customer thấy màn `access-denied` của AUTH.
 
+Đường dẫn web: `/admin/reports/revenue`. Khi URL chỉ có `to` hoặc chỉ có `from`, ô còn lại hiện đúng giá trị máy chủ đã dùng (thiếu `to` là hôm nay, thiếu `from` là `to` trừ 29 ngày).
+
 ## Wireframe
 Phương án đã chọn: **A** (bộ lọc khoảng ngày, hàng số tổng, biểu đồ chính theo mốc, rồi bảng mốc và khối theo phương thức). **Đây là lựa chọn mặc định** (khuyến nghị theo `U3` và mẫu "Trang báo cáo" của evon), chưa có người dùng chọn. Không dựng HTML hay chạy probe ở phase này.
 

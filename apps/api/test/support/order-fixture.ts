@@ -4,7 +4,7 @@ import type { PrismaClient } from '@prisma/client';
 // Đơn dựng thẳng trong CSDL (fixture, không qua CHK): dùng chung bởi test Jest (support/ord.ts) và máy chủ E2E (e2e/server.ts), không phụ thuộc Nest hay Jest.
 export type Status = 'pending' | 'confirmed' | 'paid' | 'shipped' | 'delivered' | 'cancelled' | 'expired' | 'returned';
 export type PayStatus = 'pending' | 'processing' | 'succeeded' | 'failed' | 'expired' | 'cancelled' | 'refunded';
-export const ADDRESS = { receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi', ward: 'Bến Nghé', city: 'TP.HCM' };
+export const ADDRESS = { receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi', ward: 'Bến Nghé', district: 'Quận 1', city: 'TP.HCM' };
 export const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 /** Mã đơn hợp lệ (12 ký tự Crockford ngẫu nhiên). */
 export const code = (): string => Array.from({ length: 12 }, () => ALPHABET[randomInt(32)]).join('');

@@ -1,8 +1,12 @@
 // Sổ mã lỗi (PRJ-REQ-20261006-095422820 BR2, ADR-023): `type` = urn:ecom:error:<mã>.
 export interface ProblemDef { code: string; status: number; title: string }
 export interface ProblemErrorItem { field: string; code: string }
-/** Giá trị trường phụ của problem+json: vô hướng hoặc danh sách mã (ví dụ `reasons`, `missing` của PRD). */
-export type ProblemExtra = string | number | boolean | string[];
+/**
+ * Giá trị trường phụ của problem+json: vô hướng, danh sách mã (ví dụ `reasons`, `missing` của PRD) hoặc đối tượng JSON thuần và danh sách đối tượng (ví dụ `items` của `insufficient-stock`,
+ * `issues` của `cart-has-unavailable-items`, `review` của `price-changed`, CHK-API mục Danh mục lỗi). Giá trị do module đặt từ dữ liệu của chính nó, không bao giờ từ chuỗi client gửi lên nguyên văn.
+ */
+export type ProblemExtra = string | number | boolean | string[] | ProblemJson | ProblemJson[];
+export type ProblemJson = { [key: string]: string | number | boolean | null | string[] | ProblemJson | ProblemJson[] };
 
 export class ErrorRegistry {
   private readonly defs = new Map<string, ProblemDef>();
@@ -58,11 +62,14 @@ for (const [code, status] of Object.entries(BASE_STATUS)) errorRegistry.register
 
 export const registerProblem = (def: ProblemDef): void => errorRegistry.register(def);
 
-/** Lỗi miền có mã; platform ánh xạ sang HTTP, module không tự đặt phản hồi lỗi (BR7). */
+/**
+ * Lỗi miền có mã; platform ánh xạ sang HTTP, module không tự đặt phản hồi lỗi (BR7). `options.status` chỉ dùng khi spec cho CÙNG một mã `type` hai mã HTTP (CRT: `product-unavailable` 404 khi thêm, 409 khi tăng số lượng
+ * dòng đã ngừng bán); phải là 4xx hay 5xx, ngoài khoảng thì bỏ qua và dùng status của sổ mã.
+ */
 export class DomainError extends Error {
   constructor(
     readonly code: string,
-    readonly options: { detail?: string; errors?: ProblemErrorItem[]; headers?: Record<string, string>; extra?: Record<string, ProblemExtra> } = {},
+    readonly options: { detail?: string; errors?: ProblemErrorItem[]; headers?: Record<string, string>; extra?: Record<string, ProblemExtra>; status?: number } = {},
   ) {
     super(code);
     this.name = 'DomainError';

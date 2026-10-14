@@ -86,6 +86,19 @@ export class InternalService {
   }
 
   /**
+   * REV (phân biệt `not_delivered` với `not_purchased`, REV-REQ-20261006-103135296 BR3 bước 4): người dùng có dòng đơn chứa sản phẩm ở đơn CHƯA giao xong (`pending`, `confirmed`, `paid`, `shipped`)?
+   * Đơn `cancelled`, `expired`, `returned` không tính. Chỉ đọc, không `tx`. Bổ sung ngoài bảng Giao diện module hiện có (xem report REV, Lệch spec).
+   */
+  async hasUndeliveredItems(userId: string, productId: string): Promise<boolean> {
+    if (!isUuid(userId) || !isUuid(productId)) return false;
+    const [r] = await this.prisma.$queryRaw<{ yes: boolean }[]>`
+      SELECT EXISTS (
+        SELECT 1 FROM orders o JOIN order_items i ON i.order_id = o.id
+        WHERE o.user_id = ${userId}::uuid AND o.status IN ('pending', 'confirmed', 'paid', 'shipped') AND i.product_id = ${productId}::uuid) AS yes`;
+    return r.yes;
+  }
+
+  /**
    * SHP gọi trong giao dịch bàn giao `tx` (sau khi SHP khóa vận đơn, ADR-012): khóa dòng đơn, chỉ cho `paid` hoặc `confirmed`, đặt `handoff_locked_at` (giữ giờ đầu khi gọi lại).
    * Không lịch sử, event hay audit. Cờ commit hoặc rollback cùng `tx` của SHP; hủy của khách và admin gặp cờ thì 409 (R-04).
    */
@@ -144,10 +157,10 @@ export class InternalService {
   /** DSH: các đơn mới nhất, không trường cá nhân (không `user_id`, không địa chỉ). */
   async listRecent(limit: number) {
     checkLimit(limit);
-    const rows = await this.prisma.$queryRaw<{ code: string; created_at: Date; status: string; grand_total: bigint; payment_status: string; item_count: number }[]>`
-      SELECT o.code, o.created_at, o.status::text AS status, o.grand_total, o.payment_status::text AS payment_status, (SELECT count(*)::int FROM order_items i WHERE i.order_id = o.id) AS item_count
+    const rows = await this.prisma.$queryRaw<{ code: string; created_at: Date; status: string; grand_total: bigint; payment_method: string; payment_status: string; item_count: number }[]>`
+      SELECT o.code, o.created_at, o.status::text AS status, o.grand_total, o.payment_method::text AS payment_method, o.payment_status::text AS payment_status, (SELECT count(*)::int FROM order_items i WHERE i.order_id = o.id) AS item_count
       FROM orders o ORDER BY o.created_at DESC, o.id DESC LIMIT ${limit}`;
-    return rows.map((r) => ({ code: r.code, created_at: r.created_at.toISOString(), status: r.status, grand_total: Number(r.grand_total), payment_status: r.payment_status, item_count: r.item_count }));
+    return rows.map((r) => ({ code: r.code, created_at: r.created_at.toISOString(), status: r.status, grand_total: Number(r.grand_total), payment_method: r.payment_method, payment_status: r.payment_status, item_count: r.item_count }));
   }
 
   /** DSH: dòng hàng nhóm theo sản phẩm của đơn đã thu tiền (`succeeded`) có `paid_at` trong khoảng và trạng thái không thuộc cancelled, expired, returned (DSH-DB). */
@@ -162,5 +175,17 @@ export class InternalService {
       WHERE o.payment_status = 'succeeded' AND o.paid_at >= ${range.from}::timestamptz AND o.paid_at < ${range.to}::timestamptz AND o.status NOT IN ('cancelled', 'expired', 'returned')
       GROUP BY i.product_id ORDER BY ${order}, i.product_id LIMIT ${limit}`;
     return rows.map((r) => ({ product_id: r.product_id, quantity: Number(r.quantity), amount: Number(r.amount) }));
+  }
+  /**
+   * DSH (báo cáo sản phẩm, DSH-REQ ...458 BR4): tổng số lượng bán và số sản phẩm khác nhau của TOÀN khoảng (không chỉ `limit` dòng đầu của `getTopProducts`), cùng điều kiện lọc với `getTopProducts`.
+   * Một câu SQL, chỉ số đếm. Bổ sung ngoài bảng Giao diện module hiện có (xem report DSH, Lệch spec).
+   */
+  async getProductSalesTotals(range: RangeUtc): Promise<{ units_total: number; distinct_products: number }> {
+    checkRange(range);
+    const [r] = await this.prisma.$queryRaw<{ units: bigint; n: bigint }[]>`
+      SELECT COALESCE(sum(i.quantity), 0) AS units, count(DISTINCT i.product_id) AS n
+      FROM orders o JOIN order_items i ON i.order_id = o.id
+      WHERE o.payment_status = 'succeeded' AND o.paid_at >= ${range.from}::timestamptz AND o.paid_at < ${range.to}::timestamptz AND o.status NOT IN ('cancelled', 'expired', 'returned')`;
+    return { units_total: Number(r.units), distinct_products: Number(r.n) };
   }
 }

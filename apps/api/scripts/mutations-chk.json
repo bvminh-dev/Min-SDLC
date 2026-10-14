@@ -1,0 +1,1625 @@
+{
+ "test": "node scripts/run-jest.mjs test/checkout",
+ "mutations": [
+  {
+   "id": "SB-06, T1: khóa dòng phiên không lọc theo người dùng (hủy phiên của người khác)",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "CHK-TC-20261006-110703793",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "WHERE id = ${id.toLowerCase()}::uuid AND user_id = ${userId}::uuid FOR UPDATE`;",
+   "replace": "WHERE id = ${id.toLowerCase()}::uuid FOR UPDATE`;",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703793\""
+  },
+  {
+   "id": "SB-06, T1: đọc phiên không lọc theo người dùng (xem phiên của người khác)",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "CHK-TC-20261006-110702205",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "WHERE id = ${id.toLowerCase()}::uuid AND user_id = ${userId}::uuid`;",
+   "replace": "WHERE id = ${id.toLowerCase()}::uuid`;",
+   "test": "node scripts/run-jest.mjs test/checkout/view.spec.ts -t \"CHK-TC-20261006-110702205\""
+  },
+  {
+   "id": "SB-06, T1: địa chỉ không tìm thấy trả mã khác 404 address-not-found (lộ khác biệt người khác và không có)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "CHK-TC-20261006-110701084",
+   "file": "src/modules/checkout/select.service.ts",
+   "find": "if (!a) throw new DomainError('address-not-found');",
+   "replace": "if (!a) throw new DomainError('checkout-session-not-found');",
+   "test": "node scripts/run-jest.mjs test/checkout/address.spec.ts -t \"CHK-TC-20261006-110701084\""
+  },
+  {
+   "id": "SB-06, T1: phương thức vận chuyển sai định dạng trả 400 thay vì cùng 409",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "CHK-TC-20261006-110701388",
+   "file": "src/modules/checkout/select.service.ts",
+   "find": "method = UUID_RE.test(b.method_id) ? methods.find((m) => m.id === b.method_id.toLowerCase()) : undefined;",
+   "replace": "method = methods.find((m) => m.id === b.method_id.toLowerCase());\n      if (!UUID_RE.test(b.method_id)) throw new DomainError('validation-failed');",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701388\""
+  },
+  {
+   "id": "SB-05, T4: staff được đặt hàng (role của route place-order)",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "CHK-TC-20261006-110703400",
+   "file": "src/modules/checkout/checkout.controller.ts",
+   "find": "@Action('Đặt hàng và tạo đơn') @Roles('customer')",
+   "replace": "@Action('Đặt hàng và tạo đơn') @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703400\""
+  },
+  {
+   "id": "SB-05, T4: staff được tạo phiên",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "CHK-TC-20261006-110700904",
+   "file": "src/modules/checkout/checkout.controller.ts",
+   "find": "@Action('Bắt đầu phiên checkout từ giỏ (cần email đã xác minh)') @Roles('customer')",
+   "replace": "@Action('Bắt đầu phiên checkout từ giỏ (cần email đã xác minh)') @Roles('customer', 'staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/checkout/session.spec.ts -t \"CHK-TC-20261006-110700904\""
+  },
+  {
+   "id": "SB-23, T2: body đóng cho phép trường lạ (grand_total, items, user_id)",
+   "sb": [
+    "SB-23",
+    "SB-11"
+   ],
+   "tc": "CHK-TC-20261006-110703367",
+   "file": "src/modules/checkout/policy.ts",
+   "find": "for (const k of Object.keys(o)) if (!known.has(k)) ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "replace": "void known;",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703367\""
+  },
+  {
+   "id": "SB-23, T2: so khớp expected_grand_total bị bỏ (tin số của client)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702458",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (body.expected_grand_total !== priced.grand_total) throw reject(",
+   "replace": "if (false) throw reject(",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702458\""
+  },
+  {
+   "id": "SB-23, T2: so khớp price-changed chỉ báo khi giá TĂNG (giảm giá không phải xác nhận)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702559",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (body.expected_grand_total !== priced.grand_total) throw reject(",
+   "replace": "if (body.expected_grand_total < priced.grand_total) throw reject(",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702559\""
+  },
+  {
+   "id": "SB-23, T2: tổng tiền của đơn lệch công thức (items_total cộng 1)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702386",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "items_total: priced.items_subtotal, discount: priced.discount",
+   "replace": "items_total: priced.items_subtotal + 1, discount: priced.discount",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702386\""
+  },
+  {
+   "id": "SB-23, T2: ngưỡng miễn phí tính trên tạm tính SAU giảm giá",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110701316",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "await this.ship(o.methodId, o.city, snap.items_subtotal, o.strict)",
+   "replace": "await this.ship(o.methodId, o.city, snap.items_subtotal - num(discount), o.strict)",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701316\""
+  },
+  {
+   "id": "SB-23, T2: tổng cộng không trừ giảm giá",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702133",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "grand_total: num(subtotal - discount + (fee ?? 0n))",
+   "replace": "grand_total: num(subtotal + (fee ?? 0n))",
+   "test": "node scripts/run-jest.mjs test/checkout/view.spec.ts -t \"CHK-TC-20261006-110702133\""
+  },
+  {
+   "id": "SB-23, T2: tổng cộng không cộng phí vận chuyển",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702133",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "grand_total: num(subtotal - discount + (fee ?? 0n))",
+   "replace": "grand_total: num(subtotal - discount)",
+   "test": "node scripts/run-jest.mjs test/checkout/view.spec.ts -t \"CHK-TC-20261006-110702133\""
+  },
+  {
+   "id": "SB-23, T11: phí tính theo city của bản chụp thay vì địa chỉ thật (bỏ đọc lại địa chỉ khi đặt)",
+   "sb": [
+    "SB-23",
+    "SB-06"
+   ],
+   "tc": "CHK-TC-20261006-110701151",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (addressChanged(row.address_snapshot, addr)) {",
+   "replace": "if (false) {",
+   "test": "node scripts/run-jest.mjs test/checkout/address.spec.ts -t \"CHK-TC-20261006-110701151\""
+  },
+  {
+   "id": "SB-23, T11: địa chỉ so updated_at bằng `===` (không phát hiện sửa)",
+   "sb": [
+    "SB-23",
+    "SB-06"
+   ],
+   "tc": "CHK-TC-20261006-110701151",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "new Date(snap.updated_at).getTime() !== a.updated_at.getTime()",
+   "replace": "new Date(snap.updated_at).getTime() === a.updated_at.getTime()",
+   "test": "node scripts/run-jest.mjs test/checkout/address.spec.ts -t \"CHK-TC-20261006-110701151\""
+  },
+  {
+   "id": "SB-23, T11: địa chỉ đã xóa không bỏ lựa chọn của phiên",
+   "sb": [
+    "SB-23",
+    "SB-06"
+   ],
+   "tc": "CHK-TC-20261006-110701117",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "SET address_id = NULL, address_snapshot = NULL WHERE id",
+   "replace": "SET address_snapshot = NULL WHERE id",
+   "test": "node scripts/run-jest.mjs test/checkout/address.spec.ts -t \"CHK-TC-20261006-110701117\""
+  },
+  {
+   "id": "SB-23, T11: bản chụp địa chỉ không cập nhật sau address-changed",
+   "sb": [
+    "SB-23",
+    "SB-06"
+   ],
+   "tc": "CHK-TC-20261006-110701151",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "SET address_snapshot = ${JSON.stringify(snapOf(addr))}::jsonb WHERE id = ${row.id}::uuid AND status = 'open'::checkout_status`",
+   "replace": "SET address_snapshot = address_snapshot WHERE id = ${row.id}::uuid AND status = 'open'::checkout_status`",
+   "test": "node scripts/run-jest.mjs test/checkout/address.spec.ts -t \"CHK-TC-20261006-110701151\""
+  },
+  {
+   "id": "SB-23, T11: đơn lưu bản chụp địa chỉ thiếu district (sáu khóa)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261013-210240854",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "ward: addr.ward, district: addr.district ?? null, city: addr.city }, // đúng sáu khóa",
+   "replace": "ward: addr.ward, city: addr.city }, // đúng sáu khóa",
+   "test": "node scripts/run-jest.mjs test/checkout/sync.spec.ts -t \"CHK-TC-20261013-210240854\""
+  },
+  {
+   "id": "SB-23, T20: zero_total chỉ chặn số âm",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110701633",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "if (total === 0) return new DomainError('zero-total-unsupported');",
+   "replace": "if (total < 0) return new DomainError('zero-total-unsupported');",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701633\""
+  },
+  {
+   "id": "SB-23, T20: trần VNPay 1.000.000.000",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110701748",
+   "file": "src/modules/checkout/config.ts",
+   "find": "export const VNPAY_MAX = 999_999_999;",
+   "replace": "export const VNPAY_MAX = 1_000_000_000;",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701748\""
+  },
+  {
+   "id": "SB-23, T20: sàn VNPay 4.999",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110701599",
+   "file": "src/modules/checkout/config.ts",
+   "find": "export const VNPAY_MIN = 5_000;",
+   "replace": "export const VNPAY_MIN = 4_999;",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701599\""
+  },
+  {
+   "id": "SB-23, T20: giới hạn số tiền áp cho cả COD",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110701599",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "if (method === 'vnpay' && (total < VNPAY_MIN || total > VNPAY_MAX))",
+   "replace": "if (method !== null && (total < VNPAY_MIN || total > VNPAY_MAX))",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701599\""
+  },
+  {
+   "id": "SB-23, T20: lúc đặt hàng không kiểm giới hạn số tiền",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110701633",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (bound) throw reject(bound);",
+   "replace": "void bound;",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701633\""
+  },
+  {
+   "id": "SB-23: tổng tạm tính cắt về trần SHP (4,95 nghìn tỷ ném RangeError thành lỗi phụ thuộc)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702349",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "subtotal: Math.min(subtotal, SHIP_SUBTOTAL_MAX) }); // tạm tính vượt trần",
+   "replace": "subtotal }); // tạm tính vượt trần",
+   "test": "node scripts/run-jest.mjs test/checkout/view.spec.ts -t \"CHK-TC-20261006-110702349\""
+  },
+  {
+   "id": "SB-26, T3: tạo phiên không kiểm email_verified",
+   "sb": [
+    "SB-26",
+    "SB-05"
+   ],
+   "tc": "CHK-TC-20261006-110700835",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "if (!s.email_verified) throw new DomainError('email-not-verified', { extra: { resend_endpoint: RESEND_ENDPOINT } });\n    let snap",
+   "replace": "if (s.email_verified === undefined) throw new DomainError('email-not-verified', { extra: { resend_endpoint: RESEND_ENDPOINT } });\n    let snap",
+   "test": "node scripts/run-jest.mjs test/checkout/session.spec.ts -t \"CHK-TC-20261006-110700835\""
+  },
+  {
+   "id": "SB-26, T3: đặt hàng không kiểm lại email_verified",
+   "sb": [
+    "SB-26",
+    "SB-05"
+   ],
+   "tc": "CHK-TC-20261006-110703301",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (!s.email_verified) throw reject(",
+   "replace": "if (s.email_verified === undefined) throw reject(",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703301\""
+  },
+  {
+   "id": "SB-25, T5: bỏ khóa dòng phiên (FOR UPDATE) khi đặt hàng song song",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703521",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "AND user_id = ${userId}::uuid FOR UPDATE`;\n    return r ?? null;",
+   "replace": "AND user_id = ${userId}::uuid`;\n    return r ?? null;",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110703521 \\(REV: thao tác chọn\""
+  },
+  {
+   "id": "SB-25, T5: phiên đã completed không phát lại đơn (lớp hai idempotency)",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703521",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (row.status === 'completed') return this.replay(row);",
+   "replace": "if (false) return this.replay(row);",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703521\""
+  },
+  {
+   "id": "SB-25, T5: bỏ kiểm giỏ đã có phiên completed",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703556",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (done) throw reject(new DomainError('cart-already-ordered'));",
+   "replace": "if (false) throw reject(new DomainError('cart-already-ordered'));",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703556\""
+  },
+  {
+   "id": "SB-25, T5: completed_at của phiên lệch một ngày",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703196",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "order_id = ${order.order_id}::uuid, completed_at = clock_timestamp()",
+   "replace": "order_id = ${order.order_id}::uuid, completed_at = clock_timestamp() - interval '1 day'",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703196: đặt đơn VNPay\""
+  },
+  {
+   "id": "SB-25, T6: giữ hàng bị bỏ qua khi INV báo thiếu",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "CHK-TC-20261006-110702693",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (!held.ok) {",
+   "replace": "if (false as boolean && !held.ok) {",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702693\""
+  },
+  {
+   "id": "SB-25, T14: giữ lượt coupon thất bại không hoàn tác",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110702996",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (!r.ok) throw reject(this.couponInvalid(couponFailure(priced.coupon.code, r)));",
+   "replace": "if (false) throw reject(this.couponInvalid(couponFailure(priced.coupon.code, r)));",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702996\""
+  },
+  {
+   "id": "SB-25, T14: COD không xác nhận trong cùng giao dịch",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703231",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (!vnpay) await this.deps.confirmCod(order.order_id, tx);",
+   "replace": "if (false) await this.deps.confirmCod(order.order_id, tx);",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703231: đặt đơn COD\""
+  },
+  {
+   "id": "SB-25, T14: hạn giữ hàng truyền cho INV là rỗng",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110702894",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })), expiresAt, tx)",
+   "replace": "items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })), null, tx)",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702894\""
+  },
+  {
+   "id": "SB-25, T14: hạn giữ hàng của COD vẫn có (không rỗng)",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110702928",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "const expiresAt = vnpay ? at : null;",
+   "replace": "const expiresAt = at;",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702928\""
+  },
+  {
+   "id": "SB-25, T14: RESERVATION_TTL mặc định 10 phút",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110702894",
+   "file": "src/modules/checkout/config.ts",
+   "find": "RESERVATION_TTL: cfg.int({ default: 15,",
+   "replace": "RESERVATION_TTL: cfg.int({ default: 10,",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702894\""
+  },
+  {
+   "id": "SB-25, T14: payment_expires_at của đơn là rỗng cho VNPay",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110702894",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "payment_method: row.payment_method!, payment_expires_at: expiresAt,",
+   "replace": "payment_method: row.payment_method!, payment_expires_at: null,",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702894\""
+  },
+  {
+   "id": "SB-25, T14: lỗi sau createPending không hoàn tác (bắt lỗi nuốt)",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703029",
+   "file": "src/modules/checkout/deps.service.ts",
+   "find": "      throw new DependencyError(dep, e);\n    } finally",
+   "replace": "      return undefined as T;\n    } finally",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703029: lỗi gài\""
+  },
+  {
+   "id": "SB-25, T14: kiểm giữ lượt PRM không so khớp amount",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110702996",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (r.amount !== priced.discount) throw reject(",
+   "replace": "if (false) throw reject(",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110702996 \\(REV: amount\""
+  },
+  {
+   "id": "SB-33, T7: giới hạn đơn mở so `>` thay `>=` ở bước đặt",
+   "sb": [
+    "SB-33"
+   ],
+   "tc": "CHK-TC-20261006-110703589",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (current >= limit) throw reject(",
+   "replace": "if (current > limit) throw reject(",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703589\""
+  },
+  {
+   "id": "SB-33, T7: giới hạn VNPay mặc định 4",
+   "sb": [
+    "SB-33"
+   ],
+   "tc": "CHK-TC-20261006-110701666",
+   "file": "src/modules/checkout/config.ts",
+   "find": "CHK_MAX_OPEN_VNPAY_ORDERS: cfg.int({ default: 3,",
+   "replace": "CHK_MAX_OPEN_VNPAY_ORDERS: cfg.int({ default: 4,",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701666\""
+  },
+  {
+   "id": "SB-33, T7: giới hạn COD mặc định 6",
+   "sb": [
+    "SB-33"
+   ],
+   "tc": "CHK-TC-20261006-110701784",
+   "file": "src/modules/checkout/config.ts",
+   "find": "CHK_MAX_OPEN_COD_ORDERS: cfg.int({ default: 5,",
+   "replace": "CHK_MAX_OPEN_COD_ORDERS: cfg.int({ default: 6,",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701784\""
+  },
+  {
+   "id": "SB-33, T7: chọn COD tính theo số đơn VNPay",
+   "sb": [
+    "SB-33"
+   ],
+   "tc": "CHK-TC-20261006-110701784",
+   "file": "src/modules/checkout/select.service.ts",
+   "find": "['cod', this.limits.cod, open.cod_open] as const",
+   "replace": "['cod', this.limits.cod, open.online_pending] as const",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701784\""
+  },
+  {
+   "id": "SB-33, T7: lý do per_user_limit_reached đổi thành mã khác",
+   "sb": [
+    "SB-33"
+   ],
+   "tc": "CHK-TC-20261006-122751355",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "case 'per_user_limit_reached': return { code, applied: false, reason: r.reason, limit: r.limit, used: r.used };",
+   "replace": "case 'per_user_limit_reached': return { code, applied: false, reason: 'no_discount' };",
+   "test": "node scripts/run-jest.mjs test/checkout/coupon.spec.ts -t \"CHK-TC-20261006-122751355\""
+  },
+  {
+   "id": "SB-14, T9: tạo phiên 11 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CHK-TC-20261006-110700980",
+   "file": "src/modules/checkout/config.ts",
+   "find": "create: { tier: 'B', limit: 10, windowSeconds: 60 }",
+   "replace": "create: { tier: 'B', limit: 11, windowSeconds: 60 }",
+   "test": "node scripts/run-jest.mjs test/checkout/session.spec.ts -t \"CHK-TC-20261006-110700980\""
+  },
+  {
+   "id": "SB-14, T9: đặt hàng 6 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CHK-TC-20261006-110703623",
+   "file": "src/modules/checkout/config.ts",
+   "find": "place: { tier: 'B', limit: 5, windowSeconds: 60 }",
+   "replace": "place: { tier: 'B', limit: 6, windowSeconds: 60 }",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703623\""
+  },
+  {
+   "id": "SB-14, T8: áp mã không đếm dò mã (count_attempt = false)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CHK-TC-20261006-110701888",
+   "file": "src/modules/checkout/select.service.ts",
+   "find": "snap.items_subtotal, true, true); } catch",
+   "replace": "snap.items_subtotal, true, false); } catch",
+   "test": "node scripts/run-jest.mjs test/checkout/coupon.spec.ts -t \"CHK-TC-20261006-110701888\""
+  },
+  {
+   "id": "SB-14, T8: xem lại đếm vào bộ đếm dò mã (count_attempt = true)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CHK-TC-20261006-110702099",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "async coupon(userId: string, code: string, subtotal: number, strict: boolean, countAttempt = false)",
+   "replace": "async coupon(userId: string, code: string, subtotal: number, strict: boolean, countAttempt = true)",
+   "test": "node scripts/run-jest.mjs test/checkout/coupon.spec.ts -t \"CHK-TC-20261006-110702099\""
+  },
+  {
+   "id": "SB-14, T8: 429 của PRM đổi thành 503",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CHK-TC-20261006-110701922",
+   "file": "src/modules/checkout/select.service.ts",
+   "find": "case 'too_many_attempts': { const s = Math.max(1, Math.ceil(retryAfter ?? 1));",
+   "replace": "case 'too_many_attempts': { const s = Math.max(1, Math.ceil(0));",
+   "test": "node scripts/run-jest.mjs test/checkout/coupon.spec.ts -t \"CHK-TC-20261006-110701922\""
+  },
+  {
+   "id": "SB-11, T19: số thực được nhận làm expected_grand_total",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CHK-TC-20261006-110702525",
+   "file": "src/modules/checkout/policy.ts",
+   "find": "z.number(str).int({ message: 'invalid_format' }).min(min, { message: 'out_of_range' })",
+   "replace": "z.number(str).min(min, { message: 'out_of_range' })",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702525\""
+  },
+  {
+   "id": "SB-11, T19: payment_method nhận giá trị lạ",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CHK-TC-20261006-110701709",
+   "file": "src/modules/checkout/config.ts",
+   "find": "export const PAYMENT_METHODS = ['vnpay', 'cod'] as const;",
+   "replace": "export const PAYMENT_METHODS = ['vnpay', 'cod', 'paypal'] as const;",
+   "test": "node scripts/run-jest.mjs test/checkout/select.spec.ts -t \"CHK-TC-20261006-110701709\""
+  },
+  {
+   "id": "SB-11, T19: tạo phiên nhận trường lạ trong body (cart_id, user_id)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CHK-TC-20261006-110701017",
+   "file": "src/modules/checkout/policy.ts",
+   "find": "export const emptyBody = closedObject({});",
+   "replace": "export const emptyBody = z.unknown();",
+   "test": "node scripts/run-jest.mjs test/checkout/session.spec.ts -t \"CHK-TC-20261006-110701017\""
+  },
+  {
+   "id": "SB-40, T21: thiếu Idempotency-Key vẫn đặt được",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "CHK-TC-20261006-120840748",
+   "file": "src/modules/checkout/checkout.controller.ts",
+   "find": "const key = keyOf(req);",
+   "replace": "const key = (req.headers['idempotency-key'] as string | undefined) ?? 'fixed-key-00000000';",
+   "test": "node scripts/run-jest.mjs test/checkout/idem.spec.ts -t \"CHK-TC-20261006-120840748\""
+  },
+  {
+   "id": "SB-40, T21: định dạng khóa 1..64 ký tự",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "CHK-TC-20261006-120840748",
+   "file": "src/modules/checkout/config.ts",
+   "find": "export const IDEMPOTENCY_KEY_RE = /^[A-Za-z0-9_-]{8,64}$/;",
+   "replace": "export const IDEMPOTENCY_KEY_RE = /^[A-Za-z0-9_ -]{1,64}$/;",
+   "test": "node scripts/run-jest.mjs test/checkout/idem.spec.ts -t \"CHK-TC-20261006-120840748\""
+  },
+  {
+   "id": "SB-40, T21: request_hash không gồm tham số đường dẫn (id phiên)",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "CHK-TC-20261006-120848703",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "hashOf('/api/v1/checkout/sessions/:id/place-order', { params: { id }, body })",
+   "replace": "hashOf('/api/v1/checkout/sessions/:id/place-order', { body })",
+   "test": "node scripts/run-jest.mjs test/checkout/idem.spec.ts -t \"CHK-TC-20261006-120848703 \\(khóa gắn với phiên\\)\""
+  },
+  {
+   "id": "SB-40, T21: phát lại trả 201 và replayed false (không phát lại đúng)",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "CHK-TC-20261006-120848703",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "return out.replayed ? { status: 200, body: { ...out.body, replayed: true } } : { status: out.status, body: out.body };",
+   "replace": "return { status: out.status, body: out.body };",
+   "test": "node scripts/run-jest.mjs test/checkout/idem.spec.ts -t \"CHK-TC-20261006-120848703: gửi lại\""
+  },
+  {
+   "id": "SB-40, T21: controller luôn trả 201",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "CHK-TC-20261006-110703521",
+   "file": "src/modules/checkout/checkout.controller.ts",
+   "find": "res.status(r.status); // 201 đơn mới, 200 phát lại (`replayed` = true)",
+   "replace": "res.status(201);",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703521\""
+  },
+  {
+   "id": "SB-19, T13: AuditLog ghi action khác",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "CHK-TC-20261006-120856566",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "action: 'checkout.place_order', target_type: 'order'",
+   "replace": "action: 'checkout.placed', target_type: 'order'",
+   "test": "node scripts/run-jest.mjs test/checkout/idem.spec.ts -t \"CHK-TC-20261006-120856566\""
+  },
+  {
+   "id": "SB-19, T13: AuditLog ghi actor_role system",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "CHK-TC-20261006-120856566",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "actor_role: 'customer', action: 'checkout.place_order'",
+   "replace": "actor_role: 'system', action: 'checkout.place_order'",
+   "test": "node scripts/run-jest.mjs test/checkout/idem.spec.ts -t \"CHK-TC-20261006-120856566\""
+  },
+  {
+   "id": "SB-19, T13: AuditLog ghi dữ liệu cá nhân (địa chỉ) trong after",
+   "sb": [
+    "SB-19",
+    "SB-08"
+   ],
+   "tc": "CHK-TC-20261006-120856566",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "after: { order_code: order.code, grand_total: priced.grand_total, payment_method: row.payment_method } });",
+   "replace": "after: { order_code: order.code, grand_total: priced.grand_total, payment_method: row.payment_method, to: addr.receiver, phone: addr.phone } });",
+   "test": "node scripts/run-jest.mjs test/checkout/idem.spec.ts -t \"CHK-TC-20261006-120856566\""
+  },
+  {
+   "id": "SB-19, T13: AuditLog target là phiên thay vì đơn",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "CHK-TC-20261006-120856566",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "target_type: 'order', target_id: order.order_id,",
+   "replace": "target_type: 'order', target_id: row.id,",
+   "test": "node scripts/run-jest.mjs test/checkout/idem.spec.ts -t \"CHK-TC-20261006-120856566\""
+  },
+  {
+   "id": "SB-27, T15: CheckoutCompleted mang type khác",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CHK-TC-20261006-110703196",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "type: 'CheckoutCompleted', aggregate_type: 'CheckoutSession'",
+   "replace": "type: 'CheckoutDone', aggregate_type: 'CheckoutSession'",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703196: đặt đơn VNPay\""
+  },
+  {
+   "id": "SB-27, T15: CheckoutCompleted thiếu order_id",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CHK-TC-20261006-110703196",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "payload: { checkout_id: row.id, cart_id: row.cart_id, order_id: order.order_id } });",
+   "replace": "payload: { checkout_id: row.id, cart_id: row.cart_id } });",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703196: đặt đơn VNPay\""
+  },
+  {
+   "id": "SB-27, T15: CheckoutExpired do job mang type khác",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CHK-TC-20261006-110703691",
+   "file": "src/modules/checkout/jobs.service.ts",
+   "find": "type: 'CheckoutExpired', aggregate_type: 'CheckoutSession', aggregate_id: r.id, payload: { checkout_id: r.id, user_id: r.user_id, cart_id: r.cart_id } });",
+   "replace": "type: 'CheckoutExpiredX', aggregate_type: 'CheckoutSession', aggregate_id: r.id, payload: { checkout_id: r.id, user_id: r.user_id, cart_id: r.cart_id } });",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703691\""
+  },
+  {
+   "id": "SB-27, T15: CheckoutExpired lúc có yêu cầu tới mang payload có order_id",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CHK-TC-20261006-110703826",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "payload: { checkout_id: r.id, user_id: r.user_id, cart_id: r.cart_id } });\n    return true;",
+   "replace": "payload: { checkout_id: r.id, user_id: r.user_id, cart_id: r.cart_id, order_id: r.id } });\n    return true;",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703826\""
+  },
+  {
+   "id": "SB-24: phiên quá hạn mà job chưa chạy vẫn đặt được (không kiểm expires_at)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703826",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (row.overdue) throw new PlaceAbort(closed('expired')",
+   "replace": "if (false) throw new PlaceAbort(closed('expired')",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703826\""
+  },
+  {
+   "id": "SB-24: xem lại không phát hiện giỏ khác giỏ của phiên",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703893",
+   "file": "src/modules/checkout/view.service.ts",
+   "find": "if (snap.ok && snap.cart_id !== row.cart_id) {",
+   "replace": "if (false as boolean && snap.ok && snap.cart_id !== row.cart_id) {",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703893\""
+  },
+  {
+   "id": "SB-24: đặt hàng không phát hiện giỏ khác giỏ của phiên",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703893",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (snap.cart_id !== row.cart_id) throw new PlaceAbort(closed('cancelled')",
+   "replace": "if (false as boolean) throw new PlaceAbort(closed('cancelled')",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703893\""
+  },
+  {
+   "id": "SB-24: job hết hạn bỏ điều kiện expires_at",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703691",
+   "file": "src/modules/checkout/jobs.service.ts",
+   "find": "AND expires_at <= COALESCE(${now ?? null}::timestamptz, clock_timestamp())\n          ORDER BY expires_at, id LIMIT",
+   "replace": "AND expires_at >= COALESCE(${now ?? null}::timestamptz, clock_timestamp())\n          ORDER BY expires_at, id LIMIT",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703691\""
+  },
+  {
+   "id": "SB-24: job xóa bản chụp tính 20 ngày",
+   "sb": [
+    "SB-24",
+    "SB-08"
+   ],
+   "tc": "CHK-TC-20261006-110703926",
+   "file": "src/modules/checkout/config.ts",
+   "find": "export const PURGE_DAYS = 30;",
+   "replace": "export const PURGE_DAYS = 20;",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703926\""
+  },
+  {
+   "id": "SB-08: job xóa bản chụp cả phiên open",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "CHK-TC-20261006-110703926",
+   "file": "src/modules/checkout/jobs.service.ts",
+   "find": "SELECT id FROM checkout_sessions WHERE status <> 'open'::checkout_status AND address_snapshot IS NOT NULL",
+   "replace": "SELECT id FROM checkout_sessions WHERE address_snapshot IS NOT NULL",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703926\""
+  },
+  {
+   "id": "SB-24: hủy phiên không đổi trạng thái cancelled",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703657",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "UPDATE checkout_sessions SET status = 'cancelled'::checkout_status, updated_at = clock_timestamp() WHERE id = ${id}::uuid AND status = 'open'::checkout_status`) > 0;",
+   "replace": "UPDATE checkout_sessions SET status = 'open'::checkout_status, updated_at = clock_timestamp() WHERE id = ${id}::uuid AND status = 'open'::checkout_status`) > 0;",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703657\""
+  },
+  {
+   "id": "SB-24: hủy phiên completed thành công (204)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703725",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "if (r.status === 'completed') return { kind: 'completed', order_id: r.order_id! };",
+   "replace": "if (r.status === 'completed') return { kind: 'done' };",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703725\""
+  },
+  {
+   "id": "SB-24: xem lại kéo dài phiên (có ghi gia hạn)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703860",
+   "file": "src/modules/checkout/view.service.ts",
+   "find": "    if (row.status !== 'open') return this.finished(row);\n    if (row.overdue)",
+   "replace": "    if (row.status !== 'open') return this.finished(row);\n    await this.sessions.mutate(s.user_id, id, async () => undefined).catch(() => undefined);\n    if (row.overdue)",
+   "test": "node scripts/run-jest.mjs test/checkout/lifecycle.spec.ts -t \"CHK-TC-20261006-110703860\""
+  },
+  {
+   "id": "SB-08, T10: phản hồi xem lại cho lưu đệm (Cache-Control public)",
+   "sb": [
+    "SB-08",
+    "SB-18"
+   ],
+   "tc": "CHK-TC-20261006-110701249",
+   "file": "src/modules/checkout/checkout.controller.ts",
+   "find": "res.setHeader('Cache-Control', 'no-store');",
+   "replace": "res.setHeader('Cache-Control', 'public, max-age=60');",
+   "test": "node scripts/run-jest.mjs test/checkout/address.spec.ts -t \"CHK-TC-20261006-110701249\""
+  },
+  {
+   "id": "SB-18, T10: log chọn địa chỉ ghi nội dung địa chỉ",
+   "sb": [
+    "SB-18",
+    "SB-08"
+   ],
+   "tc": "CHK-TC-20261006-110701249",
+   "file": "src/modules/checkout/select.service.ts",
+   "find": "    const addr = a;\n    const { row }",
+   "replace": "    const addr = a;\n    this.log.info('chọn địa chỉ', { addr });\n    const { row }",
+   "test": "node scripts/run-jest.mjs test/checkout/address.spec.ts -t \"CHK-TC-20261006-110701249\""
+  },
+  {
+   "id": "SB-20, T17: insufficient-stock lộ mặt hàng đủ hàng cùng số tồn",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "CHK-TC-20261006-110702693",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "items: held.shortages.map((x) =>",
+   "replace": "items: [...held.shortages, { product_id: snap.lines[0].product_id, requested: 1, available: 10, reason: 'insufficient_stock' as const }].map((x) =>",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702693\""
+  },
+  {
+   "id": "SB-20, T17: tình trạng hàng lộ số tồn của dòng đủ hàng",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "CHK-TC-20261006-110702133",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "const availability: Availability = !i ? { status: 'ok' } :",
+   "replace": "const availability: Availability = !i ? { status: 'ok', available: 99 } as never :",
+   "test": "node scripts/run-jest.mjs test/checkout/view.spec.ts -t \"CHK-TC-20261006-110702133\""
+  },
+  {
+   "id": "SB-31, T18: hạn gọi module khác mặc định 3 giây",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "CHK-TC-20261006-110702761",
+   "file": "src/modules/checkout/config.ts",
+   "find": "CHK_DEPENDENCY_TIMEOUT_MS: cfg.int({ default: 2000,",
+   "replace": "CHK_DEPENDENCY_TIMEOUT_MS: cfg.int({ default: 3000,",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702761\""
+  },
+  {
+   "id": "SB-31, T18: lời gọi module khác không có hạn",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "CHK-TC-20261006-110702761",
+   "file": "src/modules/checkout/deps.service.ts",
+   "find": "return await Promise.race([fn(), timeout]);",
+   "replace": "return await fn();",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702761\""
+  },
+  {
+   "id": "SB-31, T18: mã lỗi của SHP bị nuốt thành lỗi phụ thuộc",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "CHK-TC-20261006-110702243",
+   "file": "src/modules/checkout/deps.service.ts",
+   "find": "throw new DependencyError(dep, e);\n    } finally",
+   "replace": "throw e;\n    } finally",
+   "test": "node scripts/run-jest.mjs test/checkout/view.spec.ts -t \"CHK-TC-20261006-110702243\""
+  },
+  {
+   "id": "SB-31, T18: bộ chặn hold-and-wait bị bỏ (pool 2 kết nối)",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "CHK-SEC-20261006-105800857",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "const release = await this.gate.acquire();",
+   "replace": "const release = (): void => undefined;",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-SEC-20261006-105800857 T18 \\(pool\\)\""
+  },
+  {
+   "id": "SB-31, T18: bộ chặn cho phép cả pool (không chừa kết nối thứ hai)",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "CHK-SEC-20261006-105800857",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "new Gate(Math.max(1, Math.floor(config.get<number>('DB_POOL_MAX') / 2)))",
+   "replace": "new Gate(Math.max(1, config.get<number>('DB_POOL_MAX')))",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-SEC-20261006-105800857 T18 \\(pool\\)\""
+  },
+  {
+   "id": "SB-31, T18: PRM quá hạn lúc đặt bị coi là mã không còn dùng được (strict bị bỏ)",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "CHK-TC-20261006-110702243",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "if (e instanceof DependencyError && !strict) return { code, applied: false, reason: 'service_unavailable' };",
+   "replace": "if (e instanceof DependencyError) return { code, applied: false, reason: 'service_unavailable' };",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110702243 \\(hồi quy: PRM quá hạn lúc ĐẶT\\)\""
+  },
+  {
+   "id": "SB-31, T18: SHP quá hạn lúc xem lại không đánh dấu degraded",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "CHK-TC-20261006-110702243",
+   "file": "src/modules/checkout/view.service.ts",
+   "find": "if (priced.ship.error === 'method_unavailable') blockers.push('shipping_method_unavailable'); else degraded = true; }",
+   "replace": "if (priced.ship.error === 'method_unavailable') blockers.push('shipping_method_unavailable'); else void 0; }",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110702243 \\(hồi quy: SHP quá hạn\""
+  },
+  {
+   "id": "SB-31, T18: quote ném method-unavailable bị đổi thành lỗi phụ thuộc",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "CHK-TC-20261006-110701463",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "if (e instanceof DomainError && e.code === 'method-unavailable') return { method_id: methodId, error: 'method_unavailable' };",
+   "replace": "if (e instanceof DomainError && e.code === 'method-unavailable-x') return { method_id: methodId, error: 'method_unavailable' };",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110701463 \\(hồi quy\""
+  },
+  {
+   "id": "SB-23, T2: giảm giá không bị chặn bằng tạm tính",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702133",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "if (discount > subtotal) discount = subtotal;",
+   "replace": "void 0;",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110702133 \\(hồi quy: giảm giá\""
+  },
+  {
+   "id": "SB-14, T9: áp mã 11 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CHK-TC-20261006-110701922",
+   "file": "src/modules/checkout/config.ts",
+   "find": "coupon: { tier: 'A', limit: 10, windowSeconds: 60 }",
+   "replace": "coupon: { tier: 'A', limit: 11, windowSeconds: 60 }",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110701922 \\(giới hạn 10\""
+  },
+  {
+   "id": "SB-11, T19: mã giảm giá tối đa 51 ký tự",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CHK-TC-20261006-110701888",
+   "file": "src/modules/checkout/config.ts",
+   "find": "export const CODE_MAX = 50;",
+   "replace": "export const CODE_MAX = 51;",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110701888 \\(độ dài mã\""
+  },
+  {
+   "id": "SB-11, T19: khóa __proto__ của JSON không bị từ chối",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CHK-TC-20261006-110701017",
+   "file": "src/modules/checkout/policy.ts",
+   "find": "Object.prototype.hasOwnProperty.call(v, '__proto__')",
+   "replace": "false",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110701017 \\(__proto__\""
+  },
+  {
+   "id": "SB-11, T19: id dài tùy ý được nhận (không giới hạn 100)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CHK-TC-20261006-110701017",
+   "file": "src/modules/checkout/policy.ts",
+   "find": "else if (v.length > 100) ctx.addIssue({ code: 'custom', message: 'too_long' });",
+   "replace": "else void 0;",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110701017 \\(__proto__\""
+  },
+  {
+   "id": "SB-24: thao tác ghi không gia hạn phiên",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703860",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "UPDATE checkout_sessions SET last_activity_at = clock_timestamp(), expires_at = clock_timestamp() + make_interval(mins => ${this.ttl}::int), updated_at = clock_timestamp()\n      WHERE id",
+   "replace": "UPDATE checkout_sessions SET last_activity_at = clock_timestamp(), expires_at = expires_at, updated_at = clock_timestamp()\n      WHERE id",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110703860 \\(hồi quy: thao tác ghi\""
+  },
+  {
+   "id": "SB-24: ghi lên phiên quá hạn không chuyển expired",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703826",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "if (row.overdue) { await this.expire(tx, row); return { kind: 'closed', status: 'expired' }; }",
+   "replace": "if (row.overdue) { return { kind: 'closed', status: 'expired' }; }",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110703826 \\(REV: quá hạn đúng trong khe\""
+  },
+  {
+   "id": "SB-24: đặt hàng bị từ chối không gia hạn phiên",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110702421",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (more) await more(t); await this.sessions.touch(t, row.id); });",
+   "replace": "if (more) await more(t); });",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110702421 \\(phiên gia hạn\""
+  },
+  {
+   "id": "SB-24: tạo phiên mới đóng phiên cũ quá hạn thành cancelled (mất CheckoutExpired)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110700937",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "if (open) { if (open.overdue) await this.expire(tx, open); else await this.cancel(tx, open.id); }",
+   "replace": "if (open) { await this.cancel(tx, open.id); }",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110700937 \\(phiên open cũ\""
+  },
+  {
+   "id": "SB-24: hủy phiên quá hạn thành cancelled (mất CheckoutExpired)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703657",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "if (r.status === 'open') { if (r.overdue) await this.expire(tx, r); else await this.cancel(tx, r.id); }",
+   "replace": "if (r.status === 'open') { await this.cancel(tx, r.id); }",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110703657 \\(hủy phiên đã quá hạn\""
+  },
+  {
+   "id": "SB-24: điền sẵn phương thức vận chuyển không kiểm còn bật",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110700762",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "const method = snap.shipping_method_id && methods.some((m) => m.id === snap.shipping_method_id) ? snap.shipping_method_id : null;",
+   "replace": "const method = snap.shipping_method_id;",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110700762 \\(điền sẵn\""
+  },
+  {
+   "id": "SB-26: blocker email_not_verified bị bỏ khỏi bản xem lại",
+   "sb": [
+    "SB-26"
+   ],
+   "tc": "CHK-TC-20261006-110703301",
+   "file": "src/modules/checkout/view.service.ts",
+   "find": "if (!s.email_verified) blockers.push('email_not_verified');",
+   "replace": "void 0;",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110703301 \\(blocker\""
+  },
+  {
+   "id": "SB-23: blocker số tiền VNPay sàn 4.999",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702349",
+   "file": "src/modules/checkout/view.service.ts",
+   "find": "(!priced.total_is_estimate && total < 5000)",
+   "replace": "(!priced.total_is_estimate && total < 4999)",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110702349 \\(blockers\""
+  },
+  {
+   "id": "SB-23: blocker zero_total bị bỏ",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702349",
+   "file": "src/modules/checkout/view.service.ts",
+   "find": "if (!priced.total_is_estimate && total === 0 && snap) blockers.push('zero_total');",
+   "replace": "void 0;",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110702349 \\(blockers\""
+  },
+  {
+   "id": "SB-33: blocker too_many_open_orders bị bỏ",
+   "sb": [
+    "SB-33"
+   ],
+   "tc": "CHK-TC-20261006-110702349",
+   "file": "src/modules/checkout/view.service.ts",
+   "find": "blockers.push('too_many_open_orders');",
+   "replace": "void 0;",
+   "test": "node scripts/run-jest.mjs test/checkout/review.spec.ts -t \"CHK-TC-20261006-110702349 \\(blockers\""
+  },
+  {
+   "id": "BR2 (105051825): bản xem lại cart-changed lệch thứ tự với price-changed",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702626",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (body.cart_version !== snap.cart_version) throw reject(",
+   "replace": "if (body.cart_version !== snap.cart_version && body.expected_grand_total === priced.grand_total) throw reject(",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110702626\""
+  },
+  {
+   "id": "BR8 (105051825): coupon-invalid không ưu tiên hơn price-changed",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110701956",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (priced.coupon && !priced.coupon.applied) throw reject(",
+   "replace": "if (priced.coupon && !priced.coupon.applied && body.expected_grand_total === priced.grand_total) throw reject(",
+   "test": "node scripts/run-jest.mjs test/checkout/coupon.spec.ts -t \"CHK-TC-20261006-110701956\""
+  },
+  {
+   "id": "BR1 (105052272): phiên ghi sai hạn 30 phút (tạo phiên)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110700762",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "clock_timestamp() + make_interval(mins => ${this.ttl}::int), clock_timestamp(), clock_timestamp(), clock_timestamp())",
+   "replace": "clock_timestamp() + make_interval(mins => ${this.ttl * 2}::int), clock_timestamp(), clock_timestamp(), clock_timestamp())",
+   "test": "node scripts/run-jest.mjs test/checkout/session.spec.ts -t \"CHK-TC-20261006-110700762\""
+  },
+  {
+   "id": "BR3 (105051681): cờ address changed luôn false khi xem lại",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110701151",
+   "file": "src/modules/checkout/view.service.ts",
+   "find": "const changed = addressChanged(row.address_snapshot, a);",
+   "replace": "const changed = false;",
+   "test": "node scripts/run-jest.mjs test/checkout/address.spec.ts -t \"CHK-TC-20261006-110701151\""
+  },
+  {
+   "id": "BR5 (105051681): blocker missing_address bị bỏ",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702169",
+   "file": "src/modules/checkout/view.service.ts",
+   "find": "} else blockers.push('missing_address');",
+   "replace": "} else void 0;",
+   "test": "node scripts/run-jest.mjs test/checkout/view.spec.ts -t \"CHK-TC-20261006-110702169\""
+  },
+  {
+   "id": "BR5 (105051681): can_place_order bỏ qua blockers",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702169",
+   "file": "src/modules/checkout/view.service.ts",
+   "find": "can_place_order: blockers.length === 0 && !degraded && !!snap,",
+   "replace": "can_place_order: !!snap,",
+   "test": "node scripts/run-jest.mjs test/checkout/view.spec.ts -t \"CHK-TC-20261006-110702169\""
+  },
+  {
+   "id": "SB-13, T12: CSRF bỏ qua khi Origin lạ ở place-order (guard nền cho phép mọi Origin)",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "CHK-TC-20261006-110703453",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "if (!origin || !this.allowed.has(origin)) throw new DomainError('csrf_failed');",
+   "replace": "if (!origin) throw new DomainError('csrf_failed');",
+   "test": "node scripts/run-jest.mjs test/checkout/place.spec.ts -t \"CHK-TC-20261006-110703453\""
+  },
+  {
+   "id": "SB-13, T12: CSRF không chặn phương thức DELETE (hủy phiên)",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "CHK-TC-20261006-110703453",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);",
+   "replace": "const UNSAFE = new Set(['POST', 'PUT', 'PATCH']);",
+   "test": "node scripts/run-jest.mjs test/checkout/guard.spec.ts -t \"CHK-TC-20261006-110703453 CHK-SEC-20261006-105800857 T12\""
+  },
+  {
+   "id": "Giao diện: trạng thái phiên đóng đọc trường status (mã HTTP) thay vì session_status",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703759",
+   "file": "../web/lib/checkout.ts",
+   "find": "r.body?.session_status === 'cancelled'",
+   "replace": "r.body?.status === 'cancelled'",
+   "test": "node scripts/run-jest.mjs test/checkout/web-lib.spec.ts -t \"CHK-TC-20261006-110703759 \\(web\\)\""
+  },
+  {
+   "id": "Giao diện: nhãn blocker tra trực tiếp (khóa của Object.prototype lọt)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702169",
+   "file": "../web/lib/checkout.ts",
+   "find": "own(BLOCKER_TEXT, code) ??",
+   "replace": "BLOCKER_TEXT[code] ??",
+   "test": "node scripts/run-jest.mjs test/checkout/web-lib.spec.ts -t \"CHK-TC-20261006-110702169 \\(web\\)\""
+  },
+  {
+   "id": "Giao diện: nhãn tồn kho lộ sai số (Chỉ còn N + 1)",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "CHK-TC-20261006-110702693",
+   "file": "../web/lib/checkout.ts",
+   "find": "`Chỉ còn ${a.available}`",
+   "replace": "`Chỉ còn ${a.available + 1}`",
+   "test": "node scripts/run-jest.mjs test/checkout/web-lib.spec.ts -t \"CHK-TC-20261006-110702693 \\(web\\)\""
+  },
+  {
+   "id": "Giao diện: lỗi đơn 0 đồng ánh xạ thành lỗi khoảng VNPay",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110701599",
+   "file": "../web/lib/checkout.ts",
+   "find": "if (r.code === 'zero-total-unsupported') return { kind: 'zero' };",
+   "replace": "if (r.code === 'zero-total-unsupported') return { kind: 'range', min: 5000, max: 999_999_999 };",
+   "test": "node scripts/run-jest.mjs test/checkout/web-lib.spec.ts -t \"CHK-TC-20261006-110701599 \\(web\\)\""
+  },
+  {
+   "id": "Giao diện: trang kết quả mất cờ replayed",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "CHK-TC-20261007-085336918",
+   "file": "../web/lib/checkout.ts",
+   "find": "if (o.replayed) q.set('replayed', '1');",
+   "replace": "void 0;",
+   "test": "node scripts/run-jest.mjs test/checkout/web-lib.spec.ts -t \"CHK-TC-20261007-085336918 \\(web\\)\""
+  },
+  {
+   "id": "Giao diện: giây chờ mặc định 30 thay vì 60",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CHK-TC-20261007-085336884",
+   "file": "../web/lib/checkout.ts",
+   "find": "thử lại sau ${s ?? 60} giây",
+   "replace": "thử lại sau ${s ?? 30} giây",
+   "test": "node scripts/run-jest.mjs test/checkout/web-lib.spec.ts -t \"CHK-TC-20261007-085336884 \\(web\\)\""
+  },
+  {
+   "id": "CHK-DB: bỏ CHECK completed khi và chỉ khi có order_id",
+   "sb": [
+    "SB-24",
+    "SB-25"
+   ],
+   "tc": "CHK-DB-20261006-105800565",
+   "file": "prisma/migrations/20261009000200_checkout_tables/migration.sql",
+   "find": "CHECK ((status = 'completed') = (order_id IS NOT NULL))",
+   "replace": "CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/checkout/db.spec.ts -t \"CHK-DB-20261006-105800565\""
+  },
+  {
+   "id": "CHK-DB: bỏ CHECK completed khi và chỉ khi có completed_at",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-DB-20261006-105800565",
+   "file": "prisma/migrations/20261009000200_checkout_tables/migration.sql",
+   "find": "CHECK ((status = 'completed') = (completed_at IS NOT NULL))",
+   "replace": "CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/checkout/db.spec.ts -t \"CHK-DB-20261006-105800565\""
+  },
+  {
+   "id": "CHK-DB: bỏ CHECK độ dài mã giảm giá",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "CHK-DB-20261006-105800565",
+   "file": "prisma/migrations/20261009000200_checkout_tables/migration.sql",
+   "find": "CHECK (coupon_code IS NULL OR char_length(coupon_code) BETWEEN 1 AND 50)",
+   "replace": "CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/checkout/db.spec.ts -t \"CHK-DB-20261006-105800565\""
+  },
+  {
+   "id": "CHK-DB: unique phiên open mỗi người thành chỉ mục thường",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-DB-20261006-105800565",
+   "file": "prisma/migrations/20261009000200_checkout_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"checkout_sessions_user_open_key\"",
+   "replace": "CREATE INDEX \"checkout_sessions_user_open_key\"",
+   "test": "node scripts/run-jest.mjs test/checkout/db.spec.ts -t \"CHK-DB-20261006-105800565\""
+  },
+  {
+   "id": "CHK-DB: unique phiên completed mỗi giỏ thành chỉ mục thường",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "CHK-DB-20261006-105800565",
+   "file": "prisma/migrations/20261009000200_checkout_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"checkout_sessions_cart_completed_key\"",
+   "replace": "CREATE INDEX \"checkout_sessions_cart_completed_key\"",
+   "test": "node scripts/run-jest.mjs test/checkout/db.spec.ts -t \"CHK-DB-20261006-105800565\""
+  },
+  {
+   "id": "CHK-DB: unique phiên mỗi đơn thành chỉ mục thường",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "CHK-DB-20261006-105800565",
+   "file": "prisma/migrations/20261009000200_checkout_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"checkout_sessions_order_key\"",
+   "replace": "CREATE INDEX \"checkout_sessions_order_key\"",
+   "test": "node scripts/run-jest.mjs test/checkout/db.spec.ts -t \"CHK-DB-20261006-105800565\""
+  },
+  {
+   "id": "CHK-DB: khóa ngoại tới carts ON DELETE CASCADE",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "CHK-DB-20261006-105800565",
+   "file": "prisma/migrations/20261009000200_checkout_tables/migration.sql",
+   "find": "FOREIGN KEY (\"cart_id\") REFERENCES \"carts\"(\"id\") ON DELETE RESTRICT",
+   "replace": "FOREIGN KEY (\"cart_id\") REFERENCES \"carts\"(\"id\") ON DELETE CASCADE",
+   "test": "node scripts/run-jest.mjs test/checkout/db.spec.ts -t \"CHK-DB-20261006-105800565\""
+  },
+  {
+   "id": "CHK-DB: khóa ngoại tới addresses ON DELETE RESTRICT (USR xóa cứng sau 30 ngày bị chặn)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "CHK-DB-20261006-105800565",
+   "file": "prisma/migrations/20261009000200_checkout_tables/migration.sql",
+   "find": "FOREIGN KEY (\"address_id\") REFERENCES \"addresses\"(\"id\") ON DELETE SET NULL",
+   "replace": "FOREIGN KEY (\"address_id\") REFERENCES \"addresses\"(\"id\") ON DELETE RESTRICT",
+   "test": "node scripts/run-jest.mjs test/checkout/db.spec.ts -t \"CHK-DB-20261006-105800565\""
+  },
+  {
+   "id": "CHK-DB: khóa ngoại tới orders ON DELETE SET NULL",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "CHK-DB-20261006-105800565",
+   "file": "prisma/migrations/20261009000200_checkout_tables/migration.sql",
+   "find": "FOREIGN KEY (\"order_id\") REFERENCES \"orders\"(\"id\") ON DELETE RESTRICT",
+   "replace": "FOREIGN KEY (\"order_id\") REFERENCES \"orders\"(\"id\") ON DELETE SET NULL",
+   "test": "node scripts/run-jest.mjs test/checkout/db.spec.ts -t \"CHK-DB-20261006-105800565\""
+  },
+  {
+   "id": "CHK-DB: chỉ mục job hết hạn sai điều kiện",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "CHK-TC-20261006-110703691",
+   "file": "prisma/migrations/20261009000200_checkout_tables/migration.sql",
+   "find": "ON \"checkout_sessions\" (expires_at) WHERE status = 'open'",
+   "replace": "ON \"checkout_sessions\" (expires_at) WHERE status = 'expired'",
+   "test": "node scripts/run-jest.mjs test/checkout/db.spec.ts -t \"CHK-TC-20261006-110703691 CHK-TC-20261006-110703926 CHK-DB\""
+  },
+  {
+   "id": "Giao diện: đặt hàng không gửi Idempotency-Key (SB-40)",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "CHK-E2E-20261006-110743989",
+   "file": "../web/app/checkout/Checkout.tsx",
+   "find": "headers: { 'Idempotency-Key': key }, silentExpired: true });\n    let r = await send();",
+   "replace": "silentExpired: true });\n    let r = await send();",
+   "test": "node scripts/run-jest.mjs test/e2e/chk.e2e.spec.ts -t \"CHK-E2E-20261006-110743989\""
+  },
+  {
+   "id": "Giao diện: đặt hàng gửi cart_version = 0 (SB-23)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-E2E-20261006-110743989",
+   "file": "../web/app/checkout/Checkout.tsx",
+   "find": "expected_grand_total: v.expected_grand_total, cart_version: v.cart_version }, headers",
+   "replace": "expected_grand_total: v.expected_grand_total, cart_version: 0 }, headers",
+   "test": "node scripts/run-jest.mjs test/e2e/chk.e2e.spec.ts -t \"CHK-E2E-20261006-110743989\""
+  },
+  {
+   "id": "REV-CHK-30 (MEDIUM): đặt hàng trên phiên cancelled không bị chặn (bỏ kiểm trạng thái khác open) lọt",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "CHK-TC-20261006-110703759",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (row.status !== 'open') throw closed(row.status);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-30\""
+  },
+  {
+   "id": "REV-CHK-25 (LOW): checkout-incomplete bị thay bằng no-shipping-methods khi thiếu địa chỉ lọt",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110703334",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "missing.length === 1 && missing[0] === 'shipping_method' && methods.length === 0",
+   "replace": "missing.length === 1 && methods.length === 0",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-25\""
+  },
+  {
+   "id": "REV-CHK-25 (LOW): bản chụp địa chỉ rỗng không coi là địa chỉ đã đổi lọt",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110703334",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "!snap || new Date",
+   "replace": "!!snap && new Date",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-25\""
+  },
+  {
+   "id": "REV-CHK-20 (MEDIUM): hết lượt thử lại 40001 trả 500 thay vì 503 lọt",
+   "sb": [
+    "SB-25",
+    "SB-31"
+   ],
+   "tc": "CHK-TC-20261006-110703029",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "if (e instanceof DependencyError || (e instanceof DomainError && e.code === 'internal-error'))",
+   "replace": "if (e instanceof DependencyError)",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-20\""
+  },
+  {
+   "id": "REV-CHK-27 (MEDIUM): tạo phiên cho giỏ đã có đơn không bị 409 cart-already-ordered lọt",
+   "sb": [
+    "SB-24",
+    "SB-25"
+   ],
+   "tc": "CHK-TC-20261006-110703556",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "if (done) throw new DomainError('cart-already-ordered');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-27\""
+  },
+  {
+   "id": "REV-CHK-28 (LOW): hết hạn không kiểm số dòng, CheckoutExpired trùng lọt",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "CHK-TC-20261006-110703691",
+   "file": "src/modules/checkout/session.service.ts",
+   "find": "if (n === 0) return false;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-28\""
+  },
+  {
+   "id": "REV-CHK-21 (LOW): hold_minutes của payment_note cứng 15 thay vì RESERVATION_TTL lọt",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "CHK-TC-20261006-110702894",
+   "file": "src/modules/checkout/select.service.ts",
+   "find": "{ hold_minutes: this.limits.ttl, confirmed_immediately: false }",
+   "replace": "{ hold_minutes: 15, confirmed_immediately: false }",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-21\""
+  },
+  {
+   "id": "REV-CHK-21 (LOW): hạn giữ hàng tính theo giây thay vì phút lọt",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "CHK-TC-20261006-110702894",
+   "file": "src/modules/checkout/place.service.ts",
+   "find": "make_interval(mins =>",
+   "replace": "make_interval(secs =>",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-21\""
+  },
+  {
+   "id": "REV-CHK-29 (MEDIUM): SHP quá hạn lúc đặt bị coi là phương thức đã tắt (xóa lựa chọn, 409 thay 503) lọt",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "CHK-TC-20261006-110702243",
+   "file": "src/modules/checkout/price.service.ts",
+   "find": "if (e instanceof DependencyError && !strict) return { method_id: methodId, error",
+   "replace": "if (e instanceof DependencyError) return { method_id: methodId, error",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-29\""
+  },
+  {
+   "id": "REV-CHK-23 (LOW): đặt hàng không Cache-Control no-store lọt",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "CHK-SEC-20261006-105800857",
+   "file": "src/modules/checkout/checkout.controller.ts",
+   "find": "noStore(res);\n    const key = keyOf(req);",
+   "replace": "const key = keyOf(req);",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-23\""
+  },
+  {
+   "id": "REV-CHK-02 (LOW): đặt hàng đọc giỏ không khóa (snapshotForCheckout thay lockForCheckout), sửa giỏ chen vào lọt",
+   "sb": [
+    "SB-25",
+    "SB-38"
+   ],
+   "tc": "CHK-SEC-20261006-105800857",
+   "file": "src/modules/checkout/deps.service.ts",
+   "find": "this.call('cart', 'lockForCheckout', () => this.cart.lockForCheckout(userId, tx))",
+   "replace": "this.call('cart', 'lockForCheckout', () => this.cart.snapshotForCheckout(userId))",
+   "test": "node scripts/run-jest.mjs test/checkout/rev.spec.ts -t \"REV-CHK-02\""
+  },
+  {
+   "id": "REV-CHK-40 (MEDIUM): giao diện không tự gửi lại khi lỗi mạng (bỏ nhánh status 0, giữ Idempotency-Key) lọt",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "CHK-E2E-20261006-110743989",
+   "file": "../web/app/checkout/Checkout.tsx",
+   "find": "if (r.status === 0) { await sleep(RETRY_NETWORK_MS); r = await send(); }",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/e2e/chk.e2e.spec.ts -t \"REV-CHK-40\""
+  },
+  {
+   "id": "429 (SB-14): xem lại phiên cho 1000 lần mỗi phút thay vì 120",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CHK-TC-20261013-210241009",
+   "file": "src/modules/checkout/config.ts",
+   "find": "view: { tier: 'C', limit: 120, windowSeconds: 60 },",
+   "replace": "view: { tier: 'C', limit: 1000, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/checkout/sync.spec.ts -t \"CHK-TC-20261013-210241009\""
+  },
+  {
+   "id": "429 (SB-14): hủy phiên cho 1000 lần mỗi phút thay vì 120",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CHK-TC-20261013-210241168",
+   "file": "src/modules/checkout/config.ts",
+   "find": "cancel: { tier: 'C', limit: 120, windowSeconds: 60 },",
+   "replace": "cancel: { tier: 'C', limit: 1000, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/checkout/sync.spec.ts -t \"CHK-TC-20261013-210241168\""
+  },
+  {
+   "id": "429 (SB-14): gỡ mã không có giới hạn tần suất",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "CHK-TC-20261013-210241326",
+   "file": "src/modules/checkout/checkout.controller.ts",
+   "find": "@RateLimit(LIMITS.select) @Validate({ params: idParams })\n  async removeCoupon",
+   "replace": "@Validate({ params: idParams })\n  async removeCoupon",
+   "test": "node scripts/run-jest.mjs test/checkout/sync.spec.ts -t \"CHK-TC-20261013-210241326\""
+  },
+  {
+   "id": "job hết hạn phiên bỏ qua hạn thời gian của lượt chạy",
+   "sb": [],
+   "tc": "CHK-TC-20261013-211638651",
+   "file": "src/modules/checkout/jobs.service.ts",
+   "find": "budget = o.budgetMs ?? EXPIRE_BUDGET_MS;",
+   "replace": "budget = EXPIRE_BUDGET_MS;",
+   "test": "node scripts/run-jest.mjs test/checkout/sync.spec.ts -t \"CHK-TC-20261013-211638651\""
+  },
+  {
+   "id": "job hết hạn phiên bỏ qua tín hiệu hủy",
+   "sb": [],
+   "tc": "CHK-TC-20261013-211638651",
+   "file": "src/modules/checkout/jobs.service.ts",
+   "find": "while (!o.signal?.aborted && Date.now() - start < budget) {\n      const n = await this.expireBatch",
+   "replace": "while (Date.now() - start < budget) {\n      const n = await this.expireBatch",
+   "test": "node scripts/run-jest.mjs test/checkout/sync.spec.ts -t \"CHK-TC-20261013-211638651\""
+  },
+  {
+   "id": "job xóa bản chụp bỏ qua hạn thời gian của lượt chạy",
+   "sb": [],
+   "tc": "CHK-TC-20261013-211638651",
+   "file": "src/modules/checkout/jobs.service.ts",
+   "find": "budget = o.budgetMs ?? PURGE_BUDGET_MS;",
+   "replace": "budget = PURGE_BUDGET_MS;",
+   "test": "node scripts/run-jest.mjs test/checkout/sync.spec.ts -t \"CHK-TC-20261013-211638651\""
+  }
+ ]
+}

@@ -8,12 +8,22 @@ import {
 import { testDbUrl } from './db';
 
 export const ORIGIN = 'https://shop.example';
+// NTF (ADR-007): staging và prod bắt buộc SES_REGION, MAIL_FROM, APP_BASE_URL (https), SES_ACCESS_KEY, SES_SECRET_KEY. Dev KHÔNG đặt khóa SES để bộ chuyển thư là "chưa cấu hình" (không bao giờ gọi mạng thật trong test);
+// môi trường ngoài dev tự có giá trị giả đủ (ghi đè được) để các test cấu hình staging, prod của nền không phải liệt kê biến của NTF.
+const NTF_OUTSIDE_DEV: Record<string, string> = {
+  SES_REGION: 'ap-southeast-1', MAIL_FROM: 'no-reply@shop.example', APP_BASE_URL: 'https://shop.example',
+  SES_ACCESS_KEY: 'AKIAFAKEFAKEFAKEFAKE', SES_SECRET_KEY: 'fakeSecretKeyForTestsOnly0123456789abcdef', // scan-secrets:allow giá trị giả của test
+};
 export const baseEnv = (over: Record<string, string> = {}): Record<string, string> => ({
   APP_ENV: 'dev',
   DATABASE_URL: testDbUrl(),
   CORS_ALLOWED_ORIGINS: ORIGIN,
   DB_POOL_MAX: '5',
+  // PAY (ADR-007): staging và prod bắt buộc khóa và cấu hình cổng VNPay (prod còn từ chối khóa giữ chỗ hoặc ngắn): giá trị giả đủ mạnh để các test cấu hình staging, prod của nền không phải liệt kê biến của PAY
+  VNPAY_TMN_CODE: 'PAYTMN01', VNPAY_RETURN_URL: 'https://shop.example/orders/{order_code}/payment',
+  VNPAY_HASH_SECRET: 'q3Z8k2Mx9R7wE5tY4uI1oP6aS0dFgHjKmNbVcXz', // scan-secrets:allow giá trị giả của test
   ...over,
+  ...(over.APP_ENV && over.APP_ENV !== 'dev' ? { ...NTF_OUTSIDE_DEV, ...over } : {}),
 });
 export const testConfig = (over: Record<string, string> = {}, extra: ConfigFragment[] = []): ConfigService => loadConfig(baseEnv(over), extra);
 

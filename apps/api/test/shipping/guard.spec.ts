@@ -87,8 +87,9 @@ describe('SHP kiểm quyền và ranh giới trên AppModule thật', () => {
 
   it(`SHP-TC-20261006-102133284 ${SEC}: giao diện nội bộ ShippingApi khớp bảng Giao diện module (tên lớp, hai phương thức listActiveMethods và quote); điểm vào công khai chỉ phơi ShippingModule và ShippingApi; ShippingApi không có tx`, async () => {
     const arch = readFileSync(resolve(REPO_ROOT, 'spec/architecture.md'), 'utf8');
-    expect(arch).toMatch(/\| CHK \| SHP \| `listActiveMethods`, `quote` \| không \|/);
-    expect(arch).toMatch(/\| CRT \| PRD, INV, PRM, SHP \|[^\n]*`quote`/);
+    expect(arch).toMatch(/\| CHK \| SHP \| `ShippingApi\.listActiveMethods`, `ShippingApi\.quote` [^|]*\| không \|/);
+    expect(arch).toMatch(/\| CRT \| PRD, INV, PRM, SHP \|[^\n]*`ShippingApi\.quote`/);
+    expect(arch).toMatch(/\| SHP \| ORD \|[^\n]*`OrderApi\.findForPayment`/); // `fail` gọi findForPayment lấy user_id (review SHP, hàng SHP -> ORD)
     expect(ShippingApi.name).toBe('ShippingApi');
     expect(Object.getOwnPropertyNames(ShippingApi.prototype).filter((n) => n !== 'constructor').sort()).toEqual(['listActiveMethods', 'quote']);
     expect(ShippingApi.prototype.listActiveMethods.length).toBe(0); // không nhận tx

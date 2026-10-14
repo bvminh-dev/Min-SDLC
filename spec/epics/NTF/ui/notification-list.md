@@ -32,7 +32,7 @@ Thanh header:  ☰  Thông báo                                              �
 ├──────────────────────────────────────────────────────────────────────────┤
 │ 1 tới 20 trong 25 thông báo                                ‹ 1 2 ›        │
 └──────────────────────────────────────────────────────────────────────────┘
-Dưới sm: tab thành nút "Chưa đọc · 3" mở danh sách; nút Đánh dấu tất cả thành mục trong menu "⋯"; dòng hai tầng (tiêu đề và giờ trên, nội dung dưới).
+Dưới sm: ô lọc trạng thái vẫn là NHÓM BA NÚT (Tất cả, Chưa đọc (n), Đã đọc; nút đang chọn có trạng thái nhấn) tự xuống dòng khi hẹp, KHÔNG đổi sang dropdown (REV-NTF-15: nhóm nút một chạm, thấy hết ba lựa chọn, không cần mở danh sách); ô "Loại" vẫn là ô chọn; nút Đánh dấu tất cả đã đọc và nút Xoá lọc vẫn hiện trên cùng khối, không gom vào menu "⋯"; dòng hai tầng (tiêu đề và giờ trên, nội dung dưới).
 ```
 
 ## Trạng thái
@@ -50,7 +50,7 @@ Dưới sm: tab thành nút "Chưa đọc · 3" mở danh sách; nút Đánh d�
 ## Phần tử
 | testid | Phần tử | Role | Hành động | Requirement |
 |---|---|---|---|---|
-| ntf-notification-list-status-filter | Hàng tab Tất cả, Chưa đọc, Đã đọc (dropdown dưới sm) | customer, staff, admin | Chọn một trạng thái | NTF-REQ-20261006-103209345 |
+| ntf-notification-list-status-filter | Nhóm ba nút Tất cả, Chưa đọc, Đã đọc (nhóm nút ở mọi khổ, tự xuống dòng dưới sm; không dropdown) | customer, staff, admin | Chọn một trạng thái | NTF-REQ-20261006-103209345 |
 | ntf-notification-list-type-filter | Ô chọn loại thông báo | customer, staff, admin | Chọn một loại hoặc Tất cả | NTF-REQ-20261006-103209345 |
 | ntf-notification-list-clear-filter | Nút Xoá lọc (chỉ khi đang lọc) | customer, staff, admin | Về Tất cả | NTF-REQ-20261006-103209345 |
 | ntf-notification-list-row | Dòng thông báo | customer, staff, admin | Bấm để mở nơi liên quan (nếu có link) và đánh dấu đã đọc | NTF-REQ-20261006-103209345 |

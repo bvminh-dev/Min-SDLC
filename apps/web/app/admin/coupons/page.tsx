@@ -9,6 +9,7 @@ import { api } from '../../../lib/api';
 import { FILTERS, STATUS_LABEL, describeDiscount, formatVn, isOverdue, num, type Coupon, type CouponStatus } from '../../../lib/coupon';
 import { useLoginRedirect } from '../../../lib/prd';
 import { limitedText } from '../../../lib/stock';
+import { useQueryGo } from '../../../components/useQueryGo';
 
 interface Result { items: Coupon[]; page: number; limit: number; total: number }
 const LIMIT = 20;
@@ -34,13 +35,7 @@ function CouponList() {
   const wasLimited = useRef(false);
 
   useEffect(() => { setSearch(q); }, [q]);
-  const go = useCallback((change: Record<string, string | null>, keepPage = false) => {
-    const n = new URLSearchParams(sp.toString());
-    for (const [k, v] of Object.entries(change)) { if (v) n.set(k, v); else n.delete(k); }
-    if (!keepPage) n.delete('page');
-    const s = n.toString();
-    router.push(s ? `/admin/coupons?${s}` : '/admin/coupons', { scroll: false });
-  }, [sp, router]);
+  const go = useQueryGo('/admin/coupons'); // cộng dồn các lần đổi liền nhau (REV-REV-12)
   // Gõ rồi chờ 300 ms (hoặc Enter) mới tìm; tiền tố tối đa 20 ký tự.
   useEffect(() => {
     if (search.trim() === q) return;

@@ -8,7 +8,8 @@ import { FakeClock, testConfig } from '../support/app';
 import { REPO_ROOT } from '../support/db';
 
 const MATRIX = readFileSync(resolve(REPO_ROOT, 'spec/permissions-matrix.md'), 'utf8');
-const PRD_SCOPE = (id: string) => /\s\/api\/v1\/(categories|products|admin\/categories|admin\/products)(\/|$)/.test(id);
+// route của REV nằm dưới /products/:product_id/ (đánh giá, điều kiện đánh giá) không thuộc PRD (REV-TC-20261006-104523767: sửa test nền kèm theo REV)
+const PRD_SCOPE = (id: string) => /\s\/api\/v1\/(categories|products|admin\/categories|admin\/products)(\/|$)/.test(id) && !/\/products\/:product_id\/review/.test(id);
 // Hàng "Xem điểm đánh giá" không có endpoint riêng: điểm là trường của danh sách và chi tiết, đổi bằng event của REV (tác nhân system, không HTTP).
 const EXEMPT = ['Xem điểm đánh giá của sản phẩm'];
 const opts = { scope: PRD_SCOPE, epic: 'PRD', exempt: EXEMPT };

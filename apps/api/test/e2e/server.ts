@@ -11,20 +11,40 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Client } from 'pg';
 import sharp from 'sharp';
 import { FakeS3 } from '../support/fake-s3';
+import { FakeSes } from '../support/fake-ses';
+import { EmailService } from '../../src/modules/notification/email.service';
 import { purgeKeys, realS3, waitForBucket } from '../support/real-s3';
 import { searchTextOf } from '../../src/modules/catalog/text';
 import { AppModule } from '../../src/app.module';
+import { JobsService as InvJobs } from '../../src/modules/inventory/jobs.service';
+import { VNPAY_GATEWAY, type QueryResult, type RefundInput, type RefundResult, type VnpayGateway } from '../../src/modules/payment/gateway';
+import { RefundService } from '../../src/modules/payment/refund.service';
+import { PaymentApi } from '../../src/modules/payment';
+import { BlockCache } from '../../src/modules/dashboard/cache.service';
+import { DashboardService } from '../../src/modules/dashboard/dashboard.service';
+import { sign, verifySignature } from '../../src/modules/payment/vnpay';
 import { insertOrder } from '../support/order-fixture';
+import { currentPorts } from '../support/e2e-ports';
+import { seedPayment, seedRefund, type SeedPayment } from '../support/pay';
 import { hashPassword } from '../../src/modules/auth/crypto';
-import { AppLogger, Clock, ConfigService, EventsService, PrismaService, configureApp, loadConfigFromProcess, runWithCorrelation, type EventEnvelope } from '../../src/modules/platform';
+import { AppLogger, Clock, ConfigService, EventsService, OutboxRelay, PrismaService, TransactionService, configureApp, loadConfigFromProcess, runWithCorrelation, type EventEnvelope } from '../../src/modules/platform';
 
-const [apiPort, ctlPort, s3Port] = [Number(process.env.E2E_API_PORT ?? 3101), Number(process.env.E2E_CTL_PORT ?? 3102), Number(process.env.E2E_S3_PORT ?? 3103)];
+const ports = currentPorts(); // cơ sở từ E2E_PORT_BASE; support.ts truyền từng cổng rõ ràng qua E2E_*_PORT
+const [apiPort, ctlPort, s3Port] = [Number(process.env.E2E_API_PORT ?? ports.api), Number(process.env.E2E_CTL_PORT ?? ports.ctl), Number(process.env.E2E_S3_PORT ?? ports.s3)];
 const dbBase = process.env.TEST_DB_BASE ?? 'postgresql://ecom:ecom@localhost:5433';
 const dbUrl = `${dbBase}/ecom_e2e`;
 
 class OffsetClock extends Clock {
   offset = 0;
   now(): Date { return new Date(Date.now() + this.offset); }
+}
+
+/** Cổng VNPay giả của E2E: kết quả hoàn tiền do test điều khiển qua cổng điều khiển (`/gateway`); truy vấn giao dịch luôn là "không có giao dịch". CHƯA thử với sandbox thật. */
+class E2eGateway implements VnpayGateway {
+  refundMode: 'ok' | 'decline' = 'ok';
+  refundCalls = 0;
+  async queryTransaction(): Promise<QueryResult> { return { kind: 'not_found' }; }
+  async refund(_i: RefundInput): Promise<RefundResult> { this.refundCalls++; return this.refundMode === 'ok' ? { kind: 'succeeded', code: '00' } : { kind: 'declined', code: '93' }; }
 }
 
 async function prepareDb(): Promise<void> {
@@ -46,19 +66,28 @@ async function main() {
   const real = realCfg ? await waitForBucket(realCfg) : null;
   if (!realCfg) await fake.start(s3Port);
   const s3 = realCfg && real
-    ? { cfg: realCfg, seed: (key: string, body: Buffer) => real.put(key, body, { contentType: 'image/webp' }), keys: async (prefix = 'avatars/') => (await real.list(prefix)).map((o) => o.key).sort(), reset: () => purgeKeys(real, ['avatars/', 'products/']), urlOf: (key: string) => real.urlFor(key) }
+    ? { cfg: realCfg, seed: (key: string, body: Buffer) => real.put(key, body, { contentType: 'image/webp' }), keys: async (prefix = 'avatars/') => (await real.list(prefix)).map((o) => o.key).sort(), reset: () => purgeKeys(real, ['avatars/', 'products/', 'reviews/']), urlOf: (key: string) => real.urlFor(key) }
     : { cfg: { endpoint: fake.url, bucket: fake.bucket, region: 'us-east-1', accessKey: fake.accessKey, secretKey: fake.secretKey }, seed: async (key: string, body: Buffer) => fake.seed(key, body, new Date()), keys: async (prefix = 'avatars/') => fake.keys(prefix), reset: async () => fake.reset(), urlOf: (key: string) => `${fake.url}/${fake.bucket}/${key}` };
+  // NTF: SES giả trong tiến trình (client SES thật của NTF ký SigV4 và nói chuyện qua HTTP; KHÁC SES thật, xem fake-ses.ts); thư gửi ra xem được qua cổng điều khiển `/ses-mails`
+  const ses = new FakeSes();
+  await ses.start();
+  Object.assign(process.env, { SES_ENDPOINT: ses.url, SES_REGION: ses.region, SES_ACCESS_KEY: ses.accessKey, SES_SECRET_KEY: ses.secretKey, MAIL_FROM: 'no-reply@shop.vn', APP_BASE_URL: process.env.E2E_APP_BASE_URL ?? `http://localhost:${ports.web}` });
   process.env.DATABASE_URL = dbUrl; // khởi tạo môi trường test trước khi nạp cấu hình
   process.env.APP_ENV = 'dev';
   Object.assign(process.env, { STORAGE_ENDPOINT: s3.cfg.endpoint, STORAGE_BUCKET: s3.cfg.bucket, STORAGE_REGION: s3.cfg.region, STORAGE_ACCESS_KEY: s3.cfg.accessKey, STORAGE_SECRET_KEY: s3.cfg.secretKey });
   const config: ConfigService = loadConfigFromProcess();
   const clock = new OffsetClock();
   const logger = AppLogger.create({ level: 'warn', env: 'dev' });
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).overrideProvider(Clock).useValue(clock).compile();
+  const gateway = new E2eGateway();
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).overrideProvider(Clock).useValue(clock).overrideProvider(VNPAY_GATEWAY).useValue(gateway).compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false, logger: false });
   configureApp(app, { config, logger });
   await app.init();
   const prisma = app.get(PrismaService);
+  let preModeration = true; // REVIEW_PRE_MODERATION lúc chạy (điều khiển qua /set-pre-moderation)
+  const appConfig = app.get(ConfigService);
+  const configGet = appConfig.get.bind(appConfig) as (n: string) => unknown;
+  (appConfig as { get: (n: string) => unknown }).get = (n: string) => (n === 'REVIEW_PRE_MODERATION' ? preModeration : configGet(n));
 
   const mails: { type: string; user_id: string; token: string }[] = [];
   for (const type of ['EmailVerificationRequested', 'PasswordResetRequested']) {
@@ -66,6 +95,14 @@ async function main() {
   }
   await app.listen(apiPort);
 
+  // DSH: điều khiển nguồn PAY của dashboard (chỉ ở môi trường test): `hang` làm `getRevenue` không bao giờ trả lời (hạn nguồn của DSH quá hạn thì khối doanh thu trả 503), `ok` nhả các lời gọi đang treo và trả về hàm thật.
+  const pay = app.get(PaymentApi);
+  const realRevenue = pay.getRevenue.bind(pay);
+  const held: ((e: Error) => void)[] = [];
+  const dshFault = (mode: 'hang' | 'ok'): void => {
+    if (mode === 'ok') { pay.getRevenue = realRevenue; for (const r of held.splice(0)) r(new Error('released')); return; }
+    pay.getRevenue = (() => new Promise((_res, rej) => { held.push(rej); })) as typeof pay.getRevenue;
+  };
   const params = { memory: config.get<number>('ARGON2_MEMORY_KIB'), passes: config.get<number>('ARGON2_TIME_COST'), parallelism: config.get<number>('ARGON2_PARALLELISM') };
   const body = (req: import('node:http').IncomingMessage) => new Promise<any>((res) => { let s = ''; req.on('data', (d) => { s += d; }); req.on('end', () => res(s ? JSON.parse(s) : {})); });
   createServer(async (req, res) => {
@@ -74,11 +111,14 @@ async function main() {
     try {
       if (url.pathname === '/health') return send(200, { ok: true });
       if (url.pathname === '/reset') {
-        await prisma.$executeRaw(Prisma.raw('TRUNCATE shipment_status_history, shipments, shipping_methods, order_status_history, order_items, orders, coupon_redemptions, coupons, stock_movements, stock_reservations, stock_items, product_review_ratings, product_images, products, categories, addresses, outbox_events, processed_events, idempotency_keys, rate_limit_counters, sessions, password_reset_tokens, email_verification_tokens, users CASCADE'));
+        await prisma.$executeRaw(Prisma.raw('TRUNCATE review_images, reviews, email_deliveries, notifications, checkout_sessions, cart_items, carts, refunds, payment_attempts, payment_webhook_logs, payments, shipment_status_history, shipments, shipping_methods, order_status_history, order_items, orders, coupon_redemptions, coupons, stock_movements, stock_reservations, stock_items, product_review_ratings, product_images, products, categories, addresses, outbox_events, processed_events, idempotency_keys, rate_limit_counters, sessions, password_reset_tokens, email_verification_tokens, users CASCADE'));
         await prisma.$executeRaw`DELETE FROM audit_logs`;
-        mails.length = 0; clock.offset = 0; await s3.reset();
+        await app.get(RefundService).idle();
+        preModeration = true; mails.length = 0; ses.reset(); clock.offset = 0; gateway.refundMode = 'ok'; gateway.refundCalls = 0; await s3.reset();
+        dshFault('ok'); app.get(BlockCache).clear(); (app.get(DashboardService) as unknown as { marks: Map<string, number> }).marks.clear(); // DSH: bộ nhớ đệm, dấu audit và lỗi gài của lần trước
         return send(200, { ok: true });
       }
+      if (url.pathname === '/dsh-fault') { const b = await body(req); dshFault(b.mode === 'hang' ? 'hang' : 'ok'); return send(200, { mode: b.mode === 'hang' ? 'hang' : 'ok', held: held.length }); }
       if (url.pathname === '/advance') { clock.offset += Number((await body(req)).ms); return send(200, { offset: clock.offset }); }
       if (url.pathname === '/seed-user') {
         const b = await body(req);
@@ -193,6 +233,54 @@ async function main() {
         const [r] = await prisma.$queryRaw<unknown[]>`SELECT id, status::text AS status, payment_status::text AS payment_status, tracking_number, (SELECT count(*)::int FROM order_status_history h WHERE h.order_id = o.id) AS history FROM orders o WHERE code = ${url.searchParams.get('code') ?? ''}`;
         return r ? send(200, r) : send(404, {});
       }
+      // REV: đánh giá dựng thẳng (fixture, không qua API) của khách `email` cho sản phẩm `product_id`; tự dựng một đơn đã giao chứa sản phẩm nếu khách chưa có (giao `delivered_days_ago` ngày trước, mặc định 10).
+      // `status`, `rating`, `comment`, `reason` (rejected, hidden), `age_ms` (tuổi của đánh giá), `edited` (đã sửa), `images` (số ảnh thật trong kho). Trả `id`.
+      if (url.pathname === '/seed-review') {
+        const b = await body(req);
+        const [u] = await prisma.$queryRaw<{ id: string }[]>`SELECT id FROM users WHERE email = ${String(b.email).toLowerCase()}::citext`;
+        if (!u) return send(404, {});
+        let [item] = await prisma.$queryRaw<{ id: string }[]>`
+          SELECT i.id FROM order_items i JOIN orders o ON o.id = i.order_id WHERE o.user_id = ${u.id}::uuid AND o.status = 'delivered' AND i.product_id = ${b.product_id}::uuid
+            AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.order_item_id = i.id AND r.status <> 'deleted') LIMIT 1`;
+        if (!item) {
+          const o = await insertOrder(prisma, clock.now(), { user: u.id, status: 'delivered', items: [{ product: b.product_id, name: 'Hàng đã giao' }], deliveredAt: new Date(clock.now().getTime() - Number(b.delivered_days_ago ?? 10) * 86_400_000) });
+          [item] = await prisma.$queryRaw<{ id: string }[]>`SELECT id FROM order_items WHERE order_id = ${o.id}::uuid`;
+        }
+        const status: string = b.status ?? 'published';
+        const created = new Date(clock.now().getTime() - Number(b.age_ms ?? 3_600_000));
+        const published = status === 'published' || status === 'hidden' ? created : null;
+        const reason = b.reason ?? (status === 'rejected' || status === 'hidden' ? 'Lý do kiểm duyệt' : null);
+        const [r] = await prisma.$queryRaw<{ id: string }[]>`
+          INSERT INTO reviews (user_id, product_id, order_item_id, status, rating, comment, moderation_reason, published_at, edited_at, created_at, updated_at)
+          VALUES (${u.id}::uuid, ${b.product_id}::uuid, ${item.id}::uuid, ${status}::review_status, ${b.rating ?? 5}, ${b.comment === undefined ? 'Rất tốt' : b.comment}, ${reason}, ${published}::timestamptz,
+                  ${b.edited ? created : null}::timestamptz, ${created}::timestamptz, ${created}::timestamptz) RETURNING id`;
+        for (let k = 1; k <= Number(b.images ?? 0); k++) {
+          const key = `reviews/${randomUUID()}.webp`;
+          await s3.seed(key, await sharp({ create: { width: 64, height: 48, channels: 3, background: '#ec4899' } }).webp().toBuffer());
+          await prisma.$executeRaw`INSERT INTO review_images (user_id, review_id, position, storage_key, width, height, bytes, created_at, updated_at) VALUES (${u.id}::uuid, ${r.id}::uuid, ${k}, ${key}, 64, 48, 100, ${created}::timestamptz, ${created}::timestamptz)`;
+        }
+        return send(200, { id: r.id });
+      }
+      // REV: trạng thái đánh giá theo mã, hoặc theo (email, product_id) khi chưa biết mã; kèm tên các event đã phát và điểm tổng hợp hiện tại của PRD.
+      if (url.pathname === '/review-state') {
+        const id = url.searchParams.get('id'), email = url.searchParams.get('email'), product = url.searchParams.get('product_id');
+        const [r] = id
+          ? await prisma.$queryRaw<{ id: string; status: string; rating: number; comment: string | null; edited_at: Date | null; moderation_reason: string | null }[]>`SELECT id, status::text AS status, rating::int AS rating, comment, edited_at, moderation_reason FROM reviews WHERE id = ${id}::uuid`
+          : await prisma.$queryRaw<{ id: string; status: string; rating: number; comment: string | null; edited_at: Date | null; moderation_reason: string | null }[]>`
+              SELECT r.id, r.status::text AS status, r.rating::int AS rating, r.comment, r.edited_at, r.moderation_reason FROM reviews r JOIN users u ON u.id = r.user_id
+              WHERE u.email = ${String(email).toLowerCase()}::citext AND r.product_id = ${product}::uuid AND r.status <> 'deleted' ORDER BY r.created_at DESC LIMIT 1`;
+        if (!r) return send(404, {});
+        const ev = await prisma.$queryRaw<{ type: string }[]>`SELECT type FROM outbox_events WHERE aggregate_id = ${r.id} ORDER BY occurred_at, id`;
+        const [p] = await prisma.$queryRaw<{ rating_count: number; rating_sum: number }[]>`SELECT p.rating_count, p.rating_sum FROM products p JOIN reviews x ON x.product_id = p.id WHERE x.id = ${r.id}::uuid`;
+        const [{ n }] = await prisma.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM review_images WHERE review_id = ${r.id}::uuid`;
+        return send(200, { ...r, events: ev.map((e) => e.type), images: n, prd: p });
+      }
+      // REV: bật hoặc tắt kiểm duyệt trước lúc chạy (chỉ ở máy chủ E2E; thật sự là biến môi trường khởi động lại, ADR-007): thay hàm đọc cấu hình của MỘT ConfigService đang dùng chung.
+      if (url.pathname === '/set-pre-moderation') {
+        const b = await body(req);
+        preModeration = b.on !== false;
+        return send(200, { on: preModeration });
+      }
       // SHP: phương thức vận chuyển và vận đơn dựng thẳng (fixture, không qua API); vận đơn kèm lịch sử đúng đường đi tới `status`, mỗi dòng cách nhau một phút từ `created_at` (ISO, mặc định một giờ trước)
       if (url.pathname === '/seed-shipping-method') {
         const b = await body(req);
@@ -222,8 +310,8 @@ async function main() {
         const shippedAt = steps.includes('shipped') ? at(1) : null;
         const deliveredAt = status === 'delivered' ? at(2) : null;
         const [s] = await prisma.$queryRaw<{ id: string }[]>`
-          INSERT INTO shipments (order_id, shipping_method_id, status, tracking_number, cod_amount, shipped_at, delivered_at, version, created_at, updated_at)
-          VALUES (${o.id}::uuid, ${methodId}::uuid, ${status}::shipment_status, ${tracking}, ${b.cod_amount ?? 0}, ${shippedAt}::timestamptz, ${deliveredAt}::timestamptz, ${b.version ?? 1}, ${createdAt}::timestamptz, ${at(steps.length - 1)}::timestamptz) RETURNING id`;
+          INSERT INTO shipments (order_id, order_code, shipping_method_id, status, tracking_number, cod_amount, shipped_at, delivered_at, version, created_at, updated_at)
+          VALUES (${o.id}::uuid, ${String(b.order_code)}, ${methodId}::uuid, ${status}::shipment_status, ${tracking}, ${b.cod_amount ?? 0}, ${shippedAt}::timestamptz, ${deliveredAt}::timestamptz, ${b.version ?? 1}, ${createdAt}::timestamptz, ${at(steps.length - 1)}::timestamptz) RETURNING id`;
         for (const [i, st] of steps.entries()) {
           const failed = st === 'failed';
           await prisma.$executeRaw`
@@ -250,16 +338,204 @@ async function main() {
         await runWithCorrelation(env.correlation_id, async () => { for (const sub of events.consumersFor(b.type)) await events.deliver(sub, env); });
         return send(200, { ok: true });
       }
+      // PAY: Payment dựng thẳng (fixture, không qua event) theo email chủ đơn và mã đơn; đơn tự dựng khớp trạng thái nếu `order_code` chưa có. `attempts: 'auto'` dựng lượt thử theo `attempt_no` và trạng thái
+      if (url.pathname === '/seed-payment') {
+        const b = await body(req);
+        const [u] = await prisma.$queryRaw<{ id: string }[]>`SELECT id FROM users WHERE email = ${String(b.email).toLowerCase()}::citext`;
+        if (!u) return send(404, {});
+        const d = (v: unknown) => (v === undefined || v === null ? v : new Date(String(v)));
+        const [existing] = b.order_code ? await prisma.$queryRaw<{ id: string; code: string }[]>`SELECT id, code FROM orders WHERE code = ${String(b.order_code)}` : [];
+        const shim = { prisma, clock } as unknown as Parameters<typeof seedPayment>[0];
+        const o: SeedPayment = {
+          user: u.id, method: b.method, amount: b.amount, status: b.status, attemptNo: b.attempt_no, expiresAt: d(b.expires_at) as Date | null | undefined, paidAt: d(b.paid_at) as Date | null | undefined,
+          createdAt: d(b.created_at) as Date | undefined, orderStatus: b.order_status, orderCode: b.order_code, attempts: b.attempts, providerRef: b.provider_ref,
+          ...(existing ? { order: { id: existing.id, code: existing.code, user: u.id } } : {}),
+        };
+        const p = await seedPayment(shim, o);
+        return send(200, { id: p.id, order_id: p.order.id, order_code: p.order.code, attempts: p.attempts.map((a) => ({ txn_ref: a.txnRef, no: a.no })) });
+      }
+      if (url.pathname === '/seed-refund') {
+        const b = await body(req);
+        const [a] = await prisma.$queryRaw<{ id: string; payment_id: string }[]>`SELECT a.id, a.payment_id FROM payment_attempts a JOIN payments p ON p.id = a.payment_id WHERE p.order_code = ${String(b.order_code)} AND a.status = 'succeeded'::attempt_status ORDER BY a.attempt_no LIMIT 1`;
+        if (!a) return send(404, {});
+        const shim = { prisma, clock } as unknown as Parameters<typeof seedRefund>[0];
+        return send(200, { id: await seedRefund(shim, { paymentId: a.payment_id, attemptId: a.id, status: b.status, reason: b.reason, autoAttemptNo: b.auto_attempt_no, createdAt: b.created_at ? new Date(String(b.created_at)) : undefined }) });
+      }
+      if (url.pathname === '/payment') {
+        const [p] = await prisma.$queryRaw<{ id: string; status: string; attempt_no: number; method: string; provider_ref: string | null }[]>`SELECT id, status::text AS status, attempt_no, method::text AS method, provider_ref FROM payments WHERE order_code = ${url.searchParams.get('order_code') ?? ''}`;
+        if (!p) return send(404, {});
+        const attempts = await prisma.$queryRaw<unknown[]>`SELECT attempt_no, txn_ref, status::text AS status, reason::text AS reason FROM payment_attempts WHERE payment_id = ${p.id}::uuid ORDER BY attempt_no`;
+        const refunds = await prisma.$queryRaw<unknown[]>`SELECT id, status::text AS status, reason::text AS reason, amount::int AS amount, auto_attempt_no FROM refunds WHERE payment_id = ${p.id}::uuid ORDER BY created_at, id`;
+        const events = await prisma.$queryRaw<{ type: string }[]>`SELECT type FROM outbox_events WHERE payload->>'payment_id' = ${p.id} ORDER BY occurred_at, id`;
+        return send(200, { ...p, attempts, refunds, events: events.map((e) => e.type) });
+      }
+      // Điều khiển cổng giả: kết quả hoàn tiền (ok | decline) và số lệnh hoàn đã nhận
+      if (url.pathname === '/gateway') {
+        const b = await body(req);
+        if (b.refund) gateway.refundMode = b.refund === 'decline' ? 'decline' : 'ok';
+        return send(200, { refund: gateway.refundMode, refund_calls: gateway.refundCalls });
+      }
+      // Hạ tầng test thay relay: giao mọi event đang chờ (PAY phát, ORD nhận và phát tiếp, PAY nhận lại...), rồi chờ các cuộc gọi hoàn tiền đang chạy xong
+      if (url.pathname === '/relay') {
+        const relay = app.get(OutboxRelay);
+        for (let i = 0; i < 12; i++) { if ((await relay.runOnce(new Date(Date.now() + 3_600_000))).picked === 0) break; }
+        await app.get(RefundService).idle();
+        return send(200, { ok: true });
+      }
+      // Cổng thanh toán giả (tự dựng theo tài liệu VNPay; CHƯA thử với sandbox thật): kiểm chữ ký đường dẫn như VNPay, hiện ba nút; mỗi nút gửi IPN ĐÃ KÝ tới API rồi đưa trình duyệt về địa chỉ quay về kèm `vnp_*`
+      if (url.pathname === '/vnpay/pay') {
+        const params = Object.fromEntries(url.searchParams.entries());
+        const valid = verifySignature(params, params.vnp_SecureHash, process.env.VNPAY_HASH_SECRET ?? '');
+        const href = (result: string) => `/vnpay/act?result=${result}&${url.searchParams.toString()}`;
+        res.writeHead(valid ? 200 : 400, { 'Content-Type': 'text/html; charset=utf-8' });
+        return void res.end(valid
+          ? `<!doctype html><meta charset="utf-8"><title>Cổng VNPay giả</title><h1 id="gate-title">Cổng VNPay giả</h1><p id="gate-amount">${Number(params.vnp_Amount) / 100}</p><p id="gate-ref">${params.vnp_TxnRef}</p>
+             <a id="gate-ok" href="${href('ok')}">Thanh toán thành công</a> <a id="gate-cancel" href="${href('cancel')}">Hủy giao dịch</a> <a id="gate-decline" href="${href('decline')}">Ngân hàng từ chối</a>`
+          : '<!doctype html><meta charset="utf-8"><h1 id="gate-invalid">Chữ ký không hợp lệ</h1>');
+      }
+      if (url.pathname === '/vnpay/act') {
+        const params = Object.fromEntries(url.searchParams.entries());
+        const secret = process.env.VNPAY_HASH_SECRET ?? '';
+        const { result, ...pay } = params;
+        if (!verifySignature(pay, pay.vnp_SecureHash, secret)) { res.writeHead(400); return void res.end('invalid'); }
+        const code = result === 'ok' ? '00' : result === 'cancel' ? '24' : '51';
+        const ipn: Record<string, string> = {
+          vnp_TmnCode: pay.vnp_TmnCode, vnp_Amount: pay.vnp_Amount, vnp_BankCode: 'NCB', vnp_OrderInfo: pay.vnp_OrderInfo, vnp_PayDate: pay.vnp_CreateDate,
+          vnp_ResponseCode: code, vnp_TransactionStatus: code === '00' ? '00' : '02', vnp_TxnRef: pay.vnp_TxnRef, vnp_TransactionNo: String(14_000_000 + Math.floor(Math.random() * 999_999)),
+        };
+        const signed = new URLSearchParams({ ...ipn, vnp_SecureHashType: 'HmacSHA512', vnp_SecureHash: sign(ipn, secret) });
+        await fetch(`http://127.0.0.1:${apiPort}/api/v1/webhooks/vnpay/ipn?${signed.toString()}`);
+        const back = new URL(pay.vnp_ReturnUrl);
+        for (const k of ['vnp_Amount', 'vnp_TxnRef', 'vnp_ResponseCode']) back.searchParams.set(k, k === 'vnp_ResponseCode' ? code : ipn[k]);
+        res.writeHead(302, { Location: back.toString() });
+        return void res.end();
+      }
       // Đưa đồng hồ API tới đầu cửa sổ giới hạn tần suất kế tiếp (cộng 1 giây): 30 yêu cầu của bậc D nằm trọn một cửa sổ, không vỡ khi test chạy qua ranh giới phút
+      // `seconds`: độ dài cửa sổ cố định cần căn (mặc định 60; bộ đếm thử sai mã của PRM dùng cửa sổ 600 giây)
       if (url.pathname === '/align-window') {
-        clock.offset += (60_000 - ((Date.now() + clock.offset) % 60_000)) % 60_000 + 1000;
+        const ms = Number((await body(req)).seconds ?? 60) * 1000;
+        clock.offset += (ms - ((Date.now() + clock.offset) % ms)) % ms + 1000;
         return send(200, { offset: clock.offset });
+      }
+      // CRT: giỏ dựng thẳng (fixture, không qua API) theo email chủ giỏ; dòng cách nhau 1 mili giây theo thứ tự; `price` là giá ĐÃ LƯU lúc thêm (mặc định bằng giá hiện hành)
+      if (url.pathname === '/seed-cart') {
+        const b = await body(req);
+        const [u] = await prisma.$queryRaw<{ id: string }[]>`SELECT id FROM users WHERE email = ${String(b.email).toLowerCase()}::citext`;
+        if (!u) return send(404, {});
+        const [c] = await prisma.$queryRaw<{ id: string }[]>`
+          INSERT INTO carts (user_id, coupon_code, shipping_method_id, shipping_city, last_activity_at) VALUES (${u.id}::uuid, ${b.coupon ?? null}, ${b.method_id ?? null}::uuid, ${b.city ?? null}, now()) RETURNING id`;
+        let k = 0;
+        for (const l of b.lines ?? []) {
+          await prisma.$executeRaw`
+            INSERT INTO cart_items (cart_id, product_id, quantity, unit_price, unavailable_reason, created_at)
+            SELECT ${c.id}::uuid, p.id, ${l.quantity ?? 1}, COALESCE(${l.price ?? null}::bigint, p.price), ${l.reason ?? null}, now() + make_interval(secs => ${++k / 1000.0}) FROM products p WHERE p.id = ${l.product_id}::uuid`;
+        }
+        return send(200, { id: c.id });
+      }
+      if (url.pathname === '/cart') {
+        const [c] = await prisma.$queryRaw<{ id: string }[]>`SELECT c.id FROM carts c JOIN users u ON u.id = c.user_id WHERE u.email = ${(url.searchParams.get('email') ?? '').toLowerCase()}::citext AND c.status = 'active'`;
+        if (!c) return send(404, {});
+        const [h] = await prisma.$queryRaw<unknown[]>`SELECT status::text AS status, coupon_code, shipping_method_id, shipping_city, version FROM carts WHERE id = ${c.id}::uuid`;
+        const items = await prisma.$queryRaw<unknown[]>`SELECT product_id, quantity, unit_price::int AS unit_price, unavailable_reason FROM cart_items WHERE cart_id = ${c.id}::uuid ORDER BY created_at, id`;
+        return send(200, { ...(h as object), items });
+      }
+      if (url.pathname === '/cart-count') {
+        const [r] = await prisma.$queryRaw<unknown[]>`SELECT count(*)::int AS carts, (SELECT count(*)::int FROM cart_items) AS items FROM carts`;
+        return send(200, r);
+      }
+      // PRD: đổi trạng thái hay giá của sản phẩm sau khi đã vào giỏ (admin ngừng bán, đổi giá); `event: true` giao thêm ProductArchived cho consumer của CRT như relay
+      if (url.pathname === '/product-set') {
+        const b = await body(req);
+        if (b.status) await prisma.$executeRaw`UPDATE products SET status = ${b.status}::product_status, updated_at = now() WHERE id = ${b.id}::uuid`;
+        if (b.price !== undefined) await prisma.$executeRaw`UPDATE products SET price = ${b.price}, updated_at = now() WHERE id = ${b.id}::uuid`;
+        if (b.event) {
+          const events = app.get(EventsService);
+          const env: EventEnvelope = { event_id: randomUUID(), type: 'ProductArchived', aggregate_type: 'product', aggregate_id: b.id, payload: { product_id: b.id }, occurred_at: clock.now().toISOString(), correlation_id: 'e2e-event' };
+          await runWithCorrelation(env.correlation_id, async () => { for (const sub of events.consumersFor('ProductArchived')) await events.deliver(sub, env); });
+        }
+        return send(200, { ok: true });
+      }
+      if (url.pathname === '/set-shipping-method') {
+        const b = await body(req);
+        await prisma.$executeRaw`UPDATE shipping_methods SET is_active = ${b.active}, updated_at = now() WHERE id = ${b.id}::uuid`;
+        return send(200, { ok: true });
+      }
+      if (url.pathname === '/set-coupon') {
+        const b = await body(req);
+        await prisma.$executeRaw`UPDATE coupons SET status = ${b.status}::coupon_status WHERE code = ${String(b.code).toUpperCase()}`;
+        return send(200, { ok: true });
+      }
+      // CHK: phiên checkout của khách (đọc trạng thái để kiểm không có đơn nào được tạo) và lùi hạn phiên về quá khứ theo GIỜ CSDL (đồng hồ ứng dụng `advance` không đổi `expires_at`, hạn tính bằng clock_timestamp() của CSDL)
+      if (url.pathname === '/chk-session') {
+        const rows = await prisma.$queryRaw<unknown[]>`
+          SELECT s.id, s.status::text AS status, s.address_id, s.shipping_method_id, s.payment_method::text AS payment_method, s.coupon_code, s.order_id, s.expires_at,
+                 (s.expires_at - clock_timestamp() > make_interval(mins => 29)) AS fresh, o.code AS order_code
+          FROM checkout_sessions s JOIN users u ON u.id = s.user_id LEFT JOIN orders o ON o.id = s.order_id
+          WHERE u.email = ${(url.searchParams.get('email') ?? '').toLowerCase()}::citext ORDER BY s.created_at DESC, s.id`;
+        return send(200, { sessions: rows });
+      }
+      if (url.pathname === '/chk-expire') {
+        const b = await body(req);
+        const n = await prisma.$executeRaw`
+          UPDATE checkout_sessions SET expires_at = clock_timestamp() - make_interval(mins => ${Number(b.minutes ?? 1)}::int)
+          WHERE status = 'open'::checkout_status AND user_id = (SELECT id FROM users WHERE email = ${String(b.email).toLowerCase()}::citext)`;
+        return send(200, { updated: n });
+      }
+      // INV: đổi tồn dựng thẳng (khách khác đã mua) và đọc các dòng giữ hàng của đơn
+      if (url.pathname === '/stock-set') {
+        const b = await body(req);
+        await prisma.$executeRaw`UPDATE stock_items SET on_hand = COALESCE(${b.on_hand ?? null}::int, on_hand), reserved = COALESCE(${b.reserved ?? null}::int, reserved), updated_at = now() WHERE product_id = ${b.product_id}::uuid`;
+        return send(200, { ok: true });
+      }
+      if (url.pathname === '/reservations') {
+        const rows = await prisma.$queryRaw<unknown[]>`
+          SELECT r.status::text AS status, r.quantity, r.expires_at, s.product_id FROM stock_reservations r JOIN stock_items s ON s.id = r.stock_item_id JOIN orders o ON o.id = r.order_id
+          WHERE o.code = ${url.searchParams.get('order_code') ?? ''} ORDER BY s.product_id`;
+        return send(200, { items: rows });
+      }
+      // INV: job hết hạn giữ hàng với mốc giờ CSDL ở tương lai (`ms` sau bây giờ), rồi giao event cho ORD như relay (đơn VNPay quá hạn thành `expired`)
+      if (url.pathname === '/inv-expire') {
+        const b = await body(req);
+        const r = await app.get(InvJobs).expireOnce({ now: new Date(Date.now() + Number(b.ms ?? 16 * 60_000)) });
+        const relay = app.get(OutboxRelay);
+        for (let i = 0; i < 12; i++) { if ((await relay.runOnce(new Date(Date.now() + 3_600_000))).picked === 0) break; }
+        return send(200, r);
       }
       if (url.pathname === '/mail') {
         const [u] = await prisma.$queryRaw<{ id: string }[]>`SELECT id FROM users WHERE email = ${url.searchParams.get('email') ?? ''}::citext`;
         const m = u && [...mails].reverse().find((x) => x.user_id === u.id && x.type === url.searchParams.get('type'));
         return m ? send(200, { token: m.token }) : send(404, {});
       }
+      // NTF: thông báo dựng thẳng (fixture), trạng thái, phát event qua outbox + relay, thư đã gửi tới SES giả, chạy job gửi email
+      if (url.pathname === '/seed-notification') {
+        const b = await body(req);
+        const [u] = await prisma.$queryRaw<{ id: string }[]>`SELECT id FROM users WHERE email = ${String(b.email).toLowerCase()}::citext`;
+        if (!u) return send(404, {});
+        const at = new Date(Date.now() - Number(b.age_ms ?? 0));
+        const status = b.status === 'read' ? 'read' : 'unread';
+        const rows = await prisma.$queryRaw<{ id: string }[]>`
+          INSERT INTO notifications (user_id, type, title, body, link, data, status, read_at, event_id, dedupe_key, created_at, updated_at)
+          VALUES (${u.id}::uuid, ${b.type ?? 'order_created'}::notification_type, ${b.title ?? 'Tiêu đề'}, ${b.body ?? 'Nội dung'}, ${b.link === undefined ? '/orders' : b.link}, ${JSON.stringify(b.data ?? {})}::jsonb,
+                  ${status}::notification_status, ${status === 'read' ? at : null}::timestamptz, ${randomUUID()}::uuid, ${`e2e:${randomUUID()}`}, ${at}::timestamptz, ${at}::timestamptz) RETURNING id`;
+        return send(200, { id: rows[0].id });
+      }
+      if (url.pathname === '/notifications') {
+        const rows = await prisma.$queryRaw<{ type: string; status: string; title: string; body: string; link: string | null; read_at: Date | null }[]>`
+          SELECT n.type::text AS type, n.status::text AS status, n.title, n.body, n.link, n.read_at FROM notifications n JOIN users u ON u.id = n.user_id
+          WHERE u.email = ${(url.searchParams.get('email') ?? '').toLowerCase()}::citext ORDER BY n.created_at DESC, n.id DESC`;
+        return send(200, { items: rows });
+      }
+      if (url.pathname === '/publish') { // phát một event lên outbox rồi chạy relay tới hết (NTF nhận như event thật của module khác)
+        const b = await body(req);
+        const events = app.get(EventsService);
+        await app.get(TransactionService).run((tx) => events.publish(tx, { type: b.type, aggregate_type: 'e2e', aggregate_id: String(b.payload?.order_id ?? randomUUID()), payload: b.payload ?? {} }));
+        const relay = app.get(OutboxRelay);
+        for (let i = 0; i < 12; i++) { if ((await relay.runOnce(new Date(Date.now() + 3_600_000))).picked === 0) break; }
+        return send(200, { ok: true });
+      }
+      if (url.pathname === '/ses-mode') { const b = await body(req); ses.fallback = b.status && b.status !== 200 ? { status: Number(b.status), type: b.type } : { status: 200 }; return send(200, { fallback: ses.fallback }); } // review NTF: giả lập SES lỗi (5xx, 429) hay hồi phục
+      if (url.pathname === '/ses-mails') return send(200, { items: ses.mails });
+      if (url.pathname === '/run-email-job') return send(200, await app.get(EmailService).sendDue({ now: new Date(Date.now() + 3_600_000) }));
       return send(404, {});
     } catch (e) {
       return send(500, { error: (e as Error).message });

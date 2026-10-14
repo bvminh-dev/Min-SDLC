@@ -71,6 +71,11 @@ model User {
   addresses               Address[] // quan hệ ngược cho Address của module user (khóa ngoại USR -> users, USR-DB)
   orders                  Order[] // quan hệ ngược cho Order của module order (khóa ngoại ORD -> users, ORD-DB)
   orderStatusHistory      OrderStatusHistory[] // actor_id của order_status_history (ORD-DB)
+  notifications           Notification[] // quan hệ ngược cho Notification của module notification (khóa ngoại NTF -> users, NTF-DB)
+  emailDeliveries         EmailDelivery[] // quan hệ ngược cho EmailDelivery của module notification (NTF-DB)
+  reviews                 Review[]      @relation("ReviewAuthor") // quan hệ ngược cho Review của module review (khóa ngoại REV -> users, REV-DB)
+  moderatedReviews        Review[]      @relation("ReviewModerator") // moderated_by của reviews (REV-DB)
+  reviewImages            ReviewImage[] @relation("ReviewImageUploader") // user_id của review_images (REV-DB)
 
   @@index([role, status])
   @@index([createdAt(sort: Desc), id(sort: Desc)])

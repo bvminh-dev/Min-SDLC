@@ -1,0 +1,71 @@
+// Module review (epic REV, REV-DB-20261006-103618216): Review, ReviewImage.
+// Phần Prisma không biểu diễn được (CHECK, chỉ mục duy nhất một phần WHERE status <> 'deleted', chỉ mục một phần theo status = 'published', chỉ mục theo biểu thức COALESCE) nằm trong migration SQL.
+// Khóa ngoại chỉ tới bảng của REV và `users` (AUTH), `products` (PRD), `order_items` (ORD): đúng cột Phụ thuộc của REV (PRD, ORD, AUTH). REV không SELECT `products`, `order_items`, `users` (SB-35).
+
+enum ReviewStatus {
+  pending
+  published
+  rejected
+  hidden
+  deleted
+
+  @@map("review_status")
+}
+
+enum ReviewActorRole {
+  customer
+  admin
+
+  @@map("review_actor_role")
+}
+
+model Review {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String           @map("user_id") @db.Uuid
+  productId        String           @map("product_id") @db.Uuid
+  orderItemId      String           @map("order_item_id") @db.Uuid
+  status           ReviewStatus     @default(pending)
+  rating           Int              @db.SmallInt
+  comment          String?
+  moderationReason String?          @map("moderation_reason")
+  moderatedBy      String?          @map("moderated_by") @db.Uuid
+  moderatedAt      DateTime?        @map("moderated_at") @db.Timestamptz(6)
+  publishedAt      DateTime?        @map("published_at") @db.Timestamptz(6)
+  editedAt         DateTime?        @map("edited_at") @db.Timestamptz(6)
+  deletedAt        DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  deletedByRole    ReviewActorRole? @map("deleted_by_role")
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user      User          @relation("ReviewAuthor", fields: [userId], references: [id], onDelete: Restrict)
+  moderator User?         @relation("ReviewModerator", fields: [moderatedBy], references: [id], onDelete: Restrict)
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  orderItem OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  images    ReviewImage[]
+
+  @@index([userId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([status, createdAt, id])
+  @@index([status, productId, createdAt(sort: Desc)])
+  @@map("reviews")
+}
+
+model ReviewImage {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  reviewId   String?   @map("review_id") @db.Uuid
+  position   Int?      @db.SmallInt
+  storageKey String    @unique @map("storage_key")
+  width      Int
+  height     Int
+  bytes      Int
+  orphanedAt DateTime? @map("orphaned_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user   User    @relation("ReviewImageUploader", fields: [userId], references: [id], onDelete: Restrict)
+  review Review? @relation(fields: [reviewId], references: [id], onDelete: Restrict)
+
+  @@unique([reviewId, position])
+  @@index([reviewId])
+  @@map("review_images")
+}

@@ -1,0 +1,3575 @@
+{
+ "test": "node scripts/run-jest.mjs test/payment",
+ "mutations": [
+  {
+   "id": "SB-22 T1: bỏ lớp danh sách IP của cổng",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539098",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "if (allow.length && !allow.includes(ip))",
+   "replace": "if (false && allow.length && !allow.includes(ip))",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539098\""
+  },
+  {
+   "id": "SB-22 T1: danh sách IP đảo điều kiện (cho IP lạ qua)",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539098",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "allow.length && !allow.includes(ip)",
+   "replace": "allow.length && allow.includes(ip)",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539098\""
+  },
+  {
+   "id": "SB-22 T1: tham số vnp_ dạng mảng không bị coi là sai chữ ký",
+   "sb": [
+    "SB-22",
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "if (!shapeOk || !verifySignature(",
+   "replace": "if (!verifySignature(",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539065\""
+  },
+  {
+   "id": "SB-22 T1: bỏ kiểm chữ ký IPN",
+   "sb": [
+    "SB-22",
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "!verifySignature(params, given, this.core.cfg('VNPAY_HASH_SECRET'))",
+   "replace": "false",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539065\""
+  },
+  {
+   "id": "SB-22 T1: chữ ký sai nhưng ghi nhật ký là hợp lệ",
+   "sb": [
+    "SB-22",
+    "SB-18"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "await this.record(this.prisma, null, logTxn, masked, false, '97', 'invalid_signature');",
+   "replace": "await this.record(this.prisma, null, logTxn, masked, true, '97', 'invalid_signature');",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539065\""
+  },
+  {
+   "id": "SB-22 T1: sai chữ ký trả RspCode 00",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "return RSP.signature;",
+   "replace": "return RSP.ok;",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539065\""
+  },
+  {
+   "id": "SB-22: không có lượt thử theo vnp_TxnRef thì không trả 01",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539098",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "await this.record(this.prisma, null, logTxn, masked, true, '01', 'unknown_txn');\n      return RSP.notFound;",
+   "replace": "await this.record(this.prisma, null, logTxn, masked, true, '01', 'unknown_txn');\n      return RSP.ok;",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539098\""
+  },
+  {
+   "id": "SB-22: tra lượt thử bằng mã tham chiếu bất kỳ (bỏ khuôn txn_ref khi ghi)",
+   "sb": [
+    "SB-18",
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104539098",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "const logTxn = txnRef && TXN_REF_RE.test(txnRef) ? txnRef : null;",
+   "replace": "const logTxn = txnRef;",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539098\""
+  },
+  {
+   "id": "SB-23 T2: bỏ so số tiền IPN với Payment",
+   "sb": [
+    "SB-23",
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539131",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "if (amount === null || amount !== pay.amount) {",
+   "replace": "if (amount === null) {",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539131\""
+  },
+  {
+   "id": "SB-23 T2: số tiền IPN lấy từ gói tin thay vì Payment (so lỏng)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104539131",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "amount !== pay.amount",
+   "replace": "amount < 0n",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539131\""
+  },
+  {
+   "id": "SB-22 T3: bỏ chặn phát lại thành công (lượt đã cuối vẫn xử lý)",
+   "sb": [
+    "SB-22",
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104539164",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "if (success ? !OutcomeService.acceptsSuccess(a) : a.status !== 'processing') return duplicate();",
+   "replace": "if (false) return duplicate();",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539164\""
+  },
+  {
+   "id": "SB-22 T3: IPN thất bại cũ gửi lại không bị chặn",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539164",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": ": a.status !== 'processing') return duplicate();",
+   "replace": ": false) return duplicate();",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539164\""
+  },
+  {
+   "id": "SB-22 T3: trùng giao dịch cổng không trả 02",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539164",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "await this.record(this.prisma, hit.payment_id, logTxn, masked, true, '02', 'duplicate');\n      return RSP.confirmed;",
+   "replace": "await this.record(this.prisma, hit.payment_id, logTxn, masked, true, '02', 'duplicate');\n      return RSP.ok;",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539164\""
+  },
+  {
+   "id": "SB-22 T3: nuốt lỗi trùng giao dịch cổng thay vì rollback và trả 02",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539164",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "if (!(e instanceof DuplicateGatewayTxn)) throw e;",
+   "replace": "if (!(e instanceof DuplicateGatewayTxn)) throw e; throw e;",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539164\""
+  },
+  {
+   "id": "SB-22 T3: bỏ khóa dòng Payment ở IPN (đọc không khóa)",
+   "sb": [
+    "SB-24",
+    "SB-25"
+   ],
+   "tc": "PAY-TC-20261006-104539196",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "const p = await this.core.lockById(tx, hit.payment_id);",
+   "replace": "const p = (await tx.$queryRaw<import(\"./db\").PaymentRow[]>`SELECT id, order_id, order_code, user_id, amount, method::text AS method, status::text AS status, attempt_no, provider_ref, expires_at, paid_at, version, created_at, updated_at FROM payments WHERE id = ${hit.payment_id}::uuid`)[0];",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539196\"",
+   "equivalent": "lớp bảo vệ thứ hai: sau khi bỏ `FOR UPDATE`, câu UPDATE chuyển trạng thái vẫn chờ khóa dòng của giao dịch khác và có điều kiện `WHERE status = :cũ`, lượt thử chuyển trạng thái có điều kiện và `provider_txn_no` unique, nên hai IPN đồng thời vẫn cho đúng một 00 và một 02 (test chặn bằng khóa ngoài xác nhận cả hai); khóa chỉ làm đoạn đọc rồi quyết định tuần tự"
+  },
+  {
+   "id": "SB-22: thành công không có mã giao dịch vẫn nhận",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "if (!transactionNo) { await this.record(tx, p.id, logTxn, masked, true, '99', 'internal_error'); return RSP.unknown; }",
+   "replace": "if (false) { return RSP.unknown; }",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104539001\"",
+   "equivalent": "lớp bảo vệ thứ hai: cột provider_txn_no có CHECK (succeeded phải có mã giao dịch) nên giao dịch vẫn rollback và trả 99; hành vi quan sát được không đổi"
+  },
+  {
+   "id": "SB-22 T14: bỏ nhận biết đơn không còn pending (luôn coi là pending)",
+   "sb": [
+    "SB-22",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "const orderPending = order?.status === 'pending';",
+   "replace": "const orderPending = true;",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539228\""
+  },
+  {
+   "id": "SB-18: mất mặt nạ nhật ký (ghi mọi tham số)",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "for (const k of LOG_FIELDS) {",
+   "replace": "for (const k of Object.keys(params)) {",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539001\""
+  },
+  {
+   "id": "SB-18: nhật ký mang cả chữ ký",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "const masked = this.mask(params);",
+   "replace": "const masked = { ...this.mask(params), vnp_SecureHash: given ?? \"\" };",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539001\""
+  },
+  {
+   "id": "SB-18: bỏ giới hạn 64 ký tự của trường nhật ký",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "v.length <= MAX_FIELD",
+   "replace": "v.length <= 100000",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104539001\""
+  },
+  {
+   "id": "SB-18: log bảo mật in tham số vnp_Amount",
+   "sb": [
+    "SB-18",
+    "SB-20"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "this.log.warn('IPN sai chữ ký', { code: 'ipn-invalid-signature', txn_ref: logTxn });",
+   "replace": "this.log.warn('IPN sai chữ ký', { code: 'ipn-invalid-signature', txn_ref: logTxn, vnp_Amount: params.vnp_Amount });",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539065\""
+  },
+  {
+   "id": "SB-18: log IPN lỗi bất ngờ in chữ ký",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "this.log.error('xử lý IPN lỗi bất ngờ', { code: 'ipn-internal-error', err: e });",
+   "replace": "this.log.error('xử lý IPN lỗi bất ngờ', { code: 'ipn-internal-error', err: e, sig: (query as Record<string, string>)?.vnp_SecureHash });",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104539001\""
+  },
+  {
+   "id": "SB-20: IPN lỗi bất ngờ lộ thông điệp lỗi",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "return RSP.unknown;\n    }\n  }",
+   "replace": "return { RspCode: \"99\", Message: String((e as Error).message) } as never;\n    }\n  }",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104539001\""
+  },
+  {
+   "id": "SB-22: lượt thất bại ánh xạ mã sai",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-130000400",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "await this.outcome.failure(tx, p, a, failReasonOf(code), code);",
+   "replace": "await this.outcome.failure(tx, p, a, 'other', code);",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-130000400\""
+  },
+  {
+   "id": "SB-18: mã gốc của cổng không lưu ở lượt thất bại",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "PAY-TC-20261006-130000400",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "await this.outcome.failure(tx, p, a, failReasonOf(code), code);",
+   "replace": "await this.outcome.failure(tx, p, a, failReasonOf(code), null);",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-130000400\""
+  },
+  {
+   "id": "SB-22: thành công với TransactionStatus khác 00 vẫn là thành công",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-130000400",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "const success = isSuccess(code, text(params.vnp_TransactionStatus) ?? '');",
+   "replace": "const success = code === '00';",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-130000400\""
+  },
+  {
+   "id": "SB-27: IPN không gọi hoàn tiền sau commit",
+   "sb": [
+    "SB-24",
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "if (refundId) this.refunds.dispatchSoon(refundId);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539228\""
+  },
+  {
+   "id": "SB-24 T14: thành công muộn của lượt timeout không được nhận",
+   "sb": [
+    "SB-24",
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539522",
+   "file": "src/modules/payment/outcome.service.ts",
+   "find": "(a.status === 'failed' && a.reason === 'timeout')",
+   "replace": "false",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539522\""
+  },
+  {
+   "id": "SB-24: Payment closed vẫn nhận thành công (bỏ kiểm đơn pending)",
+   "sb": [
+    "SB-24",
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "src/modules/payment/outcome.service.ts",
+   "find": "(p.status === 'processing' || p.status === 'failed') && orderPending",
+   "replace": "p.status === 'processing' || p.status === 'failed'",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539228\""
+  },
+  {
+   "id": "SB-24: hoàn trùng và muộn đảo nhãn",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "src/modules/payment/outcome.service.ts",
+   "find": "{ ...a, status: 'succeeded' }, dup ? 'duplicate_payment' : 'late_payment',",
+   "replace": "{ ...a, status: 'succeeded' }, dup ? 'late_payment' : 'duplicate_payment',",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539262\""
+  },
+  {
+   "id": "SB-24: trùng thanh toán không tính Payment refunded",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "src/modules/payment/outcome.service.ts",
+   "find": "const dup = p.status === 'succeeded' || p.status === 'refunded';",
+   "replace": "const dup = p.status === 'succeeded';",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539262\""
+  },
+  {
+   "id": "SB-24 T19: is_final không dùng PAY_MAX_ATTEMPTS",
+   "sb": [
+    "SB-24",
+    "SB-25"
+   ],
+   "tc": "PAY-TC-20261006-104539587",
+   "file": "src/modules/payment/outcome.service.ts",
+   "find": "a.attempt_no >= this.core.cfg('PAY_MAX_ATTEMPTS')",
+   "replace": "a.attempt_no >= 3",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-104539587\""
+  },
+  {
+   "id": "SB-24: lượt cũ thất bại cũng làm Payment failed",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539555",
+   "file": "src/modules/payment/outcome.service.ts",
+   "find": "a.attempt_no === p.attempt_no",
+   "replace": "true",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-104539555\""
+  },
+  {
+   "id": "SB-24: lượt thành công không chốt provider_txn_no",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/outcome.service.ts",
+   "find": "provider_txn_no = ${transactionNo}, resolved_at",
+   "replace": "provider_txn_no = NULL, resolved_at",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539001\""
+  },
+  {
+   "id": "SB-24: Payment succeeded không ghi paid_at",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/outcome.service.ts",
+   "find": "set: Prisma.sql`, paid_at = ${now}::timestamptz, provider_ref = ${transactionNo}`",
+   "replace": "set: Prisma.sql`, provider_ref = ${transactionNo}`",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539001\""
+  },
+  {
+   "id": "SB-24: Refund muộn tạo bởi người dùng (không system)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "src/modules/payment/outcome.service.ts",
+   "find": "{ id: null, role: 'system' }",
+   "replace": "{ id: p.user_id, role: 'admin' }",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539228\""
+  },
+  {
+   "id": "SB-06 T6: bỏ điều kiện chủ sở hữu ở bước đọc đầu",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "PAY-TC-20261006-104538772",
+   "file": "src/modules/payment/start.service.ts",
+   "find": " WHERE id = ${id}::uuid AND user_id = ${s.user_id}::uuid`)[0] : undefined;",
+   "replace": " WHERE id = ${id}::uuid`)[0] : undefined;",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538772\""
+  },
+  {
+   "id": "SB-24: initiate cho COD",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538804",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "if (p.method !== 'vnpay') throw new DomainError('payment-not-online');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538804\""
+  },
+  {
+   "id": "SB-23 T2: bỏ chặn số tiền dưới 5000",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104538804",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "p.amount < BigInt(VNPAY_MIN_AMOUNT) || ",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538804\""
+  },
+  {
+   "id": "SB-23 T2: bỏ chặn số tiền trên 999999999",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104538671",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "p.amount > BigInt(VNPAY_MAX_AMOUNT)",
+   "replace": "p.amount > BigInt(VNPAY_MAX_AMOUNT) * 2n",
+   "test": "node scripts/run-jest.mjs test/payment/create.spec.ts -t \"PAY-TC-20261006-104538671\""
+  },
+  {
+   "id": "SB-24: retry nhận lượt 1 đang processing",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539782",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "if (kind === 'retry' && p.attempt_no < 2)",
+   "replace": "if (kind === 'retry' && p.attempt_no < 1)",
+   "test": "node scripts/run-jest.mjs test/payment/retry.spec.ts -t \"PAY-TC-20261006-104539782\""
+  },
+  {
+   "id": "SB-24: bấm lặp hết hạn vẫn trả đường dẫn cũ",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538837",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "a.expires_at.getTime() <= now.getTime()) throw new DomainError('payment-in-progress');",
+   "replace": "a.expires_at.getTime() < 0) throw new DomainError('payment-in-progress');",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538837\""
+  },
+  {
+   "id": "SB-24: bấm lặp không kiểm trạng thái lượt thử",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538837",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "!a || a.status !== 'processing' ||",
+   "replace": "!a ||",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538837\""
+  },
+  {
+   "id": "SB-24: initiate cho đơn đã đóng",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538804",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "!orderPending || !p.expires_at ||",
+   "replace": "!p.expires_at ||",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538804\""
+  },
+  {
+   "id": "SB-24: initiate đúng hạn (bỏ biên expires_at)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538871",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "p.expires_at.getTime() <= now.getTime()) throw new DomainError('payment-not-startable');",
+   "replace": "p.expires_at.getTime() < now.getTime()) throw new DomainError('payment-not-startable');",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538871\""
+  },
+  {
+   "id": "SB-24: retry cho Payment không failed",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539782",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "if (p.status !== 'failed') throw new DomainError('payment-not-retryable');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/retry.spec.ts -t \"PAY-TC-20261006-104539782\""
+  },
+  {
+   "id": "SB-24: retry cho đơn không pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539782",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "if (!orderPending) throw new DomainError('order-not-pending');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/retry.spec.ts -t \"PAY-TC-20261006-104539782\""
+  },
+  {
+   "id": "SB-24: retry hết hạn Payment vẫn nhận",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539914",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "if (!p.expires_at || p.expires_at.getTime() <= now.getTime()) throw new DomainError('payment-expired');",
+   "replace": "if (!p.expires_at || p.expires_at.getTime() < now.getTime()) throw new DomainError('payment-expired');",
+   "test": "node scripts/run-jest.mjs test/payment/retry.spec.ts -t \"PAY-TC-20261006-104539914\""
+  },
+  {
+   "id": "SB-23 T2: hạn đường dẫn bỏ chặn bởi expires_at của Payment",
+   "sb": [
+    "SB-23",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538871",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "const expiresAt = p.expires_at && p.expires_at.getTime() < ttl.getTime() ? p.expires_at : ttl;",
+   "replace": "const expiresAt = ttl;",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538871\""
+  },
+  {
+   "id": "SB-23: hạn đường dẫn sai TTL",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "this.core.cfg('PAY_ATTEMPT_URL_TTL_MINUTES') * 60_000",
+   "replace": "this.core.cfg('PAY_ATTEMPT_URL_TTL_MINUTES') * 6_000",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-24: mã tham chiếu thiếu số lượt hai chữ số",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "String(u.attempt_no).padStart(2, '0')",
+   "replace": "String(u.attempt_no)",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-40: băm yêu cầu bỏ id Payment",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "PAY-TC-20261006-113000300",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "hashOf(`/payments/:id/${kind}`, { id })",
+   "replace": "hashOf(`/payments/:id/${kind}`, {})",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-113000300\""
+  },
+  {
+   "id": "SB-06: chi tiết lượt thử kèm Payment người khác (bỏ chủ ở lockById)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "PAY-TC-20261006-104538772",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "if (!id || !pre) throw new DomainError('not-found'); // Payment của người khác",
+   "replace": "if (!id) throw new DomainError('not-found'); if (!pre) throw new DomainError('not-found'); // Payment của người khác",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538772\"",
+   "equivalent": "đổi không làm thay đổi hành vi (hai câu if tương đương)"
+  },
+  {
+   "id": "SB-07 T7: thu COD cho Payment online",
+   "sb": [
+    "SB-05",
+    "SB-07",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539390",
+   "file": "src/modules/payment/cod.service.ts",
+   "find": "if (p.method !== 'cod') throw new DomainError('payment-not-cod');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539390\""
+  },
+  {
+   "id": "SB-24 T4: thu COD lần hai không chặn",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539456",
+   "file": "src/modules/payment/cod.service.ts",
+   "find": "if (p.status === 'succeeded') throw new DomainError('payment-already-succeeded');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539456\""
+  },
+  {
+   "id": "SB-24: thu COD khi đơn chưa giao",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539422",
+   "file": "src/modules/payment/cod.service.ts",
+   "find": "order?.status !== 'delivered' || ",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539422\""
+  },
+  {
+   "id": "SB-24: thu COD khi Payment không pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539456",
+   "file": "src/modules/payment/cod.service.ts",
+   "find": " || p.status !== 'pending') throw new DomainError('order-not-delivered');",
+   "replace": ") throw new DomainError('order-not-delivered');",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539456\""
+  },
+  {
+   "id": "SB-23: thu COD không so số tiền",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104539422",
+   "file": "src/modules/payment/cod.service.ts",
+   "find": "if (BigInt(collected) !== p.amount) throw new DomainError('amount-mismatch');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539422\""
+  },
+  {
+   "id": "SB-19 T10: audit thu COD ghi system thay vì người ghi",
+   "sb": [
+    "SB-07",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539358",
+   "file": "src/modules/payment/cod.service.ts",
+   "find": "actor_id: s.user_id, actor_role: s.role, action:",
+   "replace": "actor_id: null, actor_role: 'system', action:",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539358\""
+  },
+  {
+   "id": "SB-19 T10: audit thu COD mất ghi chú",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "PAY-TC-20261006-104539358",
+   "file": "src/modules/payment/cod.service.ts",
+   "find": "after: { status: 'succeeded', amount: Number(p.amount), ...(note ? { note } : {}) }, reason: note,",
+   "replace": "after: { status: 'succeeded', amount: Number(p.amount) },",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539358\""
+  },
+  {
+   "id": "SB-24 T4: thu COD chuyển bằng sai tên (bỏ thu thành event)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104539358",
+   "file": "src/modules/payment/config.ts",
+   "find": "collect: { from: ['pending'], to: 'succeeded', event: 'PaymentSucceeded' }",
+   "replace": "collect: { from: ['pending'], to: 'succeeded', event: null }",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539358\""
+  },
+  {
+   "id": "SB-24 T8: bỏ ON CONFLICT attempt_id khi tạo Refund",
+   "sb": [
+    "SB-24",
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104540014",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "ON CONFLICT (attempt_id) DO NOTHING RETURNING ${REFUND_COLS}`;\n    if (!r) {",
+   "replace": "RETURNING ${REFUND_COLS}`;\n    if (!r) {",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-104540014\""
+  },
+  {
+   "id": "SB-24: hoàn tự động không có auto_attempt_no",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540014",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "actor.role === 'system' ? 1 : null",
+   "replace": "null",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-104540014\""
+  },
+  {
+   "id": "SB-24 T10: audit hoàn tự động ghi như thủ công",
+   "sb": [
+    "SB-07",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540177",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "actor.role === 'system' ? 'payment.refund.auto' : 'payment.refund.manual'",
+   "replace": "'payment.refund.manual'",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540177\""
+  },
+  {
+   "id": "SB-24 T7: hoàn thủ công cho COD",
+   "sb": [
+    "SB-07",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540530",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (p.method === 'cod') throw new DomainError('cod-refund-unsupported');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540530\""
+  },
+  {
+   "id": "SB-24 T8: hoàn thủ công khi Payment không succeeded",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540530",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (p.status !== 'succeeded') throw new DomainError('payment-not-refundable');\n      const a = await winningAttempt(tx, p);\n      if (!a) throw new DomainError('payment-not-refundable');\n      const [ex]",
+   "replace": "const a = await winningAttempt(tx, p);\n      if (!a) throw new DomainError('payment-not-refundable');\n      const [ex]",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540530\""
+  },
+  {
+   "id": "SB-24 T8: hoàn thủ công bỏ kiểm Refund có sẵn",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540530",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (ex) throw new DomainError(ex.status === 'requested' ? 'refund-in-progress' : ex.status === 'failed' ? 'refund-use-retry' : 'payment-not-refundable');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540530\""
+  },
+  {
+   "id": "SB-24 T8: hoàn thủ công đảo mã refund-use-retry",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540530",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "ex.status === 'failed' ? 'refund-use-retry'",
+   "replace": "ex.status === 'failed' ? 'refund-in-progress'",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540530\""
+  },
+  {
+   "id": "SB-20 T11: 409 hoàn tiền lộ chi tiết",
+   "sb": [
+    "SB-20",
+    "SB-08"
+   ],
+   "tc": "PAY-TC-20261006-104540530",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (ex) throw new DomainError(ex.status === 'requested' ? 'refund-in-progress' : ex.status === 'failed' ? 'refund-use-retry' : 'payment-not-refundable');",
+   "replace": "if (ex) throw new DomainError(ex.status === 'requested' ? 'refund-in-progress' : ex.status === 'failed' ? 'refund-use-retry' : 'payment-not-refundable', { detail: `refund ${ex.status}` });",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540530\""
+  },
+  {
+   "id": "SB-18 T17: log lý do hoàn tiền",
+   "sb": [
+    "SB-18",
+    "SB-12"
+   ],
+   "tc": "PAY-TC-20261006-104540662",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "    await this.audit.record(tx, {\n      actor_id: actor.id,",
+   "replace": "    this.log.info('refund-created', { note });\n    await this.audit.record(tx, {\n      actor_id: actor.id,",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540662\""
+  },
+  {
+   "id": "SB-24 T8: thử lại hoàn tiền khi đang requested",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540440",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (r.status === 'requested') throw new DomainError('refund-in-progress');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540440\""
+  },
+  {
+   "id": "SB-24: thử lại hoàn tiền khi Payment không còn succeeded",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540440",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (r.status !== 'failed' || p.status !== 'succeeded') throw new DomainError('refund-not-retryable');",
+   "replace": "if (r.status !== 'failed') throw new DomainError('refund-not-retryable');",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540440\""
+  },
+  {
+   "id": "SB-24: thử lại hoàn tiền không đổi mã yêu cầu",
+   "sb": [
+    "SB-24",
+    "SB-40"
+   ],
+   "tc": "PAY-TC-20261006-104540440",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "SET status = 'requested'::refund_status, gateway_request_id = ${newRequestId()}, next_retry_at = NULL, failure_reason = NULL, gateway_code = NULL, resolved_at = NULL, requested_at = ${now}::timestamptz, updated_at = ${now}::timestamptz\n        WHERE id = ${id}::uuid",
+   "replace": "SET status = 'requested'::refund_status, next_retry_at = NULL, failure_reason = NULL, gateway_code = NULL, resolved_at = NULL, requested_at = ${now}::timestamptz, updated_at = ${now}::timestamptz\n        WHERE id = ${id}::uuid",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540440\""
+  },
+  {
+   "id": "SB-19 T10: thử lại hoàn tiền không audit người thử lại",
+   "sb": [
+    "SB-19",
+    "SB-07"
+   ],
+   "tc": "PAY-TC-20261006-104540440",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "action: 'payment.refund.retry'",
+   "replace": "action: 'payment.refund.manual'",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540440\""
+  },
+  {
+   "id": "SB-24: Payment refunded cả khi hoàn giao dịch trùng",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540374",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (p.status === 'succeeded' && a?.provider_txn_no === p.provider_ref) await this.core.move(tx, p, 'refund');",
+   "replace": "if (p.status === 'succeeded') await this.core.move(tx, p, 'refund');",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540374\""
+  },
+  {
+   "id": "SB-27: không phát RefundSucceeded",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104540177",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "await this.events.publish(tx, { type: 'RefundSucceeded', aggregate_type: 'refund', aggregate_id: p.id, payload: base });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540177\""
+  },
+  {
+   "id": "SB-27: không phát RefundFailed",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104540245",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "await this.events.publish(tx, { type: 'RefundFailed', aggregate_type: 'refund', aggregate_id: p.id, payload: { ...base, failure_reason: 'gateway-declined' } });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540245\""
+  },
+  {
+   "id": "SB-20: lý do thất bại là mã của cổng",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "PAY-TC-20261006-104540245",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "failure_reason = 'gateway-declined', gateway_code = ${res.code}",
+   "replace": "failure_reason = ${res.code}, gateway_code = ${res.code}",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540245\""
+  },
+  {
+   "id": "SB-24 T8: tự thử lại vượt số lần",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "auto < this.core.cfg('PAY_REFUND_AUTO_ATTEMPTS')",
+   "replace": "auto <= this.core.cfg('PAY_REFUND_AUTO_ATTEMPTS')",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540277\""
+  },
+  {
+   "id": "SB-34: lịch tự thử lại sai khoảng",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "REFUND_RETRY_DELAYS_MS[auto - 1]",
+   "replace": "REFUND_RETRY_DELAYS_MS[0]",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540277\""
+  },
+  {
+   "id": "SB-34: job tự thử lại không bỏ hẹn khi Payment không còn succeeded",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (p.status !== 'succeeded') { await tx.$executeRaw`UPDATE refunds SET next_retry_at = NULL, updated_at = ${now}::timestamptz WHERE id = ${r.id}::uuid`; return false; }",
+   "replace": "if (p.status !== 'succeeded') { return false; }",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104540277\""
+  },
+  {
+   "id": "SB-31: gọi cổng trong giao dịch giữ khóa (settle trước khi cổng trả lời)",
+   "sb": [
+    "SB-31",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540309",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (res.kind === 'pending') { this.log.warn('cổng chưa trả lời hoàn tiền, giữ requested', { code: 'refund-gateway-pending', refund_id: refundId }); return 'pending'; }",
+   "replace": "if (res.kind === 'pending') { await this.settle(refundId, { kind: 'declined', code: 'pending' }); return 'pending'; }",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540309\""
+  },
+  {
+   "id": "SB-24: dispatch coi lỗi lạ của cổng là từ chối",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540309",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "this.log.warn('cổng hoàn tiền lỗi, giữ requested', { code: 'refund-gateway-error', refund_id: refundId, err_name: (e as Error)?.name });\n      return 'pending';",
+   "replace": "await this.settle(refundId, { kind: 'declined', code: 'error' });\n      return 'done';",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540309\""
+  },
+  {
+   "id": "SB-24: settle không kiểm Refund còn requested",
+   "sb": [
+    "SB-24",
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104540309",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (!p || !r || r.status !== 'requested') return;",
+   "replace": "if (!p || !r) return;",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540309\"",
+   "equivalent": "lớp bảo vệ thứ hai: cả hai nhánh UPDATE ngay sau đó có `AND status = requested` và thoát khi không cập nhật được dòng nào, nên Refund đã chốt không bị ghi đè dù bỏ kiểm này; hành vi quan sát được không đổi"
+  },
+  {
+   "id": "SB-34: job đối soát hoàn tiền không giới hạn lô",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104539686",
+   "file": "src/modules/payment/config.ts",
+   "find": "export const JOB_BATCH = 50;",
+   "replace": "export const JOB_BATCH = 5000;",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104539686\""
+  },
+  {
+   "id": "SB-24: StockCommitFailed chuyển nhầm (hoàn khi Payment không succeeded)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-113000400",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "if (p.status !== 'succeeded') { this.info('payment-not-refundable', e, p, { status: p.status }); return; }",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-113000400\""
+  },
+  {
+   "id": "SB-23: đơn 0 đồng vẫn tạo Payment",
+   "sb": [
+    "SB-23",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538671",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "if (total === 0) {",
+   "replace": "if (false) {",
+   "test": "node scripts/run-jest.mjs test/payment/create.spec.ts -t \"PAY-TC-20261006-104538671\""
+  },
+  {
+   "id": "SB-24: tạo Payment cho đơn đã đóng",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538671",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "if (o.status === 'cancelled' || o.status === 'expired') {",
+   "replace": "if (false) {",
+   "test": "node scripts/run-jest.mjs test/payment/create.spec.ts -t \"PAY-TC-20261006-104538671\""
+  },
+  {
+   "id": "SB-27 T3: bỏ ON CONFLICT (order_id) khi tạo Payment",
+   "sb": [
+    "SB-27",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "ON CONFLICT (order_id) DO NOTHING RETURNING id`;\n    if (!row)",
+   "replace": "RETURNING id`;\n    if (!row)",
+   "test": "node scripts/run-jest.mjs test/payment/create.spec.ts -t \"PAY-TC-20261006-104538604\""
+  },
+  {
+   "id": "SB-27 T15: handler OrderCreated nuốt lỗi ORD (không ném)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104538638",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "throw err;\n    });",
+   "replace": "return null;\n    });",
+   "test": "node scripts/run-jest.mjs test/payment/create.spec.ts -t \"PAY-TC-20261006-104538638\""
+  },
+  {
+   "id": "SB-24: hoàn theo was_paid (bỏ nhánh cảnh báo)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540079",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "if (kind === 'cancel' && e.payload.was_paid === false) this.log.warn(",
+   "replace": "if (false) this.log.warn(",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-104540079\""
+  },
+  {
+   "id": "SB-24: lý do hoàn đảo order_cancelled và order_expired",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540014",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "kind === 'cancel' ? 'order_cancelled' : 'order_expired'",
+   "replace": "kind === 'cancel' ? 'order_expired' : 'order_cancelled'",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-104540014\""
+  },
+  {
+   "id": "SB-24 T14: OrderCancelled stock_commit_failed tạo Refund lần hai",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-130000300",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "if (stockCommit) { await this.alreadyRefunded(tx, e, p); return; }",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-130000300\""
+  },
+  {
+   "id": "SB-24: OrderExpired không phát PaymentExpired",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104539947",
+   "file": "src/modules/payment/config.ts",
+   "find": "expire: { from: ['pending', 'processing', 'failed'], to: 'expired', event: 'PaymentExpired' }",
+   "replace": "expire: { from: ['pending', 'processing', 'failed'], to: 'expired', event: null }",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-104539947\""
+  },
+  {
+   "id": "SB-24: expire không nhận failed",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540144",
+   "file": "src/modules/payment/config.ts",
+   "find": "expire: { from: ['pending', 'processing', 'failed'],",
+   "replace": "expire: { from: ['pending', 'processing'],",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-104540144\""
+  },
+  {
+   "id": "SB-24: cancel không nhận processing",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540111",
+   "file": "src/modules/payment/config.ts",
+   "find": "cancel: { from: ['pending', 'processing', 'failed'],",
+   "replace": "cancel: { from: ['pending', 'failed'],",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-104540111\""
+  },
+  {
+   "id": "SB-24: cancel không nhận failed",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-150000200",
+   "file": "src/modules/payment/config.ts",
+   "find": "cancel: { from: ['pending', 'processing', 'failed'],",
+   "replace": "cancel: { from: ['pending', 'processing'],",
+   "test": "node scripts/run-jest.mjs test/payment/retry.spec.ts -t \"PAY-TC-20261006-150000200\""
+  },
+  {
+   "id": "SB-24: succeed không nhận failed",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539522",
+   "file": "src/modules/payment/config.ts",
+   "find": "succeed: { from: ['processing', 'failed'],",
+   "replace": "succeed: { from: ['processing'],",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539522\""
+  },
+  {
+   "id": "SB-24: fail nhận cả failed",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "src/modules/payment/config.ts",
+   "find": "fail: { from: ['processing'],",
+   "replace": "fail: { from: ['processing', 'succeeded'],",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-TC-20261006-104539228\""
+  },
+  {
+   "id": "SB-24: refund nhận cả expired",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "src/modules/payment/config.ts",
+   "find": "refund: { from: ['succeeded'],",
+   "replace": "refund: { from: ['succeeded', 'expired'],",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-TC-20261006-104539228\""
+  },
+  {
+   "id": "SB-24: OrderDelivered thu cả online pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-113000200",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "if (p.method !== 'cod' || p.status !== 'pending') {",
+   "replace": "if (p.status !== 'pending') {",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-113000200\""
+  },
+  {
+   "id": "SB-24: OrderDelivered không dùng delivered_at",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-113000100",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "const paidAt = dateOf(e.payload.delivered_at) ?? this.core.now();",
+   "replace": "const paidAt = this.core.now();",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-113000100\""
+  },
+  {
+   "id": "SB-19 T10: thu COD tự động không audit",
+   "sb": [
+    "SB-07",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-113000100",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "await this.audit.record(tx, { actor_id: null, actor_role: 'system', action: 'payment.cod.collect'",
+   "replace": "if (false) await this.audit.record(tx, { actor_id: null, actor_role: 'system', action: 'payment.cod.collect'",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-113000100\""
+  },
+  {
+   "id": "SB-24: OrderReturned đóng cả online pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-130000100",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "if (p.method === 'cod' && p.status === 'pending') { await this.core.move(tx, p, 'cancel'); return; }",
+   "replace": "if (p.status === 'pending') { await this.core.move(tx, p, 'cancel'); return; }",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-130000100\""
+  },
+  {
+   "id": "SB-24: OrderReturned tự hoàn Payment online đã thu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-130000200",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "this.info(p.status === 'succeeded' ? 'refund-manual-required' : 'payment-already-closed', e, p, { status: p.status });",
+   "replace": "if (p.status === 'succeeded') await this.autoRefund(tx, e, p, 'order_cancelled'); this.info('payment-already-closed', e, p, { status: p.status });",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-130000200\""
+  },
+  {
+   "id": "SB-24: StockCommitFailed bỏ mã reservation_missing",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-150000100",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "'reservation_expired', 'reservation_released', 'reservation_missing'",
+   "replace": "'reservation_expired', 'reservation_released'",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-150000100\""
+  },
+  {
+   "id": "SB-24: COD succeeded vẫn hoàn tự động",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540342",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "if (p.method === 'cod') { this.log.info('Payment COD đã thu tiền: hoàn tiền tự động chưa hỗ trợ'",
+   "replace": "if (false) { this.log.info('Payment COD đã thu tiền: hoàn tiền tự động chưa hỗ trợ'",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540342\""
+  },
+  {
+   "id": "SB-24: handler không bỏ qua event cho Payment không có (ném thay vì cảnh báo)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104540047",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "if (!p) { this.log.warn('event đóng cho đơn không có thanh toán', { code: 'payment-none', event_type: e.type, order_id: orderId }); return; }",
+   "replace": "if (!p) { throw new Error('payment-none'); }",
+   "test": "node scripts/run-jest.mjs test/payment/close.spec.ts -t \"PAY-TC-20261006-104540047\""
+  },
+  {
+   "id": "SB-18 T17: log chép chuỗi lạ của payload",
+   "sb": [
+    "SB-18",
+    "SB-12"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "src/modules/payment/lifecycle.service.ts",
+   "find": "const orderId = uuidOf(pl.order_id), userId = uuidOf(pl.user_id), code = typeof pl.order_code === 'string' ? pl.order_code : null;",
+   "replace": "const orderId = uuidOf(pl.order_id), userId = uuidOf(pl.user_id), code = typeof pl.order_code === 'string' ? pl.order_code : null; this.log.info('OrderCreated', { order_code: pl.order_code });",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104538604\""
+  },
+  {
+   "id": "SB-22 T20: đối soát hỏi lượt chưa quá 2 phút",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539686",
+   "file": "src/modules/payment/config.ts",
+   "find": "export const RECONCILE_GRACE_MS = 2 * 60_000;",
+   "replace": "export const RECONCILE_GRACE_MS = 60_000;",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-104539686\""
+  },
+  {
+   "id": "SB-22 T20: đối soát không thuê dòng (hỏi cổng nhiều lần)",
+   "sb": [
+    "SB-22",
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104539653",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "private static readonly LEASE_MS = 50_000;",
+   "replace": "private static readonly LEASE_MS = 0;",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-104539653\""
+  },
+  {
+   "id": "SB-22 T20: đối soát nhận số tiền lệch",
+   "sb": [
+    "SB-22",
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104539718",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "q.amount !== amount || ",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-104539718\""
+  },
+  {
+   "id": "SB-22 T20: đối soát timeout ghi lý do khác",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539621",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "await this.outcome.failure(tx, p, cur, 'timeout', q.kind === 'failed' ? q.code : null);",
+   "replace": "await this.outcome.failure(tx, p, cur, 'other', q.kind === 'failed' ? q.code : null);",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-104539621\""
+  },
+  {
+   "id": "SB-34: đối soát xử lý lỗi cổng thành thất bại",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104539653",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": ".catch(() => ({ kind: 'error' as const }));",
+   "replace": ".catch(() => ({ kind: 'not_found' as const }));",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-104539653\""
+  },
+  {
+   "id": "SB-32 T22: job dọn nhật ký webhook dọn cả dòng mới",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "PAY-TC-20261006-113000600",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "created_at < now() - interval '12 months' LIMIT 1000",
+   "replace": "created_at < now() - interval '1 months' LIMIT 1000",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-113000600\""
+  },
+  {
+   "id": "SB-34: job dọn nhật ký dừng sau một lô",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "if (n < 1000) break;",
+   "replace": "break;",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104539001\""
+  },
+  {
+   "id": "SB-24: chuyển trạng thái tăng version sai",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/core.service.ts",
+   "find": "version = version + 1, updated_at",
+   "replace": "version = version, updated_at",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539001\""
+  },
+  {
+   "id": "SB-27: chuyển trạng thái không phát event",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104539326",
+   "file": "src/modules/payment/core.service.ts",
+   "find": "if (type) await this.events.publish(",
+   "replace": "if (false) await this.events.publish(",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539326\""
+  },
+  {
+   "id": "SB-27: event ghi ngoài giao dịch (publish lỗi bị nuốt)",
+   "sb": [
+    "SB-27"
+   ],
+   "tc": "PAY-TC-20261006-104539326",
+   "file": "src/modules/payment/core.service.ts",
+   "find": "if (type) await this.events.publish(tx, { type, aggregate_type: 'payment', aggregate_id: r.id, payload: { ...this.base(type, r), ...o.extra } });",
+   "replace": "if (type) await this.events.publish(tx, { type, aggregate_type: 'payment', aggregate_id: r.id, payload: { ...this.base(type, r), ...o.extra } }).catch(() => undefined);",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539326\""
+  },
+  {
+   "id": "SB-24: PaymentSucceeded thiếu số tiền",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104539326",
+   "file": "src/modules/payment/core.service.ts",
+   "find": "amount: Number(r.amount), method: r.method, paid_at: r.paid_at?.toISOString()",
+   "replace": "method: r.method, paid_at: r.paid_at?.toISOString()",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539326\""
+  },
+  {
+   "id": "SB-24: chuyển trạng thái bỏ kiểm cột Từ",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539164",
+   "file": "src/modules/payment/core.service.ts",
+   "find": "if (!(t.from as readonly string[]).includes(p.status)) return null;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539164\""
+  },
+  {
+   "id": "SB-06 T6: danh sách customer bỏ điều kiện user_id",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "PAY-TC-20261006-104540695",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "myList(s: SessionContext, q: MyListQuery) { return this.page(this.filters([Prisma.sql`user_id = ${s.user_id}::uuid`], q), q); }",
+   "replace": "myList(s: SessionContext, q: MyListQuery) { return this.page(this.filters([], q), q); }",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540695\""
+  },
+  {
+   "id": "SB-06 T6: chi tiết customer bỏ điều kiện chủ",
+   "sb": [
+    "SB-06",
+    "SB-05"
+   ],
+   "tc": "PAY-TC-20261006-104540794",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "AND user_id = ${userId}::uuid`",
+   "replace": "`",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540794\""
+  },
+  {
+   "id": "SB-06: chi tiết customer đọc với userId rỗng (quản trị)",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "PAY-TC-20261006-104540794",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "const p = await this.load(id, s.user_id);",
+   "replace": "const p = await this.load(id);",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540794\""
+  },
+  {
+   "id": "SB-24: phân trang bỏ OFFSET",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104540695",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "LIMIT ${take} OFFSET ${skip}`,\n      this.prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM payments",
+   "replace": "LIMIT ${take} OFFSET 0`,\n      this.prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM payments",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540695\""
+  },
+  {
+   "id": "SB-24: sắp xếp danh sách tăng dần",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104540695",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "FROM payments WHERE ${where} ORDER BY created_at DESC, id DESC",
+   "replace": "FROM payments WHERE ${where} ORDER BY created_at ASC, id ASC",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540695\""
+  },
+  {
+   "id": "SB-11: mã đơn đổi hoa bằng toUpperCase (ſ khớp nhầm)",
+   "sb": [
+    "SB-11",
+    "SB-06"
+   ],
+   "tc": "PAY-TC-20261006-104541095",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "const upperAscii = (s: string): string => s.replace(/[a-z]/g, (c) => c.toUpperCase());",
+   "replace": "const upperAscii = (s: string): string => s.toUpperCase();",
+   "test": "node scripts/run-jest.mjs test/payment/admin-read.spec.ts -t \"PAY-TC-20261006-104541095\""
+  },
+  {
+   "id": "SB-24: can_retry bỏ giới hạn lượt",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540728",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "p.status === 'failed' && p.attempt_no < this.core.cfg('PAY_MAX_ATTEMPTS') && open",
+   "replace": "p.status === 'failed' && open",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540728\""
+  },
+  {
+   "id": "SB-24: can_retry bỏ kiểm đơn pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540728",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "!!order && order.status === 'pending' && !!p.expires_at",
+   "replace": "!!p.expires_at",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540728\""
+  },
+  {
+   "id": "SB-24: can_retry bỏ kiểm hạn",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540728",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "&& p.expires_at.getTime() > now;",
+   "replace": ";",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540728\""
+  },
+  {
+   "id": "SB-24: can_initiate cho Payment không pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540728",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "p.method === 'vnpay' && p.status === 'pending' && open",
+   "replace": "p.method === 'vnpay' && open",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540728\""
+  },
+  {
+   "id": "SB-20 T11: customer thấy user_id",
+   "sb": [
+    "SB-08",
+    "SB-20",
+    "SB-06"
+   ],
+   "tc": "PAY-TC-20261006-104540728",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "return { id: p.id, order_code: p.order_code,",
+   "replace": "return { user_id: p.user_id, id: p.id, order_code: p.order_code,",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540728\""
+  },
+  {
+   "id": "SB-20 T11: customer thấy mã tham chiếu lượt thử",
+   "sb": [
+    "SB-20",
+    "SB-08"
+   ],
+   "tc": "PAY-TC-20261006-104540728",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "attempts: attempts.map((a) => ({ attempt_no: a.attempt_no, status: a.status, reason: a.reason, created_at: a.created_at.toISOString() })),",
+   "replace": "attempts: attempts.map((a) => ({ attempt_no: a.attempt_no, status: a.status, reason: a.reason, txn_ref: a.txn_ref, created_at: a.created_at.toISOString() })),",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540728\""
+  },
+  {
+   "id": "SB-20 T11: customer thấy lý do và mã gốc của hoàn tiền",
+   "sb": [
+    "SB-20",
+    "SB-08"
+   ],
+   "tc": "PAY-TC-20261006-104540893",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "refunds: refunds.map((r) => ({ amount: Number(r.amount), status: r.status, created_at: r.created_at.toISOString() })),\n    };\n  }\n\n  /** Chi tiết của staff",
+   "replace": "refunds: refunds.map((r) => ({ amount: Number(r.amount), status: r.status, reason: r.reason, gateway_code: r.gateway_code, created_at: r.created_at.toISOString() })),\n    };\n  }\n\n  /** Chi tiết của staff",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540893\""
+  },
+  {
+   "id": "SB-08 T11: chi tiết quản trị kèm email (dữ liệu cá nhân)",
+   "sb": [
+    "SB-08",
+    "SB-18"
+   ],
+   "tc": "PAY-TC-20261006-104540996",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "provider_ref: p.provider_ref, user_id: p.user_id,",
+   "replace": "provider_ref: p.provider_ref, user_id: p.user_id, email: 'khach@example.com',",
+   "test": "node scripts/run-jest.mjs test/payment/admin-read.spec.ts -t \"PAY-TC-20261006-104540996\""
+  },
+  {
+   "id": "SB-18: chi tiết quản trị kèm chữ ký (payload webhook)",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "PAY-TC-20261006-104540996",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "webhook_logs: logs.reverse().map((l) => ({ created_at: l.created_at.toISOString(), rsp_code: l.rsp_code, result: l.result })),",
+   "replace": "webhook_logs: logs.reverse().map((l) => ({ created_at: l.created_at.toISOString(), rsp_code: l.rsp_code, result: l.result, signature_valid: true })),",
+   "test": "node scripts/run-jest.mjs test/payment/admin-read.spec.ts -t \"PAY-TC-20261006-104540996\""
+  },
+  {
+   "id": "SB-24: hàng đợi hoàn tiền không đưa failed lên đầu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540928",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "CASE r.status WHEN 'failed' THEN 0 WHEN 'requested' THEN 1 ELSE 2 END",
+   "replace": "CASE r.status WHEN 'failed' THEN 2 WHEN 'requested' THEN 1 ELSE 0 END",
+   "test": "node scripts/run-jest.mjs test/payment/admin-read.spec.ts -t \"PAY-TC-20261006-104540928\""
+  },
+  {
+   "id": "SB-34: chi tiết quản trị không giới hạn dòng nhật ký",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104539001",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "ORDER BY created_at DESC, id DESC LIMIT 100`",
+   "replace": "ORDER BY created_at DESC, id DESC LIMIT 1000`",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104539001\""
+  },
+  {
+   "id": "SB-24: nhật ký webhook chi tiết xếp ngược",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540996",
+   "file": "src/modules/payment/read.service.ts",
+   "find": "webhook_logs: logs.reverse().map",
+   "replace": "webhook_logs: logs.map",
+   "test": "node scripts/run-jest.mjs test/payment/admin-read.spec.ts -t \"PAY-TC-20261006-104540996\""
+  },
+  {
+   "id": "SB-05 T7: staff được bắt đầu thanh toán",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "PAY-TC-20261006-104538738",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Action('Bắt đầu thanh toán online qua VNPay') @HttpCode(200) @Roles('customer')",
+   "replace": "@Action('Bắt đầu thanh toán online qua VNPay') @HttpCode(200) @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/payment/guard.spec.ts -t \"PAY-TC-20261006-104538738\""
+  },
+  {
+   "id": "SB-05 T7: admin được thử lại thanh toán",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "PAY-TC-20261006-104539817",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Action('Thử lại thanh toán online') @HttpCode(200) @Roles('customer')",
+   "replace": "@Action('Thử lại thanh toán online') @HttpCode(200) @Roles('customer', 'admin')",
+   "test": "node scripts/run-jest.mjs test/payment/retry.spec.ts -t \"PAY-TC-20261006-104539817\""
+  },
+  {
+   "id": "SB-05 T7: customer được ghi nhận thu COD",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "PAY-TC-20261006-104539390",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Action('Ghi nhận đã thu tiền COD') @HttpCode(200) @Roles('staff', 'admin')",
+   "replace": "@Action('Ghi nhận đã thu tiền COD') @HttpCode(200) @Roles('staff', 'admin', 'customer')",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539390\""
+  },
+  {
+   "id": "SB-05 T7: staff được hoàn tiền thủ công",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "PAY-TC-20261006-104540482",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Action('Hoàn tiền thủ công toàn phần') @Roles('admin')",
+   "replace": "@Action('Hoàn tiền thủ công toàn phần') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540482\""
+  },
+  {
+   "id": "SB-05 T7: staff được thử lại hoàn tiền",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "PAY-TC-20261006-104540482",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Action('Thử lại hoàn tiền thất bại') @Roles('admin')",
+   "replace": "@Action('Thử lại hoàn tiền thất bại') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540482\""
+  },
+  {
+   "id": "SB-05: staff xem danh sách thanh toán của customer",
+   "sb": [
+    "SB-05",
+    "SB-06"
+   ],
+   "tc": "PAY-TC-20261006-104540761",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Action('Xem danh sách thanh toán của mình') @Roles('customer')",
+   "replace": "@Action('Xem danh sách thanh toán của mình') @Roles('customer', 'staff')",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540761\""
+  },
+  {
+   "id": "SB-05: admin xem chi tiết thanh toán của customer",
+   "sb": [
+    "SB-05",
+    "SB-06"
+   ],
+   "tc": "PAY-TC-20261006-104540761",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Action('Xem chi tiết thanh toán của mình') @Roles('customer')",
+   "replace": "@Action('Xem chi tiết thanh toán của mình') @Roles('customer', 'admin')",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540761\""
+  },
+  {
+   "id": "SB-05: customer xem danh sách quản trị",
+   "sb": [
+    "SB-05",
+    "SB-08"
+   ],
+   "tc": "PAY-TC-20261006-104541031",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Roles('staff', 'admin') @RateLimit(LIMITS.admin) @Validate({ query: adminListQuery })",
+   "replace": "@Roles('staff', 'admin', 'customer') @RateLimit(LIMITS.admin) @Validate({ query: adminListQuery })",
+   "test": "node scripts/run-jest.mjs test/payment/admin-read.spec.ts -t \"PAY-TC-20261006-104541031\""
+  },
+  {
+   "id": "SB-05: customer xem chi tiết quản trị",
+   "sb": [
+    "SB-05",
+    "SB-08"
+   ],
+   "tc": "PAY-TC-20261006-104541031",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Roles('staff', 'admin') @RateLimit(LIMITS.admin) @Validate({ params: idParams })\n  detail(@ValidParams() p: Id) { return this.reads.adminDetail",
+   "replace": "@Roles('staff', 'admin', 'customer') @RateLimit(LIMITS.admin) @Validate({ params: idParams })\n  detail(@ValidParams() p: Id) { return this.reads.adminDetail",
+   "test": "node scripts/run-jest.mjs test/payment/admin-read.spec.ts -t \"PAY-TC-20261006-104541031\""
+  },
+  {
+   "id": "SB-05: customer xem hàng đợi hoàn tiền",
+   "sb": [
+    "SB-05",
+    "SB-08"
+   ],
+   "tc": "PAY-TC-20261006-104541031",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Roles('staff', 'admin') @RateLimit(LIMITS.admin) @Validate({ query: refundQueueQuery })",
+   "replace": "@Roles('staff', 'admin', 'customer') @RateLimit(LIMITS.admin) @Validate({ query: refundQueueQuery })",
+   "test": "node scripts/run-jest.mjs test/payment/admin-read.spec.ts -t \"PAY-TC-20261006-104541031\""
+  },
+  {
+   "id": "SB-05 T1: IPN không khai @Public (guard từ chối cổng)",
+   "sb": [
+    "SB-05",
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104538738",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Action('Nhận webhook IPN của VNPay (cổng gọi, xác thực bằng chữ ký)') @Public() @RateLimit(LIMITS.ipn)",
+   "replace": "@Action('Nhận webhook IPN của VNPay (cổng gọi, xác thực bằng chữ ký)') @RateLimit(LIMITS.ipn)",
+   "test": "node scripts/run-jest.mjs test/payment/guard.spec.ts -t \"PAY-TC-20261006-104538738\""
+  },
+  {
+   "id": "SB-14 T13: bỏ giới hạn bắt đầu thanh toán",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Roles('customer') @RateLimit(LIMITS.start) @Validate({ params: idParams, body: emptyBody })\n  async initiate",
+   "replace": "@Roles('customer') @Validate({ params: idParams, body: emptyBody })\n  async initiate",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13: bỏ giới hạn thử lại (retry)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Roles('customer') @RateLimit(LIMITS.start) @Validate({ params: idParams, body: emptyBody })\n  async retry",
+   "replace": "@Roles('customer') @Validate({ params: idParams, body: emptyBody })\n  async retry",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13: bỏ giới hạn hoàn tiền",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Roles('admin') @RateLimit(LIMITS.refund) @Validate({ params: idParams, body: refundBody })",
+   "replace": "@Roles('admin') @Validate({ params: idParams, body: refundBody })",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13: bỏ giới hạn đọc của customer",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Action('Xem danh sách thanh toán của mình') @Roles('customer') @RateLimit(LIMITS.read)",
+   "replace": "@Action('Xem danh sách thanh toán của mình') @Roles('customer')",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13: bỏ giới hạn IPN",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104539294",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Public() @RateLimit(LIMITS.ipn) @Validate({ query: ipnQuery })",
+   "replace": "@Public() @Validate({ query: ipnQuery })",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539294\""
+  },
+  {
+   "id": "SB-14 T13: bỏ giới hạn quản trị",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Action('Xem danh sách mọi thanh toán (lọc trạng thái, phương thức, mã đơn)') @Roles('staff', 'admin') @RateLimit(LIMITS.admin)",
+   "replace": "@Action('Xem danh sách mọi thanh toán (lọc trạng thái, phương thức, mã đơn)') @Roles('staff', 'admin')",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13: bỏ giới hạn ghi nhận thu COD",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/payment.controller.ts",
+   "find": "@Roles('staff', 'admin') @RateLimit(LIMITS.collect) @Validate({ params: idParams, body: codBody })",
+   "replace": "@Roles('staff', 'admin') @Validate({ params: idParams, body: codBody })",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13: ngưỡng bắt đầu thanh toán 11",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/http.ts",
+   "find": "start: { tier: 'E', limit: 10,",
+   "replace": "start: { tier: 'E', limit: 11,",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13: ngưỡng hoàn tiền 21",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/http.ts",
+   "find": "refund: { tier: 'E', limit: 20,",
+   "replace": "refund: { tier: 'E', limit: 21,",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13: ngưỡng IPN 301",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104539294",
+   "file": "src/modules/payment/http.ts",
+   "find": "ipn: { tier: 'E', limit: 300,",
+   "replace": "ipn: { tier: 'E', limit: 301,",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539294\""
+  },
+  {
+   "id": "SB-14 T13: ngưỡng đọc 61",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/http.ts",
+   "find": "read: { tier: 'E', limit: 60,",
+   "replace": "read: { tier: 'E', limit: 61,",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13: ngưỡng quản trị 31",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/http.ts",
+   "find": "admin: { tier: 'D', limit: 30,",
+   "replace": "admin: { tier: 'D', limit: 31,",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13: ngưỡng thu COD 31",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104538969",
+   "file": "src/modules/payment/http.ts",
+   "find": "collect: { tier: 'D', limit: 30,",
+   "replace": "collect: { tier: 'D', limit: 31,",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104538969\""
+  },
+  {
+   "id": "SB-14 T13/T21: khóa đếm IPN theo phiên thay vì IP",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104539294",
+   "file": "src/modules/payment/http.ts",
+   "find": "key: (req: Request) => `ip:${ipOf(req)}` },",
+   "replace": "key: undefined },",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539294\""
+  },
+  {
+   "id": "SB-14 T21: IPN không tin TRUST_PROXY_HOPS (IP từ X-Forwarded-For đầu)",
+   "sb": [
+    "SB-14",
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539294",
+   "file": "src/modules/payment/http.ts",
+   "find": "export const ipOf = (req: Request): string => clientIp(req, ipHops);",
+   "replace": "export const ipOf = (req: Request): string => String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() || clientIp(req, ipHops);",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539294\""
+  },
+  {
+   "id": "SB-40: bỏ kiểm định dạng Idempotency-Key",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "PAY-TC-20261006-113000300",
+   "file": "src/modules/payment/idem.ts",
+   "find": "if (!k || !IDEMPOTENCY_KEY_RE.test(k)) throw",
+   "replace": "if (false) throw",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-113000300\""
+  },
+  {
+   "id": "SB-40: Idempotency-Key tối thiểu 1 ký tự",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "PAY-TC-20261006-113000300",
+   "file": "src/modules/payment/config.ts",
+   "find": "/^[A-Za-z0-9_-]{8,64}$/",
+   "replace": "/^[A-Za-z0-9_-]{1,64}$/",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-113000300\""
+  },
+  {
+   "id": "SB-40: Idempotency-Key nhận khóa dài hơn 64 ký tự",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "PAY-TC-20261006-113000500",
+   "file": "src/modules/payment/config.ts",
+   "find": "/^[A-Za-z0-9_-]{8,64}$/",
+   "replace": "/^[A-Za-z0-9_-]{8,200}$/",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-113000500\""
+  },
+  {
+   "id": "SB-40: hoàn tiền không dùng Idempotency-Key (băm bỏ lý do)",
+   "sb": [
+    "SB-40",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-113000500",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "hashOf('/payments/:id/refunds', { id, reason })",
+   "replace": "hashOf('/payments/:id/refunds', { id })",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-113000500\""
+  },
+  {
+   "id": "SB-40: thử lại hoàn tiền băm bỏ id",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "PAY-TC-20261006-113000500",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "hashOf('/refunds/:id/retry', { id })",
+   "replace": "hashOf('/refunds/:id/retry', {})",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-113000500\""
+  },
+  {
+   "id": "SB-11: bỏ chặn trường lạ (amount, user_id)",
+   "sb": [
+    "SB-11",
+    "SB-23",
+    "SB-06"
+   ],
+   "tc": "PAY-TC-20261006-104540563",
+   "file": "src/modules/payment/policy.ts",
+   "find": "ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540563\""
+  },
+  {
+   "id": "SB-11: bỏ chặn __proto__",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104540563",
+   "file": "src/modules/payment/policy.ts",
+   "find": "if (v && typeof v === 'object' && Object.prototype.hasOwnProperty.call(v, '__proto__')) ctx.addIssue({ code: 'custom', path: ['__proto__'], message: 'unknown_field' });",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540563\""
+  },
+  {
+   "id": "SB-11: collected_amount nhận số thực",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104539422",
+   "file": "src/modules/payment/policy.ts",
+   "find": ".int({ message: 'invalid_format' })",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539422\""
+  },
+  {
+   "id": "SB-11: collected_amount nhận 0",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104539422",
+   "file": "src/modules/payment/policy.ts",
+   "find": ".min(1, { message: 'out_of_range' })",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539422\""
+  },
+  {
+   "id": "SB-11 T17: lý do tối thiểu 4 ký tự",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "PAY-TC-20261006-104540563",
+   "file": "src/modules/payment/config.ts",
+   "find": "export const REASON_MIN = 5;",
+   "replace": "export const REASON_MIN = 4;",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540563\""
+  },
+  {
+   "id": "SB-11 T17: lý do tối đa 301 ký tự",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "PAY-TC-20261006-104540563",
+   "file": "src/modules/payment/config.ts",
+   "find": "export const REASON_MAX = 300;",
+   "replace": "export const REASON_MAX = 301;",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540563\""
+  },
+  {
+   "id": "SB-11 T17: ghi chú COD tối đa 201 ký tự",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "PAY-TC-20261006-104539422",
+   "file": "src/modules/payment/config.ts",
+   "find": "export const NOTE_MAX = 200;",
+   "replace": "export const NOTE_MAX = 201;",
+   "test": "node scripts/run-jest.mjs test/payment/success.spec.ts -t \"PAY-TC-20261006-104539422\""
+  },
+  {
+   "id": "SB-11: cho ký tự điều khiển (NUL) trong lý do",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104540563",
+   "file": "src/modules/payment/policy.ts",
+   "find": "const CONTROL_TEXT = /[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/;",
+   "replace": "const CONTROL_TEXT = /[\\u007F]/;",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104540563\""
+  },
+  {
+   "id": "SB-12 T17: lý do bị biến đổi (cắt ký tự <)",
+   "sb": [
+    "SB-12",
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104540662",
+   "file": "src/modules/payment/policy.ts",
+   "find": "z.string(str).transform((s) => s.trim()).pipe(z.string().superRefine((v, ctx) => {\n  const n = len(v);\n  const c = n === 0",
+   "replace": "z.string(str).transform((s) => s.trim().replace(/</g, '')).pipe(z.string().superRefine((v, ctx) => {\n  const n = len(v);\n  const c = n === 0",
+   "test": "node scripts/run-jest.mjs test/payment/refund-manual.spec.ts -t \"PAY-TC-20261006-104540662\""
+  },
+  {
+   "id": "SB-11: danh sách nhận trạng thái tùy ý",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104540827",
+   "file": "src/modules/payment/policy.ts",
+   "find": "status: enumOf([...PAYMENT_STATUSES] as [string, ...string[]]).optional() as unknown as z.ZodOptional<z.ZodType<(typeof PAYMENT_STATUSES)[number]>>,",
+   "replace": "status: z.string().optional() as unknown as z.ZodOptional<z.ZodType<(typeof PAYMENT_STATUSES)[number]>>,",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540827\""
+  },
+  {
+   "id": "SB-11: order_code không giới hạn độ dài",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104540827",
+   "file": "src/modules/payment/config.ts",
+   "find": "export const ORDER_CODE_QUERY_MAX = 32;",
+   "replace": "export const ORDER_CODE_QUERY_MAX = 3200;",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540827\""
+  },
+  {
+   "id": "SB-08 T11: admin lọc theo phương thức bất kỳ",
+   "sb": [
+    "SB-08",
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104541064",
+   "file": "src/modules/payment/policy.ts",
+   "find": "method: enumOf([...METHODS] as [string, ...string[]]).optional() as unknown as z.ZodOptional<z.ZodType<(typeof METHODS)[number]>>,",
+   "replace": "method: z.string().optional() as unknown as z.ZodOptional<z.ZodType<(typeof METHODS)[number]>>,",
+   "test": "node scripts/run-jest.mjs test/payment/admin-read.spec.ts -t \"PAY-TC-20261006-104541064\""
+  },
+  {
+   "id": "SB-06: customer lọc được theo user_id",
+   "sb": [
+    "SB-06",
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104540794",
+   "file": "src/modules/payment/policy.ts",
+   "find": "export const myListQuery = paginationQuery.extend({",
+   "replace": "export const myListQuery = paginationQuery.extend({\n  user_id: z.string().optional(),",
+   "test": "node scripts/run-jest.mjs test/payment/read.spec.ts -t \"PAY-TC-20261006-104540794\""
+  },
+  {
+   "id": "SB-23: khoảng số tiền VNPay dưới 4000",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104538804",
+   "file": "src/modules/payment/config.ts",
+   "find": "export const VNPAY_MIN_AMOUNT = 5_000;",
+   "replace": "export const VNPAY_MIN_AMOUNT = 4_000;",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538804\""
+  },
+  {
+   "id": "SB-23: khoảng số tiền VNPay tới 1 tỷ",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104538671",
+   "file": "src/modules/payment/config.ts",
+   "find": "export const VNPAY_MAX_AMOUNT = 999_999_999;",
+   "replace": "export const VNPAY_MAX_AMOUNT = 1_000_000_000;",
+   "test": "node scripts/run-jest.mjs test/payment/create.spec.ts -t \"PAY-TC-20261006-104538671\""
+  },
+  {
+   "id": "SB-34: hạn chờ hoàn tiền 1 phút",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104540309",
+   "file": "src/modules/payment/config.ts",
+   "find": "export const REFUND_STALE_MS = 5 * 60_000;",
+   "replace": "export const REFUND_STALE_MS = 60_000;",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540309\""
+  },
+  {
+   "id": "SB-34: lịch tự thử lại 5 phút rồi 5 phút",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "src/modules/payment/config.ts",
+   "find": "export const REFUND_RETRY_DELAYS_MS = [5 * 60_000, 30 * 60_000] as const;",
+   "replace": "export const REFUND_RETRY_DELAYS_MS = [5 * 60_000, 5 * 60_000] as const;",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540277\""
+  },
+  {
+   "id": "SB-16 T12: khóa ký không bị kiểm quy tắc bí mật ở prod",
+   "sb": [
+    "SB-15",
+    "SB-16"
+   ],
+   "tc": "PAY-TC-20261007-085337388",
+   "file": "src/modules/payment/config.ts",
+   "find": "const secret = (): ConfigVar => ({ zod: z.string(), sensitive: true, default: '', requiredOutsideDev: true, secretRules: true });",
+   "replace": "const secret = (): ConfigVar => ({ zod: z.string(), sensitive: true, default: '', requiredOutsideDev: true });",
+   "test": "node scripts/run-jest.mjs test/payment/guard.spec.ts -t \"PAY-TC-20261007-085337388\""
+  },
+  {
+   "id": "SB-16 T12: khóa ký không bắt buộc ở staging và prod",
+   "sb": [
+    "SB-15",
+    "SB-16"
+   ],
+   "tc": "PAY-TC-20261007-085337388",
+   "file": "src/modules/payment/config.ts",
+   "find": "const secret = (): ConfigVar => ({ zod: z.string(), sensitive: true, default: '', requiredOutsideDev: true, secretRules: true });",
+   "replace": "const secret = (): ConfigVar => ({ zod: z.string(), sensitive: true, default: '', secretRules: true });",
+   "test": "node scripts/run-jest.mjs test/payment/guard.spec.ts -t \"PAY-TC-20261007-085337388\""
+  },
+  {
+   "id": "SB-15 T12: khóa ký có giá trị mặc định",
+   "sb": [
+    "SB-15",
+    "SB-16"
+   ],
+   "tc": "PAY-TC-20261007-085337388",
+   "file": "src/modules/payment/config.ts",
+   "find": "const secret = (): ConfigVar => ({ zod: z.string(), sensitive: true, default: '',",
+   "replace": "const secret = (): ConfigVar => ({ zod: z.string(), sensitive: true, default: 'khoa-mac-dinh-khong-duoc-co',",
+   "test": "node scripts/run-jest.mjs test/payment/guard.spec.ts -t \"PAY-TC-20261007-085337388\""
+  },
+  {
+   "id": "SB-16: mã đối tác TMN không bắt buộc ngoài dev",
+   "sb": [
+    "SB-16"
+   ],
+   "tc": "PAY-TC-20261007-085337388",
+   "file": "src/modules/payment/config.ts",
+   "find": "VNPAY_TMN_CODE: required(cfg.string({ default: '' })),",
+   "replace": "VNPAY_TMN_CODE: cfg.string({ default: '' }),",
+   "test": "node scripts/run-jest.mjs test/payment/guard.spec.ts -t \"PAY-TC-20261007-085337388\""
+  },
+  {
+   "id": "SB-16: địa chỉ quay về không bắt buộc ngoài dev",
+   "sb": [
+    "SB-16"
+   ],
+   "tc": "PAY-TC-20261007-085337388",
+   "file": "src/modules/payment/config.ts",
+   "find": "VNPAY_RETURN_URL: url(''),",
+   "replace": "VNPAY_RETURN_URL: { ...url(''), requiredOutsideDev: false },",
+   "test": "node scripts/run-jest.mjs test/payment/guard.spec.ts -t \"PAY-TC-20261007-085337388\""
+  },
+  {
+   "id": "SB-24: PAY_MAX_ATTEMPTS mặc định 4",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539587",
+   "file": "src/modules/payment/config.ts",
+   "find": "PAY_MAX_ATTEMPTS: cfg.int({ default: 3, min: 1, max: 10 }),",
+   "replace": "PAY_MAX_ATTEMPTS: cfg.int({ default: 4, min: 1, max: 10 }),",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261006-104539587\""
+  },
+  {
+   "id": "SB-24: PAY_REFUND_AUTO_ATTEMPTS mặc định 2",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "src/modules/payment/config.ts",
+   "find": "PAY_REFUND_AUTO_ATTEMPTS: cfg.int({ default: 3, min: 1, max: 3 }),",
+   "replace": "PAY_REFUND_AUTO_ATTEMPTS: cfg.int({ default: 2, min: 1, max: 3 }),",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540277\""
+  },
+  {
+   "id": "SB-23: hạn đường dẫn mặc định 9 phút",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/config.ts",
+   "find": "PAY_ATTEMPT_URL_TTL_MINUTES: cfg.int({ default: 10, min: 1, max: 15 }),",
+   "replace": "PAY_ATTEMPT_URL_TTL_MINUTES: cfg.int({ default: 9, min: 1, max: 15 }),",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-22 T1: chuỗi ký không sắp theo tên tham số",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "    .sort()\n    .map((k) =>",
+   "replace": "    .map((k) =>",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104539065\""
+  },
+  {
+   "id": "SB-22 T1: chuỗi ký bỏ mã hóa khoảng trắng thành +",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": ".replace(/%20/g, '+')",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104539065\""
+  },
+  {
+   "id": "SB-22 T1: chuỗi ký gồm cả vnp_SecureHashType",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "k !== 'vnp_SecureHash' && k !== 'vnp_SecureHashType'",
+   "replace": "k !== 'vnp_SecureHash'",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104539065\""
+  },
+  {
+   "id": "SB-22 T1: so sánh chữ ký không dùng timingSafeEqual",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "a.length === b.length && timingSafeEqual(a, b)",
+   "replace": "a.equals(b)",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539065\""
+  },
+  {
+   "id": "SB-22 T1: khóa ký rỗng vẫn xác thực",
+   "sb": [
+    "SB-22",
+    "SB-16"
+   ],
+   "tc": "PAY-TC-20261007-085337388",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "return !!secret && sameHex(sign(params, secret), given);",
+   "replace": "return sameHex(sign(params, secret), given);",
+   "test": "node scripts/run-jest.mjs test/payment/guard.spec.ts -t \"PAY-TC-20261007-085337388\""
+  },
+  {
+   "id": "SB-22 T1: chữ ký hex ngắn hơn 128 ký tự được chấp nhận",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "!/^[0-9a-fA-F]{128}$/.test(given)",
+   "replace": "!/^[0-9a-fA-F]{2,128}$/.test(given)",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104539065\"",
+   "equivalent": "lớp bảo vệ thứ hai: chuỗi hex ngắn hơn 128 ký tự vẫn bị `a.length === b.length` ngay sau đó loại, nên so sánh không bao giờ thành công; hành vi quan sát được không đổi"
+  },
+  {
+   "id": "SB-23: số tiền gửi cổng ×10",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "(vnd * 100n).toString()",
+   "replace": "(vnd * 10n).toString()",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-23: số tiền IPN chia hết 100 không bắt buộc",
+   "sb": [
+    "SB-23",
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "return v > 0n && v % 100n === 0n ? v / 100n : null;",
+   "replace": "return v > 0n ? v / 100n : null;",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-23: số tiền IPN nhận 0",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "return v > 0n && v % 100n === 0n",
+   "replace": "return v >= 0n && v % 100n === 0n",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-23: số tiền IPN nhận chuỗi không phải số",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "if (!/^[0-9]{1,20}$/.test(raw)) return null;",
+   "replace": "if (!/^[0-9x ]{1,20}$/i.test(raw)) return null;",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-24: giờ VNPay theo UTC",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "const t = new Date(d.getTime() + 7 * 3600_000);",
+   "replace": "const t = new Date(d.getTime());",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-22 T1: thành công chỉ cần ResponseCode 00",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "responseCode === '00' && transactionStatus === '00'",
+   "replace": "responseCode === '00'",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-23: mô tả đơn kèm dữ liệu cá nhân",
+   "sb": [
+    "SB-23",
+    "SB-08"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "vnp_OrderInfo: `Thanh toan don ${i.orderCode}`, vnp_OrderType",
+   "replace": "vnp_OrderInfo: `Thanh toan don ${i.orderCode} lien he 0901234567`, vnp_OrderType",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-23: chữ ký đường dẫn chỉ phủ vài tham số",
+   "sb": [
+    "SB-23",
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104538705",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "const data = signData(params);\n  return `${i.payUrl}?${data}&vnp_SecureHash=${hmac512(i.secret, data)}`;",
+   "replace": "const data = signData(params);\n  return `${i.payUrl}?${data}&vnp_SecureHash=${hmac512(i.secret, signData({ vnp_TxnRef: i.txnRef }))}`;",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104538705\""
+  },
+  {
+   "id": "SB-22: mã 24 không phải hủy bởi khách",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-130000400",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "if (responseCode === '24') return 'cancelled_by_user';",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-130000400\""
+  },
+  {
+   "id": "SB-22: mã 11 không phải timeout",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-130000400",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "if (responseCode === '11') return 'timeout';",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-130000400\""
+  },
+  {
+   "id": "SB-22: mã 51 không phải declined",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-130000400",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "['07', '09', '10', '12', '13', '51', '65', '79']",
+   "replace": "['07', '09', '10', '12', '13', '65', '79']",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-130000400\""
+  },
+  {
+   "id": "SB-31 T16: truy vấn không giới hạn hạn gọi",
+   "sb": [
+    "SB-31",
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104539653",
+   "file": "src/modules/payment/gateway.ts",
+   "find": ", signal: AbortSignal.timeout(this.timeoutMs) })",
+   "replace": " })",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104539653\""
+  },
+  {
+   "id": "SB-22 T20: truy vấn không kiểm chữ ký phản hồi",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539653",
+   "file": "src/modules/payment/gateway.ts",
+   "find": "if (!sameHex(hmac512(c.secret, resp), r.vnp_SecureHash)) return { kind: 'error' }; // không tin phản hồi sai chữ ký",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104539653\""
+  },
+  {
+   "id": "SB-22: hoàn tiền không kiểm chữ ký phản hồi",
+   "sb": [
+    "SB-22",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540177",
+   "file": "src/modules/payment/gateway.ts",
+   "find": "if (!sameHex(hmac512(c.secret, resp), r.vnp_SecureHash)) return { kind: 'pending' }; // không tin phản hồi sai chữ ký",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104540177\""
+  },
+  {
+   "id": "SB-24: mã 99 của cổng coi là từ chối",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540177",
+   "file": "src/modules/payment/gateway.ts",
+   "find": "if (['94', '99'].includes(code)) return { kind: 'pending' };",
+   "replace": "if (['94'].includes(code)) return { kind: 'pending' };",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104540177\""
+  },
+  {
+   "id": "SB-24: mã 91 coi là không có giao dịch",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539621",
+   "file": "src/modules/payment/gateway.ts",
+   "find": "if (r.vnp_ResponseCode === '91') return { kind: 'not_found' };",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104539621\""
+  },
+  {
+   "id": "SB-24: hoàn tiền dùng loại một phần (03)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540177",
+   "file": "src/modules/payment/gateway.ts",
+   "find": "vnp_TransactionType: '02'",
+   "replace": "vnp_TransactionType: '03'",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104540177\""
+  },
+  {
+   "id": "SB-23: hoàn tiền gửi số tiền không nhân 100",
+   "sb": [
+    "SB-23",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540177",
+   "file": "src/modules/payment/gateway.ts",
+   "find": "vnp_Amount: toVnpAmount(i.amount),",
+   "replace": "vnp_Amount: String(i.amount),",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104540177\""
+  },
+  {
+   "id": "SB-31: khóa ký rỗng vẫn gọi cổng",
+   "sb": [
+    "SB-16"
+   ],
+   "tc": "PAY-TC-20261006-104539653",
+   "file": "src/modules/payment/gateway.ts",
+   "find": "return tmn && secret && this.config.get<string>('VNPAY_API_URL') ? { tmn, secret } : null;",
+   "replace": "return { tmn, secret };",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104539653\""
+  },
+  {
+   "id": "CHECK payments_amount_positive bị vô hiệu",
+   "sb": [
+    "SB-23",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payments_amount_positive\" CHECK (amount > 0)",
+   "replace": "ADD CONSTRAINT \"payments_amount_positive\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payments\""
+  },
+  {
+   "id": "CHECK payments_attempt_no_range bị vô hiệu",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payments_attempt_no_range\" CHECK (attempt_no BETWEEN 0 AND 10)",
+   "replace": "ADD CONSTRAINT \"payments_attempt_no_range\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payments\""
+  },
+  {
+   "id": "CHECK payments_expires_online bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payments_expires_online\" CHECK (method = 'cod' OR expires_at IS NOT NULL)",
+   "replace": "ADD CONSTRAINT \"payments_expires_online\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payments\""
+  },
+  {
+   "id": "CHECK payments_succeeded_paid_at bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payments_succeeded_paid_at\" CHECK (status <> 'succeeded' OR paid_at IS NOT NULL)",
+   "replace": "ADD CONSTRAINT \"payments_succeeded_paid_at\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payments\""
+  },
+  {
+   "id": "CHECK payments_succeeded_provider_ref bị vô hiệu",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payments_succeeded_provider_ref\" CHECK (status <> 'succeeded' OR method = 'cod' OR provider_ref IS NOT NULL)",
+   "replace": "ADD CONSTRAINT \"payments_succeeded_provider_ref\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payments\""
+  },
+  {
+   "id": "CHECK payments_order_code_format bị vô hiệu",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payments_order_code_format\" CHECK (order_code ~ '^[0-9A-HJKMNP-TV-Z]{12}$')",
+   "replace": "ADD CONSTRAINT \"payments_order_code_format\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payments\""
+  },
+  {
+   "id": "CHECK payments_version_nonneg bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payments_version_nonneg\" CHECK (version >= 0)",
+   "replace": "ADD CONSTRAINT \"payments_version_nonneg\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payments\""
+  },
+  {
+   "id": "CHECK payment_attempts_attempt_no_range bị vô hiệu",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payment_attempts_attempt_no_range\" CHECK (attempt_no BETWEEN 1 AND 10)",
+   "replace": "ADD CONSTRAINT \"payment_attempts_attempt_no_range\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "CHECK payment_attempts_txn_ref_format bị vô hiệu",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payment_attempts_txn_ref_format\" CHECK (txn_ref ~ '^[0-9a-f]{16}[0-9]{2}$')",
+   "replace": "ADD CONSTRAINT \"payment_attempts_txn_ref_format\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "CHECK payment_attempts_reason_scope bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payment_attempts_reason_scope\" CHECK (reason IS NULL OR status = 'failed')",
+   "replace": "ADD CONSTRAINT \"payment_attempts_reason_scope\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "CHECK payment_attempts_succeeded_txn_no bị vô hiệu",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payment_attempts_succeeded_txn_no\" CHECK (status <> 'succeeded' OR provider_txn_no IS NOT NULL)",
+   "replace": "ADD CONSTRAINT \"payment_attempts_succeeded_txn_no\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "CHECK payment_attempts_resolved_at bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payment_attempts_resolved_at\" CHECK ((status = 'processing') = (resolved_at IS NULL))",
+   "replace": "ADD CONSTRAINT \"payment_attempts_resolved_at\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "CHECK payment_attempts_expiry_after_create bị vô hiệu",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payment_attempts_expiry_after_create\" CHECK (expires_at > create_date)",
+   "replace": "ADD CONSTRAINT \"payment_attempts_expiry_after_create\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "CHECK refunds_amount_positive bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"refunds_amount_positive\" CHECK (amount > 0)",
+   "replace": "ADD CONSTRAINT \"refunds_amount_positive\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "CHECK refunds_note_len bị vô hiệu",
+   "sb": [
+    "SB-11",
+    "SB-12"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"refunds_note_len\" CHECK (note IS NULL OR char_length(note) BETWEEN 5 AND 300)",
+   "replace": "ADD CONSTRAINT \"refunds_note_len\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "CHECK refunds_note_manual bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"refunds_note_manual\" CHECK ((reason = 'admin_manual') = (note IS NOT NULL))",
+   "replace": "ADD CONSTRAINT \"refunds_note_manual\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "CHECK refunds_requested_by_manual bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"refunds_requested_by_manual\" CHECK (requested_by IS NULL OR reason = 'admin_manual')",
+   "replace": "ADD CONSTRAINT \"refunds_requested_by_manual\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "CHECK refunds_failure_reason_scope bị vô hiệu",
+   "sb": [
+    "SB-20"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"refunds_failure_reason_scope\" CHECK (failure_reason IS NULL OR status = 'failed')",
+   "replace": "ADD CONSTRAINT \"refunds_failure_reason_scope\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "CHECK refunds_next_retry_scope bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"refunds_next_retry_scope\" CHECK (next_retry_at IS NULL OR status = 'failed')",
+   "replace": "ADD CONSTRAINT \"refunds_next_retry_scope\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "CHECK refunds_resolved_at bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"refunds_resolved_at\" CHECK ((status = 'requested') = (resolved_at IS NULL))",
+   "replace": "ADD CONSTRAINT \"refunds_resolved_at\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "CHECK refunds_request_id_format bị vô hiệu",
+   "sb": [
+    "SB-24",
+    "SB-40"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"refunds_request_id_format\" CHECK (gateway_request_id ~ '^[0-9a-f]{32}$')",
+   "replace": "ADD CONSTRAINT \"refunds_request_id_format\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "CHECK refunds_auto_attempt_range bị vô hiệu",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"refunds_auto_attempt_range\" CHECK (auto_attempt_no IS NULL OR auto_attempt_no BETWEEN 1 AND 3)",
+   "replace": "ADD CONSTRAINT \"refunds_auto_attempt_range\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "CHECK payment_webhook_logs_rsp_code bị vô hiệu",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-113000600",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payment_webhook_logs_rsp_code\" CHECK (rsp_code IN ('00', '01', '02', '04', '97', '99'))",
+   "replace": "ADD CONSTRAINT \"payment_webhook_logs_rsp_code\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-113000600\""
+  },
+  {
+   "id": "CHECK payment_webhook_logs_payload_object bị vô hiệu",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "PAY-TC-20261006-113000600",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payment_webhook_logs_payload_object\" CHECK (jsonb_typeof(payload) = 'object')",
+   "replace": "ADD CONSTRAINT \"payment_webhook_logs_payload_object\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-113000600\""
+  },
+  {
+   "id": "CHECK payment_webhook_logs_result_format bị vô hiệu",
+   "sb": [
+    "SB-18"
+   ],
+   "tc": "PAY-TC-20261006-113000600",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"payment_webhook_logs_result_format\" CHECK (result ~ '^[a-z_]{1,40}$')",
+   "replace": "ADD CONSTRAINT \"payment_webhook_logs_result_format\" CHECK (true)",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-113000600\""
+  },
+  {
+   "id": "UNIQUE payments_order_id_key thành chỉ mục thường",
+   "sb": [
+    "SB-24",
+    "SB-25"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"payments_order_id_key\" ON \"payments\"(\"order_id\");",
+   "replace": "CREATE INDEX \"payments_order_id_key\" ON \"payments\"(\"order_id\");",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payments\""
+  },
+  {
+   "id": "UNIQUE payment_attempts_txn_ref_key thành chỉ mục thường",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"payment_attempts_txn_ref_key\" ON \"payment_attempts\"(\"txn_ref\");",
+   "replace": "CREATE INDEX \"payment_attempts_txn_ref_key\" ON \"payment_attempts\"(\"txn_ref\");",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "UNIQUE payment_attempts_payment_id_attempt_no_key thành chỉ mục thường",
+   "sb": [
+    "SB-25",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"payment_attempts_payment_id_attempt_no_key\" ON \"payment_attempts\"(\"payment_id\", \"attempt_no\");",
+   "replace": "CREATE INDEX \"payment_attempts_payment_id_attempt_no_key\" ON \"payment_attempts\"(\"payment_id\", \"attempt_no\");",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "UNIQUE refunds_attempt_id_key thành chỉ mục thường",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"refunds_attempt_id_key\" ON \"refunds\"(\"attempt_id\");",
+   "replace": "CREATE INDEX \"refunds_attempt_id_key\" ON \"refunds\"(\"attempt_id\");",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "UNIQUE payment_attempts_provider_txn_no_key thành chỉ mục thường",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "CREATE UNIQUE INDEX \"payment_attempts_provider_txn_no_key\" ON \"payment_attempts\" (provider_txn_no) WHERE provider_txn_no IS NOT NULL;",
+   "replace": "CREATE INDEX \"payment_attempts_provider_txn_no_key\" ON \"payment_attempts\" (provider_txn_no) WHERE provider_txn_no IS NOT NULL;",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "FOREIGN KEY payments_order_id_fkey bị bỏ",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ALTER TABLE \"payments\" ADD CONSTRAINT \"payments_order_id_fkey\" FOREIGN KEY (\"order_id\") REFERENCES \"orders\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+   "replace": "ALTER TABLE \"payments\" ADD CONSTRAINT \"payments_order_id_fkey\" CHECK (true);",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payments\""
+  },
+  {
+   "id": "FOREIGN KEY payment_attempts_payment_id_fkey bị bỏ",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ALTER TABLE \"payment_attempts\" ADD CONSTRAINT \"payment_attempts_payment_id_fkey\" FOREIGN KEY (\"payment_id\") REFERENCES \"payments\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+   "replace": "ALTER TABLE \"payment_attempts\" ADD CONSTRAINT \"payment_attempts_payment_id_fkey\" CHECK (true);",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "FOREIGN KEY refunds_payment_id_fkey bị bỏ",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ALTER TABLE \"refunds\" ADD CONSTRAINT \"refunds_payment_id_fkey\" FOREIGN KEY (\"payment_id\") REFERENCES \"payments\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+   "replace": "ALTER TABLE \"refunds\" ADD CONSTRAINT \"refunds_payment_id_fkey\" CHECK (true);",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "FOREIGN KEY refunds_attempt_id_fkey bị bỏ",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ALTER TABLE \"refunds\" ADD CONSTRAINT \"refunds_attempt_id_fkey\" FOREIGN KEY (\"attempt_id\") REFERENCES \"payment_attempts\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+   "replace": "ALTER TABLE \"refunds\" ADD CONSTRAINT \"refunds_attempt_id_fkey\" CHECK (true);",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "FOREIGN KEY payments_order_id_fkey thành ON DELETE CASCADE",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538604",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "REFERENCES \"orders\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"payment_attempts\"",
+   "replace": "REFERENCES \"orders\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"payment_attempts\"",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payments\""
+  },
+  {
+   "id": "FOREIGN KEY payment_attempts_payment_id_fkey thành ON DELETE CASCADE",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539262",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "REFERENCES \"payments\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"refunds\" ADD CONSTRAINT \"refunds_payment_id_fkey\"",
+   "replace": "REFERENCES \"payments\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"refunds\" ADD CONSTRAINT \"refunds_payment_id_fkey\"",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 payment_attempts\""
+  },
+  {
+   "id": "FOREIGN KEY refunds_attempt_id_fkey thành ON DELETE CASCADE",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540277",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "REFERENCES \"payment_attempts\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+   "replace": "REFERENCES \"payment_attempts\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 refunds\""
+  },
+  {
+   "id": "SB-21: thêm cột card_number vào payments",
+   "sb": [
+    "SB-21"
+   ],
+   "tc": "PAY-TC-20261006-104538540",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "    \"provider_ref\" TEXT,\n    \"expires_at\" TIMESTAMPTZ(6),\n    \"paid_at\"",
+   "replace": "    \"provider_ref\" TEXT,\n    \"card_number\" TEXT,\n    \"expires_at\" TIMESTAMPTZ(6),\n    \"paid_at\"",
+   "test": "node scripts/run-jest.mjs test/payment/create.spec.ts -t \"PAY-TC-20261006-104538540\""
+  },
+  {
+   "id": "SB-21: thêm cột cvv vào payment_attempts",
+   "sb": [
+    "SB-21"
+   ],
+   "tc": "PAY-TC-20261006-104538540",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "    \"gateway_code\" TEXT,\n    \"provider_txn_no\" TEXT,",
+   "replace": "    \"gateway_code\" TEXT,\n    \"cvv\" TEXT,\n    \"provider_txn_no\" TEXT,",
+   "test": "node scripts/run-jest.mjs test/payment/create.spec.ts -t \"PAY-TC-20261006-104538540\""
+  },
+  {
+   "id": "SB-32 T22: trigger nhật ký cho sửa",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "PAY-TC-20261006-113000600",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "IF TG_OP = 'DELETE' AND OLD.created_at < now() - interval '12 months' THEN",
+   "replace": "IF OLD.created_at < now() - interval '12 months' THEN",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-113000600\""
+  },
+  {
+   "id": "SB-32 T22: trigger nhật ký xóa dòng mới (12 thành 1 tháng)",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "PAY-TC-20261006-113000600",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "OLD.created_at < now() - interval '12 months' THEN\n    RETURN OLD;",
+   "replace": "OLD.created_at < now() - interval '1 months' THEN\n    RETURN OLD;",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-113000600\""
+  },
+  {
+   "id": "SB-32 T22: trigger nhật ký không chặn xóa mọi dòng",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "PAY-TC-20261006-113000600",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "IF TG_OP = 'DELETE' AND OLD.created_at < now() - interval '12 months' THEN",
+   "replace": "IF TG_OP = 'DELETE' THEN",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-113000600\""
+  },
+  {
+   "id": "SB-32 T22: trigger nhật ký chỉ chặn UPDATE",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "PAY-TC-20261006-113000600",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "BEFORE UPDATE OR DELETE ON \"payment_webhook_logs\"",
+   "replace": "BEFORE UPDATE ON \"payment_webhook_logs\"",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-113000600\""
+  },
+  {
+   "id": "SB-32 T22: nhật ký không thu quyền UPDATE",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "PAY-TC-20261006-113000600",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "REVOKE UPDATE, TRUNCATE ON \"payment_webhook_logs\" FROM PUBLIC, app_runtime;",
+   "replace": "REVOKE TRUNCATE ON \"payment_webhook_logs\" FROM PUBLIC, app_runtime;",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-113000600\""
+  },
+  {
+   "id": "SB-32 T22: nhật ký không thu quyền TRUNCATE",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "PAY-TC-20261006-113000600",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "REVOKE UPDATE, TRUNCATE ON \"payment_webhook_logs\" FROM PUBLIC, app_runtime;",
+   "replace": "REVOKE UPDATE ON \"payment_webhook_logs\" FROM PUBLIC, app_runtime;",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-113000600\"",
+   "equivalent": "đặc quyền TRUNCATE chưa bao giờ được cấp cho vai trò ứng dụng (nền chỉ cấp SELECT, INSERT, UPDATE, DELETE nên REVOKE TRUNCATE chỉ là lớp phòng thủ lặp); bỏ dòng này không đổi quyền thực tế nào, còn bỏ REVOKE UPDATE thì đột biến ngay trên đây đã bắt"
+  },
+  {
+   "id": "SB-24: trigger vòng đời Payment cho pending sang refunded",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "(OLD.status = 'pending' AND NEW.status IN ('processing', 'succeeded', 'expired', 'cancelled'))",
+   "replace": "(OLD.status = 'pending' AND NEW.status IN ('processing', 'succeeded', 'expired', 'cancelled', 'refunded'))",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-24: trigger vòng đời Payment chặn pending sang expired",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "NEW.status IN ('processing', 'succeeded', 'expired', 'cancelled'))\n    OR (OLD.status = 'processing'",
+   "replace": "NEW.status IN ('processing', 'succeeded', 'cancelled'))\n    OR (OLD.status = 'processing'",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-24: trigger vòng đời Payment cho processing sang pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "(OLD.status = 'processing' AND NEW.status IN ('succeeded', 'failed', 'expired', 'cancelled'))",
+   "replace": "(OLD.status = 'processing' AND NEW.status IN ('succeeded', 'failed', 'expired', 'cancelled', 'pending'))",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-24: trigger vòng đời Payment chặn processing sang failed",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "(OLD.status = 'processing' AND NEW.status IN ('succeeded', 'failed', 'expired', 'cancelled'))",
+   "replace": "(OLD.status = 'processing' AND NEW.status IN ('succeeded', 'expired', 'cancelled'))",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-24: trigger vòng đời Payment cho failed sang pending",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "(OLD.status = 'failed' AND NEW.status IN ('processing', 'succeeded', 'expired', 'cancelled'))",
+   "replace": "(OLD.status = 'failed' AND NEW.status IN ('processing', 'succeeded', 'expired', 'cancelled', 'pending'))",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-24: trigger vòng đời Payment chặn failed sang succeeded",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "(OLD.status = 'failed' AND NEW.status IN ('processing', 'succeeded', 'expired', 'cancelled'))",
+   "replace": "(OLD.status = 'failed' AND NEW.status IN ('processing', 'expired', 'cancelled'))",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-24: trigger vòng đời Payment cho succeeded sang cancelled",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "OR (OLD.status = 'succeeded' AND NEW.status = 'refunded')",
+   "replace": "OR (OLD.status = 'succeeded' AND NEW.status IN ('refunded', 'cancelled'))",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-24: trigger vòng đời Payment bỏ hẳn (điều kiện luôn sai)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "IF NEW.status IS DISTINCT FROM OLD.status AND NOT (\n       (OLD.status = 'pending'",
+   "replace": "IF false AND NOT (\n       (OLD.status = 'pending'",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-24: trigger Refund cho succeeded sang requested",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "(OLD.status = 'requested' AND NEW.status IN ('succeeded', 'failed'))",
+   "replace": "(OLD.status = 'requested' AND NEW.status IN ('succeeded', 'failed')) OR (OLD.status = 'succeeded' AND NEW.status = 'requested')",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-24: trigger Refund cho failed sang succeeded",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "OR (OLD.status = 'failed' AND NEW.status = 'requested')",
+   "replace": "OR (OLD.status = 'failed' AND NEW.status IN ('requested', 'succeeded'))",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-24: trigger Refund chặn failed sang requested",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104539228",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "OR (OLD.status = 'failed' AND NEW.status = 'requested')",
+   "replace": "OR (OLD.status = 'failed' AND NEW.status = 'failed')",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241 \\(SB-24\\): trigger\""
+  },
+  {
+   "id": "SB-13 T18: CSRF không kiểm Origin lạ",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "PAY-TC-20261006-104538935",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "if (!origin || !this.allowed.has(origin)) throw new DomainError('csrf_failed');",
+   "replace": "if (!origin) throw new DomainError('csrf_failed');",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538935\""
+  },
+  {
+   "id": "SB-13 T18: CSRF không đòi Origin khi có cookie",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "PAY-TC-20261006-104538935",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "if (!UNSAFE.has(req.method) || !(req.headers.cookie || req.headers.origin)) return true;",
+   "replace": "if (!UNSAFE.has(req.method) || !req.headers.origin) return true;",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538935\""
+  },
+  {
+   "id": "SB-13 T18: CSRF bỏ qua Referer hợp lệ",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "PAY-TC-20261006-104538935",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "if (!origin && typeof req.headers.referer === 'string') {",
+   "replace": "if (false) {",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538935\""
+  },
+  {
+   "id": "SB-25 T19: bỏ giới hạn số lượt thử (cả kiểm trước lẫn điều kiện trong câu UPDATE)",
+   "sb": [
+    "SB-24",
+    "SB-25"
+   ],
+   "tc": "PAY-TC-20261006-104539782",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "if (p.attempt_no >= max) throw new DomainError('attempts-exhausted');\n      if (!orderPending) throw new DomainError('order-not-pending');\n      if (!p.expires_at || p.expires_at.getTime() <= now.getTime()) throw new DomainError('payment-expired');\n    }\n    const ttl = new Date(now.getTime() + this.core.cfg('PAY_ATTEMPT_URL_TTL_MINUTES') * 60_000);\n    const expiresAt = p.expires_at && p.expires_at.getTime() < ttl.getTime() ? p.expires_at : ttl; // không bao giờ vượt hạn của Payment (K-01)\n    // `attempt_no + 1` có điều kiện: giới hạn chính do ứng dụng kiểm `attempt_no < PAY_MAX_ATTEMPTS`, CHECK của CSDL chỉ là trần an toàn\n    const [u] = await tx.$queryRaw<{ attempt_no: number }[]>`\n      UPDATE payments SET attempt_no = attempt_no + 1, updated_at = ${now}::timestamptz WHERE id = ${p.id}::uuid AND status = ${p.status}::payment_status AND attempt_no < ${max} RETURNING attempt_no",
+   "replace": "\n      if (!orderPending) throw new DomainError('order-not-pending');\n      if (!p.expires_at || p.expires_at.getTime() <= now.getTime()) throw new DomainError('payment-expired');\n    }\n    const ttl = new Date(now.getTime() + this.core.cfg('PAY_ATTEMPT_URL_TTL_MINUTES') * 60_000);\n    const expiresAt = p.expires_at && p.expires_at.getTime() < ttl.getTime() ? p.expires_at : ttl; // không bao giờ vượt hạn của Payment (K-01)\n    // `attempt_no + 1` có điều kiện: giới hạn chính do ứng dụng kiểm `attempt_no < PAY_MAX_ATTEMPTS`, CHECK của CSDL chỉ là trần an toàn\n    const [u] = await tx.$queryRaw<{ attempt_no: number }[]>`\n      UPDATE payments SET attempt_no = attempt_no + 1, updated_at = ${now}::timestamptz WHERE id = ${p.id}::uuid AND status = ${p.status}::payment_status RETURNING attempt_no",
+   "test": "node scripts/run-jest.mjs test/payment/retry.spec.ts -t \"PAY-TC-20261006-104539782\""
+  },
+  {
+   "id": "SB-24: initiate cho Payment không pending (gỡ kiểm trạng thái và kiểm chuyển trạng thái)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104538804",
+   "file": "src/modules/payment/start.service.ts",
+   "find": "if (p.status !== 'pending') throw new DomainError('payment-not-startable');\n      if (!orderPending || !p.expires_at || p.expires_at.getTime() <= now.getTime()) throw new DomainError('payment-not-startable');\n    } else {\n      if (p.status !== 'failed') throw new DomainError('payment-not-retryable');\n      if (p.attempt_no >= max) throw new DomainError('attempts-exhausted');\n      if (!orderPending) throw new DomainError('order-not-pending');\n      if (!p.expires_at || p.expires_at.getTime() <= now.getTime()) throw new DomainError('payment-expired');\n    }\n    const ttl = new Date(now.getTime() + this.core.cfg('PAY_ATTEMPT_URL_TTL_MINUTES') * 60_000);\n    const expiresAt = p.expires_at && p.expires_at.getTime() < ttl.getTime() ? p.expires_at : ttl; // không bao giờ vượt hạn của Payment (K-01)\n    // `attempt_no + 1` có điều kiện: giới hạn chính do ứng dụng kiểm `attempt_no < PAY_MAX_ATTEMPTS`, CHECK của CSDL chỉ là trần an toàn\n    const [u] = await tx.$queryRaw<{ attempt_no: number }[]>`\n      UPDATE payments SET attempt_no = attempt_no + 1, updated_at = ${now}::timestamptz WHERE id = ${p.id}::uuid AND status = ${p.status}::payment_status AND attempt_no < ${max} RETURNING attempt_no`;\n    if (!u) throw new DomainError('attempts-exhausted');\n    const txnRef = `${randomBytes(8).toString('hex')}${String(u.attempt_no).padStart(2, '0')}`;\n    let a: AttemptRow;\n    try {\n      [a] = await tx.$queryRaw<AttemptRow[]>`\n        INSERT INTO payment_attempts (payment_id, attempt_no, txn_ref, status, create_date, expires_at, created_at, updated_at)\n        VALUES (${p.id}::uuid, ${u.attempt_no}, ${txnRef}, 'processing'::attempt_status, ${now}::timestamptz, ${expiresAt}::timestamptz, ${now}::timestamptz, ${now}::timestamptz) RETURNING ${ATTEMPT_COLS}`;\n    } catch (e) {\n      if (isUnique(e, /payment_id.*attempt_no|attempt_no.*payment_id/)) throw new DomainError('payment-in-progress'); // bên thua đua: giao dịch rollback, lần gọi sau đọc lại\n      throw e;\n    }\n    const moved = await this.core.move(tx, p, kind === 'retry' ? 'retry' : 'start', { set: Prisma.empty });\n    if (!moved) throw new DomainError(kind === 'retry' ? 'payment-not-retryable' : 'payment-not-startable');",
+   "replace": "\n      if (!orderPending || !p.expires_at || p.expires_at.getTime() <= now.getTime()) throw new DomainError('payment-not-startable');\n    } else {\n      if (p.status !== 'failed') throw new DomainError('payment-not-retryable');\n      if (p.attempt_no >= max) throw new DomainError('attempts-exhausted');\n      if (!orderPending) throw new DomainError('order-not-pending');\n      if (!p.expires_at || p.expires_at.getTime() <= now.getTime()) throw new DomainError('payment-expired');\n    }\n    const ttl = new Date(now.getTime() + this.core.cfg('PAY_ATTEMPT_URL_TTL_MINUTES') * 60_000);\n    const expiresAt = p.expires_at && p.expires_at.getTime() < ttl.getTime() ? p.expires_at : ttl; // không bao giờ vượt hạn của Payment (K-01)\n    // `attempt_no + 1` có điều kiện: giới hạn chính do ứng dụng kiểm `attempt_no < PAY_MAX_ATTEMPTS`, CHECK của CSDL chỉ là trần an toàn\n    const [u] = await tx.$queryRaw<{ attempt_no: number }[]>`\n      UPDATE payments SET attempt_no = attempt_no + 1, updated_at = ${now}::timestamptz WHERE id = ${p.id}::uuid AND status = ${p.status}::payment_status AND attempt_no < ${max} RETURNING attempt_no`;\n    if (!u) throw new DomainError('attempts-exhausted');\n    const txnRef = `${randomBytes(8).toString('hex')}${String(u.attempt_no).padStart(2, '0')}`;\n    let a: AttemptRow;\n    try {\n      [a] = await tx.$queryRaw<AttemptRow[]>`\n        INSERT INTO payment_attempts (payment_id, attempt_no, txn_ref, status, create_date, expires_at, created_at, updated_at)\n        VALUES (${p.id}::uuid, ${u.attempt_no}, ${txnRef}, 'processing'::attempt_status, ${now}::timestamptz, ${expiresAt}::timestamptz, ${now}::timestamptz, ${now}::timestamptz) RETURNING ${ATTEMPT_COLS}`;\n    } catch (e) {\n      if (isUnique(e, /payment_id.*attempt_no|attempt_no.*payment_id/)) throw new DomainError('payment-in-progress'); // bên thua đua: giao dịch rollback, lần gọi sau đọc lại\n      throw e;\n    }\n    const moved = await this.core.move(tx, p, kind === 'retry' ? 'retry' : 'start', { set: Prisma.empty });\n    ",
+   "test": "node scripts/run-jest.mjs test/payment/start.spec.ts -t \"PAY-TC-20261006-104538804\""
+  },
+  {
+   "id": "SB-34: job tự thử lại không chờ hẹn (cả câu chọn lẫn câu khóa dòng)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104540245",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "AND next_retry_at <= ${now}::timestamptz ORDER BY next_retry_at, id LIMIT ${JOB_BATCH}`;\n    for (const d of due) {\n      if (signal?.aborted) return { retried, reasked, gaveUp };\n      const claimed = await this.transactions.run(async (tx) => {\n        const p = await this.core.lockSkip(tx, d.payment_id);\n        if (!p) return false; // bên khác đang xử lý Payment này\n        const r = (await tx.$queryRaw<RefundRow[]>`SELECT ${REFUND_COLS} FROM refunds WHERE id = ${d.id}::uuid AND status = 'failed'::refund_status AND next_retry_at <= ${now}::timestamptz FOR UPDATE`)[0];",
+   "replace": "ORDER BY next_retry_at, id LIMIT ${JOB_BATCH}`;\n    for (const d of due) {\n      if (signal?.aborted) return { retried, reasked, gaveUp };\n      const claimed = await this.transactions.run(async (tx) => {\n        const p = await this.core.lockSkip(tx, d.payment_id);\n        if (!p) return false; // bên khác đang xử lý Payment này\n        const r = (await tx.$queryRaw<RefundRow[]>`SELECT ${REFUND_COLS} FROM refunds WHERE id = ${d.id}::uuid AND status = 'failed'::refund_status FOR UPDATE`)[0];",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540245\""
+  },
+  {
+   "id": "SB-34: job đối soát hoàn tiền hỏi lại ngay (bỏ ngưỡng 5 phút ở câu chọn lẫn câu thuê dòng)",
+   "sb": [
+    "SB-34",
+    "SB-31"
+   ],
+   "tc": "PAY-TC-20261006-104540309",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "WHERE status = 'requested'::refund_status AND updated_at <= ${new Date(now.getTime() - REFUND_STALE_MS)}::timestamptz ORDER BY updated_at, id LIMIT ${JOB_BATCH}`;\n    for (const d of stale) {\n      if (signal?.aborted) break;\n      const claimed = await this.transactions.run(async (tx) => {\n        const p = await this.core.lockSkip(tx, d.payment_id);\n        if (!p) return false;\n        // thuê dòng bằng `updated_at`: lượt đối soát khác (hay tiến trình khác) không nhặt lại trước 5 phút nữa\n        return (await tx.$executeRaw`UPDATE refunds SET updated_at = ${now}::timestamptz WHERE id = ${d.id}::uuid AND status = 'requested'::refund_status AND updated_at <= ${new Date(now.getTime() - REFUND_STALE_MS)}::timestamptz`) > 0;",
+   "replace": "WHERE status = 'requested'::refund_status ORDER BY updated_at, id LIMIT ${JOB_BATCH}`;\n    for (const d of stale) {\n      if (signal?.aborted) break;\n      const claimed = await this.transactions.run(async (tx) => {\n        const p = await this.core.lockSkip(tx, d.payment_id);\n        if (!p) return false;\n        // thuê dòng bằng `updated_at`: lượt đối soát khác (hay tiến trình khác) không nhặt lại trước 5 phút nữa\n        return (await tx.$executeRaw`UPDATE refunds SET updated_at = ${now}::timestamptz WHERE id = ${d.id}::uuid AND status = 'requested'::refund_status`) > 0;",
+   "test": "node scripts/run-jest.mjs test/payment/refund-auto.spec.ts -t \"PAY-TC-20261006-104540309\""
+  },
+  {
+   "id": "REV-PAY-02 SB-22: IPv4 ánh xạ IPv6 (::ffff:a.b.c.d) không đổi về a.b.c.d (danh sách IP từ chối IPN thật)",
+   "sb": [
+    "SB-22",
+    "SB-14"
+   ],
+   "tc": "PAY-TC-20261006-104539098",
+   "file": "src/modules/platform/http/client-ip.ts",
+   "find": "return v4 && isIP(v4) === 4 ? v4 : ip;",
+   "replace": "return ip;",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"REV-PAY-02\""
+  },
+  {
+   "id": "REV-PAY-03 SB-34: đối soát sắp theo expires_at (lượt kẹt vĩnh viễn chặn lượt khác khi quá JOB_BATCH)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104539686",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "ORDER BY a.updated_at, a.expires_at, a.id LIMIT",
+   "replace": "ORDER BY a.expires_at, a.id LIMIT",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"REV-PAY-03\""
+  },
+  {
+   "id": "REV-PAY-04 SB-34: ngưỡng Refund kẹt 10 phút thay vì 1 giờ",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261006-104540309",
+   "file": "src/modules/payment/config.ts",
+   "find": "REFUND_STUCK_MS = 60 * 60_000",
+   "replace": "REFUND_STUCK_MS = 10 * 60_000",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"REV-PAY-04\""
+  },
+  {
+   "id": "REV-PAY-06 SB-22: hoàn tiền 00 kèm TransactionStatus 09 (từ chối) vẫn là succeeded",
+   "sb": [
+    "SB-22",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540177",
+   "file": "src/modules/payment/gateway.ts",
+   "find": "String(r.vnp_TransactionStatus ?? '') === '09' ? { kind: 'declined', code: '09' } : { kind: 'succeeded', code }",
+   "replace": "{ kind: 'succeeded', code }",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104540177\""
+  },
+  {
+   "id": "REV-PAY-05 SB-22 T1: chuỗi ký không mã hóa giá trị (vectơ vàng)",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261006-104539065",
+   "file": "src/modules/payment/vnpay.ts",
+   "find": "const enc = (v: string): string => encodeURIComponent(v).replace(/%20/g, '+');",
+   "replace": "const enc = (v: string): string => v;",
+   "test": "node scripts/run-jest.mjs test/payment/gateway.spec.ts -t \"PAY-TC-20261006-104539065\""
+  },
+  {
+   "id": "REV-PAY-15 SB-24: dispatch gọi cổng cho Refund đã chốt (bỏ điều kiện requested)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261006-104540309",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "WHERE r.id = ${refundId}::uuid AND r.status = 'requested'::refund_status`;",
+   "replace": "WHERE r.id = ${refundId}::uuid`;",
+   "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"REV-PAY-15\""
+  },
+  {
+   "id": "REV-PAY-15 CHECK refunds_amount_positive yếu thành khác 0 (số âm lọt)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-DB-20261006-103701241",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "ADD CONSTRAINT \"refunds_amount_positive\" CHECK (amount > 0),",
+   "replace": "ADD CONSTRAINT \"refunds_amount_positive\" CHECK (amount <> 0),",
+   "test": "node scripts/run-jest.mjs test/payment/db.spec.ts -t \"PAY-DB-20261006-103701241\""
+  },
+  {
+   "id": "REV-PAY-01 SB-22 T20: đối soát lại chỉ lượt của Payment còn mở (bỏ qua Payment đã đóng)",
+   "sb": [
+    "SB-22",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715406",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "AND a.updated_at <= ${new Date(now.getTime() - ReconcileService.LEASE_MS)}::timestamptz\n      ORDER BY",
+   "replace": "AND a.updated_at <= ${new Date(now.getTime() - ReconcileService.LEASE_MS)}::timestamptz AND a.payment_id IN (SELECT id FROM payments WHERE status IN ('processing'::payment_status, 'failed'::payment_status, 'succeeded'::payment_status))\n      ORDER BY",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261013-193715406\""
+  },
+  {
+   "id": "REV-PAY-01 SB-22 T20: Payment đã đóng, cổng báo thành công mà không tạo Refund (bỏ qua kết quả thành công)",
+   "sb": [
+    "SB-22",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715406",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "      if (q.kind === 'success') {\n        const r = await this.outcome.success(",
+   "replace": "      if (q.kind === 'success' && closed) return false;\n      if (q.kind === 'success') {\n        const r = await this.outcome.success(",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261013-193715406\""
+  },
+  {
+   "id": "REV-PAY-01 SB-22 T20: Payment đã đóng, cổng báo thất bại mà không ghi lượt",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261013-193715507",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "        await this.outcome.failure(tx, p, cur, 'timeout', q.kind === 'failed' ? q.code : null); // Payment đã đóng",
+   "replace": "        if (!closed) await this.outcome.failure(tx, p, cur, 'timeout', q.kind === 'failed' ? q.code : null); // Payment đã đóng",
+   "test": "node scripts/run-jest.mjs test/payment/failure.spec.ts -t \"PAY-TC-20261013-193715507\""
+  },
+  {
+   "id": "SB-34: đối soát bỏ giới hạn lô JOB_BATCH",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-193715606",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "ORDER BY a.updated_at, a.expires_at, a.id LIMIT ${JOB_BATCH}`",
+   "replace": "ORDER BY a.updated_at, a.expires_at, a.id`",
+   "test": "node scripts/run-jest.mjs test/payment/reconcile-closed.spec.ts -t \"PAY-TC-20261013-193715606\""
+  },
+  {
+   "id": "REV-PAY-01 T20: lượt Payment đã đóng không bao giờ bị đóng khi quá hạn 7 ngày",
+   "sb": [
+    "SB-22",
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-193715697",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "const expired = closed && a.expires_at.getTime() < now.getTime() - RECONCILE_CLOSED_WINDOW_MS;",
+   "replace": "const expired = false;",
+   "test": "node scripts/run-jest.mjs test/payment/reconcile-closed.spec.ts -t \"PAY-TC-20261013-193715697\""
+  },
+  {
+   "id": "REV-PAY-01 T20: hạn 7 ngày bỏ ngưỡng (lượt mới quá 6 ngày cũng bị đóng)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-193715697",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "a.expires_at.getTime() < now.getTime() - RECONCILE_CLOSED_WINDOW_MS;",
+   "replace": "a.expires_at.getTime() < now.getTime();",
+   "test": "node scripts/run-jest.mjs test/payment/reconcile-closed.spec.ts -t \"PAY-TC-20261013-193715697\""
+  },
+  {
+   "id": "REV-PAY-01 T20: hạn 7 ngày áp cả cho Payment còn mở",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-193715697",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "const expired = closed && a.expires_at",
+   "replace": "const expired = a.expires_at",
+   "test": "node scripts/run-jest.mjs test/payment/reconcile-closed.spec.ts -t \"PAY-TC-20261013-193715697\""
+  },
+  {
+   "id": "REV-PAY-01 T20: cổng lỗi quá hạn không đóng lượt",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-193715697",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "if (expired) return this.giveUp(a, orderCode, 'gateway_error');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/reconcile-closed.spec.ts -t \"PAY-TC-20261013-193715697\""
+  },
+  {
+   "id": "REV-PAY-01 T20: số tiền lệch quá hạn không đóng lượt",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-193715697",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "if (expired) return this.giveUp(a, orderCode, 'amount_mismatch');",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/payment/reconcile-closed.spec.ts -t \"PAY-TC-20261013-193715697\""
+  },
+  {
+   "id": "REV-PAY-01 T20: trùng mã giao dịch quá hạn không đóng lượt",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-193715697",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "return expired ? this.giveUp(a, orderCode, 'duplicate_txn') : false;",
+   "replace": "return false;",
+   "test": "node scripts/run-jest.mjs test/payment/reconcile-closed.spec.ts -t \"PAY-TC-20261013-193715697\""
+  },
+  {
+   "id": "REV-PAY-01 T20: đóng lượt quá hạn nhưng chỉ log warn (không error)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-193715697",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "this.log.error('lượt thử của Payment đã đóng",
+   "replace": "this.log.warn('lượt thử của Payment đã đóng",
+   "test": "node scripts/run-jest.mjs test/payment/reconcile-closed.spec.ts -t \"PAY-TC-20261013-193715697\""
+  },
+  {
+   "id": "REV-PAY-04 SB-34: Refund kẹt requested quá 1 giờ không bị kết thúc",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-193715799",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "if (r === 'pending' && await this.giveUp(d.id, now)) gaveUp++;",
+   "replace": "if (false && r === 'pending' && await this.giveUp(d.id, now)) gaveUp++;",
+   "test": "node scripts/run-jest.mjs test/payment/refund-stuck.spec.ts -t \"PAY-TC-20261013-193715799\""
+  },
+  {
+   "id": "REV-PAY-04 SB-34: Refund kẹt kết thúc không chờ quá 1 giờ (bỏ ngưỡng)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-193715799",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "r.status !== 'requested' || r.requested_at >= cutoff) return false;",
+   "replace": "r.status !== 'requested') return false;",
+   "test": "node scripts/run-jest.mjs test/payment/refund-stuck.spec.ts -t \"PAY-TC-20261013-193715799\""
+  },
+  {
+   "id": "REV-PAY-04 SB-24: Refund kẹt kết thúc bằng mã lý do khác gateway-no-answer",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715799",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "failure_reason = 'gateway-no-answer', resolved_at",
+   "replace": "failure_reason = 'gateway-declined', resolved_at",
+   "test": "node scripts/run-jest.mjs test/payment/refund-stuck.spec.ts -t \"PAY-TC-20261013-193715799\""
+  },
+  {
+   "id": "REV-PAY-04 SB-24: Refund kẹt kết thúc vẫn hẹn tự thử lại",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715799",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "resolved_at = ${now}::timestamptz, next_retry_at = NULL, updated_at = ${now}::timestamptz\n        WHERE id = ${r.id}::uuid AND status = 'requested'::refund_status RETURNING id`;\n      if (!u) return false;",
+   "replace": "resolved_at = ${now}::timestamptz, next_retry_at = ${now}::timestamptz, updated_at = ${now}::timestamptz\n        WHERE id = ${r.id}::uuid AND status = 'requested'::refund_status RETURNING id`;\n      if (!u) return false;",
+   "test": "node scripts/run-jest.mjs test/payment/refund-stuck.spec.ts -t \"PAY-TC-20261013-193715799\""
+  },
+  {
+   "id": "REV-PAY-04 SB-24: Refund kẹt kết thúc phát sai loại event (không phải RefundFailed)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715799",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "        type: 'RefundFailed', aggregate_type: 'refund', aggregate_id: p.id,\n        payload: { refund_id: r.id,",
+   "replace": "        type: 'RefundSucceeded', aggregate_type: 'refund', aggregate_id: p.id,\n        payload: { refund_id: r.id,",
+   "test": "node scripts/run-jest.mjs test/payment/refund-stuck.spec.ts -t \"PAY-TC-20261013-193715799\""
+  },
+  {
+   "id": "REV-PAY-04 SB-24: admin thử lại không đặt lại requested_at (đóng ngay lượt kế)",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715799",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "resolved_at = NULL, requested_at = ${now}::timestamptz, updated_at = ${now}::timestamptz\n        WHERE id = ${id}::uuid AND status = 'failed'::refund_status RETURNING ${REFUND_COLS}",
+   "replace": "resolved_at = NULL, updated_at = ${now}::timestamptz\n        WHERE id = ${id}::uuid AND status = 'failed'::refund_status RETURNING ${REFUND_COLS}",
+   "test": "node scripts/run-jest.mjs test/payment/refund-stuck.spec.ts -t \"PAY-TC-20261013-193715799\""
+  },
+  {
+   "id": "REV-PAY-04 SB-24: tự thử lại không đặt lại requested_at",
+   "sb": [
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715799",
+   "file": "src/modules/payment/refund.service.ts",
+   "find": "resolved_at = NULL, requested_at = ${now}::timestamptz, updated_at = ${now}::timestamptz WHERE id = ${r.id}::uuid AND status = 'failed'::refund_status`;",
+   "replace": "resolved_at = NULL, updated_at = ${now}::timestamptz WHERE id = ${r.id}::uuid AND status = 'failed'::refund_status`;",
+   "test": "node scripts/run-jest.mjs test/payment/refund-stuck.spec.ts -t \"PAY-TC-20261013-193715799\""
+  },
+  {
+   "id": "REV-PAY-13 SB-32 T23: vẫn cho vai trò ứng dụng xóa refunds",
+   "sb": [
+    "SB-32",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715898",
+   "file": "prisma/migrations/20261013000100_payment_hardening/migration.sql",
+   "find": "REVOKE DELETE ON \"payments\", \"payment_attempts\", \"refunds\" FROM PUBLIC, app_runtime;",
+   "replace": "REVOKE DELETE ON \"payments\", \"payment_attempts\" FROM PUBLIC, app_runtime;",
+   "test": "node scripts/run-jest.mjs test/payment/db-grants.spec.ts -t \"PAY-TC-20261013-193715898\""
+  },
+  {
+   "id": "REV-PAY-13 SB-32 T23: vẫn cho vai trò ứng dụng xóa payment_attempts",
+   "sb": [
+    "SB-32",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715898",
+   "file": "prisma/migrations/20261013000100_payment_hardening/migration.sql",
+   "find": "\"payments\", \"payment_attempts\", \"refunds\" FROM",
+   "replace": "\"payments\", \"refunds\" FROM",
+   "test": "node scripts/run-jest.mjs test/payment/db-grants.spec.ts -t \"PAY-TC-20261013-193715898\""
+  },
+  {
+   "id": "REV-PAY-13 SB-32 T23: vẫn cho vai trò ứng dụng xóa payments",
+   "sb": [
+    "SB-32",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715898",
+   "file": "prisma/migrations/20261013000100_payment_hardening/migration.sql",
+   "find": "REVOKE DELETE ON \"payments\", \"payment_attempts\"",
+   "replace": "REVOKE DELETE ON \"payment_attempts\"",
+   "test": "node scripts/run-jest.mjs test/payment/db-grants.spec.ts -t \"PAY-TC-20261013-193715898\""
+  },
+  {
+   "id": "REV-PAY-13 SB-32 T23: thu cả UPDATE của vai trò ứng dụng (phá vòng đời)",
+   "sb": [
+    "SB-32",
+    "SB-24"
+   ],
+   "tc": "PAY-TC-20261013-193715898",
+   "file": "prisma/migrations/20261013000100_payment_hardening/migration.sql",
+   "find": "REVOKE DELETE ON \"payments\"",
+   "replace": "REVOKE UPDATE, DELETE ON \"payments\"",
+   "test": "node scripts/run-jest.mjs test/payment/db-grants.spec.ts -t \"PAY-TC-20261013-193715898\""
+  },
+  {
+   "id": "SB-32 T22: created_at của nhật ký webhook dùng now() thay clock_timestamp()",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "PAY-TC-20261013-193922887",
+   "file": "prisma/migrations/20261008000200_payment_tables/migration.sql",
+   "find": "\"created_at\" TIMESTAMPTZ(6) NOT NULL DEFAULT clock_timestamp(),",
+   "replace": "\"created_at\" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,",
+   "test": "node scripts/run-jest.mjs test/payment/db-grants.spec.ts -t \"PAY-TC-20261013-193922887\""
+  },
+  {
+   "id": "REV-PAY-10 SB-22 T1: IP ngoài danh sách vẫn ghi nhật ký webhook",
+   "sb": [
+    "SB-22"
+   ],
+   "tc": "PAY-TC-20261013-194320138",
+   "file": "src/modules/payment/webhook.service.ts",
+   "find": "{ this.log.warn('IPN từ IP ngoài danh sách cho phép', { code: 'ipn-ip-rejected', ip }); return RSP.unknown; }",
+   "replace": "{ this.log.warn('IPN từ IP ngoài danh sách cho phép', { code: 'ipn-ip-rejected', ip }); await this.record(this.prisma, null, null, {}, false, '99', 'invalid_signature'); return RSP.unknown; }",
+   "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261013-194320138\""
+  },
+  {
+   "id": "SB-34 T22: job dọn nhật ký không xóa theo lô (chỉ một lô đầu)",
+   "sb": [
+    "SB-34"
+   ],
+   "tc": "PAY-TC-20261013-194320040",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "if (n < 1000) break;",
+   "replace": "break;",
+   "test": "node scripts/run-jest.mjs test/payment/db-grants.spec.ts -t \"PAY-TC-20261013-194320040\""
+  },
+  {
+   "id": "SB-32 T22: job dọn nhật ký xóa cả dòng chưa quá 12 tháng",
+   "sb": [
+    "SB-32"
+   ],
+   "tc": "PAY-TC-20261013-194320040",
+   "file": "src/modules/payment/reconcile.service.ts",
+   "find": "created_at < now() - interval '12 months' LIMIT 1000",
+   "replace": "created_at < now() - interval '2 months' LIMIT 1000",
+   "test": "node scripts/run-jest.mjs test/payment/db-grants.spec.ts -t \"PAY-TC-20261013-194320040\""
+  }
+ ]
+}

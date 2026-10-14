@@ -8,13 +8,14 @@ import { UUID_RE, lockById, type PaymentMethod } from './row';
 import { TransitionService } from './transition.service';
 
 export interface OrderItemInput { product_id: string; name_snapshot: string; unit_price: number; quantity: number }
-export interface ShippingAddress { receiver: string; phone: string; line1: string; ward: string; city: string }
+/** Bản chụp địa chỉ lúc đặt: ĐÚNG sáu khóa; `district` (quận, huyện) là chuỗi hoặc `null` khi khách không có (USR cho phép rỗng, E-06). Đơn cũ trước 2026-10-13 chỉ có năm khóa, không có `district`. */
+export interface ShippingAddress { receiver: string; phone: string; line1: string; ward: string; district: string | null; city: string }
 export interface CreatePendingInput {
   user_id: string; items: OrderItemInput[]; items_total: number; discount: number; shipping_fee: number; grand_total: number;
   shipping_address: ShippingAddress; shipping_method_id: string; payment_method: PaymentMethod; payment_expires_at: Date | null;
 }
 
-const ADDRESS_KEYS = ['receiver', 'phone', 'line1', 'ward', 'city'] as const;
+const ADDRESS_KEYS = ['receiver', 'phone', 'line1', 'ward', 'district', 'city'] as const;
 const SURROGATE = /\p{Cs}/u; // nửa cặp thay thế lẻ không mã hóa được UTF-8 (PostgreSQL từ chối): lỗi nghiệp vụ ở biên, không 500
 const money = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
 const NUL = { test: (v: string): boolean => v.includes('\u0000') }; // PostgreSQL không lưu NUL trong text hay jsonb (lỗi 22021, 22P05): từ chối ở biên như nửa cặp thay thế lẻ
@@ -29,7 +30,7 @@ function validate(i: CreatePendingInput): void {
   if (typeof i.shipping_method_id !== 'string' || !UUID_RE.test(i.shipping_method_id)) bad('shipping_method_id không phải uuid');
   if (i.payment_method !== 'vnpay' && i.payment_method !== 'cod') bad('payment_method phải là vnpay hoặc cod');
   const a = i.shipping_address as unknown as Record<string, unknown> | null;
-  if (!a || typeof a !== 'object' || Object.keys(a).sort().join() !== [...ADDRESS_KEYS].sort().join() || ADDRESS_KEYS.some((k) => !text(a[k], 500))) bad('shipping_address phải có đúng năm khóa receiver, phone, line1, ward, city');
+  if (!a || typeof a !== 'object' || Object.keys(a).sort().join() !== [...ADDRESS_KEYS].sort().join() || ADDRESS_KEYS.some((k) => !(k === 'district' && a[k] === null) && !text(a[k], 500))) bad('shipping_address phải có đúng sáu khóa receiver, phone, line1, ward, district, city (district là chuỗi hoặc null)');
   if (!Array.isArray(i.items) || i.items.length === 0) bad('đơn phải có ít nhất một dòng hàng');
   let sum = 0;
   for (const it of i.items) {

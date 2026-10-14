@@ -19,6 +19,8 @@ Mỗi bẫy: `phát hiện` (nêu ở Xung đột/câu hỏi) / `bỏ qua` / `ch
 | H3 | **Staff đặt hộ**: USR-REQ-...007 cho staff thực hiện "Đặt hàng", nhưng ma trận ghi staff `-` | USR-REQ-20261001-090000007 | Nêu mâu thuẫn ma trận ↔ USR-REQ ở Xung đột; không âm thầm để staff `-` hay tự đổi thành `Y` |
 | H4 | **Nền thiếu lộ ra ở epic đầu tiên** (L13): retro của epic thử có bài học loại `spec` mà vẫn chạy tiếp các epic khác | Bước 0b của SKILL | Dừng các epic còn lại tới khi nền được sửa; không tiếp tục chạy song song |
 | H5 | **Sửa hàng loạt bằng script thay chuỗi** (L21) | Bước 8 của SKILL | Sau đó chạy lại `check-spec.mjs spec/` và grep chuỗi cũ; báo cáo nêu đã kiểm |
+| H6 | **Hai requirement cùng làm chủ một kết quả tra theo trạng thái** (L77: PRM `disabled` là `coupon_not_found` ở một BR, `coupon_expired` ở BR khác; kết quả đổi theo lúc job chạy) | Hai requirement của cùng epic nhắc cùng một trạng thái | Một requirement làm chủ, requirement khác trỏ ID; BR "mọi coupon ở trạng thái X" liệt kê mọi requirement nhắc X, kể cả sau khi job đổi trạng thái, và ghi nhất quán |
+| H7 | **Quy tắc "xét theo thứ tự" không có ca hai bước cùng đúng** (L132: REV BR3 năm bước, mã trả bước 5 trong khi bước 4 đứng trước) | BR nhiều bước của requirement | Có bảng quyết định, mỗi cặp bước có thể cùng đúng một dòng, mỗi cặp có kịch bản Given/When/Then |
 
 ## Chấm bẫy ẩn
 `phát hiện` (nêu rõ, trích ID) / `bỏ qua` (không nhắc) / `chọn bừa` (viết theo một bên không nêu). Bẫy ẩn là phần phân biệt skill với prompt trần.

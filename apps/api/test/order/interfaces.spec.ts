@@ -68,7 +68,7 @@ describe('ORD giao diện đọc nội bộ', () => {
     expect([series[4].orders.delivered, series[4].paid_orders, series[5].paid_orders, series[5].paid_total]).toEqual([1, 0, 1, 380000]); // đơn tạo ngày 5 thu ngày 6 nằm ở mốc ngày 6 của doanh thu, ngày 5 của số đơn
     const recent = await t.ord.listRecent(5);
     expect(recent).toHaveLength(5);
-    for (const r of recent) { expect(keys(r)).toEqual(['code', 'created_at', 'grand_total', 'item_count', 'payment_status', 'status']); expect(Number.isInteger(r.grand_total)).toBe(true); }
+    for (const r of recent) { expect(keys(r)).toEqual(['code', 'created_at', 'grand_total', 'item_count', 'payment_method', 'payment_status', 'status']); expect(Number.isInteger(r.grand_total)).toBe(true); }
     expect(JSON.stringify(recent)).not.toMatch(/shipping_address|receiver|phone|user_id/);
     expect(recent.map((r) => r.created_at)).toEqual([...recent.map((r) => r.created_at)].sort().reverse());
     const top = await t.ord.getTopProducts(RANGE, 'quantity', 10);

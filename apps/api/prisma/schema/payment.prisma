@@ -1,0 +1,150 @@
+// Module payment (epic PAY, PAY-DB-20261006-103701241): Payment, PaymentAttempt, PaymentWebhookLog, Refund.
+// Phần Prisma không biểu diễn được (CHECK, chỉ mục một phần, trigger chỉ-thêm của nhật ký webhook) nằm trong migration SQL.
+// Khóa ngoại chỉ trỏ vào bảng của PAY hoặc `orders` (ORD, ràng buộc toàn vẹn; PAY không SELECT `orders`, SB-35). `user_id` là cột trơn, không khóa ngoại (SB-06).
+
+enum PaymentMethod {
+  vnpay
+  cod
+
+  @@map("payment_method")
+}
+
+enum PaymentStatus {
+  pending
+  processing
+  succeeded
+  failed
+  expired
+  cancelled
+  refunded
+
+  @@map("payment_status")
+}
+
+enum AttemptStatus {
+  processing
+  succeeded
+  failed
+  superseded
+
+  @@map("attempt_status")
+}
+
+enum PaymentFailReason {
+  cancelled_by_user
+  declined
+  timeout
+  other
+
+  @@map("payment_fail_reason")
+}
+
+enum RefundReason {
+  order_cancelled
+  order_expired
+  late_payment
+  duplicate_payment
+  admin_manual
+
+  @@map("refund_reason")
+}
+
+enum RefundStatus {
+  requested
+  succeeded
+  failed
+
+  @@map("refund_status")
+}
+
+model Payment {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId     String        @unique @map("order_id") @db.Uuid
+  orderCode   String        @map("order_code")
+  userId      String        @map("user_id") @db.Uuid
+  amount      BigInt
+  method      PaymentMethod
+  status      PaymentStatus @default(pending)
+  attemptNo   Int           @default(0) @map("attempt_no") @db.SmallInt
+  providerRef String?       @map("provider_ref")
+  expiresAt   DateTime?     @map("expires_at") @db.Timestamptz(6)
+  paidAt      DateTime?     @map("paid_at") @db.Timestamptz(6)
+  version     Int           @default(0)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  order    Order            @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  attempts PaymentAttempt[]
+  refunds  Refund[]
+
+  @@index([userId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([status, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([method, status, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([orderCode])
+  @@map("payments")
+}
+
+model PaymentAttempt {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId     String             @map("payment_id") @db.Uuid
+  attemptNo     Int                @map("attempt_no") @db.SmallInt
+  txnRef        String             @unique @map("txn_ref")
+  status        AttemptStatus
+  reason        PaymentFailReason?
+  gatewayCode   String?            @map("gateway_code")
+  providerTxnNo String?            @map("provider_txn_no")
+  createDate    DateTime           @map("create_date") @db.Timestamptz(6)
+  expiresAt     DateTime           @map("expires_at") @db.Timestamptz(6)
+  resolvedAt    DateTime?          @map("resolved_at") @db.Timestamptz(6)
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  refund  Refund?
+
+  @@unique([paymentId, attemptNo])
+  @@index([status, expiresAt])
+  @@map("payment_attempts")
+}
+
+model PaymentWebhookLog {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId      String?  @map("payment_id") @db.Uuid
+  txnRef         String?  @map("txn_ref")
+  payload        Json
+  signatureValid Boolean  @map("signature_valid")
+  rspCode        String   @map("rsp_code")
+  result         String
+  createdAt      DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+
+  @@index([txnRef, createdAt])
+  @@index([createdAt])
+  @@map("payment_webhook_logs")
+}
+
+model Refund {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId        String       @map("payment_id") @db.Uuid
+  attemptId        String       @unique @map("attempt_id") @db.Uuid
+  amount           BigInt
+  reason           RefundReason
+  note             String?
+  requestedBy      String?      @map("requested_by") @db.Uuid
+  status           RefundStatus @default(requested)
+  failureReason    String?      @map("failure_reason")
+  gatewayCode      String?      @map("gateway_code")
+  gatewayRequestId String       @map("gateway_request_id")
+  autoAttemptNo    Int?         @map("auto_attempt_no") @db.SmallInt
+  nextRetryAt      DateTime?    @map("next_retry_at") @db.Timestamptz(6)
+  requestedAt      DateTime     @default(dbgenerated("clock_timestamp()")) @map("requested_at") @db.Timestamptz(6)
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  resolvedAt       DateTime?    @map("resolved_at") @db.Timestamptz(6)
+
+  payment Payment        @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  attempt PaymentAttempt @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId, createdAt])
+  @@index([status, createdAt(sort: Desc), id(sort: Desc)])
+  @@map("refunds")
+}

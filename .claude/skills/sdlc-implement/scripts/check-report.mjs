@@ -6,10 +6,12 @@
 // (template mới) hoặc `--strict`; báo cáo cũ không có trường đó chỉ bị cảnh báo để không làm vỡ báo cáo đã có.
 // Kiểm thêm (L43 nhãn sai, L49 mốc thời gian cứng, L53 sửa mã nền không test, L55 đo thời gian tuần tự) là LỖI với `kit_version: 3` hoặc `--strict`,
 // cảnh báo với báo cáo kit_version 2 (không làm đỏ báo cáo đã có).
+// Kiểm thêm (L60 dòng đệm cho đủ số dòng, L63 mã lỗi tự đặt, L86 thư mục tạm không xóa, L95 so thời gian không đếm, L98 clean_run: pass phải có clean-run.mjs, L120 biến cấu hình chưa thử giá trị khác mặc định,
+// L135 hẹn sửa lỗi mã của mình ở lượt review, L137 hành vi thêm ngoài spec không dẫn test, giá trị giữ chỗ TBD/TODO) là LỖI với `kit_version: 4` hoặc `--strict`, cảnh báo với báo cáo kit_version 3 (không làm đỏ báo cáo đã có).
 //  --base <ref>: so mã đổi với <ref> thay vì HEAD (L53; mặc định: tệp sửa và tệp chưa theo dõi so với HEAD)
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 
 const argv = process.argv.slice(2);
 const epic = argv.includes('--epic') ? argv[argv.indexOf('--epic') + 1] : null;
@@ -50,7 +52,12 @@ const fresh = Number(fm.kit_version) >= 2 || argv.includes('--strict');
 const gate = (m) => (fresh ? err(m) : warnings.push(`${reportPath}: ${m} (báo cáo không có kit_version: 2 nên chỉ cảnh báo)`));
 const fresh3 = Number(fm.kit_version) >= 3 || argv.includes('--strict');
 const gate3 = (m) => (fresh3 ? err(m) : warnings.push(`${reportPath}: ${m} (báo cáo chưa có kit_version: 3 nên chỉ cảnh báo)`));
+const fresh4 = Number(fm.kit_version) >= 4 || argv.includes('--strict');
+const gate4 = (m) => (fresh4 ? err(m) : warnings.push(`${reportPath}: ${m} (báo cáo chưa có kit_version: 4 nên chỉ cảnh báo)`));
 if (fm.epic !== epic) err(`epic trong frontmatter phải là ${epic}`);
+// giá trị giữ chỗ (báo cáo dựng từ template mà chưa điền): TBD, TODO, 0000000 ở frontmatter hoặc ô bảng
+for (const [k, v] of Object.entries(fm)) if (/\bTBD\w*|\bTODO\b|^0{7,}$/.test(v)) gate4(`frontmatter ${k}: "${v}" là giá trị giữ chỗ, điền kết quả thật`);
+for (const l of text.split(/\r?\n/)) if (l.startsWith('|')) for (const c of l.split('|').slice(1, -1)) if (/\bTBD\w*|\bTODO\b/.test(c)) gate4(`ô bảng còn chữ giữ chỗ "${c.trim().slice(0, 40)}": báo cáo chưa xong`);
 if (!fm.test_command) err('thiếu test_command (lệnh test đã chạy)');
 if (!fm.test_result) err('thiếu test_result (dòng tóm tắt do lệnh test in ra)');
 
@@ -94,6 +101,28 @@ const scanTime = (path, code) => {
     }
   });
 };
+// mã nguồn của dự án (bỏ node_modules, dist, .git, spec, .claude); chỉ dựng khi cần
+const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', '.next', 'coverage', '.claude', 'spec']);
+let codeFiles = null;
+const allCode = () => (codeFiles ??= (function w(d, acc = []) {
+  for (const n of existsSync(d) ? readdirSync(d) : []) { const p = join(d, n); if (SKIP_DIRS.has(n)) continue; statSync(p).isDirectory() ? w(p, acc) : /\.(?:ts|tsx|js|mjs|cjs)$/.test(n) && acc.push(p); }
+  return acc;
+})(codeDir));
+const hasTeardown = (() => { // dự án có cổng dọn sau test (jest globalTeardown) thì thư mục tạm không rò
+  const dirs = [codeDir, ...['apps', 'packages'].flatMap((g) => (existsSync(join(codeDir, g)) ? readdirSync(join(codeDir, g)).map((n) => join(codeDir, g, n)) : []))];
+  return dirs.some((d) => ['jest.config.js', 'jest.config.cjs', 'jest.config.mjs', 'jest.config.ts', 'package.json'].some((f) => existsSync(join(d, f)) && /globalTeardown/.test(readFileSync(join(d, f), 'utf8'))));
+})();
+const scanTests = (path, code) => {
+  // L86: thư mục tạm không xóa
+  if (/\bmkdtemp(?:Sync)?\(|\btmpdir\(\)|\bos\.tmpdir\b/.test(code) && !/\brm(?:Sync)?\(|\brmdir(?:Sync)?\(|\bsweep\w*\(|\bcleanup\w*\(|tmp-hygiene:\s*\S/.test(code) && !hasTeardown) gate4(`${path}: tạo thư mục tạm (mkdtemp, tmpdir) mà không xóa (rm, rmSync) và dự án không có globalTeardown: mỗi lần test để lại thư mục tạm (đĩa đầy); xóa ở afterAll hoặc finally, hoặc ghi \`tmp-hygiene: <lý do>\``);
+  // L95: so thời gian mà không có phép đếm
+  const ls = code.split('\n'), starts = ls.map((l, i) => (/^\s*(?:it|test)(?:\.\w+)?\(/.test(l) ? i : -1)).filter((i) => i >= 0);
+  starts.forEach((a, k) => {
+    const b = ls.slice(a, starts[k + 1] ?? ls.length).join('\n');
+    const timed = /\bmedian(?:Pair)?Ms\(/.test(b) || (b.match(/process\.hrtime|performance\.now\(/g) ?? []).length >= 2;
+    if (timed && /toBeLessThan/.test(b) && !/mock\.calls|toHaveBeenCalledTimes|spyOn|\.calls\.length/.test(b)) gate4(`${path}:${a + 1}: test so thời gian (medianMs, hrtime rồi toBeLessThan) mà không có phép đếm (mock.calls, toHaveBeenCalledTimes, spyOn): thời gian đo nhiễu theo tải máy; đếm số lần gọi hàm thay cho so thời gian`);
+  });
+};
 const weak = [], MACHINE = /\/Users\/|\/home\/[\w.-]+|\/opt\/homebrew|\.nvm\/versions|\b[A-Za-z]:\\{1,2}[A-Za-z]/;
 const res = rows(text, '| ID | Loại');
 if (!res) err('thiếu bảng "Kết quả test" (| ID | Loại | Test code | Kết quả | Ghi chú |)');
@@ -109,7 +138,7 @@ else {
     if (!existsSync(p) || !statSync(p).isFile()) err(`${id}: file test không tồn tại: ${path}`);
     else {
       const code = readFileSync(p, 'utf8');
-      if (!scanned.has(path)) scanTime(path, code);
+      if (!scanned.has(path)) { scanTime(path, code); scanTests(path, code); }
       if (!code.includes(id)) err(`${id}: file ${path} không chứa ID (đặt ID vào tên test hoặc comment để truy vết)`);
       if (!scanned.has(path)) {
         scanned.add(path);
@@ -132,7 +161,7 @@ else if (!['pass', 'chưa'].includes(fm.clean_run)) err('clean_run phải là pa
 else if (fm.clean_run === 'chưa') {
   if (!/^\s*(?:\d+\.\s*|[-*]\s*)?(?:\*\*)?(?:\[[^\]]+\]\s*)?(?:\*\*)?CI chưa chạy:/m.test(slang)) err('clean_run: chưa thì Lệch spec phải có dòng bắt đầu bằng "CI chưa chạy:" nêu lý do');
   warnings.push(`${reportPath}: clean_run: chưa (CI chưa chạy thật): review coi là HIGH cho tới khi workflow chạy một lần`);
-}
+} else if (fm.clean_run === 'pass' && !(/clean-run\.mjs/.test(text) && /mã thoát|\bexit\b/i.test(text))) gate4('clean_run: pass mà báo cáo không ghi lệnh `clean-run.mjs` đã chạy và mã thoát từng bước (Lệch spec hoặc phụ lục): dựng clean run bằng script của kit, không chép công thức tay');
 
 // L29: bảng Kiểm đột biến (thay test-first cho khung dự án; mỗi SB "Kiểm bằng: test" có ít nhất một đột biến)
 const t1 = (tasks?.[0] ?? []).slice(0, 2).join(' ');
@@ -152,12 +181,42 @@ if (/khung|monorepo|scaffold/i.test(t1) || sawSecError) {
 // L38: mỗi mục Lệch spec có nhãn
 // L53: sửa mã module khác (nền) mà không có test dưới test/<module đó>/ đổi theo (ponytail: bố cục NestJS `src/modules/<m>/`; mã đổi lấy từ git, cây sạch thì không thấy gì)
 const myMod = existsSync(join(specDir, 'architecture.md')) ? rows(readFileSync(join(specDir, 'architecture.md'), 'utf8'), '| Epic | Module')?.find((r) => r[0] === epic)?.[1] : null;
+const git = (...a) => spawnSync('git', a, { cwd: codeDir, encoding: 'utf8' });
+const gitLines = (...a) => git(...a).stdout?.split('\n').filter(Boolean) ?? [];
+const changed = [...new Set([...gitLines('diff', '--name-only', base), ...gitLines('ls-files', '-o', '--exclude-standard')])].filter((f) => existsSync(join(codeDir, f)));
 if (myMod) {
-  const git = (...a) => spawnSync('git', a, { cwd: codeDir, encoding: 'utf8' }).stdout?.split('\n').filter(Boolean) ?? [];
-  const changed = [...new Set([...git('diff', '--name-only', base), ...git('ls-files', '-o', '--exclude-standard')])].filter((f) => existsSync(join(codeDir, f)));
   const byMod = new Map();
   for (const f of changed) { const m = f.match(/(?:^|\/)src\/modules\/([^/]+)\//)?.[1]; if (m && m !== myMod) byMod.set(m, [...(byMod.get(m) ?? []), f]); }
   for (const [m, fs] of byMod) if (!changed.some((f) => new RegExp(`(^|/)test/${m}/`).test(f))) gate3(`${fs.join(', ')}: sửa mã module ${m} (epic ${epic} ở module ${myMod}) mà không có test nào dưới test/${m}/ đổi theo: thêm test hoặc đột biến cho từng chỗ sửa`);
+}
+// L60: tệp mã đổi chỉ bằng cách thêm từ 8 dòng chú thích (dòng đệm cho vừa số dòng bằng chứng của review khác)
+const onlyAdds = new Set(gitLines('diff', '--numstat', '--diff-filter=M', base).map((l) => l.split('\t')).filter(([a, d]) => Number(a) >= 8 && d === '0').map((c) => c[2])); // một lần gọi git; chỉ tệp đã có ở base, thêm từ 8 dòng và không xóa dòng nào mới xem kỹ (tệp mới thêm thì bỏ qua)
+for (const f of changed.filter((x) => onlyAdds.has(x) && /\.(?:ts|tsx|js|mjs)$/.test(x) && !/^(?:spec|\.claude)\//.test(x))) {
+  const d = git('diff', '-U0', base, '--', f).stdout.split('\n').filter((l) => /^[+-]/.test(l) && !/^(?:\+\+\+|---)/.test(l));
+  const added = d.filter((l) => l[0] === '+');
+  if (added.length >= 8 && added.length === d.length && added.every((l) => /^\+\s*(?:\/\/|\/\*|\*|#)/.test(l))) gate4(`${f}: chỉ thêm ${added.length} dòng chú thích, không đổi dòng mã nào: có phải dòng đệm cho vừa số dòng bằng chứng của review khác? Bằng chứng lệch là việc của người review`);
+}
+const mentioned = (code, l) => l.includes(code);
+if (myMod) {
+  // L63: mã lỗi trong errors.ts của module epic phải có ở tài liệu spec của epic hoặc ở mục Lệch spec
+  const ef = allCode().find((f) => f.replace(/\\/g, '/').endsWith(`/src/modules/${myMod}/errors.ts`));
+  if (ef) {
+    const src = readFileSync(ef, 'utf8');
+    const codes = [...new Set([...src.matchAll(/^\s*\[\s*'([a-z0-9_-]+)'\s*,\s*\d{3}\s*,/gm), ...src.matchAll(/registerProblem\(\s*\{\s*code:\s*'([^']+)'/g)].map((m) => m[1]))];
+    const docs = walk(join(specDir, 'epics', epic)).filter((f) => f.endsWith('.md') && !/[\\/](?:report|review)\.md$/.test(f)).map((f) => readFileSync(f, 'utf8')).join('\n');
+    for (const c of codes) if (!docs.includes(c) && !docs.includes(c.replace(/-/g, '_')) && !mentioned(c, slang)) gate4(`mã lỗi "${c}" ở ${relative(codeDir, ef)} không có ở tài liệu spec nào của epic ${epic} và mục Lệch spec không nêu: tự đặt mã thì ghi [cần quyết] cho mã đó (spec chưa nêu type)`);
+  }
+  // L120: biến cấu hình của module epic mà không test nào gán giá trị khác mặc định
+  const cf = allCode().find((f) => f.replace(/\\/g, '/').endsWith(`/src/modules/${myMod}/config.ts`));
+  if (cf) {
+    const vars = [...readFileSync(cf, 'utf8').matchAll(/^\s*([A-Z][A-Z0-9_]+):\s*(?:\w+\()?cfg\.\w+\(\s*\{[^}]*default:/gm)].map((m) => m[1]);
+    const tests = vars.length ? allCode().filter((f) => /[\\/]test[\\/]|\.(?:spec|test)\./.test(f.slice(codeDir.length))).map((f) => readFileSync(f, 'utf8')) : [];
+    for (const v of vars) {
+      const set = new RegExp(`\\b${v}\\b\\s*[:=]\\s*['"\`\\d]`);
+      const exempt = slang.split(/\r?\n/).some((l) => l.includes(v) && /không đổi được/i.test(l));
+      if (!tests.some((t) => set.test(t)) && !exempt) gate4(`biến cấu hình ${v} (${relative(codeDir, cf)}) không có test nào gán giá trị khác mặc định (env: { ${v}: '...' }): đột biến đọc cứng mặc định sẽ lọt; thêm test hoặc ghi ở Lệch spec là không đổi được lúc chạy`);
+    }
+  }
 }
 const labelCount = { 'đã chọn': 0, 'chưa làm': 0, 'cần quyết': 0 };
 const unlabeled = [];
@@ -168,6 +227,19 @@ for (const l of slang.split(/\r?\n/)) {
   const n = l.match(/^\d+/)[0];
   // L43: [đã chọn] mà việc thật cần người hoặc sdlc-impact/sdlc-foundation quyết
   if (lb === 'đã chọn' && /(?:nên|cần|phải|chờ)\b[^.;]{0,80}?(?:qua|bằng|chạy)\s*`?sdlc-(?:impact|foundation)|nên ghi vào (?:ADR|nền)|review \w+ cân nhắc lại|chưa (?:chạy|qua)\s*`?sdlc-/i.test(l)) gate3(`Lệch spec mục ${n} gắn [đã chọn] nhưng nội dung còn chờ sdlc-impact/sdlc-foundation (hoặc "nên ghi vào ADR"): đổi sang [cần quyết] (hoặc [chưa làm] nếu việc chưa xong)`);
+  // L60: ghi chú thêm cho đủ số dòng
+  if (/cho (?:đủ|khớp) số dòng|cho hết báo vượt (?:độ dài|dòng)|thêm (?:\d+ )?dòng (?:ghi chú|đệm)/i.test(l)) gate4(`Lệch spec mục ${n} nêu việc thêm ghi chú hay dòng "cho đủ số dòng": không sửa mã để số dòng bằng chứng của review khác còn hợp lệ; bằng chứng lệch là việc của người review`);
+  // L135: hẹn sửa lỗi mã của mình ở lượt sau
+  if (lb === 'đã chọn' && /nên sửa ở lượt review|sẽ sửa sau|để lượt review sửa|sửa ở lượt sau/i.test(l)) gate4(`Lệch spec mục ${n} hẹn sửa ở lượt review hoặc "sửa sau": lỗi của mã đang làm thì sửa ngay; chỉ lệch spec mới được ghi`);
+  // L95: "chập chờn" không kèm bản sửa
+  if (/chập chờn/i.test(l) && lb === 'đã chọn' && !/đã sửa|bản sửa|đo xen kẽ|đếm số lần/i.test(l)) gate4(`Lệch spec mục ${n} ghi test "chập chờn" mà không kèm bản sửa (đếm số lần gọi, mốc không ngẫu nhiên) hoặc việc cho người: đổi sang [cần quyết] hoặc sửa test`);
+  // L137: hành vi thêm ngoài spec phải dẫn test thật chứa lại từ khóa hành vi
+  if (/^\d+\.\s*(?:\*\*)?(?:\[[^\]]+\]\s*)?(?:\*\*)?\s*Thêm ngoài spec\b/i.test(l) || /^\d+\.\s*(?:\*\*)?\[đã chọn\](?:\*\*)?\s*Thêm\b/.test(l)) {
+    const files = [...l.matchAll(/[\w./@-]+\.(?:spec|test)\.[cm]?[tj]sx?/g)].map((m) => resolve(codeDir, m[0])).filter((p) => existsSync(p) && statSync(p).isFile());
+    const kw = [...l.matchAll(/`([^`]{3,60})`/g)].map((m) => m[1]).filter((k) => !/[\\/]/.test(k) && !/\.(?:spec|test)\./.test(k));
+    if (!files.length) gate4(`Lệch spec mục ${n}: hành vi thêm ngoài spec phải dẫn ít nhất một tệp test có thật (đường dẫn .spec.ts) kiểm hành vi đó; thuộc tính áp cho N route thì test duyệt cả danh sách route`);
+    else if (kw.length && !files.some((p) => kw.some((k) => readFileSync(p, 'utf8').toLowerCase().includes(k.toLowerCase())))) gate4(`Lệch spec mục ${n}: tệp test dẫn ở mục không chứa từ khóa hành vi "${kw[0]}": test phải kiểm đúng hành vi thêm`);
+  }
   // L53: sửa nền phải nêu TC/E2E cho chỗ sửa
   if (/sửa (?:mã )?(?:nền|của PRJ|platform)/i.test(l) && !/-(?:TC|E2E)-\d/.test(l)) gate3(`Lệch spec mục ${n}: sửa nền (mã module khác) mà mục không nêu ID TC/E2E kiểm từng chỗ sửa`);
   // L55: "nhiễu đo" phải kèm bản sửa hoặc việc cho người

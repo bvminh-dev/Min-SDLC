@@ -5,6 +5,8 @@
 // Kiểm mới (L27 Kết quả chạy lại, L28 reviewed_tree, L38 khớp mục [chưa làm] của report) là LỖI với review có `kit_version: 2`
 // hoặc `--strict`; review cũ không có trường đó chỉ bị cảnh báo.
 // Kiểm thêm L48 (dòng "Đã sửa" cần mục Kết quả sau sửa) là LỖI với `kit_version: 3` hoặc `--strict`, cảnh báo với review kit_version 2.
+// Kiểm thêm L93 (giá trị giữ chỗ TBD/TODO/`0000000`, ô Kết quả thật thiếu số pass) và L65 (bằng chứng trỏ dòng trống hay chỉ `}`) là LỖI với `kit_version: 4` hoặc `--strict`,
+// cảnh báo với review kit_version 3. L65: review trên cây sạch tại reviewed_commit mà mã đổi sau đó thì in "dòng N của <tệp> đã đổi; dòng cũ nay ở M" (chỉ cảnh báo).
 // Không đánh giá code đúng hay sai; chỉ bảo đảm review không bỏ sót mục nào và mỗi kết luận có bằng chứng kiểm được trên đĩa.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -54,7 +56,11 @@ const fresh = Number(fm.kit_version) >= 2 || argv.includes('--strict');
 const gate = (m) => (fresh ? err(m) : warnings.push(`${path}: ${m} (review không có kit_version: 2 nên chỉ cảnh báo)`));
 const fresh3 = Number(fm.kit_version) >= 3 || argv.includes('--strict');
 const gate3 = (m) => (fresh3 ? err(m) : warnings.push(`${path}: ${m} (review chưa có kit_version: 3 nên chỉ cảnh báo)`));
+const fresh4 = Number(fm.kit_version) >= 4 || argv.includes('--strict');
+const gate4 = (m) => (fresh4 ? err(m) : warnings.push(`${path}: ${m} (review chưa có kit_version: 4 nên chỉ cảnh báo)`));
 if (fm.epic !== epic) err(`epic trong frontmatter phải là ${epic}`);
+if (fm.reviewed_tree && !/^[0-9a-f]{40}$/.test(fm.reviewed_tree)) gate4(`reviewed_tree "${fm.reviewed_tree}" không phải chuỗi 40 chữ số thập lục phân (giá trị 0000000 là giữ chỗ): ghi kết quả của "check-review.mjs --tree <gốc mã>" hoặc xóa dòng nếu mã sạch`);
+for (const l of text.split(/\r?\n/)) for (const c of l.startsWith('|') ? cells(l) : []) if (/\bTBD\w*|\bTODO\b/.test(c)) gate4(`ô còn chữ giữ chỗ "${c.slice(0, 40)}": review chưa xong, điền kết quả thật`);
 if (!fm.reviewed_commit) err('thiếu reviewed_commit (git rev-parse --short HEAD của mã đã review)');
 
 // L28: mã đổi sau review thì số dòng bằng chứng có thể sai
@@ -76,10 +82,14 @@ else if (rp) {
   if (cmd && !line) gate(`Kết quả chạy lại không có dòng chứa test_command của report.md (${cmd})`);
   else if (line) {
     const pass = (t) => t.match(/(\d+)\s+pass(?:ed)?\b/)?.[1];
+    if (!pass(line[1] ?? '')) gate4(`Kết quả chạy lại: ô Kết quả thật của dòng test_command không có số pass ("${(line[1] ?? '').slice(0, 40)}")`);
+    if (/\.\.\.|…/.test(line[1] ?? '')) gate4('Kết quả chạy lại: ô Kết quả thật chứa "..." (giá trị giữ chỗ)');
     if (pass(res ?? '') && pass(line[1] ?? '') && pass(res) !== pass(line[1]) && /^khớp/i.test(line[2] ?? '')) gate(`Kết quả chạy lại: ${pass(line[1])} pass không khớp test_result của report.md (${pass(res)} pass) mà cột So với report.md ghi "khớp"`);
   }
 }
 
+const commitOk = fm.reviewed_commit && !fm.reviewed_tree && git(root, 'cat-file', '-e', `${fm.reviewed_commit}^{commit}`).status === 0;
+const drifted = new Set(), blankRefs = [];
 const KQ = ['đạt', 'lệch', 'chưa làm', 'không áp dụng'];
 const TABLES = [['Đối chiếu spec', 'Mục'], ['Quyền', 'Hành động'], ['Bảo mật', 'Mục']];
 const listed = { 'Đối chiếu spec': new Set(), 'Quyền': new Set(), 'Bảo mật': new Set() };
@@ -101,11 +111,25 @@ for (const [name] of TABLES) {
         const m = ref.match(/^(.+):(\d+)$/);
         const p = m && resolve(root, m[1]);
         if (!m || !existsSync(p) || !statSync(p).isFile()) { err(`${name} / ${item}: bằng chứng "${ref}" không phải file:dòng có thật`); continue; }
-        if (Number(m[2]) < 1 || Number(m[2]) > readFileSync(p, 'utf8').split('\n').length) err(`${name} / ${item}: dòng ${m[2]} vượt quá độ dài file ${m[1]}`);
+        const cur = readFileSync(p, 'utf8').split('\n'), n = Number(m[2]);
+        if (n < 1 || n > cur.length) { err(`${name} / ${item}: dòng ${m[2]} vượt quá độ dài file ${m[1]}`); continue; }
+        if (/^\s*[})\];,]*\s*$/.test(cur[n - 1])) blankRefs.push(`${ref} (${item.slice(0, 30)})`);
+        // L65: cây sạch tại reviewed_commit: so dòng được trích lúc đó với hiện tại
+        if (commitOk && !drifted.has(ref)) {
+          drifted.add(ref);
+          const old = git(root, 'show', `${fm.reviewed_commit}:./${m[1]}`);
+          const was = old.status === 0 ? old.stdout.split('\n')[n - 1] : undefined;
+          if (was !== undefined && was.trim() && was !== cur[n - 1]) {
+            const at = cur.map((t, i) => (t === was ? i + 1 : 0)).filter(Boolean).sort((a, b) => Math.abs(a - n) - Math.abs(b - n))[0];
+            warnings.push(`${path}: ${name} / ${item}: dòng ${n} của ${m[1]} đã đổi; ${at ? `dòng cũ nay ở ${at}` : 'dòng cũ không còn trong tệp'}: dịch bằng chứng`);
+          }
+        }
       }
     }
   }
 }
+
+if (blankRefs.length) gate4(`${blankRefs.length} bằng chứng trỏ dòng trống hoặc chỉ gồm ngoặc đóng (dòng này không chứng minh gì; trỏ dòng có mã làm chứng): ${[...new Set(blankRefs)].slice(0, 4).join('; ')}${blankRefs.length > 4 ? '; ...' : ''}`);
 
 // phủ: endpoint (API docs), hành động (ma trận quyền), SB (baseline)
 const docs = walk(specDir).map((f) => ({ f, t: readFileSync(f, 'utf8') }));

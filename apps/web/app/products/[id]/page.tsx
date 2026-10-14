@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AddToCart } from '../../../components/AddToCart';
 import { StockLabel } from '../../../components/StockLabel';
 import { useCountdown } from '../../../components/useCountdown';
 import { api } from '../../../lib/api';
@@ -86,8 +87,12 @@ export default function ProductDetailPage() {
           <h1 data-testid="prd-product-detail-name">{p.name}</h1>
           <p className="hint">Mã: <span data-testid="prd-product-detail-sku">{p.sku}</span></p>
           <p className="price" data-testid="prd-product-detail-price">{formatPrice(p.price)}</p>
-          {rating ? <p data-testid="prd-product-detail-rating">{rating}</p> : <p className="hint" data-testid="prd-product-detail-rating-empty">Chưa có đánh giá</p>}
+          <div className="rating-line">
+            {rating ? <p data-testid="prd-product-detail-rating">{rating}</p> : <p className="hint" data-testid="prd-product-detail-rating-empty">Chưa có đánh giá</p>}
+            <Link href={`/products/${encodeURIComponent(p.id)}/reviews`}>Xem đánh giá</Link>
+          </div>
           <p><StockLabel inStock={stock} testId="prd-product-detail-stock" /></p>
+          <AddToCart productId={p.id} />
           {cat && <p>Danh mục: <Link href={`/products?category=${encodeURIComponent(cat.id)}`} data-testid="prd-product-detail-category">{cat.name}</Link></p>}
         </div>
       </div>

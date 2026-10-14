@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import {
   AppLogger, Clock, ConfigService, EventsService, JobRunner, OutboxRelay, PrismaService, RetentionService, TransactionService,
-  currentCorrelationId, runWithCorrelation, type EventEnvelope,
+  SKIP, currentCorrelationId, runWithCorrelation, type EventEnvelope,
 } from '../../src/modules/platform';
 import { JOB_ABORT_GRACE_MS, JOB_TIMEOUT_MS } from '../../src/modules/platform/jobs/job-runner';
 import { LEASE_MS } from '../../src/modules/platform/events/outbox-relay';
@@ -329,5 +329,139 @@ describe('Outbox, relay, consumer idempotent (PRJ-REQ-20261006-095422563 BR12, B
     expect(await s.events.deliver(sub as never, env(E(2)))).toBe('skipped');
     expect(await s.events.deliver(sub as never, env(E(1)))).toBe('processed'); // đã xóa nên xử lý lại (hạn 30 ngày đã qua)
     expect(ran).toBe(1);
+  });
+});
+
+// Consumer hai pha và consumer raw (sửa nền kèm theo epic NTF: `EventsService.subscribePrepared`, `subscribeRaw`, `idle`, `SKIP`): NTF phải hỏi AUTH NGOÀI giao dịch (SB-31, L71, L87), event token không có ProcessedEvent.
+describe('Consumer hai pha và consumer raw của EventsService (sửa nền kèm NTF)', () => {
+  const s = stack();
+  afterAll(() => s.prisma.$disconnect());
+  beforeEach(async () => { await truncateAll(s.prisma); s.clock.set(NOW); s.logs.clear(); });
+  const E = (n: number) => `00000000-0000-4000-8000-0000000001${String(n).padStart(2, '0')}`;
+  const env = (id: string, type = 'OrderCreated', payload: Record<string, unknown> = {}): EventEnvelope => ({ event_id: id, type, aggregate_type: 'a', aggregate_id: 'a', payload, occurred_at: NOW.toISOString(), correlation_id: 'c' });
+  const processedCount = async (consumer?: string) => (await processed(s)).filter((r: { consumer: string }) => !consumer || r.consumer === consumer).length;
+
+  it('NTF-TC-20261006-104222732: prepare chạy NGOÀI giao dịch (chưa có processed_events), handle chạy trong giao dịch kèm processed_events; lỗi tạm thời ở prepare ném ra, không để lại dấu vết; giao lại thì xử lý', async () => {
+    const trace: string[] = [];
+    let fail = true;
+    s.events.subscribePrepared('X', 'OrderCreated', {
+      prepare: async (e) => { trace.push(`prepare:${await processedCount()}`); if (fail) throw new Error('AUTH tạm thời lỗi'); return { who: e.event_id }; },
+      handle: async (tx, e, p: { who: string }) => { trace.push(`handle:${p.who === e.event_id}`); const n = await tx.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM processed_events WHERE consumer = 'X' AND event_id = ${e.event_id}::uuid`; trace.push(`in-tx:${n[0].n}`); },
+    });
+    const sub = s.events.consumersFor('OrderCreated')[0];
+    await expect(s.events.deliver(sub, env(E(1)))).rejects.toThrow('AUTH tạm thời lỗi');
+    expect(await processedCount()).toBe(0);
+    fail = false;
+    expect(await s.events.deliver(sub, env(E(1)))).toBe('processed');
+    expect(await s.events.deliver(sub, env(E(1)))).toBe('skipped'); // giao lại cùng event_id: bỏ qua ở bước chèn processed_events
+    expect(trace).toEqual(['prepare:0', 'prepare:0', 'handle:true', 'in-tx:1', 'prepare:1']); // prepare luôn ngoài giao dịch; lần giao lại vẫn hỏi AUTH rồi bị chặn
+    expect(sub.handler).toBeInstanceOf(Function);
+    await expect(sub.handler({} as never, env(E(1)))).rejects.toThrow(/hai pha|raw/); // không có đường chạy handler trần của consumer hai pha
+  });
+
+  it('NTF-TC-20261006-104222664: prepare trả SKIP (event không hợp lệ, người nhận không tồn tại) thì không giao dịch, không processed_events, relay coi như đã phát và không giao lại', async () => {
+    let handled = 0;
+    s.events.subscribePrepared('X2', 'OrderCreated', { prepare: async () => SKIP, handle: async () => { handled++; } });
+    const id = await publish(s, 'OrderCreated', 'o-skip');
+    expect(await s.relay.runOnce(NOW)).toMatchObject({ picked: 1, dispatched: 1, failed: 0 });
+    expect([handled, await processedCount('X2')]).toEqual([0, 0]);
+    expect((await outbox(s))[0]).toMatchObject({ id, attempts: 0 });
+    expect((await outbox(s))[0].dispatched_at).toEqual(NOW);
+  });
+
+  it('NTF-TC-20261006-104223184: subscribeRaw chỉ nhận event token; chạy sau commit của bên phát, không ProcessedEvent, không đi outbox; lỗi của handler chỉ log (không payload); idle() chờ xong; deliver từ chối consumer raw', async () => {
+    const got: string[] = [];
+    expect(() => s.events.subscribeRaw('NTF', 'OrderPaid', async () => undefined)).toThrow(/subscribeRaw/);
+    s.events.subscribeRaw('NTF', 'PasswordResetRequested', async (e) => { await new Promise((r) => setTimeout(r, 60)); got.push(String(e.payload.user_id)); if (e.payload.user_id === 'boom') throw new Error('lỗi gửi'); });
+    await s.transactions.run(async () => { s.events.publishAfterCommit({ type: 'PasswordResetRequested', aggregate_type: 'user', aggregate_id: 'u1', payload: { user_id: 'u1', token_ref: 'RAW-TOKEN-VALUE-456' } }); }); // scan-secrets:allow giá trị giả của test
+    expect(got).toEqual([]); // handler chạy nền, chưa xong
+    await s.events.idle();
+    expect(got).toEqual(['u1']);
+    s.events.publishAfterCommit({ type: 'PasswordResetRequested', aggregate_type: 'user', aggregate_id: 'boom', payload: { user_id: 'boom', token_ref: 'RAW-TOKEN-VALUE-789' } }); // scan-secrets:allow giá trị giả của test
+    await s.events.idle();
+    expect(got).toEqual(['u1', 'boom']);
+    expect(s.logs.records.filter((r) => r.level === 'error' && r.event_type === 'PasswordResetRequested')).toHaveLength(1);
+    expect(s.logs.lines.join('\n')).not.toMatch(/RAW-TOKEN-VALUE/);
+    expect([await processedCount(), (await outbox(s)).length]).toEqual([0, 0]);
+    const sub = s.events.consumersFor('PasswordResetRequested').find((x) => x.raw)!;
+    expect(() => s.events.deliver(sub, env(E(9), 'PasswordResetRequested'))).toThrow(/raw/);
+  });
+});
+
+describe('Consumer hai pha không giữ kết nối khi hỏi module khác, và payload không phải đối tượng (PRJ-REQ-20261006-095422563 BR13)', () => {
+  const small = stack({ DB_POOL_MAX: '2' });
+  afterAll(() => small.prisma.$disconnect());
+  beforeEach(async () => { await truncateAll(small.prisma); small.clock.set(NOW); small.logs.clear(); });
+  const E = (n: number) => `00000000-0000-4000-8000-0000000002${String(n).padStart(2, '0')}`;
+  const env = (id: string, payload: unknown, type = 'OrderCreated'): EventEnvelope => ({ event_id: id, type, aggregate_type: 'a', aggregate_id: 'a', payload: payload as Record<string, unknown>, occurred_at: NOW.toISOString(), correlation_id: 'c' });
+  const processedFor = async (consumer: string) => (await processed(small)).filter((r: { consumer: string }) => r.consumer === consumer).length;
+
+  it('PRJ-TC-20261013-184314446: ở pool nhỏ nhất (DB_POOL_MAX = 2) tám event giao song song cho consumer hai pha không treo vì `prepare` (hỏi module khác bằng kết nối của pool) chạy NGOÀI giao dịch; lỗi tạm thời và SKIP không để lại processed_events', async () => {
+    const asked: number[] = [];
+    small.events.subscribePrepared('PREP', 'OrderCreated', {
+      // `prepare` dùng một kết nối của pool (như đọc AUTH, PRD): nếu chạy trong giao dịch giao event thì hai giao dịch song song giữ hết pool rồi cùng chờ kết nối thứ hai
+      prepare: async (e) => {
+        const [{ ok }] = await small.prisma.$queryRaw<{ ok: number }[]>`SELECT 1 AS ok FROM (SELECT pg_sleep(0.05)) s`;
+        asked.push(ok);
+        return e.payload.mode === 'skip' ? SKIP : e.payload.mode === 'fail' ? (() => { throw new Error('AUTH tạm thời lỗi'); })() : { n: ok };
+      },
+      handle: async (tx, e) => { await tx.$queryRaw`SELECT 1`; asked.push(Number(e.payload.i) + 100); },
+    });
+    const sub = small.events.consumersFor('OrderCreated').find((x) => x.consumer === 'PREP')!;
+    const t0 = Date.now();
+    const rs = await Promise.all(Array.from({ length: 8 }, (_v, i) => small.events.deliver(sub, env(E(i), { i, mode: 'ok' }))));
+    expect(rs).toEqual(Array(8).fill('processed'));
+    expect(Date.now() - t0).toBeLessThan(5000); // không chờ hạn của pool
+    expect(await processedFor('PREP')).toBe(8);
+    await expect(small.events.deliver(sub, env(E(20), { i: 20, mode: 'fail' }))).rejects.toThrow('AUTH tạm thời lỗi');
+    expect(await small.events.deliver(sub, env(E(21), { i: 21, mode: 'skip' }))).toBe('skipped');
+    expect(await processedFor('PREP')).toBe(8); // lỗi tạm thời và SKIP không ghi processed_events: lỗi tạm thời được giao lại, SKIP thì không có gì để giao lại
+    expect(asked.length).toBeGreaterThanOrEqual(8 + 8 + 2);
+  });
+
+  it('PRJ-TC-20261013-184314546: payload không phải đối tượng (null, mảng, chuỗi, số) bị nền bác trước prepare và handle, log mã event không log payload, đánh dấu đã xử lý để không giao lại; đối tượng rỗng vẫn tới handler (L85)', async () => {
+    const seen: string[] = [];
+    small.events.subscribe('PLAIN', 'OrderCancelled', async (_tx, e) => { seen.push(`plain:${JSON.stringify(e.payload)}`); });
+    small.events.subscribePrepared('PREP2', 'OrderCancelled', { prepare: async () => { seen.push('prepare'); return {}; }, handle: async () => { seen.push('handle'); } });
+    const subs = small.events.consumersFor('OrderCancelled');
+    const bad: unknown[] = [null, ['x'], 'SECRET-PAYLOAD-STRING', 42];
+    for (const [i, payload] of bad.entries()) for (const sub of subs) expect(await small.events.deliver(sub, env(E(30 + i), payload, 'OrderCancelled'))).toBe('skipped');
+    expect(seen).toEqual([]); // handler và prepare không bao giờ chạy
+    expect([await processedFor('PLAIN'), await processedFor('PREP2')]).toEqual([4, 4]); // đã đánh dấu: relay không giao lại
+    const errors = small.logs.records.filter((r) => r.level === 'warn' && r.event_type === 'OrderCancelled');
+    expect(errors).toHaveLength(8);
+    expect(errors[0]).toMatchObject({ event_id: E(30), consumer: expect.any(String) });
+    expect(small.logs.lines.join('\n')).not.toMatch(/SECRET-PAYLOAD-STRING/); // không log payload
+    expect(await small.events.deliver(subs[0], env(E(40), {}, 'OrderCancelled'))).toBe('processed'); // `{}` vẫn là đối tượng
+    expect(seen).toEqual(['plain:{}']);
+  });
+});
+
+describe('Đăng ký job và lịch chu kỳ của JobRunner (PRJ-REQ-20261006-095422563 BR14, ADR-013)', () => {
+  const s = stack();
+  afterAll(() => s.prisma.$disconnect());
+
+  it('PRJ-TC-20261013-185818272: jobs.register từ chối tên trùng; lịch là chu kỳ `every` từ lúc khởi động: lần đầu sau một chu kỳ (không chạy ngay), khởi động lại thì đếm lại từ đầu (L70)', async () => {
+    const ids: (string | undefined)[] = [];
+    const def = { name: 'tc-185818272', module: 'platform', every: 150, run: async () => { ids.push(currentCorrelationId()); } };
+    const a = new JobRunner(s.config, s.logger);
+    a.register(def);
+    expect(() => a.register({ ...def })).toThrow(/đã đăng ký/);
+    try {
+      a.start();
+      expect(ids).toHaveLength(0); // không chạy ngay khi khởi động
+      await new Promise((r) => setTimeout(r, 60));
+      expect(ids).toHaveLength(0); // chưa tới hết MỘT chu kỳ
+      expect(await waitFor(() => ids.length >= 3, 3000, 20)).toBe(true);
+    } finally { await a.stop(); }
+    expect(new Set(ids).size).toBe(ids.length); // mỗi lượt một correlation_id mới
+    const before = ids.length;
+    const b = new JobRunner(s.config, s.logger);
+    b.register({ ...def });
+    try {
+      b.start();
+      expect(ids).toHaveLength(before); // runner mới đếm lại từ đầu: chưa chạy ngay
+      expect(await waitFor(() => ids.length > before, 3000, 20)).toBe(true);
+    } finally { await b.stop(); }
   });
 });

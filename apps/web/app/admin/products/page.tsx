@@ -9,6 +9,7 @@ import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { formatDateTime, formatPrice, STATUS_LABEL, type ProductStatus } from '../../../lib/format';
 import { flattenTree, rateLimitedText, useCategories, useLoginRedirect } from '../../../lib/prd';
+import { useQueryGo } from '../../../components/useQueryGo';
 
 interface Row { id: string; name: string; sku: string; price: number; status: ProductStatus; category: { id: string; name: string } | null; updated_at: string }
 interface Result { items: Row[]; page: number; limit: number; total: number }
@@ -35,13 +36,7 @@ function ProductAdminList() {
   const wasLimited = useRef(false);
 
   useEffect(() => { setSearch(q); }, [q]);
-  const go = useCallback((change: Record<string, string | null>, keepPage = false) => {
-    const n = new URLSearchParams(sp.toString());
-    for (const [k, v] of Object.entries(change)) { if (v) n.set(k, v); else n.delete(k); }
-    if (!keepPage) n.delete('page');
-    const s = n.toString();
-    router.push(s ? `/admin/products?${s}` : '/admin/products', { scroll: false });
-  }, [sp, router]);
+  const go = useQueryGo('/admin/products'); // cộng dồn các lần đổi liền nhau (REV-REV-12)
   // Gõ rồi chờ 300 ms (hoặc Enter) mới tìm.
   useEffect(() => {
     if (search.trim() === q) return;

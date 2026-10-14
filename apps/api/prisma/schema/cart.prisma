@@ -1,0 +1,52 @@
+// Module cart (epic CRT, CRT-DB-20261006-103824563): Cart, CartItem.
+// Phần Prisma không biểu diễn được (CHECK, chỉ mục duy nhất một phần WHERE status = 'active', chỉ mục một phần cho job) nằm trong migration SQL.
+// Khóa ngoại chỉ trỏ vào bảng của CRT, `products` (PRD) và `shipping_methods` (SHP), đúng cột Phụ thuộc (PRD, INV, PRM, SHP); `user_id` và `converted_order_id` là cột trơn
+// (AUTH, ORD không nằm trong Phụ thuộc của CRT, ADR-012, A-03). CRT không SELECT `products` hay `shipping_methods` (SB-35).
+
+enum CartStatus {
+  active
+  converted
+  abandoned
+
+  @@map("cart_status")
+}
+
+model Cart {
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String     @map("user_id") @db.Uuid
+  status           CartStatus @default(active)
+  couponCode       String?    @map("coupon_code")
+  shippingMethodId String?    @map("shipping_method_id") @db.Uuid
+  shippingCity     String?    @map("shipping_city")
+  version          Int        @default(1)
+  lastActivityAt   DateTime   @default(now()) @map("last_activity_at") @db.Timestamptz(6)
+  convertedOrderId String?    @map("converted_order_id") @db.Uuid
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  shippingMethod   ShippingMethod?   @relation(fields: [shippingMethodId], references: [id], onDelete: Restrict)
+  items            CartItem[]
+  // Phía ngược của khóa ngoại checkout_sessions.cart_id (CHK phụ thuộc CRT, CHK-DB): CRT không đọc bảng này.
+  checkoutSessions CheckoutSession[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cartId            String   @map("cart_id") @db.Uuid
+  productId         String   @map("product_id") @db.Uuid
+  quantity          Int
+  unitPrice         BigInt   @map("unit_price")
+  unavailableReason String?  @map("unavailable_reason")
+  createdAt         DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([cartId, productId])
+  @@index([productId])
+  @@index([cartId, createdAt, id])
+  @@map("cart_items")
+}

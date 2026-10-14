@@ -29,7 +29,7 @@ describe('ORD với INV và PRM qua relay thật', () => {
     return t.tx.run(async (tx: Tx) => {
       const o = await t.ord.createPending({
         user_id: userId, items: [{ product_id: product, name_snapshot: 'Áo thun', unit_price: 100000, quantity: 2 }], items_total: 200000, discount: 20000, shipping_fee: 30000, grand_total: 210000,
-        shipping_address: { receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi', ward: 'Bến Nghé', city: 'TP.HCM' }, shipping_method_id: randomUUID(), payment_method: method, payment_expires_at: expires,
+        shipping_address: { receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi', ward: 'Bến Nghé', district: 'Quận 1', city: 'TP.HCM' }, shipping_method_id: randomUUID(), payment_method: method, payment_expires_at: expires,
       }, tx);
       expect((await t.inv.reserve(o.order_id, [{ product_id: product, quantity: 2 }], expires, tx)).ok).toBe(true);
       expect((await t.prm.reserve({ order_id: o.order_id, user_id: userId, code: coupon, items_subtotal: 200000 }, tx)).ok).toBe(true);

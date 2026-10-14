@@ -37,7 +37,7 @@ describe('PRM kiểm quyền theo ma trận trên AppModule thật (PRM-SEC T1, 
       'DELETE /api/v1/admin/coupons/:id', 'GET /api/v1/admin/coupons', 'GET /api/v1/admin/coupons/:id', 'PATCH /api/v1/admin/coupons/:id', 'POST /api/v1/admin/coupons',
       'POST /api/v1/admin/coupons/:id/disable', 'POST /api/v1/admin/coupons/:id/enable',
     ]);
-    expect(routeIds(app).filter((id) => /coupon|promotion/i.test(id) && !PRM_SCOPE(id))).toEqual([]); // PRM không có endpoint nào cho khách
+    expect(routeIds(app).filter((id) => /coupon|promotion/i.test(id) && !PRM_SCOPE(id) && !/^(PUT|DELETE) \/api\/v1\/(cart\/coupon|checkout\/sessions\/:id\/coupon)$/.test(id))).toEqual([]); // PRM không có endpoint nào cho khách; áp, gỡ mã trên giỏ là route của CRT (CRT-REQ-20261006-103226511) và trên checkout là route của CHK (CHK-REQ-20261006-105051536), không phải của PRM
   });
 
   it('PRM-TC-20261006-101037169 và PRM-SEC-20261006-101036568 T1 (kiểm lệch ma trận, SB-05): báo khi ma trận hay code sai (staff được quyền coupon, hàng đổi tên) và đóng khi công cụ hỏng', () => {

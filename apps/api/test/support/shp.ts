@@ -47,6 +47,8 @@ export interface SeedShipment {
   createdAt?: Date; reason?: FailReason; note?: string | null; version?: number; handoff?: Date | null; noHistory?: boolean; address?: Record<string, string>;
   /** Đơn không có dòng lịch sử (để thử ON DELETE RESTRICT của chính vận đơn, không bị lịch sử của đơn chặn thay). */
   bareOrder?: boolean;
+  /** Vận đơn "có sẵn từ trước migration order_code": cột `order_code` để rỗng (để thử câu backfill). */
+  legacyNoOrderCode?: boolean;
 }
 export interface SeededShipment { id: string; order: { id: string; code: string; user: string }; method: string; tracking: string | null }
 let trackingCounter = 0;
@@ -72,8 +74,8 @@ export async function seedShipment(t: AuthApp, o: SeedShipment = {}): Promise<Se
   const shippedAt = path.includes('shipped') ? at(1) : null;
   const deliveredAt = status === 'delivered' ? at(2) : null;
   const [r] = await t.prisma.$queryRaw<{ id: string }[]>`
-    INSERT INTO shipments (order_id, shipping_method_id, status, tracking_number, cod_amount, shipped_at, delivered_at, version, created_at, updated_at)
-    VALUES (${order.id}::uuid, ${method}::uuid, ${status}::shipment_status, ${tracking}, ${o.cod ?? 0}, ${shippedAt}::timestamptz, ${deliveredAt}::timestamptz, ${o.version ?? (path.length)}, ${created}::timestamptz, ${at(path.length - 1)}::timestamptz) RETURNING id`;
+    INSERT INTO shipments (order_id, order_code, shipping_method_id, status, tracking_number, cod_amount, shipped_at, delivered_at, version, created_at, updated_at)
+    VALUES (${order.id}::uuid, ${o.legacyNoOrderCode ? null : order.code}, ${method}::uuid, ${status}::shipment_status, ${tracking}, ${o.cod ?? 0}, ${shippedAt}::timestamptz, ${deliveredAt}::timestamptz, ${o.version ?? (path.length)}, ${created}::timestamptz, ${at(path.length - 1)}::timestamptz) RETURNING id`;
   if (!o.noHistory) {
     for (const [i, st] of path.entries()) {
       const failed = st === 'failed';

@@ -96,7 +96,7 @@ function OrderDetailView({ code }: { code: string }) {
       <section>
         <h2>Giao hàng</h2>
         {order.shipping_address
-          ? <div data-testid="ord-order-detail-address"><p>{order.shipping_address.receiver}</p><p>{order.shipping_address.phone}</p><p>{order.shipping_address.line1}, {order.shipping_address.ward}, {order.shipping_address.city}</p></div>
+          ? <div data-testid="ord-order-detail-address"><p>{order.shipping_address.receiver}</p><p>{order.shipping_address.phone}</p><p>{[order.shipping_address.line1, order.shipping_address.ward, order.shipping_address.district, order.shipping_address.city].filter(Boolean).join(', ')}</p></div>
           : <p className="hint" data-testid="ord-order-detail-address-hidden">Thông tin người nhận được ẩn theo chính sách dữ liệu</p>}
         {order.tracking_number && <p>Mã vận đơn: <span className="mono" data-testid="ord-order-detail-tracking">{order.tracking_number}</span></p>}
         {customer && order.tracking_number && <Link href={`/orders/${order.code}/shipment`} data-testid="ord-order-detail-tracking-link">Theo dõi vận chuyển ›</Link>}

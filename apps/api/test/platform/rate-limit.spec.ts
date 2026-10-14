@@ -72,6 +72,21 @@ describe('Giới hạn tần suất: bậc A, bậc D, khóa tùy chỉnh (PRJ-R
     expect((await get(t, '/api/v1/fx/limited-key?account=b', CUST)).status).toBe(200); // khóa khác, đếm riêng
     expect((await get(t, '/api/v1/fx/limited-a', CUST)).status).toBe(200); // route khác, không đếm chung
   });
+
+  // L133, REV-REV-15: bộ đếm khóa bằng (bucket, window_start); tên bucket không có method và độ dài cửa sổ nên PUT 3600 giây và DELETE 60 giây cùng đường dẫn dùng chung một dòng ở đầu mỗi giờ
+  it('PRJ-TC-20261013-184314241: khóa bộ đếm gồm method và độ dài cửa sổ: cùng đường dẫn khác method hoặc khác cửa sổ không trừ lượt của nhau, kể cả ở đầu giờ (đầu cửa sổ 3600 cũng là đầu cửa sổ 60)', async () => {
+    t.clock.set(new Date('2026-10-06T10:00:00.000Z')); // đúng đầu giờ
+    const call = (method: 'get' | 'put' | 'delete') => request(t.app.getHttpServer())[method]('/api/v1/fx/limited-w').set('x-test-user', CUST).then((r) => r.status);
+    for (let i = 0; i < 5; i++) expect([i, await call('delete')]).toEqual([i, 200]); // DELETE (60 giây, 100 lần) ghi vào cửa sổ phút trùng đầu giờ
+    for (let i = 0; i < 3; i++) expect([i, await call('put')]).toEqual([i, 200]); // PUT (3600 giây, 3 lần) vẫn đủ ba lượt: DELETE không trừ vào hạn của PUT
+    expect(await call('put')).toBe(429); // lần thứ 4 của PUT
+    for (let i = 0; i < 3; i++) expect([i, await call('get')]).toEqual([i, 200]); // GET cùng cửa sổ 3600 với PUT nhưng khác method: bộ đếm riêng
+    expect(await call('get')).toBe(429);
+    expect(await call('delete')).toBe(200); // PUT hết lượt không kéo DELETE theo
+    const rows = await t.app.get(PrismaService).$queryRaw<{ bucket: string }[]>`SELECT bucket FROM rate_limit_counters WHERE bucket LIKE 'B:%' ORDER BY bucket`;
+    expect(rows).toHaveLength(3); // ba bộ đếm riêng (DELETE, GET, PUT), không dòng nào dùng chung
+    for (const r of rows) expect(r.bucket).toMatch(/\/api\/v1\/fx\/limited-w|\/fx\/limited-w/); // tên bucket vẫn truy được về đường dẫn
+  });
 });
 
 describe('RateLimitService.check, hitCounter, reset (PRJ-API: Giao tiếp giữa module)', () => {

@@ -26,12 +26,13 @@ ${fm}---
 ${extra}## Lệch spec
 ${slang}
 `;
-function run(o = {}, code = `// ${TC}\ntest('x')\n`, tc = `---\nid: ${TC}\n---\n`) {
+function run(o = {}, code = `// ${TC}\ntest('x')\n`, tc = `---\nid: ${TC}\n---\n`, files = {}) {
   const r = mkdtempSync(join(tmpdir(), 'impl-'));
   put(r, `spec/epics/ORD/design/${API}.md`, `---\nid: ${API}\n---\n`);
   put(r, `spec/epics/ORD/tests/${TC}.md`, tc);
   put(r, 'spec/epics/ORD/report.md', report(o));
   put(r, 'src/orders.spec.ts', code);
+  for (const [f, t] of Object.entries(files)) put(r, f, t);
   return spawnSync('node', [script, join(r, 'spec'), r, '--epic', 'ORD'], { encoding: 'utf8' });
 }
 const bad = (o, re, code, tc) => { const x = run(o, code, tc); assert.equal(x.status, 1, String(re)); assert.match(x.stderr, re); };
@@ -113,7 +114,7 @@ assert.equal(run(g3(), T49(`// fixed-clock: Clock giả cho mọi nguồn thời
 assert.equal(run(g3(), T49(`const NOW = '${D()}T10:00:00Z'; // fixed-clock: đồng hồ giả`)).status, 0);
 // L53: sửa mã module khác (nền) mà không có test đổi theo ở test/<module>/
 const ARCH = '| Epic | Module | Phụ thuộc |\n|---|---|---|\n| ORD | order | - |\n| PRJ | platform | - |\n';
-function runGit(o, edit) {
+function runGit(o, edit, base = {}) {
   const r = mkdtempSync(join(tmpdir(), 'impl-git-'));
   put(r, `spec/epics/ORD/design/${API}.md`, `---\nid: ${API}\n---\n`);
   put(r, `spec/epics/ORD/tests/${TC}.md`, `---\nid: ${TC}\n---\n`);
@@ -121,6 +122,7 @@ function runGit(o, edit) {
   put(r, 'spec/epics/ORD/report.md', report(o));
   put(r, 'src/orders.spec.ts', `// ${TC}\ntest('x')\n`);
   put(r, 'apps/api/src/modules/platform/a.ts', 'a\n');
+  for (const [f, t] of Object.entries(base)) put(r, f, t);
   const g = (...a) => spawnSync('git', a, { cwd: r, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' } });
   g('init', '-q'); g('add', '-A'); g('commit', '-qm', 'x');
   edit(r);
@@ -144,4 +146,60 @@ assert.equal(run(g3(), `// ${TC}\nit('x', async () => {\n  const a = await media
 warn3(g3({ slang: '1. [đã chọn] TC đỏ một lần ở 0,325 là nhiễu đo, giữ ngưỡng.' }), /mục 1.*nhiễu đo/);
 assert.equal(run(g3({ slang: '1. [đã chọn] TC đỏ một lần là nhiễu đo; đã sửa sang đo xen kẽ.' })).status, 0);
 assert.equal(run(g3({ slang: '1. [cần quyết] TC đỏ một lần là nhiễu đo, cần người chọn ngưỡng.' })).status, 0);
+
+// ---- L60, L63, L86, L95, L98, L120, L135, L137 + giá trị giữ chỗ (kit_version: 4): lỗi với `kit_version: 4` hoặc --strict; kit_version 3 chỉ cảnh báo
+const F4 = 'kit_version: 4\nclean_run: pass\n', SCRIPT = '\n9. [đã chọn] clean run bằng `node .claude/skills/sdlc-implement/scripts/clean-run.mjs`, mã thoát từng bước 0.';
+const g4 = (o = {}) => ({ fm: F4, ...o, slang: (o.slang ?? LB) + SCRIPT });
+assert.equal(run(g4()).status, 0, run(g4()).stderr);
+const warn4 = (o, re, code, tc, files, base) => { // cùng đầu vào: kit 4 là lỗi, kit 3 chỉ cảnh báo
+  const e = run(o, code, tc, files); assert.equal(e.status, 1, String(re) + '\n' + e.stdout); assert.match(e.stderr, re);
+  const w = run({ ...o, fm: (o.fm ?? F4).replace('kit_version: 4', 'kit_version: 3') }, code, tc, files); assert.equal(w.status, 0, w.stderr); assert.match(w.stdout, new RegExp(`Lưu ý: .*${re.source}`));
+};
+const ARCH4 = { 'spec/architecture.md': '| Epic | Module | Phụ thuộc |\n|---|---|---|\n| ORD | order | - |\n' };
+// L98: clean_run: pass phải kèm lệnh clean-run.mjs và mã thoát từng bước
+warn4({ fm: F4, slang: LB }, /clean-run\.mjs/);
+// giá trị giữ chỗ
+warn4(g4({ fm: `${F4}test_result: TBD_TEST_RESULT\n` }), /giữ chỗ|TBD/);
+warn4(g4({ note: 'TBD_NOTE' }), /giữ chỗ|TBD/);
+// L60: dòng đệm cho đủ số dòng bằng chứng
+warn4(g4({ slang: '1. [đã chọn] thêm ghi chú tài liệu vào ba tệp cho đủ số dòng bằng chứng của review USR.' }), /cho đủ số dòng/);
+const PAD = Array.from({ length: 9 }, (_, i) => `// ghi chú ${i}`).join('\n') + '\n';
+const padEdit = (r) => put(r, 'apps/api/src/modules/order/b.ts', 'export const a = 1;\n' + PAD);
+const gp = runGit(g4(), padEdit, { 'apps/api/src/modules/order/b.ts': 'export const a = 1;\n' });
+assert.equal(gp.status, 1, 'chỉ thêm 9 dòng chú thích: ' + gp.stdout);
+assert.match(gp.stderr, /b\.ts.*chú thích/);
+const gp3 = runGit({ ...g4(), fm: F3 }, padEdit, { 'apps/api/src/modules/order/b.ts': 'export const a = 1;\n' });
+assert.equal(gp3.status, 0, gp3.stderr);
+assert.match(gp3.stdout, /Lưu ý: .*b\.ts.*chú thích/);
+assert.equal(runGit(g4(), (r) => put(r, 'apps/api/src/modules/order/b.ts', 'export const a = 2;\n' + PAD), { 'apps/api/src/modules/order/b.ts': 'export const a = 1;\n' }).status, 0, 'có đổi dòng mã thì không phải chỉ đệm');
+// L63: mã lỗi trong errors.ts không có ở tài liệu spec của epic và không có ở Lệch spec
+const ERRS = "const defs = [\n  ['known-code', 409, 'a'],\n  ['order-stuck', 409, 'b'],\n];\n";
+const ERRF = { ...ARCH4, 'apps/api/src/modules/order/errors.ts': ERRS, [`spec/epics/ORD/design/${API}x.md`]: 'urn:ecom:error:known-code\n' };
+warn4(g4(), /order-stuck/, undefined, undefined, ERRF);
+assert.equal(run(g4({ slang: LB + '\n2. [đã chọn] mã `order-stuck` tự đặt vì spec chưa nêu mã.' }), undefined, undefined, ERRF).status, 0, 'mã tự đặt có nêu ở Lệch spec thì qua');
+assert.equal(run(g4(), undefined, undefined, { ...ERRF, [`spec/epics/ORD/design/${API}x.md`]: 'urn:ecom:error:known-code urn:ecom:error:order-stuck\n' }).status, 0, 'mã có trong spec thì qua');
+// L86: test tạo thư mục tạm không xóa
+const TMPT = `// ${TC}\nconst d = mkdtempSync(join(tmpdir(), 'x-'));\n`;
+warn4(g4(), /thư mục tạm/, TMPT);
+assert.equal(run(g4(), TMPT + 'rmSync(d, { recursive: true });\n').status, 0, 'có xóa thì qua');
+assert.equal(run(g4(), TMPT.replace("'x-'));", "'x-')); // tmp-hygiene: xóa ở globalTeardown của tooling")).status, 0);
+assert.equal(run(g4(), TMPT, undefined, { 'jest.config.js': "module.exports = { globalTeardown: '<rootDir>/t.ts' };\n" }).status, 0, 'dự án có globalTeardown thì qua');
+// L95: so thời gian mà không đếm; "chập chờn" không kèm bản sửa
+const TIMED = `// ${TC}\nit('x', async () => {\n  const a = await medianMs(30, f);\n  expect(a).toBeLessThan(30);\n});\n`;
+warn4(g4(), /phép đếm|đếm số lần/, TIMED);
+assert.equal(run(g4(), TIMED.replace('});\n', '  expect(spy).toHaveBeenCalledTimes(3);\n});\n')).status, 0, 'có đếm số lần gọi thì qua');
+warn4(g4({ slang: '1. [đã chọn] test đỏ chập chờn một lần, giữ ngưỡng.' }), /chập chờn/);
+assert.equal(run(g4({ slang: '1. [đã chọn] test đỏ chập chờn một lần; đã sửa sang đếm số lần gọi.' })).status, 0);
+// L120: biến cấu hình của module epic mà không test nào gán giá trị khác mặc định
+const CFG = { ...ARCH4, 'apps/api/src/modules/order/config.ts': "export const V = {\n  ORD_HOLD_TTL: cfg.int({ default: 15, min: 1 }),\n};\n" };
+warn4(g4(), /ORD_HOLD_TTL/, undefined, undefined, CFG);
+assert.equal(run(g4(), `// ${TC}\nmakeApp({ env: { ORD_HOLD_TTL: '20' } });\n`, undefined, CFG).status, 0, 'test có gán giá trị thì qua');
+assert.equal(run(g4({ slang: LB + '\n2. [đã chọn] ORD_HOLD_TTL không đổi được lúc chạy (hằng của hợp đồng).' }), undefined, undefined, CFG).status, 0);
+// L135: lỗi của chính mã mà hẹn sửa ở lượt review
+warn4(g4({ slang: '1. [đã chọn] bộ lọc URL dùng chuỗi cũ khi đổi hai lần liền; nên sửa ở lượt review.' }), /lượt review|sửa sau/);
+// L137: hành vi thêm ngoài spec phải dẫn test thật chứa lại từ khóa
+const ADD = (path = '') => `1. [đã chọn] Thêm ngoài spec: header \`Cache-Control\` private cho chín endpoint${path}.`;
+warn4(g4({ slang: ADD() }), /thêm ngoài spec.*test/);
+warn4(g4({ slang: ADD(', test src/orders.spec.ts') }), /Cache-Control/, `// ${TC}\nexpect(res.status).toBe(200);\n`);
+assert.equal(run(g4({ slang: ADD(', test src/orders.spec.ts') }), `// ${TC}\nexpect(h['Cache-Control']).toBe('private');\n`).status, 0);
 console.log('OK: check-report.mjs');

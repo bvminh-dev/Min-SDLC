@@ -59,17 +59,17 @@ describe('ORD kiểm quyền và ranh giới trên AppModule thật', () => {
     expect(auditPermissions(t.app, MATRIX, { ...opts, exempt: [] }).join('\n')).toContain('hàng ma trận "Xem trạng thái đơn" của ORD không có endpoint nào khai @Action');
   });
 
-  it('ORD-API-20261006-092703780 mục Giao tiếp giữa module: OrderApi đúng bảng Giao diện module (mười lăm phương thức, đúng số đối số, tx ở bốn phương thức ghi), chỉ có AUTH là phụ thuộc, sổ mã lỗi sạch và có order-not-cancellable (409)', () => {
+  it('ORD-API-20261006-092703780 mục Giao tiếp giữa module: OrderApi đúng bảng Giao diện module (mười lăm phương thức của bảng cộng `hasUndeliveredItems` của REV, REV-TC-20261006-104525491, và `getProductSalesTotals` của DSH, DSH-TC-20261006-110332035, đúng số đối số, tx ở bốn phương thức ghi), chỉ có AUTH là phụ thuộc, sổ mã lỗi sạch và có order-not-cancellable (409)', () => {
     const arch = (re: RegExp) => expect(ARCH).toMatch(re);
     arch(/\| CHK \| ORD \| `OrderApi\.createPending\(\.\.\., payment_expires_at, tx\)`[^|]*`OrderApi\.confirmCod`, `OrderApi\.countOpenOrders`, `OrderApi\.getSummary` \| có \|/);
     arch(/\| PAY \| ORD \| `OrderApi\.findForPayment` \(đọc\) \| không \|/);
     arch(/\| SHP \| ORD \| `OrderApi\.findForShipment`, `OrderApi\.findByCode`, `OrderApi\.findOwned`, `OrderApi\.getRecipient` [^|]*`OrderApi\.lockForHandoff\(order_id, tx\)`/);
-    arch(/\| REV \| ORD \| `OrderApi\.getDeliveredItems` \(đọc\) \| không \|/);
-    arch(/\| DSH \| ORD \| `OrderApi\.countByStatus`, `OrderApi\.getOrderSeries`, `OrderApi\.listRecent`, `OrderApi\.getTopProducts`/);
+    arch(/\| REV \| ORD \| `OrderApi\.getDeliveredItems\(user_id, product_id\)` \(đọc\), `OrderApi\.hasUndeliveredItems\(user_id, product_id\)` \(đọc[^|]*\| không \|/);
+    arch(/\| DSH \| ORD \| `OrderApi\.countByStatus\(range_utc\)`, `OrderApi\.getOrderSeries\(range_utc, bucket\)`, `OrderApi\.listRecent\(limit\)`[^|]*`OrderApi\.getTopProducts\(range_utc, sort, limit\)`[^|]*`OrderApi\.getProductSalesTotals\(range_utc\)`/);
     arch(/\|\s*ORD\s*\|\s*order\s*\|\s*AUTH\s*\|/);
     const arity: Record<string, number> = {
       createPending: 2, confirmCod: 2, countOpenOrders: 1, getSummary: 1, findForPayment: 1, findForShipment: 1, findByCode: 1, findOwned: 2, getRecipient: 1, lockForHandoff: 2,
-      getDeliveredItems: 2, countByStatus: 1, getOrderSeries: 2, listRecent: 1, getTopProducts: 3,
+      getDeliveredItems: 2, hasUndeliveredItems: 2, countByStatus: 1, getOrderSeries: 2, listRecent: 1, getTopProducts: 3, getProductSalesTotals: 1,
     };
     const proto = Object.getOwnPropertyNames(OrderApi.prototype).filter((n) => n !== 'constructor').sort();
     expect(proto).toEqual(Object.keys(arity).sort());

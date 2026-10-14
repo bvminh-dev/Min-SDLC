@@ -487,7 +487,7 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | ntf-notification-list-pagination | notification-list | NTF | Phân trang ‹ 1 2 › (ẩn khi một trang) | customer, staff, admin | NTF-REQ-20261006-103209345 |
 | ntf-notification-list-retry | notification-list | NTF | Nút Thử lại | customer, staff, admin | NTF-REQ-20261006-103209345 |
 | ntf-notification-list-row | notification-list | NTF | Dòng thông báo | customer, staff, admin | NTF-REQ-20261006-103209345 |
-| ntf-notification-list-status-filter | notification-list | NTF | Hàng tab Tất cả, Chưa đọc, Đã đọc (dropdown dưới sm) | customer, staff, admin | NTF-REQ-20261006-103209345 |
+| ntf-notification-list-status-filter | notification-list | NTF | Nhóm ba nút Tất cả, Chưa đọc, Đã đọc (nhóm nút ở mọi khổ, tự xuống dòng dưới sm; không dropdown) | customer, staff, admin | NTF-REQ-20261006-103209345 |
 | ntf-notification-list-summary | notification-list | NTF | Dòng "1 tới 20 trong 25 thông báo" | customer, staff, admin | NTF-REQ-20261006-103209345 |
 | ntf-notification-list-title | notification-list | NTF | Tiêu đề trên dòng | customer, staff, admin | NTF-REQ-20261006-103209345 |
 | ntf-notification-list-toast-error | notification-list | NTF | Toast lỗi đánh dấu | customer, staff, admin | NTF-REQ-20261006-103209256 |

@@ -2,6 +2,7 @@
 // Kiểm tài liệu thiết kế `spec/epics/<EPIC>/design/*.md` (DB, API, SEC) với domain model, kiến trúc và baseline.
 // Hình thức chung (ID, links, status) do check-spec.mjs kiểm; file này kiểm phần nhất quán chéo.
 // Dùng: node check-tech-design.mjs [spec-dir, mặc định ./spec] [--epic <EPIC>] [--strict]
+// Kiểm L66 (bảng chỉ-thêm sắp theo created_at), L68 (tên lớp *Service thay vì *Api), L106 (biến môi trường ngoài ADR-007), L121 (thiếu 429) là cảnh báo; lỗi ở --strict hoặc khi tài liệu có `kit_version: 4` ở frontmatter.
 //  --strict: entity chưa có DB / epic có API mà chưa có SEC / chữ ký decorator hay interface lệch giữa requirement, API, architecture.md cũng là lỗi (mặc định chỉ cảnh báo)
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -75,6 +76,11 @@ const docs = walk(specDir).filter((f) => /[\\/]design[\\/]/.test(f)).map((f) => 
   .map((d) => ({ ...d, fm: fmOf(d.text) })).filter((d) => !epicOnly || d.fm.epic === epicOnly);
 const err = (f, m) => errors.push(`${f}: ${m}`);
 const sigDiff = []; // cảnh báo (lỗi ở --strict): chữ ký lệch (L30), mã lỗi gần trùng mã chung (L44), Kiểm bằng test cho biện pháp ở hạ tầng (L58)
+const soft = (fm, f, m) => (Number(fm.kit_version) >= 4 ? err(f, m) : sigDiff.push(`${f}: ${m}`));
+// L68: hàm trong bảng "Giao diện module" của architecture.md -> lớp ghi ở bảng ('' nếu bảng chỉ ghi tên hàm)
+const ifaceMethods = new Map();
+for (const r of tableAfter(read('architecture.md'), '| Gọi | Đến')) for (const m of (r[2] ?? '').matchAll(/`([^`]+)`/g)) { const x = m[1].match(/^(?:(\w+)\.)?([A-Za-z_]\w*)/); if (x) ifaceMethods.set(x[2], x[1] ?? ''); }
+const archText = read('architecture.md');
 const endpoints = new Map(), dbEntities = new Set(), apiEpics = new Set(), secEpics = new Set();
 
 for (const { f, text, fm } of docs) {
@@ -103,6 +109,13 @@ for (const { f, text, fm } of docs) {
         if (ep && ep !== fm.epic && !(modDeps.get(fm.epic) ?? []).includes(ep)) err(f, `bảng ${r[0]}: FK ${target} thuộc epic ${ep}, không có trong Phụ thuộc của ${fm.epic} ở architecture.md (dùng cột tham chiếu không FK và ghi [OPEN], hoặc ADR mới)`);
       }
     }
+    // L66: bảng chỉ-thêm mà chỉ mục hay thứ tự đọc theo created_at (giờ BẮT ĐẦU giao dịch): cần cột seq hoặc ghi clock_timestamp() làm giờ ghi
+    const bangSec = section(text, 'Bảng') ?? '';
+    for (const r of rows(bangSec)) {
+      const t = r[0], ctx = [r.join(' '), ...bangSec.split(/\r?\n/).filter((l) => !l.startsWith('|') && l.slice(0, 40).includes(t)), ...text.split(/\r?\n/).filter((l) => /BEFORE UPDATE OR DELETE/i.test(l) && l.includes(`trên \`${t}\``))].join(' ');
+      const appendOnly = /chỉ thêm|append-only|BEFORE UPDATE OR DELETE/i.test(ctx), byCreated = /(?:chỉ mục|index|unique)[^;|]*created_at|ORDER BY[^;|.]*created_at|created_at\s*(?:DESC|ASC)|(?:sắp|thứ tự)[^;|.]*created_at/i.test(ctx);
+      if (appendOnly && byCreated && !/\bseq\b|clock_timestamp\(\)/i.test(ctx)) soft(fm, f, `bảng ${t} là bảng chỉ-thêm nhưng chỉ mục hay thứ tự đọc theo created_at (giờ bắt đầu giao dịch, không phải lúc ghi): thêm cột seq (GENERATED ALWAYS AS IDENTITY) làm khóa thứ tự hoặc ghi rõ clock_timestamp() làm giờ ghi`);
+    }
     const stated = new Map();
     for (const [e, s] of rows(section(text, 'Trạng thái hợp lệ'))) (stated.get(e) ?? stated.set(e, new Set()).get(e)).add(s);
     for (const e of ents.filter((x) => lifecycle.has(x))) {
@@ -121,7 +134,19 @@ for (const { f, text, fm } of docs) {
       const c = commonCodes.has(u) ? null : [...commonCodes].find((x) => norm(x) === norm(u) || (norm(u).length >= 4 && norm(x).startsWith(norm(u))));
       if (c) sigDiff.push(`${f}: mã lỗi "${u}" gần trùng mã chung "${c}" (dòng "Mã chung" của requirement nền): dùng đúng mã chung hoặc đặt tên khác hẳn`);
     }
+    // L68: `<Tên>Service.<hàm>(` trùng tên hàm của bảng Giao diện module nhưng khác tên lớp (module phơi lớp <Tên>Api ở điểm vào duy nhất)
+    const seenSvc = new Set();
+    for (const m of text.matchAll(/\b([A-Z]\w*Service)\.([a-z]\w*)\(/g)) {
+      const cls = ifaceMethods.get(m[2]);
+      if (cls !== undefined && cls !== m[1] && !seenSvc.has(m[0])) { seenSvc.add(m[0]); soft(fm, f, `${m[1]}.${m[2]}( : bảng Giao diện module ở architecture.md ${cls ? `ghi ${cls}.${m[2]}` : 'chỉ ghi tên hàm, lớp giao diện là <Tên>Api (module phơi lớp <Tên>Api ở điểm vào duy nhất)'}: dùng đúng tên lớp, không đặt <Tên>Service`); }
+    }
+    // L106: biến môi trường nêu ở tài liệu API phải có ở architecture.md (ADR-007)
+    const seenEnv = new Set();
+    for (const l of text.split(/\r?\n/)) if (/biến|cấu hình|môi trường|\benv\b|mặc định/i.test(l)) for (const m of l.matchAll(/`([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+)`/g)) if (!archText.includes(m[1]) && !seenEnv.has(m[1])) { seenEnv.add(m[1]); soft(fm, f, `biến môi trường ${m[1]} nêu ở tài liệu API nhưng architecture.md (ADR-007) không có: sửa ADR-007 qua sdlc-impact trước khi implement`); }
     const rowsApi = rows(section(text, 'Endpoint'));
+    // L121: SB-14 mọi endpoint có giới hạn tần suất nên cột Lỗi có 429 (trừ ngoại lệ ghi rõ)
+    const no429 = rowsApi.filter((r) => !/\b429\b/.test(r[4] ?? '')).map((r) => `${r[0]} ${r[1]}`);
+    if (no429.length && !/không giới hạn tần suất/i.test(text)) soft(fm, f, `${no429.length} endpoint thiếu 429 ở cột Lỗi (SB-14: mọi endpoint có giới hạn tần suất; ngoại lệ ghi "không giới hạn tần suất" kèm lý do): ${no429.slice(0, 3).join('; ')}${no429.length > 3 ? '; ...' : ''}`);
     if (!rowsApi.length) err(f, 'mục Endpoint trống');
     for (const [method, path, role, req, errs] of rowsApi) {
       if (!['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) err(f, `method sai: ${method}`);

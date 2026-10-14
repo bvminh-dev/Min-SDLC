@@ -132,6 +132,20 @@ export class AuthApi {
     return Number(n);
   }
 
+  /**
+   * DSH (qua `UserApi.countCustomers`, ADR-020): tổng khách (role `customer`, mọi trạng thái), số đang `locked` và số tạo trong khoảng UTC nửa mở `[from, to)` theo `created_at`, MỘT câu truy vấn.
+   * Chỉ số đếm, không trường cá nhân (SB-08). Khoảng sai ném `RangeError` (lỗi lập trình của bên gọi); lỗi CSDL ném nguyên để DSH trả 503, không bao giờ trả 0 thay số thật (SB-39).
+   */
+  async countCustomerStats(range: { from: Date; to: Date }): Promise<{ total: number; locked: number; new_in_range: number }> {
+    const okDate = (d: unknown): d is Date => d instanceof Date && !Number.isNaN(d.getTime()) && d.getUTCFullYear() >= 1 && d.getUTCFullYear() <= 9999; // ngoài miền này PostgreSQL ném lỗi thô
+    if (!range || !okDate(range.from) || !okDate(range.to) || range.to < range.from) throw new RangeError('range_utc phải là [from, to) hợp lệ với from không sau to, năm 1 đến 9999');
+    const [r] = await this.prisma.$queryRaw<{ total: bigint; locked: bigint; fresh: bigint }[]>`
+      SELECT count(*) AS total, count(*) FILTER (WHERE status = 'locked') AS locked,
+             count(*) FILTER (WHERE created_at >= ${range.from}::timestamptz AND created_at < ${range.to}::timestamptz) AS fresh
+      FROM users WHERE role = 'customer'`;
+    return { total: Number(r.total), locked: Number(r.locked), new_in_range: Number(r.fresh) };
+  }
+
   // --- USR: đổi mật khẩu (SB-03)
   /**
    * Đổi mật khẩu cho người đang đăng nhập, một giao dịch của AUTH: băm mới, thu hồi MỌI phiên `active` (phiên của request `replaced`,

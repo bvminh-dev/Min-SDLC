@@ -4,6 +4,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { api, SESSION_EXPIRED_EVENT } from '../lib/api';
 import { ROLE_LABEL, useAuth } from '../lib/auth';
+import { crtExpiredTestId } from '../lib/cart';
+import { payExpiredTestId } from '../lib/payment';
 import { expiredTestId } from '../lib/shipping';
 
 /** Menu tài khoản (AUTH-REQ-20261006-095515808, ...774): avatar, tên, email, role, chip chưa xác minh (chỉ customer), đăng xuất. */
@@ -76,7 +78,7 @@ export function SessionExpiredDialog() {
   const next = typeof window === 'undefined' ? '/' : window.location.pathname + window.location.search;
   return (
     <div className="backdrop">
-      <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="se-title" data-testid={expiredTestId(path) ?? 'auth-account-menu-session-expired'}>
+      <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="se-title" data-testid={expiredTestId(path) ?? payExpiredTestId(path) ?? crtExpiredTestId(path) ?? 'auth-account-menu-session-expired'}>
         <h2 id="se-title">Phiên đã hết hạn</h2>
         <p>Hãy đăng nhập lại để tiếp tục.</p>
         <a className="btn btn-primary" href={`/login?next=${encodeURIComponent(next)}&reason=expired`} data-testid="auth-account-menu-session-expired-login">Đăng nhập</a>

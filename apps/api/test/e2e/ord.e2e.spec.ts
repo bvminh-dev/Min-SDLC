@@ -1,5 +1,5 @@
 import type { Page } from 'playwright-core';
-import { advance, alignWindow, count, eventually, hasText, id, loginUi, orderState, reset, see, seedOrder, seedUser, sendEvent, startE2e, textOf, withPage, type E2eEnv } from './support';
+import { advance, alignWindow, count, eventually, hasText, id, loginUi, orderState, reset, see, seedOrder, seedUser, sendEvent, startE2e, textOf, withPage, type E2eEnv, API } from './support';
 
 // E2E của ORD chạy bằng Jest và playwright-core điều khiển Chromium thật: API thật (AppModule) trên PostgreSQL thật (`ecom_e2e`), bản build production của web.
 // Đơn dựng thẳng qua cổng điều khiển (không qua CHK); event của PAY, INV, SHP do hạ tầng test giao cho ORD qua cùng đường consumer như relay. Giờ hiển thị là giờ Việt Nam (UTC+7).
@@ -8,7 +8,6 @@ beforeAll(async () => { env = await startE2e(); }, 420_000);
 afterAll(async () => { await env?.stop(); });
 beforeEach(async () => { await reset(); });
 const e2e = (name: string, fn: (page: Page) => Promise<void>) => it(name, () => withPage(env.browser, fn), 150_000);
-const API = 'http://localhost:3101/api/v1';
 
 /** Giờ Việt Nam `2026-10-06 08:24` thành ISO UTC. */
 const vn = (day: string, hhmm: string, plusMin = 0): string => new Date(Date.parse(`${day}T${hhmm}:00+07:00`) + plusMin * 60_000).toISOString();

@@ -1,0 +1,207 @@
+---
+epic: NTF
+status: draft
+kit_version: 3
+reviewed_commit: c557cdb     # HEAD; mã NTF, nền kèm theo và mã các epic AUTH đến CHK chưa commit nằm trong working tree nên có reviewed_tree
+reviewed_tree: c35d774c588534e431899496cc1f921eabe95103
+---
+# Review: NTF
+
+Kết quả: `đạt` | `lệch` | `chưa làm` | `không áp dụng`. Bằng chứng: `đường/dẫn/file:dòng`, đường dẫn tính từ gốc dự án.
+
+Ghi chú phạm vi: review độc lập (reviewer không phải người implement; không dùng số liệu của `report.md`; chạy lại mọi lệnh; đọc mã module `notification`, migration `20261009000300_notification_tables`, quan hệ ngược ở `auth.prisma`, phần sửa nền `platform/events/events.service.ts` và `index.ts`, giao diện web (chuông, `/notifications`), test và so với NTF-API, NTF-DB, NTF-SEC, 11 REQ, hai tài liệu ui, `events.md`, ma trận quyền, `security-baseline.md`, ADR-007, ADR-010, ADR-011, ADR-022 và bảng Giao diện module của `architecture.md`). Số dòng ứng với working tree SAU khi reviewer sửa (mục *Kết quả sau sửa*); `reviewed_tree` là mã sau sửa. Working tree còn chứa mã các epic khác chưa commit, ngoài phạm vi trừ chỗ nêu rõ. Đột biến chạy trong ba bản sao ở `/tmp/ntfrev/c1` đến `c3` (mỗi bản một CSDL `ecom_test_ntfmN`), không chạy trên cây thật; sau phiên `git diff` của `apps/api/src`, `apps/api/prisma`, `apps/web` chỉ còn các sửa có chủ ý của review (bản sao đối chiếu bằng `diff -rq` không lệch). Thăm dò tay giữ lại ở `apps/api/test/notification/rev.spec.ts` (16 ca, tên `REV-NTF-Pnn`). Luồng đầu-cuối chạy bằng máy chủ API thật của E2E (`test/e2e/server.ts`, AppModule, SES giả) điều khiển qua HTTP, không trình duyệt.
+
+Mức: không có CRITICAL hay HIGH. MEDIUM đã sửa 5 (REV-NTF-01 hạn mức email vượt 30 khi hai lượt gửi song song, REV-NTF-02 dòng email thuê đủ 3 lần làm CHECK ném lỗi và kẹt cả hàng đợi, REV-NTF-03 lỗi một dòng bỏ rơi cả lượt gửi, REV-NTF-12 bốn lỗ hổng test do đột biến chỉ ra, REV-NTF-16 chi tiết thanh toán của admin đọc lệch (ngoài NTF) làm E2E PAY hoàn tiền đỏ chập chờn); MEDIUM còn lại 5, đều là chỗ spec phải đổi (REV-NTF-05 nền EventsService hai pha chưa có spec, REV-NTF-06 ADR-007 thiếu biến SES, REV-NTF-07 SB-18 chưa chốt dạng `user_id` trong log, REV-NTF-08 NTF-API nói SDK và TC nói MIME trong khi mã gọi SES v2 JSON tự ký, REV-NTF-09 hai trigger ngoài NTF-DB); LOW: REV-NTF-04 (đã sửa lớp web, lớp CSDL chờ spec), REV-NTF-10, REV-NTF-11 (ngưỡng 30%: không tái hiện được chập chờn), REV-NTF-13 (đã sửa: E2E AUTH 429 đỏ chập chờn khi chạy qua ranh giới phút, ngoài phạm vi NTF; hai lượt `pnpm test` đầy đủ của reviewer mỗi lượt đỏ một E2E của epic khác, xem *Kết quả chạy lại*), REV-NTF-14 (hai mục `chưa làm` của report), REV-NTF-15 (ô lọc trạng thái là nhóm nút thay vì dropdown dưới `sm`).
+
+## Kết quả chạy lại
+Reviewer tự chạy lại, không tin `report.md`.
+
+| Lệnh | Kết quả thật | So với report.md |
+|---|---|---|
+| Lượt đồng bộ spec 2026-10-13 (sdlc-impact): `E2E_PORT_BASE=3300 NEXT_TELEMETRY_DISABLED=1 STORAGE_TEST_ENDPOINT=http://localhost:9210 pnpm test`, cộng `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm check:boundaries`, `pnpm scan:secrets`, `check-migration-compat` trên migration mới, `check-mutations` hai bảng, `check-impact`, `check-tests --strict`, `check-report`, `check-review` | `pnpm test`: 209 bộ, 1788 test, 1788 pass, 0 skip (`Tests:       1788 passed, 1788 total`, 1412 s, thoát 0; không còn máy chủ E2E hay Chromium của lượt này). `pnpm lint`, `pnpm typecheck`, `pnpm build` (api và web) thoát 0; `check:boundaries` sạch (14 module trong bảng); `scan:secrets` sạch (2523 tệp); `check-migration-compat --files` trên `20261013000300_notification_link_hardening`: 1 migration mới, tương thích ngược (có `-- contract-step`); `check-mutations`: bảng NTF 100 đột biến, bảng REV 163 đột biến hợp lệ; mọi đột biến mới của đợt này (NTF 2, REV 18) chạy bằng `mutate.mjs --only` đều bắt | số của lượt đồng bộ NTF (`test_result` của report.md nay là 1791 pass, lượt chạy cuối đợt đồng bộ spec 2026-10-13); khi đó khớp |
+| `NEXT_TELEMETRY_DISABLED=1 STORAGE_TEST_ENDPOINT=http://localhost:9210 pnpm test` | Lượt cuối, sau mọi sửa của review: 162 bộ, 1445 test, 1445 pass, 0 skip (`Tests:       1445 passed, 1445 total`, 1291 giây; thoát 0; máy chủ E2E và Chromium không còn sau lượt chạy, cổng 3100 đến 3103 trống). Sau lượt đó chỉ đổi cách xuống dòng của một câu ở `payment/read.service.ts` (để giữ số dòng mà review PAY đã trích) rồi chạy lại lint, typecheck và `test/payment`, `test/notification`, `mutations-ntf.spec.ts` (30 bộ, 289 test xanh). Lượt thứ hai (đã có tệp thăm dò đầy đủ, trước khi sửa PAY và E2E AUTH): 162 bộ, 1444 test: 1442 pass, 2 đỏ, đều là E2E của epic khác đỏ chập chờn: `AUTH-E2E-20261007-085336677` (11 lần đăng nhập sai rơi qua ranh giới phút của cửa sổ cố định, REV-NTF-13) và `PAY-E2E-20261006-104612463` (hoàn tiền thủ công, REV-NTF-16; chạy riêng một ca ba lần thì đỏ một lần, sau sửa bốn lần xanh). Lượt đầu: xem dòng kế | tại lượt review: khớp: `test_result` của report.md đã cập nhật thành 1445 pass (1428 của implement, cộng 16 ca `rev.spec.ts`, cộng 1 ca PAY `REV-NTF-16`); số 1428 của implement tái hiện đúng ở lượt đầu (không kể tệp thăm dò đang viết dở) |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build` (api và web), `pnpm check:boundaries`, `pnpm scan:secrets` | Cả năm thoát 0 (hai lần: trước và sau các sửa của review): lint sạch, typecheck api và web xong, build api và web xong, `check:boundaries` sạch (14 module trong bảng), `scan:secrets` sạch (2346 tệp, các giá trị giả của test có `scan-secrets:allow`) | khớp (report: cả sáu lệnh thoát 0, nay thêm build) |
+| Lượt `pnpm test` đầu tiên của reviewer, trước mọi sửa (mã nguyên của implement cộng tệp thăm dò đang viết dở) | 161 bộ, 1428 test: 1427 pass, 1 đỏ (`project-setup.spec.ts` chạy `pnpm lint` toàn repo và tệp thăm dò của reviewer còn một biến không dùng; không phải lỗi của NTF; sau khi sửa tệp thăm dò, lint sạch). Mọi bộ test của INV, PRM, ORD, SHP, PAY, PRD, CHK, CRT, AUTH, USR, PRJ và nền (kể cả `test/platform/events.spec.ts` và `test/platform/errors-logging.spec.ts`) xanh với nền `EventsService` đã sửa; ba E2E NTF xanh; thời gian 1094 giây | số `1428` của report khớp (không kể tệp thăm dò) |
+| Thăm dò tay trên PostgreSQL thật (`rev.spec.ts`, 16 ca) | Lần chạy đầu 6 trên 12 ca đỏ: P01 hạn mức vượt (31 email trong 24 giờ), P02 `attempts_range` ném lỗi (23514) làm `sendDue` ném, P03 một dòng lỗi bỏ rơi dòng sau (REV-NTF-01 đến 03); ba ca còn lại đỏ do chính ca viết sai (đường dẫn `forgot-password` thay vì `password/forgot`, mã 400 thay vì 404 cho `%ED%A0%80`) nên đã bỏ hay sửa. Sau sửa mã: 16 ca xanh, ba lần chạy liền xanh. Xanh ngay từ đầu (bằng chứng độc lập, không phát hiện): cùng `event_id` giao đồng thời 6 lần rồi giao lại chỉ một thông báo, một email, một `processed_events` (P04); AUTH lỗi tạm thời ở pha `prepare` không để lại dấu vết, lỗi CSDL ở pha ghi rollback cả `processed_events`, giao lại thành công đúng một lần (P05); RefundFailed chỉ tới admin `active` (không chủ đơn, staff, admin khóa), LowStockDetected tới staff và admin `active`, không customer (P06); họ tên có HTML, nháy, CRLF không ra khỏi lời chào (P07); admin và customer khác không đọc, đếm, đánh dấu thông báo của người khác, hai read-all đồng thời `updated` là 0 và 4 (P10); token quên mật khẩu không ở log, bảng nào hay email người nhận ở log khi SES từ chối (P11); chữ ký SigV4 khớp hai vectơ do AWS công bố (get-vanilla `5fa00fa3...fbf31`, post-vanilla `5da7c1a2...e5d6b`, P12) | không có trong report |
+| Đột biến do reviewer chọn theo điều kiện câu SQL, từng CHECK, unique, khóa ngoại, trigger, hằng số hạn mức, tên mã lỗi, nền sửa kèm: `node .claude/skills/sdlc-review/scripts/mutate.mjs <bảng> --cwd apps/api` trên ba bản sao (bảng `/tmp/ntfrev/muts1.json` đến `muts3.json`, 74 đột biến, mỗi đột biến chạy một tệp spec của vùng mã). Bảng đầy đủ ở Phụ lục | 74 đột biến: lượt đầu 59 bắt, 15 lọt. Chạy lại 15 ca lọt bằng lệnh rộng (`test/notification` và `test/platform/events.spec.ts`): 7 bắt (lệnh hẹp ban đầu quá hẹp, cùng họ L109); 4 lọt thật (R23 hạn mức thường đếm cả email bí mật, R27 ghi kết quả không điều kiện `pending`, R28 `failLost` đổi cả email thường, R30 hạn mức bí mật không đếm dòng đang gửi) nên thêm ca P13, P15, P16 và chạy lại: cả 4 bắt; 4 tương đương có lý do (R20, R55, R74, R87). Cuối cùng: 70 bắt, 4 tương đương, 0 lọt chưa giải thích. Ba đột biến của chính bản sửa (R24 bỏ đếm dòng đang gửi, R24b bỏ điều kiện trần lượt thuê, R24c bỏ cô lập lỗi theo dòng) đều bắt bởi ca P01 đến P03. Cổng `mutations-ntf.spec.ts` (bảng 98 đột biến của implement) xanh sau khi cập nhật một dòng (`safeLink`) | không có trong report (report: bảng 98 đột biến, 95 bắt lượt đầu, 3 lọt đã vá) |
+| Luồng đầu-cuối 1b (máy chủ API thật, `/tmp/ntfrev/flow.mjs`): đặt hàng COD qua CHK thật rồi relay rồi job gửi; hủy qua ORD thật; tồn thấp do INV thật; thanh toán, hoàn tiền thành công và thất bại (payload dựng đúng hình dạng producer PAY, đối chiếu mã `payment/core.service.ts` và `payment/refund.service.ts`); SES lỗi 503 rồi hồi phục, từ chối 400 | 24 kiểm: khách thấy `order_created` và `order_confirmed` trong chuông (badge, `unread_count`), thư `Đã nhận đơn hàng` tới đúng `c1@x.vn` một lần, lời chào `Nguyễn <b>An</b>` được escape (`&lt;b&gt;`), liên kết `http://localhost:3100/orders/<mã>` từ `APP_BASE_URL`; tồn thấp báo staff và admin (không khách, tên sản phẩm giữ nguyên dạng chữ trong văn bản thuần); hủy đơn có thông báo và thư, lý do tự do `đổi ý <img ...>` không vào nội dung; RefundFailed gửi hai lần cùng `refund_id` chỉ một thông báo chưa đọc cho admin, staff và khách không có; khách nhận `payment_succeeded` và `refund_succeeded`, tổng bốn thư tới khách, không thư nào tới staff hay admin; khách khác đánh dấu thông báo của c1 nhận 404; read-all rồi `unread_count` 0; Origin lạ 403; người nhận chưa xác minh không có thư; SES 503: đặt hàng vẫn 201, thông báo trong ứng dụng vẫn có, job báo `retry: 1` không ném lỗi, SES hồi phục thì đúng một thư gửi, SES 400 thì `failed` ngay và chạy lại job không gửi lại. Hai dòng "LỆCH" của script là lỗi của chính phép đo (chỉ mục `items[0]` là thông báo xác nhận thay vì tạo, và fake SES ghi cả yêu cầu 503 vào danh sách thư), hành vi đúng | không có trong report |
+| Cổng kiểm tái hiện tay: `scan:secrets` và `check:boundaries` (hai lần), `check-mutations` với bảng hỏng (cổng `mutations-ntf.spec.ts`: đoạn cần phá không còn, tệp không có, SB thiếu: cả ba đỏ), `check-review` trên review dở (thiếu dòng thì đỏ), `check-lessons`, `check-report` | Đỏ đúng khi đầu vào sai ở các ca trên; xanh khi đúng | không có trong report |
+| `node .claude/sdlc/scripts/selftest.mjs` và `node .claude/sdlc/hooks/stop-check-spec.mjs` | `node .claude/sdlc/scripts/selftest.mjs`: 19/19 qua; `node .claude/sdlc/hooks/stop-check-spec.mjs` thoát 0 sau khi ghi review.md; `check-review`, `check-report` (OK, 10 bằng chứng yếu của implement còn nguyên), `check-lessons` (14 file hợp lệ) không lỗi | không có trong report |
+
+## Đối chiếu spec
+Mỗi endpoint trong tài liệu API của epic một dòng (Nguồn là ID tài liệu API, Mục ghi `METHOD path`), cộng các quy tắc nghiệp vụ đáng kiểm.
+
+| Mục | Nguồn | Kết quả | Bằng chứng | Việc cần làm |
+|---|---|---|---|---|
+| GET /api/v1/notifications | NTF-API-20261006-103815515 | đạt | apps/api/src/modules/notification/notification.controller.ts:15, apps/api/src/modules/notification/read.service.ts:31, apps/api/src/modules/notification/policy.ts:23 | - |
+| GET /api/v1/notifications/unread-count | NTF-API-20261006-103815515 | đạt | apps/api/src/modules/notification/notification.controller.ts:18, apps/api/src/modules/notification/read.service.ts:29 | - |
+| POST /api/v1/notifications/{id}/read | NTF-API-20261006-103815515 | đạt | apps/api/src/modules/notification/notification.controller.ts:24, apps/api/src/modules/notification/read.service.ts:49 | - |
+| POST /api/v1/notifications/read-all | NTF-API-20261006-103815515 | đạt | apps/api/src/modules/notification/notification.controller.ts:21, apps/api/src/modules/notification/read.service.ts:62, apps/api/src/modules/notification/policy.ts:41 | - |
+| Thứ tự kiểm 401, 403, 400, 404 và mã lỗi chung của sổ mã lỗi PRJ (NTF-API không có mã riêng) | NTF-API-20261006-103815515 | đạt | apps/api/src/modules/notification/notification.controller.ts:15, apps/api/test/notification/guard.spec.ts:66 | - |
+| Chỉ 18 event có NTF ở cột Consumers của events.md, mỗi event đúng một consumer NTF (16 qua outbox hai pha, hai event token raw) | events.md | đạt | apps/api/src/modules/notification/consumer.service.ts:10, apps/api/src/modules/notification/consumer.service.ts:34, apps/api/src/modules/notification/consumer.service.ts:36, apps/api/test/notification/guard.spec.ts:93 | - |
+| Mỗi event xử lý đúng một lần (ProcessedEvent cùng giao dịch, khóa tự nhiên, ON CONFLICT DO NOTHING; email chỉ khi thông báo chèn được) | NTF-DB-20261006-103815422 | đạt | apps/api/src/modules/notification/consumer.service.ts:65, apps/api/src/modules/platform/events/events.service.ts:111, apps/api/test/notification/rev.spec.ts:68, apps/api/test/notification/rev.spec.ts:77 | - |
+| Người nhận đúng: chủ đơn từ `user_id` của payload đã kiểm ở AUTH; cảnh báo theo role `active` từ AUTH; trần 200 người nhận cắt theo `id` kèm log warn | NTF-REQ-20261006-103209168 | đạt | apps/api/src/modules/notification/consumer.service.ts:39, apps/api/src/modules/notification/consumer.service.ts:56, apps/api/src/modules/notification/templates.ts:278, apps/api/src/modules/notification/templates.ts:285 | - |
+| Gửi email thường: nhận việc `FOR UPDATE SKIP LOCKED`, thuê 2 phút, hạn mức 30 mỗi 24 giờ, thử lại 1 rồi 5 phút, 3 lần, hộp thư chết `failed` | NTF-REQ-20261006-103208551 | đạt | apps/api/src/modules/notification/email.service.ts:51, apps/api/src/modules/notification/email.service.ts:78, apps/api/src/modules/notification/email.service.ts:91, apps/api/src/modules/notification/email.service.ts:125 | Đã sửa REV-NTF-01 (hạn mức đếm cả dòng đang gửi dở của lượt khác), REV-NTF-02 (dòng đã đủ 3 lượt thuê thì đóng `failed` `attempts_exhausted`), REV-NTF-03 (lỗi một dòng không bỏ rơi cả lượt): xem Kết quả sau sửa |
+| Email chứa bí mật gửi ngay trong handler, token chỉ ở bộ nhớ, 0, 2, 5 giây, quét `lost`, không qua outbox | NTF-REQ-20261006-103209078 | đạt | apps/api/src/modules/notification/email.service.ts:163, apps/api/src/modules/notification/email.service.ts:144, apps/api/src/modules/platform/events/events.service.ts:73, apps/api/test/notification/rev.spec.ts:134 | - |
+| Mẫu cố định, họ tên chỉ ở lời chào sau khi làm sạch, escape HTML, liên kết dựng từ `APP_BASE_URL`, không header nào từ dữ liệu | NTF-REQ-20261006-103208551 | đạt | apps/api/src/modules/notification/render.ts:14, apps/api/src/modules/notification/render.ts:35, apps/api/src/modules/notification/templates.ts:32, apps/api/test/notification/rev.spec.ts:106 | - |
+| Bộ chuyển thư SES v2 ký SigV4, hạn gọi 10 giây, phân loại lỗi tạm thời và vĩnh viễn | NTF-API-20261006-103815515 | đạt | apps/api/src/modules/notification/mail.ts:28, apps/api/src/modules/notification/mail.ts:58, apps/api/src/modules/platform/storage/signer.ts:28, apps/api/test/notification/rev.spec.ts:223 | Chưa thử với SES thật (bằng chứng YẾU đã ghi ở report mục 5; sandbox SES cần người). Chữ ký đã khớp hai vectơ do AWS công bố (REV-NTF-P12) |
+| Hạn lưu 180 ngày (đọc, đếm, đánh dấu) và job dọn `notification.cleanup` theo lô 1000, thông báo 180 ngày, email 90 ngày | NTF-REQ-20261006-103208460 | đạt | apps/api/src/modules/notification/read.service.ts:14, apps/api/src/modules/notification/cleanup.service.ts:25, apps/api/src/modules/notification/notification.module.ts:35 | - |
+| Migration `20261009000300`: 2 bảng, 5 enum, CHECK, unique, hai unique một phần chưa đọc, khóa ngoại CASCADE, chỉ mục | NTF-DB-20261006-103815422 | đạt | apps/api/prisma/migrations/20261009000300_notification_tables/migration.sql:84, apps/api/prisma/migrations/20261009000300_notification_tables/migration.sql:102, apps/api/test/notification/db.spec.ts:39 | - |
+| CHECK `link` chỉ đường dẫn nội bộ một dấu gạch chéo đầu | NTF-DB-20261006-103815422 | đạt | apps/api/prisma/migrations/20261013000300_notification_link_hardening/migration.sql:9, apps/web/lib/notification-const.ts:24, apps/api/test/notification/db.spec.ts:46, apps/api/test/notification/db.spec.ts:133 | Đã đồng bộ spec 2026-10-13 (REV-NTF-04): NTF-DB (cột `link`), NTF-SEC T15 và NTF-TC ...060 nay dùng biểu thức `^/([A-Za-z0-9_-][A-Za-z0-9/_-]*)?$`; migration mới thêm CHECK `v2` rồi bỏ CHECK cũ (migration cũ không sửa, `-- contract-step`, `check-migration-compat` qua); `db.spec.ts` kiểm `//intranet`, `//2130706433`, `///` bị từ chối; đột biến "CHECK quay về biểu thức cũ" bắt |
+| Sửa nền `EventsService`: consumer hai pha (`subscribePrepared`, `SKIP`), `subscribeRaw` cho hai event token, `idle()`; không làm yếu outbox hay consumer cũ | NTF-DB-20261006-103815422 | đạt | apps/api/src/modules/platform/events/events.service.ts:20, apps/api/src/modules/platform/events/events.service.ts:111, apps/api/src/modules/platform/index.ts:12 | Đã đồng bộ spec 2026-10-13 (REV-NTF-05): ADR-011, PRJ-REQ BR12 và BR13, PRJ-DB mục 5, PRJ-API và NTF-DB mục Giao dịch và khóa 1 và 2 ghi consumer hai pha (`spec/changes/nen-dong-bo-20261013.md`, `ntf-dong-bo-spec-20261013.md`); mã không đổi |
+| Biến cấu hình SES_REGION, MAIL_FROM, APP_BASE_URL, SES_ACCESS_KEY, SES_SECRET_KEY, SES_ENDPOINT kiểm schema lúc khởi động, https ngoài dev | NTF-API-20261006-103815515 | đạt | apps/api/src/modules/notification/config.ts:18, apps/api/src/modules/notification/mail.ts:66, .env.example:48 | Đã đồng bộ spec 2026-10-13 (REV-NTF-06): ADR-007 liệt kê đủ sáu biến (`SES_ACCESS_KEY`, `SES_SECRET_KEY` bí mật bắt buộc ngoài dev, `SES_ENDPOINT` tùy chọn, `APP_BASE_URL` gốc URL không đường dẫn con) và NTF-API mục Dịch vụ ngoài trỏ về ADR-007 |
+| Gửi qua Amazon SES: SES v2 `Simple` ký SigV4, không SDK; TC kiểm trường JSON thay header MIME thô | NTF-API-20261006-103815515 | đạt | apps/api/src/modules/notification/mail.ts:28, apps/api/test/notification/ses.spec.ts:60, apps/api/test/notification/ses.spec.ts:127 | Đã đồng bộ spec 2026-10-13 (REV-NTF-08): ADR-010 và NTF-API ghi SES v2 `Simple` ký SigV4, bỏ "qua SDK"; NTF-TC ...630 kiểm `Subject`, `Destination.ToAddresses`, `Body`; ca mới `ses.spec.ts:127` chạy qua `SesTransport` thật tới SES giả. Vẫn chưa thử với SES thật (việc người trước go-live) |
+| Hai trigger vòng đời (`notifications` chỉ `unread -> read`, nội dung bất biến; `email_deliveries` rời `pending` một lần, nội dung bất biến) | NTF-DB-20261006-103815422 | đạt | apps/api/prisma/migrations/20261009000300_notification_tables/migration.sql:108, apps/api/prisma/migrations/20261009000300_notification_tables/migration.sql:123 | Đã đồng bộ spec 2026-10-13 (REV-NTF-09): NTF-DB ghi hai trigger ở Trạng thái hợp lệ và Migration mục 3; mã không đổi |
+| Chi tiết thanh toán của admin đọc nhất quán (ngoài NTF: phát hiện khi E2E PAY hoàn tiền đỏ chập chờn trong lượt `pnpm test` đầy đủ) | spec/epics/PAY/report.md | đạt | apps/api/src/modules/payment/read.service.ts:75, apps/api/test/payment/admin-read.spec.ts:33 | Đã sửa REV-NTF-16 (MEDIUM): `adminDetail` đọc Payment trước rồi Refund; hoàn tiền chốt giữa hai lần đọc cho Payment `succeeded` kèm Refund `succeeded`, màn không còn thấy Refund `requested` nên ngừng thăm dò và kẹt ở "Đã thanh toán" (khoảng 1 trong 3 lần chạy riêng ca `PAY-E2E-20261006-104612463`; sau sửa 4 trên 4 xanh). Reviewer PAY cần biết: `myDetail` có cùng thứ tự đọc nhưng khách không thăm dò nên chỉ lệch tạm thời, chưa sửa |
+| Bảng Giao diện module: hàng NTF gọi AUTH | spec/architecture.md | đạt | apps/api/src/modules/auth/auth.api.ts:55, apps/api/src/modules/auth/auth.api.ts:64, apps/api/src/modules/notification/consumer.service.ts:28 | Đã đồng bộ spec 2026-10-13 (REV-NTF-10): bảng Giao diện module ghi `AuthApi.getUserContact`, `AuthApi.listActiveUserIdsByRole` và đoạn Hành vi lỗi của giao diện AUTH (`spec/changes/nen-dong-bo-20261013.md`) |
+| "Cùng dãy câu SQL" của ba nhánh 404 (thay ngưỡng "cùng bậc thời gian", chênh trung vị dưới 30%) | NTF-TC-20261006-104302157 | đạt | apps/api/test/notification/read.spec.ts:49, apps/api/test/notification/read.spec.ts:62, apps/api/test/notification/read.spec.ts:80, apps/api/src/modules/notification/read.service.ts:49 | Đã chốt 2026-10-13 (REV-NTF-11): bỏ ngưỡng 30%; NTF-TC ...157 đòi cùng dãy câu SQL; `read.spec.ts` ghi văn bản và thứ tự mọi câu truy vấn của ba nhánh và đòi ba dãy bằng nhau; đột biến "id sai dạng 404 ngay không chạy SQL" bắt |
+| Giao diện chuông và trang `/notifications` theo ui/notification-bell, ui/notification-list | spec/epics/NTF/ui/notification-list.md | đạt | apps/web/components/NotificationBell.tsx:15, apps/web/app/notifications/page.tsx:17, apps/web/app/notifications/page.tsx:77 | Đã đồng bộ spec 2026-10-13 (REV-NTF-15): ui/notification-list ghi nhóm ba nút ở mọi khổ, không dropdown (và nút Đánh dấu tất cả, Xoá lọc vẫn hiện, không gom vào menu). Còn lại LOW: chuông hiện chữ "Chuông" (`NotificationBell.tsx:66`), wireframe vẽ biểu tượng, chưa có thư viện biểu tượng (report mục 14): người duyệt quyết giữ chữ hay dựng biểu tượng |
+| E2E hay đột biến cho trạng thái hết phiên (401) của chuông và của trang (mục 15 của report) | spec/epics/NTF/report.md | chưa làm | apps/web/components/NotificationBell.tsx:43, apps/web/app/notifications/page.tsx:44 | REV-NTF-14 LOW (mục 15 của report): mã có xử lý nhưng chưa có ca E2E hay đột biến cho 401; implement thêm hai ca E2E (chuông biến mất, trang chuyển về đăng nhập) khi có đợt sau |
+| Tùy chọn nhận email, liên kết hủy đăng ký, bounce và complaint từ SES (mục 16 của report) | NTF-SEC-20261006-103815605 | chưa làm | apps/api/src/modules/notification/mail.ts:28 | REV-NTF-14 (mục 16 của report): đã chốt chấp nhận ở NTF-SEC Rủi ro còn lại; phải làm (webhook SNS có xác thực chữ ký, danh sách chặn, ADR mới) trước khi chạy production có lưu lượng thật; việc của người duyệt nền |
+
+## Quyền
+Mỗi hành động của epic trong `spec/permissions-matrix.md` một dòng: code có chặn đúng role không (kể cả mặc định từ chối).
+
+| Hành động | Nguồn | Kết quả | Bằng chứng | Việc cần làm |
+|---|---|---|---|---|
+| Tạo thông báo trong ứng dụng từ domain event (tác nhân hệ thống, không có endpoint; role là người nhận) | NTF-REQ-20261006-103208460 | đạt | apps/api/src/modules/notification/consumer.service.ts:34, apps/api/test/notification/guard.spec.ts:27 | - |
+| Gửi email thông báo qua SES (tác nhân hệ thống, không có endpoint; role là người nhận) | NTF-REQ-20261006-103208551 | đạt | apps/api/src/modules/notification/notification.module.ts:31, apps/api/src/modules/notification/email.service.ts:51 | - |
+| Nhận thông báo đơn đã tạo và đã xác nhận (do event, không có endpoint) | NTF-REQ-20261006-103208641 | đạt | apps/api/src/modules/notification/templates.ts:153, apps/api/src/modules/notification/templates.ts:168 | - |
+| Nhận thông báo thanh toán thành công (do event, không có endpoint) | NTF-REQ-20261006-103208725 | đạt | apps/api/src/modules/notification/templates.ts:173 | - |
+| Nhận thông báo đơn đang giao và giao thất bại (do event, không có endpoint) | NTF-REQ-20261006-103208812 | đạt | apps/api/src/modules/notification/templates.ts:221, apps/api/src/modules/notification/templates.ts:231 | - |
+| Nhận thông báo đơn đã giao (do event, không có endpoint) | NTF-REQ-20261006-103208902 | đạt | apps/api/src/modules/notification/templates.ts:242 | - |
+| Nhận thông báo thanh toán thất bại, đơn bị hủy, hoàn tiền (do event, không có endpoint) | NTF-REQ-20261006-103208992 | đạt | apps/api/src/modules/notification/templates.ts:184, apps/api/src/modules/notification/templates.ts:193, apps/api/src/modules/notification/templates.ts:210 | - |
+| Nhận email đặt lại mật khẩu, xác minh email, báo đổi mật khẩu, báo khóa tài khoản (do event, không có endpoint; guest yêu cầu ở AUTH nhưng người nhận là chủ tài khoản) | NTF-REQ-20261006-103209078 | đạt | apps/api/src/modules/notification/email.service.ts:163, apps/api/src/modules/notification/templates.ts:260, apps/api/src/modules/notification/templates.ts:272 | - |
+| Nhận cảnh báo tồn thấp (do event, không có endpoint) | NTF-REQ-20261006-103209168 | đạt | apps/api/src/modules/notification/templates.ts:278, apps/api/test/notification/rev.spec.ts:96 | - |
+| Nhận cảnh báo hoàn tiền thất bại (do event, không có endpoint; chỉ admin vì hoàn tiền thủ công chỉ admin) | NTF-REQ-20261006-103209168 | đạt | apps/api/src/modules/notification/templates.ts:285, apps/api/test/notification/rev.spec.ts:96 | - |
+| Xem số thông báo chưa đọc | NTF-REQ-20261006-103209256 | đạt | apps/api/src/modules/notification/notification.controller.ts:18, apps/api/src/modules/notification/read.service.ts:24 | - |
+| Đánh dấu một thông báo đã đọc | NTF-REQ-20261006-103209256 | đạt | apps/api/src/modules/notification/notification.controller.ts:24, apps/api/src/modules/notification/read.service.ts:49 | - |
+| Đánh dấu tất cả thông báo đã đọc | NTF-REQ-20261006-103209256 | đạt | apps/api/src/modules/notification/notification.controller.ts:21, apps/api/src/modules/notification/read.service.ts:62 | - |
+| Xem lịch sử thông báo của mình (lọc đọc hoặc chưa đọc, theo loại) | NTF-REQ-20261006-103209345 | đạt | apps/api/src/modules/notification/notification.controller.ts:15, apps/api/src/modules/notification/read.service.ts:31, apps/api/test/notification/guard.spec.ts:45 | - |
+| Nhận thông báo đơn quá hạn thanh toán (do event OrderExpired, không có endpoint; chỉ trong ứng dụng) | NTF-REQ-20261006-103208992 | đạt | apps/api/src/modules/notification/templates.ts:205 | - |
+
+## Bảo mật
+Mỗi yêu cầu `SB-nn` của `spec/security-baseline.md` có epic liên quan là epic này (hoặc `*`) một dòng.
+
+| Mục | Nguồn | Kết quả | Bằng chứng | Việc cần làm |
+|---|---|---|---|---|
+| SB-03 token đặt lại mật khẩu không lưu bản rõ, không log | SB-03 | đạt | apps/api/src/modules/notification/email.service.ts:163, apps/api/prisma/migrations/20261009000300_notification_tables/migration.sql:98, apps/api/test/notification/rev.spec.ts:134 | - |
+| SB-05 role và `user_id` lấy từ phiên ở server, không tin client | SB-05 | đạt | apps/api/src/modules/notification/notification.controller.ts:15, apps/api/src/modules/notification/policy.ts:12 | - |
+| SB-06 chống IDOR thông báo | SB-06 | đạt | apps/api/src/modules/notification/read.service.ts:49, apps/api/src/modules/notification/read.service.ts:62, apps/api/test/notification/rev.spec.ts:118 | - |
+| SB-08 nội dung thông báo và log không chứa dữ liệu cá nhân | SB-08 | đạt | apps/api/src/modules/notification/templates.ts:142, apps/api/src/modules/notification/consumer.service.ts:51, apps/api/src/modules/notification/email.service.ts:203 | - |
+| SB-09 HTTPS ngoài dev: `APP_BASE_URL` và `SES_ENDPOINT` | SB-09 | đạt | apps/api/src/modules/notification/mail.ts:73, apps/api/src/modules/notification/mail.ts:74 | - |
+| SB-11 đầu vào đóng, tham số lạ 400, JSON nửa cặp thay thế lẻ và NUL | SB-11 | đạt | apps/api/src/modules/notification/policy.ts:12, apps/api/src/modules/notification/policy.ts:35, apps/api/src/modules/notification/templates.ts:29, apps/api/test/notification/review.spec.ts:102 | - |
+| SB-12 escape khi hiển thị: văn bản thuần ở web, escape HTML ở thư | SB-12 | đạt | apps/api/src/modules/notification/render.ts:14, apps/web/components/NotificationBell.tsx:86, apps/web/app/notifications/page.tsx:108 | - |
+| SB-13 CSRF cho hai POST (Origin, JSON) do guard toàn cục của platform | SB-13 | đạt | apps/api/src/modules/notification/notification.controller.ts:21, apps/api/test/notification/read.spec.ts:99 | - |
+| SB-14 giới hạn tần suất bậc C 120 mỗi phút và bậc E 30 email mỗi 24 giờ, 10 email bí mật mỗi giờ | SB-14 | đạt | apps/api/src/modules/notification/config.ts:71, apps/api/src/modules/notification/email.service.ts:91, apps/api/src/modules/notification/email.service.ts:175 | Đã sửa REV-NTF-01: hạn mức bậc E giờ đếm cả dòng đang gửi dở nên hai lượt song song không vượt 30 |
+| SB-15 khóa SES không trong repo; quét bí mật | SB-15 | đạt | .env.example:48, apps/api/src/modules/notification/config.ts:18, apps/api/test/support/app.ts:11 | - |
+| SB-18 log che dữ liệu cá nhân, không token | SB-18 | đạt | apps/api/src/modules/notification/consumer.service.ts:51, apps/api/src/modules/notification/email.service.ts:166, apps/api/src/modules/notification/email.service.ts:171 | Đã đồng bộ spec 2026-10-13 (REV-NTF-07): SB-18 chốt `user_id` ghi nguyên văn (uuid), không kèm email, họ tên, payload, token; NTF-SEC T7 ghi "log theo SB-18"; mã NTF đúng dạng đó (chỉ khi đúng dạng uuid), không đổi |
+| SB-24 chuyển trạng thái chỉ theo bảng (lớp một: điều kiện `status` ở UPDATE; lớp hai: trigger) | SB-24 | đạt | apps/api/src/modules/notification/read.service.ts:49, apps/api/src/modules/notification/email.service.ts:135, apps/api/prisma/migrations/20261009000300_notification_tables/migration.sql:108 | - |
+| SB-26 email giao dịch chỉ tới địa chỉ đã xác minh; token xác minh không lưu, không log | SB-26 | đạt | apps/api/src/modules/notification/email.service.ts:87, apps/api/src/modules/notification/email.service.ts:163 | - |
+| SB-27 event bền (outbox) và consumer chống trùng theo `event_id`; hai event token ngoại lệ | SB-27 | đạt | apps/api/src/modules/platform/events/events.service.ts:111, apps/api/src/modules/notification/consumer.service.ts:65, apps/api/test/notification/review.spec.ts:29 | - |
+| SB-31 không giữ giao dịch khi gọi AUTH hay SES | SB-31 | đạt | apps/api/src/modules/notification/consumer.service.ts:49, apps/api/src/modules/notification/email.service.ts:37, apps/api/test/notification/review.spec.ts:46 | - |
+| SB-34 tác vụ nền có hạn gọi, giới hạn thử lại, mẫu cố định, hạn mức email | SB-34 | đạt | apps/api/src/modules/notification/email.service.ts:51, apps/api/src/modules/notification/email.service.ts:103, apps/api/src/modules/notification/cleanup.service.ts:25, apps/api/src/modules/notification/templates.ts:8 | Đã sửa REV-NTF-02 và REV-NTF-03: dòng đủ 3 lượt thuê được đóng, lỗi một dòng không dừng lượt |
+| SB-35 ranh giới module: NTF chỉ gọi AUTH qua `AuthApi`, không SQL vào bảng module khác | SB-35 | đạt | apps/api/src/modules/notification/index.ts:3, apps/api/test/notification/guard.spec.ts:78 | - |
+
+## Kết quả sau sửa
+Reviewer được giao sửa mã và test. Đã sửa ở: `file:dòng` của mã sau sửa. Chứng minh: test nào đỏ khi bỏ bản sửa.
+
+| Phát hiện (mức) | Đã sửa ở | Chứng minh |
+|---|---|---|
+| REV-NTF-01 MEDIUM: hạn mức 30 email mỗi 24 giờ vượt (31) khi hai `sendDue` chạy song song, vì `sent` chỉ ghi sau khi SES trả lời và khóa advisory chỉ che bước đếm | apps/api/src/modules/notification/email.service.ts:91 | `REV-NTF-P01` đỏ trước khi sửa (31 trên 30); đột biến R24 (bỏ đếm dòng đang gửi) đỏ ở P01 |
+| REV-NTF-02 MEDIUM: dòng `pending` đã thuê 3 lần (attempts 3) bị thuê lần thứ tư, CHECK `attempts_range` ném lỗi 23514, lượt job ném lỗi và dòng cũ nhất chặn cả hàng đợi | apps/api/src/modules/notification/email.service.ts:103 | `REV-NTF-P02` đỏ trước khi sửa (Prisma 23514); đột biến R24b đỏ ở P02 |
+| REV-NTF-03 MEDIUM: lỗi bất ngờ ở một dòng (CSDL từ chối ghi kết quả) ném khỏi `sendDue`, dòng sau không được xử lý, lỗi bền thì chặn mãi | apps/api/src/modules/notification/email.service.ts:67 | `REV-NTF-P03` đỏ trước khi sửa (dòng thứ hai còn `pending`); đột biến R24c đỏ ở P03 |
+| REV-NTF-04 LOW: `safeLink` ở trình duyệt cho qua `//intranet` (cùng biểu thức với CHECK) | apps/web/lib/notification-const.ts:24 | `NTF-TC-20261006-104223060` ở `web.spec.ts:25` đỏ với `//evil`, `//intranet/x`, `//2130706433`, `///` khi bỏ `(?!\/)` |
+| REV-NTF-12 MEDIUM: bốn đột biến lọt cả bộ test (hạn mức thường đếm cả email bí mật, `failLost` đổi cả email thường, ghi kết quả không điều kiện `pending`, hạn mức bí mật không đếm dòng đang gửi) | apps/api/test/notification/rev.spec.ts:158 | R23, R28, R30 đỏ ở `REV-NTF-P13` và `P15`, R27 đỏ ở `P16` (lọt cả `test/notification` trước khi thêm ba ca) |
+| REV-NTF-16 MEDIUM: `adminDetail` của PAY đọc Payment trước các bảng con nên hoàn tiền chốt giữa hai lần đọc cho Payment `succeeded` kèm Refund `succeeded`; màn admin ngừng thăm dò và kẹt ở "Đã thanh toán" (E2E `PAY-E2E-20261006-104612463` đỏ chập chờn, ngoài NTF) | apps/api/src/modules/payment/read.service.ts:75 | `REV-NTF-16` ở `apps/api/test/payment/admin-read.spec.ts:33` đỏ khi bỏ lần đọc lại Payment (`refunded` mong đợi, nhận `succeeded`) |
+| REV-NTF-13 LOW: E2E AUTH 429 (11 lần đăng nhập sai) đỏ chập chờn khi chạy qua ranh giới phút của cửa sổ cố định (bắt gặp ở lượt `pnpm test` đầy đủ lần hai: banner `auth-login-rate-limited` không hiện), ngoài phạm vi NTF | apps/api/test/e2e/auth.e2e.spec.ts:272 | `AUTH-E2E-20261007-085336677`: thêm `alignWindow()` như bốn E2E khác cùng họ (L104); chưa có cách tái hiện tất định ngoài việc chạy qua ranh giới phút, nên chứng minh bằng cơ chế và bằng lượt chạy lại xanh |
+
+## Việc còn thiếu
+Không có CRITICAL hay HIGH. Theo mức:
+
+- **Đã xong 2026-10-13 (spec đã đồng bộ, không còn việc spec của NTF)**: REV-NTF-05 (ADR-011, PRJ-REQ BR12 và BR13, PRJ-DB mục 5, PRJ-API, NTF-DB), REV-NTF-06 (ADR-007, NTF-API), REV-NTF-07 (SB-18, NTF-SEC T7), REV-NTF-08 (ADR-010, NTF-API, NTF-TC ...630), REV-NTF-09 (NTF-DB hai trigger), REV-NTF-10 (bảng Giao diện module), REV-NTF-04 (NTF-DB, NTF-SEC T15, NTF-TC ...060; cài ở migration `20261013000300_notification_link_hardening`, `db.spec.ts`), REV-NTF-11 (NTF-TC ...157 và `read.spec.ts`: cùng dãy câu SQL), REV-NTF-15 (ui/notification-list: nhóm nút). Chi tiết ở `spec/changes/ntf-dong-bo-spec-20261013.md` và `spec/changes/nen-dong-bo-20261013.md`.
+- **LOW còn lại (người quyết)**: chuông hiện chữ "Chuông" thay biểu tượng (phần hai của REV-NTF-15).
+- **LOW, ngoài NTF (cho reviewer PAY)**: REV-NTF-16 `ReadService.myDetail` (`apps/api/src/modules/payment/read.service.ts:60`) cùng thứ tự đọc cha rồi con (chỉ lệch tạm thời vì khách không thăm dò); đọc Payment sau các bảng con nếu cần.
+- **LOW, mã**: REV-NTF-14 hai mục `chưa làm` của report (E2E 401; bounce, complaint và tùy chọn nhận email, chưa được làm trước production).
+- **Không có việc cần người** ngoài các quyết định ở trên và việc thử với SES thật (tài khoản sandbox): chưa ai chạy một lượt thật với SES, chữ ký chỉ được kiểm bằng bộ giả lập tự dựng, vectơ tự tính ngoài mã và hai vectơ do AWS công bố.
+- **Rủi ro còn lại đã biết, không đổi trong review**: gửi trùng một email khi tiến trình chết sau khi SES đã nhận (ghi ở NTF-SEC); trần 200 người nhận cắt im lặng với người dùng (chỉ có log `recipients-capped` mức warn, đúng BR6 của NTF-REQ-20261006-103209168); `LimitExceededException` (hạn ngạch ngày của SES) coi là lỗi vĩnh viễn (4xx), không thử lại.
+
+## Phụ lục: bảng đột biến của reviewer
+Kết quả lượt đầu (mỗi đột biến một tệp spec của vùng mã) và kết quả cuối sau khi chạy lại bằng lệnh rộng hay thêm ca.
+
+| Đột biến | Lượt đầu | Kết quả cuối |
+|---|---|---|
+| R01 SB-27: email chèn cả khi thông báo bị bỏ vì trùng khóa tự nhiên | bắt | bắt |
+| R02 BR8: người nhận không có thì không SKIP mà vẫn ghi | bắt | bắt |
+| R03 BR6: cảnh báo không người nhận vẫn chạy (ids rỗng) | bắt | bắt |
+| R04 T10 SB-07: hoàn tiền thất bại gửi cả staff | bắt | bắt |
+| R05 T10: tồn thấp chỉ gửi admin | bắt | bắt |
+| R06 T9: RefundFailed gửi chủ đơn thay vì admin | bắt | bắt |
+| R07 BR3: PaymentSucceeded amount 0 cũng nhận | bắt | bắt |
+| R08 T4 SB-12: bỏ nửa cặp thay thế lẻ | lọt | bắt khi chạy cả test/notification và test/platform/events.spec.ts (lệnh hẹp ban đầu quá hẹp, L109) |
+| R09 T4: bỏ kiểm order_code ở fieldsFromData (đọc lại data email) | lọt | bắt khi chạy cả test/notification và test/platform/events.spec.ts (lệnh hẹp ban đầu quá hẹp, L109) |
+| R10 T4: bỏ kiểm tracking ở fieldsFromData | lọt | bắt khi chạy cả test/notification và test/platform/events.spec.ts (lệnh hẹp ban đầu quá hẹp, L109) |
+| R11 T18: reason giao thất bại tự do | bắt | bắt |
+| R12 BR7: UserLocked lý do chuẩn hóa ngược | bắt | bắt |
+| R13 BR2: OrderCancelled was_paid sai kiểu coi là true | bắt | bắt |
+| R14 T9: UserRegistered lưu email payload vào data | bắt | bắt |
+| R15 BR8: password_changed liên kết ra ngoài | bắt | bắt |
+| R20 BR5: job nhặt cả bản ghi failed | lọt | tương đương: dòng failed, skipped luôn có next_attempt_at rỗng nên điều kiện đã loại; trigger email_deliveries_guard chặn sửa dòng cuối |
+| R21 T11 SB-26: bỏ kiểm email_verified | bắt | bắt |
+| R22 T5 SB-14: hạn mức 30 thành 31 (so sánh) | bắt | bắt |
+| R23 T5: đếm cả email bí mật vào hạn mức thường | lọt | bắt sau khi thêm ca REV-NTF-P13 đến P16 (lỗ hổng test thật) |
+| R24 T5: hạn mức không đếm dòng đang gửi dở của lượt khác | bắt | bắt |
+| R25 BR5: lượt thử cuối > thay >= (thử lần 4) | bắt | bắt |
+| R26 BR5: chờ thử lại luôn 1 phút | bắt | bắt |
+| R27 NTF-DB 4: finish ghi đè cả trạng thái cuối | lọt | bắt sau khi thêm ca REV-NTF-P13 đến P16 (lỗ hổng test thật) |
+| R28 BR6: failLost đổi cả email thường đang pending | lọt | bắt sau khi thêm ca REV-NTF-P13 đến P16 (lỗ hổng test thật) |
+| R29 BR4: hạn mức email bí mật 10 thành 11 | bắt | bắt |
+| R30 BR4: hạn mức bí mật không đếm bản ghi pending đang gửi | lọt | bắt sau khi thêm ca REV-NTF-P13 đến P16 (lỗ hổng test thật) |
+| R31 BR6: lỗi vĩnh viễn của email bí mật vẫn thử lại | lọt | bắt khi chạy cả test/notification và test/platform/events.spec.ts (lệnh hẹp ban đầu quá hẹp, L109) |
+| R32 BR1: thêm Bcc vào Destination | bắt | bắt |
+| R33 T17: lỗi 5xx coi là vĩnh viễn | lọt | bắt khi chạy cả test/notification và test/platform/events.spec.ts (lệnh hẹp ban đầu quá hẹp, L109) |
+| R24b SB-34: dòng đã thuê đủ 3 lần vẫn được thuê tiếp | bắt | bắt |
+| R24c SB-34: lỗi một dòng làm hỏng cả lượt | bắt | bắt |
+| R40 SB-12: HTML không escape dấu nháy kép | lọt | bắt khi chạy cả test/notification và test/platform/events.spec.ts (lệnh hẹp ban đầu quá hẹp, L109) |
+| R41 T3: tiêu đề thư lấy họ tên | bắt | bắt |
+| R42 SB-12: lời chào HTML không escape | bắt | bắt |
+| R50 SB-06: danh sách bỏ khỏi cửa sổ 180 ngày ở đếm chưa đọc | bắt | bắt |
+| R51 BR1: đánh dấu một bỏ điều kiện status (ghi đè read_at) | bắt | bắt |
+| R52 SB-11: id sai dạng đi thẳng vào câu SQL | bắt | bắt |
+| R53 BR3: read-all không kẹp up_to tương lai | bắt | bắt |
+| R54 BR1: lịch sử đếm total không theo bộ lọc | bắt | bắt |
+| R55 BR3: phản hồi lộ user_id | lọt | tương đương: câu SELECT không có cột user_id nên JSON bỏ khóa |
+| R60 ADR-022: dọn thông báo theo hạn của email | bắt | bắt |
+| R61 SB-34: dọn không giới hạn LIMIT lô email | bắt | bắt |
+| R62 SB-34: dọn không dừng khi lô cuối nhỏ | bắt | bắt |
+| R70 SB-11: query list không đóng | bắt | bắt |
+| R71 SB-11: up_to không bắt buộc múi giờ | bắt | bắt |
+| R72 SB-09: APP_BASE_URL cho phép đường dẫn con | bắt | bắt |
+| R73 SB-14: giới hạn 120 thành 121 | bắt | bắt |
+| R74 SB-15: SES_SECRET_KEY không nhạy cảm | lọt | tương đương: cờ sensitive chỉ đổi lời lẽ lỗi cấu hình, không in giá trị |
+| R80 nền: SKIP bị bỏ qua (chạy handle với SKIP) | bắt | bắt |
+| R81 nền: pha prepare chạy TRONG giao dịch | bắt | bắt |
+| R82 nền: không chống trùng event_id | bắt | bắt |
+| R83 nền: idle() không chờ event đang chạy | bắt | bắt |
+| R84 nền: bộ đếm inProcess không giảm | bắt | bắt |
+| R85 nền: subscribeRaw nhận event đi outbox | bắt | bắt |
+| R86 nền: consumer raw đi qua deliver | bắt | bắt |
+| R87 nền: lỗi handler raw không bị bắt (best-effort) | lọt | tương đương: catch ngoài của dispatchInProcess vẫn bắt |
+| R90 DB: CHECK title 120 thành 121 | bắt | bắt |
+| R91 DB: CHECK body 500 thành 501 | bắt | bắt |
+| R92 DB T15: link cho phép ký tự ? | lọt | bắt khi chạy cả test/notification và test/platform/events.spec.ts (lệnh hẹp ban đầu quá hẹp, L109) |
+| R93 DB: CHECK read_at khớp status bỏ | bắt | bắt |
+| R94 DB: dedupe_key notifications 120 thành 121 | bắt | bắt |
+| R95 DB: delivery_reason 50 thành 51 | bắt | bắt |
+| R96 DB: attempts tối đa 3 thành 4 | bắt | bắt |
+| R97 DB T2: email bí mật cho phép data | bắt | bắt |
+| R98 DB T8: bỏ unique (user_id, dedupe_key) của notifications | bắt | bắt |
+| R99 DB T8: bỏ unique (user_id, type, dedupe_key) của email_deliveries | bắt | bắt |
+| R100 DB BR4: unique một phần low_stock theo type refund_failed | bắt | bắt |
+| R101 DB BR4: unique một phần refund_failed bỏ điều kiện unread | bắt | bắt |
+| R102 DB: FK notifications không CASCADE | bắt | bắt |
+| R103 DB: FK email_deliveries không CASCADE | bắt | bắt |
+| R104 DB SB-24: trigger thông báo cho đổi lại unread | bắt | bắt |
+| R105 DB SB-24: trigger thông báo cho sửa nội dung | bắt | bắt |
+| R106 DB SB-24: trigger email cho đổi trạng thái cuối | bắt | bắt |
+| R107 DB: trigger email cho sửa data | bắt | bắt |

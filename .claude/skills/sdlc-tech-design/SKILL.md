@@ -19,6 +19,14 @@ Phần cần phán đoán (chọn cách thiết kế) do skill làm. Phần ph�
 - **Không chép lại thứ tự kiểm, mã lỗi chung hay giới hạn của nền**: trỏ tới tài liệu API của PRJ (nơi sửa duy nhất), không viết lại bản thứ hai. Mã lỗi dùng đúng mã chung ở dòng "Mã chung" của requirement lỗi nền (`validation-failed`, không `validation`); mã riêng của epic chỉ khi nền cho phép (ADR-023).
 - **Hành vi do hạ tầng bảo đảm** (header phản hồi của kho, CDN, bucket) không ghi `Kiểm bằng: test`: ghi `config` hoặc `review`, hay nêu cách test quan sát được ở nơi người dùng nhận.
 - Không bịa nghiệp vụ: endpoint nào cũng truy về một requirement trong `links`, role của endpoint nằm trong `roles` của requirement đó.
+- **Bảng chỉ-thêm** ("chỉ thêm" hoặc trigger chặn UPDATE/DELETE) mà chỉ mục hay thứ tự đọc theo `created_at`: phải có cột `seq` hoặc ghi `clock_timestamp()` làm giờ ghi (`now()` là giờ bắt đầu giao dịch). `check-tech-design` cảnh báo, lỗi ở `--strict` hoặc `kit_version: 4` trong frontmatter (L66).
+- **Tên lớp giao diện module** ở bảng "Giao diện module" đầy đủ, như `InventoryApi.reserve`. Tài liệu API epic gọi đúng tên lớp trong bảng, không tự đặt `<Tên>Service`; kit cảnh báo (L68).
+- **Đối tượng truyền qua giao diện module** (bản chụp, danh sách dòng): bảng gọi module của BÊN GỌI ghi ánh xạ từng khóa nguồn sang khóa đích và khóa nào bị bỏ; bên nhận ghi tập khóa đóng. Reviewer epic gọi đầu tiên đối chiếu hai tập khóa (L83).
+- **Biến môi trường** nêu ở tài liệu API epic phải có trong bảng biến ở `architecture.md` (ADR-007). Thiếu thì `sdlc-impact` sửa ADR trước khi implement; kit cảnh báo (L106).
+- **Giao tiếp giữa module**: mỗi giao diện gọi có tham số số có một dòng "miền bên nhận so với số lớn nhất bên gọi có thể gửi" (lấy từ BR của epic gọi và đoạn Hành vi lỗi ở `architecture.md`); lớn hơn thì nêu cách xử lý: cắt, từ chối hay nâng trần (L114).
+- **Cột Lỗi của bảng Endpoint** có 429 cho mọi endpoint có giới hạn tần suất, trừ ngoại lệ "không giới hạn tần suất" kèm lý do; kit cảnh báo. Test-design: TC bậc giới hạn có ca 429 (L121).
+- **Hạn mức theo kết quả lời gọi ngoài dưới khóa** (gửi mail, gọi cổng): nêu việc đang bay được đếm thế nào, ví dụ đặt chỗ trước khi gọi bằng dấu `sending` (L125). **Đường dẫn nội bộ** dùng mẫu `^/([A-Za-z0-9_-][A-Za-z0-9/_-]*)?$` (một dấu gạch chéo đầu, ký tự thứ hai không phải gạch chéo), không dùng `^/[A-Za-z0-9/_-]*$` (L126).
+- **Epic có tiền ra vào cổng ngoài**: lập bảng trạng thái hệ thống (kể cả trạng thái cuối) nhân với "tiền đã vào hoặc ra ở cổng nhưng thông báo mất". Mỗi ô có đường phát hiện (job, đối soát) hoặc nằm ở Rủi ro còn lại của SEC có người chấp nhận (L100).
 
 ## Quy trình
 0. **Nạp framework tham chiếu.** Đọc `.claude/sdlc/adapter/active.md` và dòng phase `design` trong file mapping; đọc các file ở cột *Đọc* (`plan-template.md`, `plan.md`) để lấy cấu trúc kế hoạch kỹ thuật và cách kiểm theo nguyên tắc dự án. Cột *Kit tự làm* là phần dưới đây (threat model, DB/API). Đầu ra theo `contract.md`.

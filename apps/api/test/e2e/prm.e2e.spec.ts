@@ -1,5 +1,5 @@
 import type { Page } from 'playwright-core';
-import { advance, alignWindow, count, couponState, eventually, hasText, id, loginUi, reset, see, seedCoupon, seedUser, startE2e, textOf, withPage, type E2eEnv } from './support';
+import { advance, alignWindow, count, couponState, eventually, hasText, id, loginUi, reset, see, seedCoupon, seedUser, startE2e, textOf, withPage, type E2eEnv, API } from './support';
 
 // E2E của PRM chạy bằng Jest và playwright-core điều khiển Chromium thật: API thật (AppModule) trên PostgreSQL thật (`ecom_e2e`), bản build production của web.
 // Giờ nhập ở biểu mẫu là giờ Việt Nam; giới hạn tần suất dùng đồng hồ của API do cổng điều khiển tua (không chờ 60 giây thật). Mỗi test: CSDL sạch, ngữ cảnh trình duyệt mới.
@@ -8,7 +8,6 @@ beforeAll(async () => { env = await startE2e(); }, 420_000);
 afterAll(async () => { await env?.stop(); });
 beforeEach(async () => { await reset(); });
 const e2e = (name: string, fn: (page: Page) => Promise<void>) => it(name, () => withPage(env.browser, fn), 150_000);
-const API = 'http://localhost:3101/api/v1';
 /** Giá trị `datetime-local` (giờ Việt Nam) cách bây giờ `days` ngày. */
 const vn = (days: number): string => new Date(Date.now() + days * 86_400_000 + 7 * 3600_000).toISOString().slice(0, 16);
 const row = (page: Page, code: string) => id(page, 'prm-admin-coupon-list-row').filter({ hasText: code });

@@ -72,12 +72,12 @@ export function ShipmentBadge({ status, testid }: { status: string; testid: stri
 }
 
 /** Thông báo ngắn tự tắt sau `ms` (đường thoát của trạng thái có thời hạn); `text` đổi thì tính lại thời hạn. */
-export function useToast(ms = 4000): { toast: { text: string; testid: string; error?: boolean } | null; show: (t: { text: string; testid: string; error?: boolean }) => void } {
-  const [toast, setToast] = useState<{ text: string; testid: string; error?: boolean } | null>(null);
+export function useToast(ms = 4000): { toast: { text: string; testid?: string; error?: boolean } | null; show: (t: { text: string; testid?: string; error?: boolean }) => void } {
+  const [toast, setToast] = useState<{ text: string; testid?: string; error?: boolean } | null>(null);
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), ms); return () => clearTimeout(t); }, [toast, ms]);
   return { toast, show: setToast };
 }
 
-export function ToastView({ toast }: { toast: { text: string; testid: string; error?: boolean } | null }) {
+export function ToastView({ toast }: { toast: { text: string; testid?: string; error?: boolean } | null }) {
   return toast ? <div className={`toast${toast.error ? ' toast-error' : ''}`} role="status" data-testid={toast.testid}>{toast.text}</div> : null;
 }

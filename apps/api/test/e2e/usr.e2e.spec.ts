@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import type { Page } from 'playwright-core';
-import { advance, count, eventually, hasText, id, loginUi, reset, s3Keys, see, seedAddress, seedUser, startE2e, textOf, withPage, type E2eEnv } from './support';
+import { advance, alignWindow, count, eventually, hasText, id, loginUi, reset, s3Keys, see, seedAddress, seedUser, startE2e, textOf, withPage, type E2eEnv, API } from './support';
 import { gif } from '../support/images';
 
 // E2E của USR chạy bằng Jest và playwright-core điều khiển Chromium thật: API thật trên PostgreSQL thật (CSDL `ecom_e2e`), kho ảnh là dịch vụ S3 giả
@@ -70,14 +70,14 @@ describe('E2E USR (trình duyệt thật, API thật)', () => {
     // bị giới hạn tải ảnh (10 lần mỗi giờ) rồi thoát khỏi trạng thái đó khi hết giờ chờ, không phải tải lại trang (bài học L45)
     await page.clock.install();
     const png64 = (await sharp({ create: { width: 40, height: 40, channels: 3, background: '#22c55e' } }).png().toBuffer()).toString('base64');
-    await page.evaluate(async (b64) => { // 8 lần tải tự động: cùng gif và me.jpg ở trên là 10 lần trong giờ này
+    await page.evaluate(async ([b64, api]) => { // 8 lần tải tự động: cùng gif và me.jpg ở trên là 10 lần trong giờ này
       const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
       for (let i = 0; i < 8; i++) {
         const f = new FormData(); f.append('file', new Blob([bytes], { type: 'image/png' }), 'x.png');
-        const r = await fetch('http://localhost:3101/api/v1/me/avatar', { method: 'PUT', body: f, credentials: 'include' });
+        const r = await fetch(`${api}/me/avatar`, { method: 'PUT', body: f, credentials: 'include' });
         if (r.status !== 200) throw new Error(`tải ${i}: ${r.status}`);
       }
-    }, png64);
+    }, [png64, API]);
     await upload(page, 'again.jpg', await jpeg(), 'image/jpeg'); // lần tải thứ 11 của giờ này
     await see(id(page, 'usr-profile-avatar-rate-limited'));
     expect(await id(page, 'usr-profile-avatar-upload').isDisabled()).toBe(true);
@@ -88,7 +88,7 @@ describe('E2E USR (trình duyệt thật, API thật)', () => {
   });
 
   e2e('USR-E2E-20261006-102054373 và USR-E2E-20261007-085336817 (trạng thái bị giới hạn: banner, nút khóa, thoát khi hết giờ): customer đổi mật khẩu: sai mật khẩu hiện tại, bị giới hạn rồi đổi thành công', async (page) => {
-    await seedUser({ email: 'u1@shop.vn', password: 'Old-Password-1' });
+    await alignWindow(3600); await seedUser({ email: 'u1@shop.vn', password: 'Old-Password-1' }); // alignWindow: năm lần sai (cửa sổ 15 phút) và mười lần gọi (cửa sổ 1 giờ) nằm trọn một cửa sổ mỗi loại, không đỏ khi chạy qua ranh giới giờ (REV-REV-14)
     await loginUi(page, 'u1@shop.vn', 'Old-Password-1');
     await page.goto('/account/password');
     await see(id(page, 'usr-change-password-form'));
@@ -266,6 +266,7 @@ describe('E2E USR (trình duyệt thật, API thật)', () => {
     await page.goto('/admin/customers');
     await page.clock.install();
 
+    await alignWindow(); // 31 lần tra cứu của bậc D (30 mỗi phút) phải nằm trọn một cửa sổ cố định: không có dòng này thì test đỏ khi chạy qua ranh giới phút (đỏ chập chờn ở review PAY)
     await id(page, 'usr-customer-lookup-email').fill('an.nguyen@shop.vn');
     await id(page, 'usr-customer-lookup-submit').click();
     await hasText(id(page, 'usr-customer-lookup-result-email'), 'an.nguyen@shop.vn');
@@ -280,12 +281,12 @@ describe('E2E USR (trình duyệt thật, API thật)', () => {
     expect(await page.locator('main script').count()).toBe(0);
 
     // tra cứu thứ 31 trong một phút: 2 lần trên giao diện, 28 lần tự động (cùng phiên trình duyệt), rồi lần thứ 31 trên giao diện
-    await page.evaluate(async () => {
+    await page.evaluate(async (api) => {
       for (let i = 0; i < 28; i++) {
-        const r = await fetch(`http://localhost:3101/api/v1/admin/customers?email=ghost${i}@shop.vn`, { credentials: 'include' });
+        const r = await fetch(`${api}/admin/customers?email=ghost${i}@shop.vn`, { credentials: 'include' });
         if (r.status !== 404) throw new Error(`lần ${i}: ${r.status}`);
       }
-    });
+    }, API);
     await id(page, 'usr-customer-lookup-email').fill('an.nguyen@shop.vn');
     await id(page, 'usr-customer-lookup-submit').click();
     await see(id(page, 'usr-customer-lookup-rate-limited'));

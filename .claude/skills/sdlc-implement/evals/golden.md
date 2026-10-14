@@ -16,3 +16,6 @@
 |---|---|
 | S1 | Test case phụ thuộc hạ tầng (Postgres thật) tách nhãn và có cách chạy (docker compose) |
 | S2 | `skip` nào cũng có lý do ở Ghi chú |
+| S3 | `clean_run: pass` dựng bằng `node .claude/skills/sdlc-implement/scripts/clean-run.mjs`, ghi lệnh và mã thoát từng bước |
+| S4 | Mã lỗi tự đặt trong `errors.ts` và hành vi thêm ngoài spec có mục *Lệch spec* ngay, hành vi thêm có test thật dẫn đường dẫn |
+| S5 | Job nền có TC riêng cho giới hạn lô, trần bộ đếm, cô lập lỗi theo dòng; route có `@RateLimit` được test duyệt mọi route |

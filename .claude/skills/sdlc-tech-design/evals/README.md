@@ -8,6 +8,8 @@ Cùng khung với `sdlc-research/evals/README.md`. Phần hình thức (entity t
 3. Mỗi lần: chạy `check-tech-design.mjs --strict` (phải qua) và `check-spec.mjs` (phải qua), rồi chấm `golden.md`, `traps.md`.
 4. Chấm nội dung bằng một subagent riêng, không cho xem `SKILL.md`.
 
+`evals/traps.md` (D1..) là bẫy hồi quy từ bài học code, không gắn một fixture: chấm bằng cách đưa cho subagent bộ thiết kế của một epic có yếu tố tương ứng cùng hàng bẫy. Bẫy riêng của ca `ordering` (H1..) ở `ordering/traps.md`.
+
 ## Tiêu chí đạt
 - Hai script qua ở cả 3 lần; không file `approved` nào bị sửa (so md5 trước/sau).
 - 100% MUST có ở ít nhất 2/3 lần, không lần nào bỏ cùng một MUST.

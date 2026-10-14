@@ -143,6 +143,30 @@ for (const { f, text } of all) {
   const miss = fns.filter((n) => !new RegExp(`\\b${n}\\b`).test(tcText));
   if (miss.length) lack.push(`${fm.id}: giao diện module chưa có TC nào nhắc: ${miss.join(', ')} (mỗi hàm cung cấp cho epic khác cần ít nhất một TC)`);
 }
+// L61: mục đánh số (tài liệu DB, API) nói về job nền phải được một TC nhắc tới (tên job hoặc tiêu đề mục); cụm giới hạn lô, hạn thời gian, idempotent phải có trong một Then
+{
+  const tcDocs = docs.filter((d) => d.fm.id?.includes('-TC-'));
+  const tcAll = tcDocs.map((d) => d.text).join('\n').toLowerCase();
+  const thenAll = tcDocs.flatMap((d) => d.text.split(/\r?\n/).filter((l) => /\*\*Then\*\*/.test(l))).join('\n').toLowerCase();
+  for (const { text } of all) {
+    const fm = fmOf(text);
+    if (!/-(?:DB|API)-/.test(fm.id ?? '') || (epicOnly && fm.epic !== epicOnly)) continue;
+    for (const item of text.split(/\r?\n/).filter((l) => /^\d+\.\s/.test(l) && /\bjob\b/i.test(l.match(/\*\*([^*]+)\*\*/)?.[1] ?? l.slice(0, 60)))) { // job nằm ở tiêu đề (in đậm) hoặc đầu mục; nhắc job giữa câu thì không tính
+      const name = item.match(/\bjob\s+`([\w.-]+)`/i)?.[1] ?? item.match(/`([a-z]+\.[\w-]+)`/)?.[1], title = item.match(/\*\*([^*]+)\*\*/)?.[1];
+      if (!((name && tcAll.includes(name.toLowerCase())) || (title && tcAll.includes(title.toLowerCase())))) { lack.push(`${fm.id}: mục job "${title ?? name ?? item.slice(0, 40)}" không TC nào của epic nhắc tới (tên job${name ? ` \`${name}\`` : ''} hoặc tiêu đề mục): thêm TC riêng cho job`); continue; }
+      for (const phrase of ['giới hạn lô', 'hạn thời gian', 'idempotent']) if (item.toLowerCase().includes(phrase) && !thenAll.includes(phrase)) lack.push(`${fm.id}: mục job "${title ?? name}" nêu "${phrase}" nhưng không Then nào của TC epic có cụm này`);
+    }
+  }
+}
+// L132: BR "xét theo thứ tự" có N bước (1)..(N) mà requirement có ít hơn N TC: mỗi cặp bước cùng đúng cần một dòng quyết định và TC
+for (const [id, r] of reqs) {
+  if (epicOnly && r.epic !== epicOnly) continue;
+  const nTc = docs.filter((d) => d.fm.id?.includes('-TC-') && (d.fm.covers ?? []).includes(id)).length;
+  for (const l of r.text.split(/\r?\n/).filter((x) => /^[-*]\s*BR\d+/.test(x) && /theo thứ tự/i.test(x))) {
+    const steps = Math.max(0, ...[...l.matchAll(/\((\d{1,2})\)/g)].map((m) => Number(m[1])));
+    if (steps >= 2 && nTc < steps) lack.push(`${id}: ${l.match(/BR\d+/)[0]} "xét theo thứ tự" có ${steps} bước mà requirement chỉ có ${nTc} test case: lập bảng quyết định (mỗi cặp bước cùng đúng một dòng) và mỗi cặp một TC`);
+  }
+}
 (strict ? errors : warnings).push(...lack.map((m) => `thiếu phủ: ${m}`));
 
 

@@ -9,11 +9,11 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const FIX = join(here, '../evals/reservation-ttl/fixture/spec');
 const ID = 'INV-REQ-20261001-090000004';
-const run = (body) => {
+const run = (body, name = ID) => {
   const root = mkdtempSync(join(tmpdir(), 'impact-'));
   cpSync(FIX, join(root, 'spec'), { recursive: true });
   mkdirSync(join(root, 'spec/changes'));
-  writeFileSync(join(root, `spec/changes/${ID}.md`), body);
+  writeFileSync(join(root, `spec/changes/${name}.md`), body);
   return spawnSync('node', [join(here, 'check-impact.mjs'), join(root, 'spec')], { encoding: 'utf8' });
 };
 const H = '| ID bị ảnh hưởng | Loại | Mức | Lý do | Việc cần làm |\n|---|---|---|---|---|\n';
@@ -37,4 +37,14 @@ assert.equal(run(good).status, 0, 'không có dòng Cụm từ thì không kiể
 const fr = spawnSync('node', [join(here, 'find-refs.mjs'), FIX, '--phrase', 'HẾT HẠN  giữ hàng'], { encoding: 'utf8' });
 assert.match(fr.stdout, /nhắc cụm từ\t.*PRM-REQ-20261002-100000003\.md/, 'find-refs --phrase không phân biệt hoa thường và khoảng trắng');
 assert.doesNotMatch(fr.stdout, /INV-REQ-20261001-090000004/);
+
+// L56 (kit đã gặp ở 6 epic): thay đổi chạm tài liệu không có ID (ADR, architecture.md): tên file theo chủ đề, khai `Tài liệu bị đổi:` thay cho tên file
+const named = (t) => `Tài liệu bị đổi: ${t}\n\n` + good;
+assert.equal(run(good, 'adr-011-giao-event').status, 1, 'tên file không phải ID và không khai Tài liệu bị đổi thì lỗi');
+r = run(named(ID), 'adr-011-giao-event');
+assert.equal(r.status, 0, r.stderr);
+r = run(named('spec/domain/entities.md'), 'adr-011-giao-event');
+assert.equal(r.status, 0, 'đường dẫn spec/ có thật cũng được (không có ID thì bỏ phủ tín hiệu cứng)\n' + r.stderr);
+assert.equal(run(named('spec/khong-co.md'), 'adr-011-giao-event').status, 1, 'đường dẫn không có thật phải lỗi');
+assert.equal(run(named('INV-REQ-20269999-999999999'), 'adr-011-giao-event').status, 1, 'ID không có trong spec/ phải lỗi');
 console.log('OK: check-impact.mjs');

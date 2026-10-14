@@ -25,7 +25,7 @@ entities: [Order]
 |---|---|---|
 ${states.map((s) => `| Order | ${s} | enum |`).join('\n')}
 `;
-const API = ({ path = '/api/v1/orders', errs = '401, 403', dep = '[AUTH]', emits = '[OrderPaid]', role = 'customer' } = {}) => `---
+const API = ({ path = '/api/v1/orders', errs = '401, 403, 429', dep = '[AUTH]', emits = '[OrderPaid]', role = 'customer' } = {}) => `---
 id: ORD-API-20261006-110000002
 epic: ORD
 links: [${REQ}]
@@ -78,7 +78,7 @@ bad({ db: DB(['pending', 'paid'], 'FK stock_items') }, /FK stock_items thuộc e
 bad({ db: DB(['pending', 'paid'], 'item_id -> stock_items.id (RESTRICT)') }, /stock_items thuộc epic INV/);
 bad({ db: DB(['pending', 'paid'], 'item_id REFERENCES stock_items(id)') }, /stock_items thuộc epic INV/);
 bad({ api: API({ errs: '401' }) }, /401 và 403/);
-assert.equal(run({ api: API({ role: 'system', errs: '-' }) }).status, 0, 'endpoint role system không bắt buộc 401/403');
+assert.equal(run({ api: API({ role: 'system', errs: '429' }) }).status, 0, 'endpoint role system không bắt buộc 401/403');
 bad({ api: API({ dep: '[PAY]' }) }, /depends_on PAY/);
 bad({ api: API({ emits: '[StockReleased]' }) }, /emits StockReleased/);
 bad({ sec: SEC('SB-99') }, /SB-99/);
@@ -120,4 +120,41 @@ assert.equal(run({ sec: SEC('SB-06', 'bucket chặn truy cập công khai', 'tes
 const lax58 = run({ sec: SEC('SB-06', 'CDN giữ nguyên header', 'test'), strict: false });
 assert.equal(lax58.status, 0, lax58.stderr);
 assert.match(lax58.stdout, /Lưu ý: .*T1.*hạ tầng/);
+
+// L66: bảng chỉ-thêm (chỉ thêm, append-only) mà chỉ mục hay thứ tự đọc theo created_at, không có cột seq hay ghi clock_timestamp(): cảnh báo (lỗi ở --strict hoặc kit_version: 4 trong tài liệu)
+const DBA = (idx, extra = '') => DB().replace('| orders | Order | id | FK users |', `| orders | Order | id | FK users |\n| stock_movements | Order | id | ${extra}${idx} |`);
+bad({ db: DBA('chỉ mục (stock_item_id, created_at DESC)', 'chỉ thêm; ') }, /stock_movements.*created_at.*(?:seq|clock_timestamp)/);
+bad({ db: DBA('ORDER BY created_at DESC khi đọc lịch sử', 'append-only; ') }, /stock_movements.*created_at/);
+assert.equal(run({ db: DBA('chỉ mục (stock_item_id, seq DESC)', '`seq` bigint GENERATED ALWAYS AS IDENTITY; chỉ thêm; ') }).status, 0, 'có seq thì qua');
+assert.equal(run({ db: DBA('chỉ mục (stock_item_id, created_at DESC); giờ ghi là `clock_timestamp()`', 'chỉ thêm; ') }).status, 0, 'ghi clock_timestamp() làm giờ ghi thì qua');
+assert.equal(run({ db: DBA('chỉ mục (stock_item_id, created_at DESC)') }).status, 0, 'bảng không phải chỉ-thêm thì không kiểm');
+const lax66 = run({ db: DBA('chỉ mục (stock_item_id, created_at DESC)', 'chỉ thêm; '), strict: false });
+assert.equal(lax66.status, 0, lax66.stderr);
+assert.match(lax66.stdout, /Lưu ý: .*stock_movements.*created_at/);
+assert.equal(run({ db: DBA('chỉ mục (stock_item_id, created_at DESC)', 'chỉ thêm; ').replace('entities: [Order]', 'kit_version: 4\nentities: [Order]'), strict: false }).status, 1, 'kit_version: 4 trong tài liệu thì là lỗi');
+
+// L68: tên lớp giao diện module: API epic gọi `<Tên>Service.<hàm>(` trùng tên hàm của bảng "Giao diện module" ở architecture.md nhưng khác tên lớp ghi ở bảng (hoặc bảng chỉ ghi tên hàm: lớp thật là <Tên>Api)
+const IFT = '\n| Gọi | Đến | Phương thức (chỉ định) | tx |\n|---|---|---|---|\n| ORD | INV | `InventoryApi.reserve(order_id)`, `getSummaries` | có |\n';
+const callDoc = (txt) => API().replace('## Endpoint', `Gọi ${txt}.\n\n## Endpoint`);
+bad({ arch: IFT, api: callDoc('`InventoryService.reserve(order_id)`') }, /InventoryService\.reserve.*InventoryApi/);
+bad({ arch: IFT, api: callDoc('`CatalogService.getSummaries(ids)`') }, /CatalogService\.getSummaries.*(?:Api|bảng)/);
+assert.equal(run({ arch: IFT, api: callDoc('`InventoryApi.reserve(order_id)` và `OrderService.place(x)`') }).status, 0, 'đúng tên lớp, hay hàm không có trong bảng thì qua');
+const lax68 = run({ arch: IFT, api: callDoc('`InventoryService.reserve(order_id)`'), strict: false });
+assert.equal(lax68.status, 0, lax68.stderr);
+assert.match(lax68.stdout, /Lưu ý: .*InventoryService\.reserve/);
+
+// L106: biến môi trường nêu ở tài liệu API mà architecture.md (ADR-007) không có
+const ENVDOC = API().replace('## Endpoint', 'Cấu hình: `ORD_HOLD_TTL` (mặc định 15 phút).\n\n## Endpoint');
+bad({ api: ENVDOC }, /ORD_HOLD_TTL.*architecture\.md/);
+assert.equal(run({ api: ENVDOC, arch: '\nADR-007: `ORD_HOLD_TTL` mặc định 15.\n' }).status, 0, 'có trong architecture.md thì qua');
+const lax106 = run({ api: ENVDOC, strict: false });
+assert.equal(lax106.status, 0, lax106.stderr);
+assert.match(lax106.stdout, /Lưu ý: .*ORD_HOLD_TTL/);
+
+// L121: dòng Endpoint thiếu 429 trong cột Lỗi (SB-14: mọi endpoint có giới hạn tần suất) mà tài liệu không ghi ngoại lệ
+bad({ api: API({ errs: '401, 403' }) }, /429.*GET \/api\/v1\/orders/);
+assert.equal(run({ api: API({ errs: '401, 403' }).replace('## Endpoint', 'Endpoint webhook: không giới hạn tần suất (cổng ngoài ký).\n\n## Endpoint') }).status, 0, 'ngoại lệ ghi rõ thì qua');
+const lax121 = run({ api: API({ errs: '401, 403' }), strict: false });
+assert.equal(lax121.status, 0, lax121.stderr);
+assert.match(lax121.stdout, /Lưu ý: .*429/);
 console.log('OK: check-tech-design.mjs');

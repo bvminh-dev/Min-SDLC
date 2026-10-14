@@ -95,23 +95,6 @@ describe('SHP bẫy của review độc lập', () => {
     }
   }, 240_000);
 
-  it(`SHP-TC-20261006-102134039 ${SEC} T17: danh sách một trang 100 vận đơn gọi OrderApi.getSummary đúng một lần mỗi đơn (N+1 có chủ ý, report mục 6) và vẫn trả đủ 100 mã đơn đúng thứ tự trong dưới 3 giây`, async () => {
-    const s1 = await who(t, 'staff', 's1@shop.vn');
-    const m = (await seedShipment(t, { status: 'pending' })).method;
-    for (let i = 0; i < 99; i++) await seedShipment(t, { status: 'pending', method: m, createdAt: new Date(Date.now() - (i + 1) * 60_000) });
-    const spy = jest.spyOn(t.app.get(OrderApi), 'getSummary');
-    t.clock.advance(61_000);
-    const t0 = Date.now();
-    const r = await call(t, 'get', '/shipping/shipments?limit=100&sort=newest', { cookie: s1.cookie });
-    const ms = Date.now() - t0;
-    expect(r.status).toBe(200);
-    expect(r.body.items).toHaveLength(100);
-    expect(r.body.items.every((x: { order_code: string }) => /^[0-9A-Z]{12}$/.test(x.order_code))).toBe(true);
-    expect(new Set(r.body.items.map((x: { order_code: string }) => x.order_code)).size).toBe(100);
-    expect(spy).toHaveBeenCalledTimes(100);
-    expect(ms).toBeLessThan(3000);
-  }, 120_000);
-
   it(`SHP-TC-20261006-102133602 ${SEC} T8: biến thể Unicode của mã vận đơn (chữ rộng, số rộng, ſ, ı, dấu Kelvin, ß, ký tự điều khiển giữa mã) bị 400 ở bàn giao, sửa mã và danh sách; không đổi gì, không rò 500`, async () => {
     const s1 = await who(t, 'staff', 's1@shop.vn');
     const v = await seedShipment(t, { status: 'pending' }), w = await seedShipment(t, { status: 'shipped', tracking: 'GHN12345678' });
@@ -140,7 +123,7 @@ describe('SHP bẫy của review độc lập', () => {
     expect(alias.status).toBe(404);
   });
 
-  it(`SHP-TC-20261006-102133455 ${SEC} T20 (L71): handler tạo vận đơn giữ một kết nối của giao dịch giao event và đọc ORD bằng kết nối thứ hai nên pool một kết nối treo mãi: cấu hình DB_POOL_MAX nhỏ hơn 2 bị từ chối lúc khởi động, 2 trở lên qua`, () => {
+  it(`SHP-TC-20261008-091406542 ${SEC} T20 (L71): handler tạo vận đơn giữ một kết nối của giao dịch giao event và đọc ORD bằng kết nối thứ hai nên pool một kết nối treo mãi: cấu hình DB_POOL_MAX nhỏ hơn 2 bị từ chối lúc khởi động, 2 trở lên qua`, () => {
     const env = { APP_ENV: 'dev', DATABASE_URL: 'postgresql://u:pw@localhost:5433/x', CORS_ALLOWED_ORIGINS: 'http://localhost:3000' };
     const err = (() => { try { loadConfig({ ...env, DB_POOL_MAX: '1' }); } catch (e) { return e as ConfigError; } return null; })();
     expect(err).toBeInstanceOf(ConfigError);

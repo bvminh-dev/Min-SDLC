@@ -33,9 +33,14 @@ const errors = [];
 const err = (f, m) => errors.push(`${f}: ${m}`);
 
 for (const f of reports) {
-  const id = basename(f, '.md');
-  if (!allIds.has(id)) err(f, `tên file phải là ID của tài liệu bị đổi (spec/changes/<ID>.md), "${id}" không có trong spec/`);
+  let id = basename(f, '.md');
   const lines = readFileSync(f, 'utf8').split(/\r?\n/);
+  if (!allIds.has(id)) {
+    // thay đổi chạm tài liệu không có ID (ADR, architecture.md): tên file theo chủ đề, dòng `Tài liệu bị đổi: <ID hoặc spec/...>` thay cho tên file
+    const named = lines.join('\n').match(/^Tài liệu bị đổi:\s*(\S+)\s*$/m)?.[1];
+    if (named && (allIds.has(named) || (named.startsWith('spec/') && existsSync(join(dirname(specDir), named))))) id = named;
+    else err(f, `tên file phải là ID của tài liệu bị đổi (spec/changes/<ID>.md), "${id}" không có trong spec/; nếu đổi tài liệu không có ID thì đặt tên theo chủ đề và thêm dòng "Tài liệu bị đổi: <ID hoặc spec/đường-dẫn.md có thật>"`);
+  }
   const h = lines.findIndex((l) => squash(l).startsWith('| ID bị ảnh hưởng'));
   if (h < 0) { err(f, `thiếu bảng báo cáo với tiêu đề: | ${HEADER.join(' | ')} |`); continue; }
   const cells = (l) => l.split('|').slice(1, -1).map((c) => c.trim());
@@ -58,7 +63,7 @@ for (const f of reports) {
     if (loai !== 'không đổi' && !todo) err(f, `${target}: ${loai} phải có Việc cần làm`);
   }
   // phủ tín hiệu cứng: mọi tài liệu có links/covers trỏ tới ID bị đổi phải có dòng trong bảng (kể cả "không đổi")
-  const r = spawnSync(process.execPath, [FIND_REFS, specDir, id], { encoding: 'utf8' });
+  const r = ID_RE.test(id) ? spawnSync(process.execPath, [FIND_REFS, specDir, id], { encoding: 'utf8' }) : { stdout: '' };
   for (const line of r.stdout.split(/\r?\n/)) {
     const [kind, file] = line.split('\t');
     if (kind !== 'links/covers' || !file) continue;

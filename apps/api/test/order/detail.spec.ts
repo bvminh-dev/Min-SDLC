@@ -20,7 +20,7 @@ describe('ORD chi tiết đơn', () => {
     expect(d.status).toBe(200);
     expect(d.body).toMatchObject({ code: '7K3M9Q2XH4TB', status: 'paid', items_total: 350000, discount: 0, shipping_fee: 30000, grand_total: 380000, payment_method: 'vnpay', payment_status: 'succeeded', can_cancel: true });
     expect(d.body.items).toEqual([{ name: 'Áo thun cổ tròn', unit_price: 100000, quantity: 2, line_total: 200000 }, { name: 'Quần jean', unit_price: 150000, quantity: 1, line_total: 150000 }]);
-    expect(Object.keys(d.body.shipping_address).sort()).toEqual(['city', 'line1', 'phone', 'receiver', 'ward']);
+    expect(Object.keys(d.body.shipping_address).sort()).toEqual(['city', 'district', 'line1', 'phone', 'receiver', 'ward']);
     expect(d.body).not.toHaveProperty('tracking_number');
     expect(d.body).not.toHaveProperty('payment_expires_at'); // đã rời pending
     expect(d.body.items_total - d.body.discount + d.body.shipping_fee).toBe(d.body.grand_total);

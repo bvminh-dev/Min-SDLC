@@ -7,6 +7,7 @@ import { useCountdown } from '../../../components/useCountdown';
 import { api } from '../../../lib/api';
 import { useLoginRedirect } from '../../../lib/prd';
 import { limitedText, num, type StockItem } from '../../../lib/stock';
+import { useQueryGo } from '../../../components/useQueryGo';
 
 interface Result { items: StockItem[]; page: number; limit: number; total: number }
 const LIMIT = 20;
@@ -31,13 +32,7 @@ function InventoryList() {
   const wasLimited = useRef(false);
 
   useEffect(() => { setSearch(q); }, [q]);
-  const go = useCallback((change: Record<string, string | null>, keepPage = false) => {
-    const n = new URLSearchParams(sp.toString());
-    for (const [k, v] of Object.entries(change)) { if (v) n.set(k, v); else n.delete(k); }
-    if (!keepPage) n.delete('page');
-    const s = n.toString();
-    router.push(s ? `/admin/inventory?${s}` : '/admin/inventory', { scroll: false });
-  }, [sp, router]);
+  const go = useQueryGo('/admin/inventory'); // cộng dồn các lần đổi liền nhau (REV-REV-12)
   // Gõ rồi chờ 300 ms (hoặc Enter) mới tìm.
   useEffect(() => {
     if (low || search.trim() === q) return;

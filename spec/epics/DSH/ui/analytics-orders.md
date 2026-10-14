@@ -9,6 +9,8 @@ roles: [admin]
 
 Trang để đọc số đơn theo mốc và trạng thái, tỷ lệ hủy, hết hạn và giá trị đơn trung bình trong một khoảng ngày. Đây là số đếm và giá trị đơn, **không phải doanh thu** (doanh thu ở `analytics-revenue`). Chỉ admin; staff và customer thấy màn `access-denied` của AUTH.
 
+Đường dẫn web: `/admin/reports/orders`. Khi URL chỉ có `to` hoặc chỉ có `from`, ô còn lại hiện đúng giá trị máy chủ đã dùng (thiếu `to` là hôm nay, thiếu `from` là `to` trừ 29 ngày).
+
 ## Wireframe
 Phương án đã chọn: **A** (khoảng ngày, hàng số, biểu đồ theo mốc, bảng mốc theo tám trạng thái). **Đây là lựa chọn mặc định** (khuyến nghị theo `U3` và mẫu "Trang báo cáo" của evon), chưa có người dùng chọn. Không dựng HTML hay chạy probe ở phase này.
 
