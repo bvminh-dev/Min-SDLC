@@ -38,24 +38,32 @@ export function AccountMenu() {
       </button>
       {open && (
         <div className="popover" role="menu">
-          <p className="strong" data-testid="auth-account-menu-name">{user.full_name}</p>
-          <p data-testid="auth-account-menu-email">{user.email}</p>
-          <p data-testid="auth-account-menu-role">{ROLE_LABEL[user.role]}</p>
+          <div className="acct-head">
+            <span className="avatar avatar-lg" aria-hidden="true">{user.full_name.trim().charAt(0).toUpperCase() || '?'}</span>
+            <div className="acct-id">
+              <p className="strong" data-testid="auth-account-menu-name">{user.full_name}</p>
+              <p className="muted small" data-testid="auth-account-menu-email">{user.email}</p>
+              <p data-testid="auth-account-menu-role"><span className="badge" data-role={user.role}>{ROLE_LABEL[user.role]}</span></p>
+            </div>
+          </div>
           {user.role === 'customer' && !user.email_verified && (
-            <Link className="chip" href="/verify-email" onClick={() => setOpen(false)} data-testid="auth-account-menu-unverified">Email chưa xác minh</Link>
+            <Link className="chip" href="/verify-email" onClick={() => setOpen(false)} data-testid="auth-account-menu-unverified">Chưa xác minh email</Link>
           )}
-          <Link className="btn btn-quiet" href="/account/profile" onClick={() => setOpen(false)}>Hồ sơ của tôi</Link>
+          {user.role === 'customer' && <Link className="btn btn-quiet" href="/orders" onClick={() => setOpen(false)}>Đơn hàng</Link>}
+          {user.role === 'customer' && <Link className="btn btn-quiet" href="/payments" onClick={() => setOpen(false)}>Thanh toán</Link>}
+          {user.role === 'customer' && <Link className="btn btn-quiet" href="/me/reviews" onClick={() => setOpen(false)}>Đánh giá</Link>}
+          <Link className="btn btn-quiet" href="/account/profile" onClick={() => setOpen(false)}>Hồ sơ</Link>
           {user.role === 'customer' && <Link className="btn btn-quiet" href="/account/addresses" onClick={() => setOpen(false)}>Sổ địa chỉ</Link>}
-          {user.role !== 'customer' && <Link className="btn btn-quiet" href="/admin/customers" onClick={() => setOpen(false)}>Tra cứu khách</Link>}
-          {user.role !== 'customer' && <Link className="btn btn-quiet" href="/admin/products" onClick={() => setOpen(false)}>Quản lý sản phẩm</Link>}
-          {user.role === 'admin' && <Link className="btn btn-quiet" href="/admin/categories" onClick={() => setOpen(false)}>Quản lý danh mục</Link>}
+          {user.role !== 'customer' && <Link className="btn btn-quiet" href="/admin/customers" onClick={() => setOpen(false)}>Khách hàng</Link>}
+          {user.role !== 'customer' && <Link className="btn btn-quiet" href="/admin/products" onClick={() => setOpen(false)}>Sản phẩm</Link>}
+          {user.role === 'admin' && <Link className="btn btn-quiet" href="/admin/categories" onClick={() => setOpen(false)}>Danh mục</Link>}
           {failed && (
             <div role="alert" className="banner banner-error" data-testid="auth-account-menu-error">
-              Không đăng xuất được. Thử lại. <button className="btn" onClick={() => void logout()} data-testid="auth-account-menu-retry">Thử lại</button>
+              Không đăng xuất được <button className="btn" onClick={() => void logout()} data-testid="auth-account-menu-retry">Thử lại</button>
             </div>
           )}
           {busy ? (
-            <p data-testid="auth-account-menu-logout-loading">Đang đăng xuất...</p>
+            <p className="muted small" data-testid="auth-account-menu-logout-loading">Đang thoát…</p>
           ) : (
             <button role="menuitem" className="btn btn-quiet" onClick={() => void logout()} data-testid="auth-account-menu-logout">Đăng xuất</button>
           )}
@@ -79,8 +87,8 @@ export function SessionExpiredDialog() {
   return (
     <div className="backdrop">
       <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="se-title" data-testid={expiredTestId(path) ?? payExpiredTestId(path) ?? crtExpiredTestId(path) ?? 'auth-account-menu-session-expired'}>
-        <h2 id="se-title">Phiên đã hết hạn</h2>
-        <p>Hãy đăng nhập lại để tiếp tục.</p>
+        <div className="dlg-head"><span className="tile amber"><span className="i i-clock" aria-hidden="true" /></span><h2 id="se-title">Hết phiên</h2></div>
+        <p>Đăng nhập lại để tiếp tục.</p>
         <a className="btn btn-primary" href={`/login?next=${encodeURIComponent(next)}&reason=expired`} data-testid="auth-account-menu-session-expired-login">Đăng nhập</a>
       </div>
     </div>

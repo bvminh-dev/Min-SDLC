@@ -2,9 +2,9 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ImageStrip, ReviewPager, ReviewStatusBadge, Spin, Stars, useQueryGo } from '../../../components/ReviewParts';
+import { ImageStrip, ReviewPager, ReviewStatusBadge, RevDialog, Spin, Stars, useQueryGo } from '../../../components/ReviewParts';
 import { RequireRole } from '../../../components/RequireRole';
-import { Modal, ToastView, useToast } from '../../../components/ShipmentParts';
+import { ToastView, useToast } from '../../../components/ShipmentParts';
 import { useCountdown } from '../../../components/useCountdown';
 import { api } from '../../../lib/api';
 import { rateLimitedText, useLoginRedirect } from '../../../lib/prd';
@@ -41,7 +41,7 @@ function MyReviewsInner() {
   // Thông báo sau khi lưu ở form sửa: hiện một lần rồi gỡ `saved` khỏi URL.
   useEffect(() => {
     if (saved !== '1' && saved !== 'pending') return;
-    show({ text: saved === 'pending' ? 'Đã lưu thay đổi. Đánh giá sẽ hiện lại sau khi được duyệt.' : 'Đã lưu thay đổi', testid: 'rev-review-form-save-success' });
+    show({ text: saved === 'pending' ? 'Đã lưu. Sẽ hiện lại sau khi được duyệt.' : 'Đã lưu thay đổi', testid: 'rev-review-form-save-success' });
     go({ saved: null }, true, true);
   }, [saved]); // show, go đổi mỗi lần render nên không đưa vào deps
 
@@ -84,50 +84,54 @@ function MyReviewsInner() {
   const chips = [{ v: '', t: 'Tất cả' }, ...REVIEW_STATUSES.map((s) => ({ v: s as string, t: reviewStatusText(s) }))];
 
   return (
-    <main className="wide">
-      <h1>Đánh giá của tôi</h1>
-      <div className="tabs" role="group" aria-label="Lọc theo trạng thái" data-testid={`${P}-filter-status`}>
+    <main className="page page-mid">
+      <div className="page-head"><h1>Đánh giá của tôi</h1></div>
+      <div className="seg rd-seg" role="group" aria-label="Lọc theo trạng thái" data-testid={`${P}-filter-status`}>
         {chips.map((c) => (
-          <button key={c.v || 'all'} type="button" aria-pressed={status === c.v} className={`btn tight${status === c.v ? ' btn-current' : ''}`} onClick={() => go({ status: c.v || null })}>{c.t}</button>
+          <button key={c.v || 'all'} type="button" aria-pressed={status === c.v} onClick={() => go({ status: c.v || null })}>{c.t}</button>
         ))}
       </div>
 
       {view === 'forbidden' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không có quyền</div>}
-      {view === 'rate' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được đánh giá của bạn. {limit.left > 0 ? rateLimitedText(limit.left) : 'Thử lại sau ít phút.'}{' '}<button type="button" className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
-      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được đánh giá của bạn.{' '}<button type="button" className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
+      {view === 'rate' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{limit.left > 0 ? rateLimitedText(limit.left) : 'Thử lại sau ít phút.'}{' '}<button type="button" className="btn btn-sm" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
+      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được đánh giá.{' '}<button type="button" className="btn btn-sm" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
       {view === 'loading' && <div data-testid={`${P}-loading`} aria-busy="true"><div className="skeleton" style={{ height: '6rem' }} /><div className="skeleton" style={{ height: '6rem' }} /><div className="skeleton" style={{ height: '6rem' }} /></div>}
 
       {emptyAll && (status
-        ? <div className="notfound" data-testid={`${P}-empty-filter`}><p>Không có đánh giá nào ở trạng thái này</p><button type="button" className="btn tight" onClick={() => go({ status: null })} data-testid={`${P}-filter-clear`}>Xem tất cả</button></div>
-        : <div className="notfound" data-testid={`${P}-empty`}><p>Bạn chưa viết đánh giá nào</p><Link className="btn tight" href="/orders">Đơn hàng của tôi</Link></div>)}
+        ? <div className="empty" data-testid={`${P}-empty-filter`}><span className="tile tile-lg gray"><span className="i i-filter" aria-hidden="true" /></span><strong>Không có đánh giá</strong><button type="button" className="btn btn-sm" onClick={() => go({ status: null })} data-testid={`${P}-filter-clear`}>Xem tất cả</button></div>
+        : <div className="empty" data-testid={`${P}-empty`}><span className="tile tile-lg gray"><span className="i i-star" aria-hidden="true" /></span><strong>Chưa có đánh giá</strong><Link className="btn btn-sm" href="/orders">Đơn hàng</Link></div>)}
 
       {data && view === 'ready' && items.length > 0 && (
         <>
-          <ul className="rev-list" data-testid={`${P}-list`}>
+          <ul className="rd-cards" data-testid={`${P}-list`}>
             {items.map((it) => {
               const gone = Boolean(it.product?.status) && it.product.status !== 'active'; // đã ngừng bán: theo `product.status` của API (ảnh thiếu không đủ để kết luận)
               const showReason = (it.status === 'rejected' || it.status === 'hidden') && Boolean(it.moderation_reason);
               return (
-                <li key={it.id} className="rev-item" data-testid={`${P}-item`} data-id={it.id} data-status={it.status}>
-                  <div className="rev-item-head">
+                <li key={it.id} className="rd-card" data-testid={`${P}-item`} data-id={it.id} data-status={it.status}>
+                  <div className="rd-card-head">
                     <div className="rev-prod grow" data-testid={`${P}-item-product`}>
-                      {isHttpUrl(it.product?.image_url) && <img className="rev-prod-img" src={it.product.image_url} alt="" />}
-                      {gone ? <span>{it.product.name}</span> : <Link href={`/products/${encodeURIComponent(it.product?.id ?? '')}`}>{it.product?.name}</Link>}
-                      {gone && <span className="hint"> Sản phẩm đã ngừng bán</span>}
+                      {isHttpUrl(it.product?.image_url) ? <img className="rev-prod-img" src={it.product.image_url} alt="" /> : <span className="tile gray"><span className="i i-box" aria-hidden="true" /></span>}
+                      {gone ? <span className="strong truncate">{it.product.name}</span> : <Link className="strong truncate" href={`/products/${encodeURIComponent(it.product?.id ?? '')}`}>{it.product?.name}</Link>}
+                      {gone && <span className="badge" data-status="archived">Ngừng bán</span>}
                     </div>
                     <ReviewStatusBadge status={it.status} testid={`${P}-item-status`} />
-                    <span className="hint tabular">{formatDate(it.created_at)}</span>
-                    {it.edited_at && <span className="hint">Đã chỉnh sửa</span>}
                   </div>
-                  <Stars value={it.rating} testid={`${P}-item-rating`} />
-                  {it.comment && <p className="pre rev-comment" data-testid={`${P}-item-comment`}>{it.comment}</p>}
+                  <div className="rd-card-meta rd-card-meta-l">
+                    <Stars value={it.rating} testid={`${P}-item-rating`} />
+                    <span className="small muted tabular">{formatDate(it.created_at)}</span>
+                    {it.edited_at && <span className="small muted">· sửa</span>}
+                  </div>
+                  {it.comment && <p className="pre rd-comment" data-testid={`${P}-item-comment`}>{it.comment}</p>}
                   <ImageStrip images={it.images} testid={`${P}-item-images`} />
-                  {showReason && <p className="rev-reason"><strong>Lý do: </strong><span className="pre" data-testid={`${P}-item-reason`}>{it.moderation_reason}</span></p>}
-                  <div className="rev-actions">
-                    {it.can_edit && it.edit_requires_review && <span className="hint">Sửa sẽ đưa đánh giá về chờ duyệt</span>}
-                    {it.can_edit && <Link className="btn tight" href={`/me/reviews/${encodeURIComponent(it.id)}/edit`} data-testid={`${P}-item-edit`}>Sửa</Link>}
-                    {it.can_delete && <button type="button" className="btn btn-danger-soft tight" disabled={busy} onClick={() => { setDelErr(null); setTarget(it); }} data-testid={`${P}-item-delete`}>Xóa</button>}
-                  </div>
+                  {showReason && <p className="rd-reason"><span className="i i-alert" aria-hidden="true" /><span className="strong">Lý do: </span><span className="pre" data-testid={`${P}-item-reason`}>{it.moderation_reason}</span></p>}
+                  {(it.can_edit || it.can_delete) && (
+                    <div className="rd-actions">
+                      {it.can_edit && it.edit_requires_review && <span className="small muted rd-actions-note"><span className="i i-info" aria-hidden="true" /> Sửa sẽ chờ duyệt lại</span>}
+                      {it.can_edit && <Link className="btn btn-sm" href={`/me/reviews/${encodeURIComponent(it.id)}/edit`} data-testid={`${P}-item-edit`}>Sửa</Link>}
+                      {it.can_delete && <button type="button" className="btn btn-sm btn-danger-soft" disabled={busy} onClick={() => { setDelErr(null); setTarget(it); }} data-testid={`${P}-item-delete`}>Xóa</button>}
+                    </div>
+                  )}
                 </li>
               );
             })}
@@ -137,19 +141,19 @@ function MyReviewsInner() {
       )}
 
       {target && (
-        <Modal title={`Xóa đánh giá "${target.product?.name ?? ''}"?`} testid={`${P}-delete-dialog`} onClose={closeDialog}>
-          <p>Đánh giá sẽ biến mất khỏi trang sản phẩm và không thể khôi phục. Bạn có thể viết đánh giá mới sau đó.</p>
+        <RevDialog title="Xóa đánh giá?" icon="trash" testid={`${P}-delete-dialog`} onClose={closeDialog}>
+          <p>{target.product?.name} · không khôi phục được</p>
           {(delErr || delLimit.left > 0) && (
             <div role="alert" className="banner banner-error" data-testid={`${P}-delete-error`}>
               {delErr ? delErr.text : rateLimitedText(delLimit.left)}
-              {delErr?.reload && <>{' '}<button type="button" className="btn" onClick={() => { setTarget(null); setDelErr(null); void load(); }} data-testid={`${P}-delete-reload`}>Tải lại danh sách</button></>}
+              {delErr?.reload && <>{' '}<button type="button" className="btn btn-sm" onClick={() => { setTarget(null); setDelErr(null); void load(); }} data-testid={`${P}-delete-reload`}>Tải lại</button></>}
             </div>
           )}
           <div className="actions">
             <button type="button" className="btn" disabled={busy} onClick={closeDialog} data-testid={`${P}-delete-dismiss`}>Giữ lại</button>
-            <button type="button" className="btn btn-danger" disabled={busy || delLimit.left > 0} aria-busy={busy} onClick={() => void del()} data-testid={`${P}-delete-confirm`}>{busy && <Spin />}Xóa đánh giá</button>
+            <button type="button" className="btn btn-danger" disabled={busy || delLimit.left > 0} aria-busy={busy} onClick={() => void del()} data-testid={`${P}-delete-confirm`}>{busy && <Spin />}Xóa</button>
           </div>
-        </Modal>
+        </RevDialog>
       )}
       <ToastView toast={toast} />
     </main>
@@ -159,7 +163,7 @@ function MyReviewsInner() {
 export default function MyReviewsPage() {
   return (
     <RequireRole roles={['customer']}>
-      <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><MyReviewsInner /></Suspense>
+      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><MyReviewsInner /></Suspense>
     </RequireRole>
   );
 }

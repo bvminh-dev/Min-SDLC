@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { api, type ApiResult } from '../lib/api';
-import { newIdemKey, payStatusText, refundStatusText } from '../lib/payment';
+import { methodText, newIdemKey, payStatusText, refundStatusText } from '../lib/payment';
 import { useLoginRedirect } from '../lib/prd';
 import { limitedText } from '../lib/stock';
 import { useCountdown } from './useCountdown';
@@ -16,17 +16,22 @@ export function RefundBadge({ status, customer, testid }: { status: string; cust
 
 export const Spinner = () => <span className="spinner" aria-hidden="true" />;
 
+/** Phương thức thanh toán: icon + tên (VNPay = thẻ, COD = túi tiền mặt). */
+export function MethodTag({ method }: { method: string }) {
+  return <span className="ps-method"><span className={`i i-${method === 'vnpay' ? 'card' : 'bag'}`} aria-hidden="true" />{methodText(method)}</span>;
+}
+
 /** Tổng số (chỉ con số, để kiểm đúng giá trị) và phân trang Trước, Sau; ẩn điều khiển khi chỉ một trang. */
 export function PayPager({ testPrefix, page, limit, total, unit, onPage, disabled }: { testPrefix: string; page: number; limit: number; total: number; unit: string; onPage: (p: number) => void; disabled?: boolean }) {
   const pages = Math.max(1, Math.ceil(total / limit));
   return (
-    <div className="pager">
-      <p className="hint">Tổng <strong data-testid={`${testPrefix}-total`}>{total}</strong> {unit}</p>
+    <div className="ps-pager">
+      <p><strong data-testid={`${testPrefix}-total`}>{total}</strong> {unit}</p>
       {pages > 1 && (
-        <nav aria-label="Phân trang" className="pages" data-testid={`${testPrefix}-pagination`}>
-          <button type="button" className="btn" disabled={disabled || page <= 1} onClick={() => onPage(page - 1)}>Trước</button>
-          <span className="hint">Trang {page}/{pages}</span>
-          <button type="button" className="btn" disabled={disabled || page >= pages} onClick={() => onPage(page + 1)}>Sau</button>
+        <nav aria-label="Phân trang" data-testid={`${testPrefix}-pagination`}>
+          <button type="button" className="btn btn-sm btn-icon" aria-label="Trước" disabled={disabled || page <= 1} onClick={() => onPage(page - 1)}><span className="i i-left" aria-hidden="true" /></button>
+          <span className="tabular">{page}/{pages}</span>
+          <button type="button" className="btn btn-sm btn-icon" aria-label="Sau" disabled={disabled || page >= pages} onClick={() => onPage(page + 1)}><span className="i i-right" aria-hidden="true" /></button>
         </nav>
       )}
     </div>

@@ -3,13 +3,13 @@ import Link from 'next/link';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AccessDenied } from './AccessDenied';
 import { useAuth } from '../lib/auth';
-import { asOfText, bucketLabel, defaultRange, limitedText, money, type BlockStatus, type Granularity } from '../lib/dashboard';
+import { addDays, asOfText, bucketLabel, defaultRange, limitedText, money, type BlockStatus, type Granularity } from '../lib/dashboard';
 
-/** Lỗi theo khoảng ngày của máy chủ (400) bằng lời: không lặp lại giá trị người dùng nhập. */
+/** Lỗi theo khoảng ngày của máy chủ (400) bằng lời ngắn: không lặp lại giá trị người dùng nhập. */
 export const RANGE_ERROR_TEXT = 'Khoảng ngày không hợp lệ: tối đa 366 ngày, không sau hôm nay, Từ không sau Đến.';
 
 /**
- * Thanh khoảng ngày dùng chung (dashboard và ba báo cáo): ô Từ, Đến, Áp dụng, 30 ngày qua, dòng "Cập nhật lúc". Giá trị ở ô là bản nháp cho tới khi bấm Áp dụng; khoảng đang áp dụng (`applied`)
+ * Thanh khoảng ngày dùng chung (dashboard và ba báo cáo), gọn một hàng: ô ngày Từ, ô ngày Đến, Áp dụng, phím tắt 7 và 30 ngày, "Cập nhật lúc". Giá trị ở ô là bản nháp cho tới khi bấm Áp dụng; khoảng đang áp dụng (`applied`)
  * đến từ URL hoặc mặc định. Không có `<form>` nên ràng buộc `max` của trình duyệt không chặn lần gửi: máy chủ là nơi quyết định khoảng hợp lệ (400 hiện ở dòng lỗi, giữ số của khoảng trước).
  */
 export function RangeBar({ p, applied, onApply, onReset, invalid, asOf, children }: {
@@ -20,19 +20,27 @@ export function RangeBar({ p, applied, onApply, onReset, invalid, asOf, children
   const [to, setTo] = useState(base.to);
   useEffect(() => { setFrom(base.from); setTo(base.to); }, [base.from, base.to]);
   const today = defaultRange().to;
+  const week = addDays(today, -6);
+  const is7 = applied?.from === week && applied.to === today;
   return (
-    <div className="toolbar dsh-range" role="group" aria-label="Khoảng ngày">
-      <label className="dsh-field">Từ
-        <input type="date" value={from} max={today} onChange={(e) => setFrom(e.target.value)} data-testid={`${p}-range-from`} />
-      </label>
-      <label className="dsh-field">Đến
-        <input type="date" value={to} max={today} onChange={(e) => setTo(e.target.value)} data-testid={`${p}-range-to`} />
-      </label>
-      <button type="button" className="btn btn-current tight" onClick={() => onApply(from, to)} data-testid={`${p}-range-apply`}>Áp dụng</button>
-      <button type="button" className="btn tight" onClick={onReset} data-testid={`${p}-range-reset`}>30 ngày qua</button>
-      {children}
-      {asOf && <span className="hint dsh-asof" role="status" data-testid={`${p}-as-of`}>{asOfText(asOf)}</span>}
-      {invalid && <div role="alert" className="field-error dsh-range-error" data-testid={`${p}-range-error`}>{RANGE_ERROR_TEXT}</div>}
+    <div className="rd-range" role="group" aria-label="Khoảng ngày">
+      <div className="rd-dates">
+        <label className="rd-date"><span className="sr-only">Từ</span>
+          <input type="date" value={from} max={today} onChange={(e) => setFrom(e.target.value)} data-testid={`${p}-range-from`} />
+        </label>
+        <span className="i i-right muted" aria-hidden="true" />
+        <label className="rd-date"><span className="sr-only">Đến</span>
+          <input type="date" value={to} max={today} onChange={(e) => setTo(e.target.value)} data-testid={`${p}-range-to`} />
+        </label>
+        <button type="button" className="btn btn-primary tight" onClick={() => onApply(from, to)} data-testid={`${p}-range-apply`}>Áp dụng</button>
+      </div>
+      <div className="seg" role="group" aria-label="Phím tắt">
+        <button type="button" aria-pressed={is7} onClick={() => onApply(week, today)} data-testid={`${p}-range-7`}>7 ngày</button>
+        <button type="button" aria-pressed={!applied} onClick={onReset} data-testid={`${p}-range-reset`}>30 ngày</button>
+      </div>
+      {children && <div className="rd-range-extra">{children}</div>}
+      {asOf && <span className="small muted rd-asof" role="status" data-testid={`${p}-as-of`}><span className="i i-clock" aria-hidden="true" /> {asOfText(asOf)}</span>}
+      {invalid && <div role="alert" className="field-error rd-range-error" data-testid={`${p}-range-error`}>{RANGE_ERROR_TEXT}</div>}
     </div>
   );
 }
@@ -51,9 +59,9 @@ export function Skeleton({ testid, rows = 2 }: { testid: string; rows?: number }
 /** Lỗi của MỘT khối (503, mạng) kèm Thử lại; không bao giờ thay bằng 0. */
 export function BlockError({ what, testid, retryTestid, onRetry }: { what: string; testid: string; retryTestid: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="dsh-block-error" data-testid={testid}>
-      <p>Không tải được {what}.</p>
-      <button type="button" className="btn tight" onClick={onRetry} data-testid={retryTestid}>Thử lại</button>
+    <div role="alert" className="rd-block-error" data-testid={testid}>
+      <span>Không tải được {what}.</span>
+      <button type="button" className="btn btn-sm" onClick={onRetry} data-testid={retryTestid}>Thử lại</button>
     </div>
   );
 }
@@ -64,9 +72,20 @@ export function ForbiddenView() {
   return <AccessDenied role={user?.role} />;
 }
 
-/** Liên kết "Xem báo cáo" cùng khoảng ngày đang áp dụng. */
+/** Liên kết "Xem báo cáo" cùng khoảng ngày đang áp dụng: nút icon, chữ chỉ cho trình đọc màn hình. */
 export function ReportLink({ href, testid, children }: { href: string; testid: string; children: ReactNode }) {
-  return <Link className="dsh-link" href={href} data-testid={testid}>{children}</Link>;
+  return <Link className="btn btn-ghost btn-icon btn-sm rd-rlink" href={href} data-testid={testid}><span className="i i-chart" aria-hidden="true" /><span className="sr-only">{children}</span></Link>;
+}
+
+/** Ô số liệu: tile màu, số lớn, nhãn, dòng phụ ngắn. `children` là phần thân đã có trạng thái (chờ, lỗi, số). */
+export function Kpi({ icon, tone, label, aside, children }: { icon: string; tone?: string; label: string; aside?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="stat rd-kpi">
+      <span className={`tile ${tone ?? ''}`}><span className={`i i-${icon}`} aria-hidden="true" /></span>
+      <div className="rd-kpi-body"><span className="lbl">{label}</span>{children}</div>
+      {aside}
+    </div>
+  );
 }
 
 // --- Biểu đồ SVG tự vẽ (không thêm phụ thuộc): mốc có thể ÂM nên trục có mức 0; hơn 12 mốc dùng đường, từ 12 mốc trở xuống dùng cột; Tab vào từng mốc để đọc số của mốc.
@@ -86,14 +105,14 @@ export function Chart({ testid, title, points, format = money, unit }: { testid:
   const ticks = [...new Set([hi, 0, lo])];
   const path = points.map((pt, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(pt.value).toFixed(1)}`).join(' ');
   return (
-    <figure className="dsh-chart" data-testid={testid}>
+    <figure className="dsh-chart rd-chart" data-testid={testid}>
       <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={title} className="dsh-svg">
         {ticks.map((t) => <g key={t}><line x1={L} x2={W - R} y1={y(t)} y2={y(t)} className={t === 0 ? 'dsh-axis' : 'dsh-grid'} /><text x={L - 6} y={y(t) + 4} textAnchor="end" className="dsh-tick">{format(t)}</text></g>)}
         {!bars && <path d={path} className="dsh-line" fill="none" />}
         {points.map((pt, i) => {
           const focus = { onFocus: () => setActive(pt), onBlur: () => setActive(null), onMouseEnter: () => setActive(pt), onMouseLeave: () => setActive(null) };
           const label = `${pt.label}: ${pt.text}`;
-          const showLabel = points.length <= 14 || i % Math.ceil(points.length / 10) === 0;
+          const showLabel = points.length <= 14 || i % Math.ceil(points.length / 6) === 0;
           return (
             <g key={pt.key} tabIndex={0} role="img" aria-label={label} className="dsh-point" {...focus}>
               {bars
@@ -105,7 +124,7 @@ export function Chart({ testid, title, points, format = money, unit }: { testid:
           );
         })}
       </svg>
-      <figcaption className="hint" aria-live="polite">{active ? `${active.label}: ${active.text}` : `${title}${unit ? ` (${unit})` : ''}. Tab vào từng mốc để xem số.`}</figcaption>
+      <figcaption className="small muted" aria-live="polite">{active ? `${active.label}: ${active.text}` : `${title}${unit ? ` (${unit})` : ''}`}</figcaption>
     </figure>
   );
 }

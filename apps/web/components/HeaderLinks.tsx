@@ -2,29 +2,45 @@
 import Link from 'next/link';
 import { useAuth } from '../lib/auth';
 import { CartBadge } from './CartBadge';
+import { CategoryStrip } from './CategoryStrip';
+import { HeaderSearch } from './HeaderSearch';
 import { NotificationBell } from './NotificationBell';
 
-/** Liên kết trên thanh đầu trang: "Sản phẩm" cho mọi người, "Giỏ" (huy hiệu giỏ, CRT) cho customer, "Đơn hàng" cho mọi người đã đăng nhập (customer: của mình; staff, admin: quản lý), "Tồn kho", "Vận đơn", "Thanh toán", "Hoàn tiền" cho staff và admin ("Thanh toán" cho customer là lịch sử của mình), "Coupon" và "Kiểm duyệt đánh giá" cho admin, "Đánh giá của tôi" cho customer (REV); guest thêm đăng nhập, đăng ký (người đã đăng nhập thấy menu tài khoản thay thế). */
+/**
+ * Đầu trang. Khách và customer: kiểu sàn TMĐT (ô tìm kiếm, giỏ, chuông, dải danh mục; guest có Đăng nhập, Đăng ký; đơn hàng, thanh toán, đánh giá nằm trong menu tài khoản).
+ * Staff và admin: hàng liên kết quản trị ("Đơn hàng", "Tồn kho", "Vận đơn", "Thanh toán", "Hoàn tiền" cho staff và admin; "Dashboard", "Vận chuyển", "Coupon", "Đánh giá" cho admin).
+ */
 export function HeaderLinks() {
   const { status, user } = useAuth();
+  const staff = status === 'ready' && (user?.role === 'staff' || user?.role === 'admin');
+  const admin = status === 'ready' && user?.role === 'admin';
+  if (staff) {
+    return (
+      <>
+        <div className="navlinks">
+          <Link href="/products">Sản phẩm</Link>
+          <Link href="/admin/orders">Đơn hàng</Link>
+          <Link href="/admin/inventory">Tồn kho</Link>
+          <Link href="/admin/shipments">Vận đơn</Link>
+          <Link href="/admin/payments">Thanh toán</Link>
+          <Link href="/admin/refunds">Hoàn tiền</Link>
+          {admin && <Link href="/admin/dashboard">Dashboard</Link>}
+          {admin && <Link href="/admin/shipping-methods">Vận chuyển</Link>}
+          {admin && <Link href="/admin/coupons">Coupon</Link>}
+          {admin && <Link href="/admin/reviews">Đánh giá</Link>}
+        </div>
+        <NotificationBell />
+      </>
+    );
+  }
   return (
     <>
-      <Link href="/products">Sản phẩm</Link>
-      {status === 'ready' && user?.role === 'customer' && <CartBadge />}
-      {status === 'ready' && user?.role === 'customer' && <Link href="/orders">Đơn hàng</Link>}
-      {status === 'ready' && (user?.role === 'staff' || user?.role === 'admin') && <Link href="/admin/orders">Đơn hàng</Link>}
-      {status === 'ready' && (user?.role === 'staff' || user?.role === 'admin') && <Link href="/admin/inventory">Tồn kho</Link>}
-      {status === 'ready' && (user?.role === 'staff' || user?.role === 'admin') && <Link href="/admin/shipments">Vận đơn</Link>}
-      {status === 'ready' && user?.role === 'customer' && <Link href="/payments">Thanh toán</Link>}
-      {status === 'ready' && user?.role === 'customer' && <Link href="/me/reviews">Đánh giá của tôi</Link>}
-      {status === 'ready' && (user?.role === 'staff' || user?.role === 'admin') && <Link href="/admin/payments">Thanh toán</Link>}
-      {status === 'ready' && (user?.role === 'staff' || user?.role === 'admin') && <Link href="/admin/refunds">Hoàn tiền</Link>}
-      {status === 'ready' && user?.role === 'admin' && <Link href="/admin/dashboard">Dashboard</Link>}
-      {status === 'ready' && user?.role === 'admin' && <Link href="/admin/shipping-methods">Phương thức vận chuyển</Link>}
-      {status === 'ready' && user?.role === 'admin' && <Link href="/admin/coupons">Coupon</Link>}
-      {status === 'ready' && user?.role === 'admin' && <Link href="/admin/reviews">Kiểm duyệt đánh giá</Link>}
-      {status === 'ready' && user && <NotificationBell />}
-      {status === 'ready' && !user && (<><Link href="/login">Đăng nhập</Link><Link href="/register">Đăng ký</Link></>)}
+      <HeaderSearch />
+      {status === 'ready' && user?.role === 'customer' && <><CartBadge /><NotificationBell /></>}
+      {status === 'ready' && !user && (
+        <div className="authlinks"><Link className="btn" href="/login">Đăng nhập</Link><Link className="btn btn-primary tight" href="/register">Đăng ký</Link></div>
+      )}
+      <CategoryStrip />
     </>
   );
 }

@@ -42,24 +42,25 @@ function ChangePassword() {
   const busy = state === 'sending';
   const text = (f: string) => (errors[f] ? MSG[f]?.[errors[f]] ?? 'Giá trị không hợp lệ' : undefined);
   return (
-    <main className="center"><section className="card">
-      <h1>Đổi mật khẩu</h1>
-      {state === 'ok' && <div role="status" className="banner banner-ok" data-testid="usr-change-password-success">Đã đổi mật khẩu. {revoked} thiết bị khác đã bị đăng xuất.</div>}
-      {limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="usr-change-password-rate-limited">Bạn nhập sai quá nhiều lần, thử lại sau {minutesText(limit.left)}.</div>}
-      {state === 'error' && <div role="alert" className="banner banner-error" data-testid="usr-change-password-error">Không đổi được mật khẩu. Thử lại. <button type="button" className="btn" onClick={() => void submit()} data-testid="usr-change-password-retry">Thử lại</button></div>}
-      <form onSubmit={submit} noValidate data-testid="usr-change-password-form" aria-busy={busy}>
+    <main className="page auth-page auth-page-sm">
+      <Link className="back" href="/account/profile" data-testid="usr-change-password-back"><span className="i i-left" aria-hidden="true" /> Hồ sơ</Link>
+      <div className="page-head"><h1>Đổi mật khẩu</h1></div>
+      <section className="panel">
+      {state === 'ok' && <div role="status" className="banner banner-ok" data-testid="usr-change-password-success">Đã đổi mật khẩu{revoked > 0 ? `, đăng xuất ${revoked} thiết bị khác` : ''}.</div>}
+      {limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="usr-change-password-rate-limited">Nhập sai quá nhiều, chờ {minutesText(limit.left)}.</div>}
+      {state === 'error' && <div role="alert" className="banner banner-error" data-testid="usr-change-password-error">Không đổi được mật khẩu. <button type="button" className="btn" onClick={() => void submit()} data-testid="usr-change-password-retry">Thử lại</button></div>}
+      <form className="auth-form" onSubmit={submit} noValidate data-testid="usr-change-password-form" aria-busy={busy}>
         <Field label="Mật khẩu hiện tại" error={text('current_password')} errorTestId="usr-change-password-field-error" field="current_password">
           {(id, d) => <input id={id} aria-describedby={d} type="password" autoComplete="current-password" value={current} disabled={busy} onChange={(e) => setCurrent(e.target.value)} data-testid="usr-change-password-current" />}
         </Field>
-        <Field label="Mật khẩu mới" error={text('new_password')} errorTestId="usr-change-password-field-error" field="new_password" hint="Từ 10 đến 128 ký tự, khác mật khẩu hiện tại">
+        <Field label="Mật khẩu mới" error={text('new_password')} errorTestId="usr-change-password-field-error" field="new_password" hint="10–128 ký tự, khác mật khẩu hiện tại">
           {(id, d) => <PasswordInput id={id} describedBy={d} autoComplete="new-password" value={next} disabled={busy} onChange={(e) => setNext(e.target.value)} data-testid="usr-change-password-new" toggleTestId="usr-change-password-toggle" />}
         </Field>
-        <p className="hint">Các thiết bị khác sẽ bị đăng xuất sau khi đổi.</p>
         <button className="btn btn-primary" disabled={busy || limit.left > 0} data-testid="usr-change-password-submit">{busy ? 'Đang đổi...' : 'Đổi mật khẩu'}</button>
-        {busy && <span className="hint" data-testid="usr-change-password-loading"> Đang gửi...</span>}
+        {busy && <span className="sr-only" role="status" data-testid="usr-change-password-loading">Đang gửi...</span>}
       </form>
-      <p className="row-link"><Link href="/account/profile" data-testid="usr-change-password-back">‹ Quay lại hồ sơ</Link></p>
-    </section></main>
+      </section>
+    </main>
   );
 }
 

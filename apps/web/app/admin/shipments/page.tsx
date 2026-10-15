@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { Forbidden, ShipmentBadge } from '../../../components/ShipmentParts';
+import { Forbidden, Note, ShipmentBadge, Skel } from '../../../components/ShipmentParts';
 import { Pager } from '../../../components/Pager';
 import { RequireRole } from '../../../components/RequireRole';
 import { useCountdown } from '../../../components/useCountdown';
@@ -75,46 +75,46 @@ function ShipmentListInner() {
 
   if (view === 'forbidden') return <Forbidden testid={`${P}-forbidden`} />;
   return (
-    <main className="wide">
-      <h1>Vận đơn</h1>
-      <div className="tabs" role="tablist" aria-label="Trạng thái" data-testid={`${P}-status-filter`}>
+    <main className="page">
+      <div className="page-head"><h1>Vận đơn</h1></div>
+      <div className="seg" role="tablist" aria-label="Trạng thái" data-testid={`${P}-status-filter`} style={{ marginBottom: '.75rem' }}>
         {[{ v: '', t: 'Tất cả' }, ...SHIPMENT_STATUSES.map((s: ShipmentStatus) => ({ v: s as string, t: shipmentStatusText(s) }))].map((o) => (
-          <button key={o.v || 'all'} type="button" role="tab" aria-selected={status === o.v} className={`btn tight${status === o.v ? ' btn-current' : ''}`} onClick={() => go({ status: o.v || null })}>{o.t}</button>
+          <button key={o.v || 'all'} type="button" role="tab" aria-selected={status === o.v} onClick={() => go({ status: o.v || null })}>{o.t}</button>
         ))}
       </div>
-      <div className="toolbar">
+      <div className="ps-filters">
         <select value={by} aria-label="Tìm theo" onChange={(e) => go({ by: e.target.value === 'order_code' ? null : e.target.value })} data-testid={`${P}-search-by`}>
           <option value="order_code">Mã đơn</option>
           <option value="tracking_number">Mã vận đơn</option>
         </select>
-        <input type="search" value={search} maxLength={32} placeholder="Nhập mã đơn hoặc mã vận đơn" aria-label="Tìm theo mã đơn hoặc mã vận đơn" autoComplete="off"
+        <input type="search" value={search} maxLength={32} placeholder="Tìm..." aria-label="Tìm theo mã đơn hoặc mã vận đơn" autoComplete="off"
           onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && go({ q: search.trim() || null })} data-testid={`${P}-search`} />
         <select value={sort} aria-label="Sắp xếp" onChange={(e) => go({ sort: e.target.value === 'newest' ? null : e.target.value })} data-testid={`${P}-sort`}>
           <option value="newest">Mới nhất</option>
           <option value="oldest">Cũ nhất</option>
         </select>
-        {filtering && !emptyAll && <button type="button" className="btn btn-quiet tight" onClick={clear} data-testid={`${P}-clear-filter`}>Xoá lọc</button>}
+        {filtering && !emptyAll && <button type="button" className="btn btn-quiet tight" onClick={clear} data-testid={`${P}-clear-filter`}><span className="i i-x" aria-hidden="true" />Xoá lọc</button>}
       </div>
 
-      {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
-      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được danh sách vận đơn. <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
-      {view === 'loading' && !data && <div data-testid={`${P}-loading`} aria-busy="true">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
+      {view === 'rate' && limit.left > 0 && <Note tone="red" icon="clock" role="alert" testid={`${P}-error`}>{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></Note>}
+      {view === 'error' && <Note tone="red" icon="alert" role="alert" testid={`${P}-error`}>Không tải được danh sách vận đơn. <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></Note>}
+      {view === 'loading' && !data && <div data-testid={`${P}-loading`}><Skel n={5} /></div>}
       {emptyAll && (filtering || page > 1
-        ? <div data-testid={`${P}-empty-filtered`}><p>Không có vận đơn nào khớp.</p><button type="button" className="btn" onClick={clear} data-testid={`${P}-clear-filter`}>Xoá lọc</button></div>
-        : <div data-testid={`${P}-empty`}><p className="hint">Chưa có vận đơn nào.</p></div>)}
+        ? <div className="empty" data-testid={`${P}-empty-filtered`}><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có kết quả</strong><button type="button" className="btn" onClick={clear} data-testid={`${P}-clear-filter`}>Xoá lọc</button></div>
+        : <div className="empty" data-testid={`${P}-empty`}><span className="tile tile-lg gray"><span className="i i-truck" aria-hidden="true" /></span><strong>Chưa có vận đơn</strong></div>)}
       {data && items.length > 0 && (view === 'ready' || view === 'loading') && (
         <>
-          <div className={`table-wrap${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? `${P}-loading` : undefined}>
-            <table className="stack-table">
-              <thead><tr><th>Mã đơn</th><th>Mã vận đơn</th><th>Phương thức</th><th>Trạng thái</th><th>Ngày tạo</th></tr></thead>
+          <div className={`panel panel-flush${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? `${P}-loading` : undefined}>
+            <table className="stack-table ps-table">
+              <thead><tr><th>Đơn</th><th>Mã vận đơn</th><th>Phương thức</th><th>Trạng thái</th><th>Ngày tạo</th></tr></thead>
               <tbody>
                 {items.map((s) => (
                   <tr key={s.order_code} className="row-click" data-testid={`${P}-row`} data-code={s.order_code} onClick={() => router.push(detailHref(s.order_code, back))}>
-                    <td data-label="Mã đơn" className="mono" data-testid={`${P}-order-code`}><Link href={detailHref(s.order_code, back)} onClick={(e) => e.stopPropagation()}>{s.order_code}</Link></td>{/* liên kết thật để mở chi tiết bằng bàn phím và đọc màn hình: cả hàng bấm được chỉ bằng chuột */}
-                    <td data-label="Mã vận đơn" className="mono" data-testid={`${P}-tracking`}>{s.tracking_number ?? '—'}</td>
-                    <td data-label="Phương thức" data-testid={`${P}-method`}>{s.method_name}</td>
+                    <td data-label="Đơn" data-testid={`${P}-order-code`}><Link className="ps-code" href={detailHref(s.order_code, back)} onClick={(e) => e.stopPropagation()}>{s.order_code}</Link></td>{/* liên kết thật để mở chi tiết bằng bàn phím và đọc màn hình: cả hàng bấm được chỉ bằng chuột */}
+                    <td data-label="Mã vận đơn" className="ps-code" data-testid={`${P}-tracking`}>{s.tracking_number ?? '—'}</td>
+                    <td data-label="Phương thức" data-testid={`${P}-method`}><span className="ps-method"><span className="i i-truck" aria-hidden="true" />{s.method_name}</span></td>
                     <td data-label="Trạng thái"><ShipmentBadge status={s.status} testid={`${P}-status-badge`} /></td>
-                    <td data-label="Ngày tạo" className="tabular" data-testid={`${P}-created-at`}>{formatOrderTime(s.created_at)}</td>
+                    <td data-label="Ngày tạo" className="ps-time" data-testid={`${P}-created-at`}>{formatOrderTime(s.created_at)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -130,7 +130,7 @@ function ShipmentListInner() {
 function Guard() {
   const { user } = useAuth();
   if (user?.role === 'customer') return <Forbidden testid={`${P}-forbidden`} />; // customer không gọi API (server vẫn trả 403)
-  return <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><ShipmentListInner /></Suspense>;
+  return <Suspense fallback={<main className="page"><Skel n={1} /></main>}><ShipmentListInner /></Suspense>;
 }
 
 export default function AdminShipmentsPage() {

@@ -1,13 +1,13 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { api, type ApiResult } from '../lib/api';
 import { useLoginRedirect, rateLimitedText } from '../lib/prd';
 import {
   COMMENT_MAX, IMAGE_ACCEPT, IMAGE_MAX, IMAGE_MAX_BYTES, codePoints, imageErrorText, imageIdOf, ineligibleText, isHttpUrl, newReviewKey, type MyReview, type ReviewImage,
 } from '../lib/review';
-import { Spin } from './ReviewParts';
+import { Spin, VerifiedBadge } from './ReviewParts';
 import { useCountdown } from './useCountdown';
 
 const P = 'rev-review-form';
@@ -213,56 +213,45 @@ export function ReviewForm(props: { mode: 'create'; productId: string } | { mode
   };
 
   const cancelHref = edit ? '/me/reviews' : `/products/${encodeURIComponent(targetId)}/reviews`;
+  const shell = (children: ReactNode, testid?: string) => <main className="page page-narrow"><section className="panel" data-testid={testid} aria-busy={testid ? true : undefined}>{children}</section></main>;
 
-  if (view === 'loading') return <main className="center"><section className="card rev-form-card" data-testid={`${P}-loading`} aria-busy="true"><div className="skeleton" /><div className="skeleton" style={{ height: '4rem' }} /><div className="skeleton" style={{ height: '7rem' }} /></section></main>;
+  if (view === 'loading') return shell(<><div className="skeleton" /><div className="skeleton" style={{ height: '4rem' }} /><div className="skeleton" style={{ height: '7rem' }} /></>, `${P}-loading`);
   if (view === 'notfound') {
     return (
-      <main className="center">
-        <section className="card rev-form-card notfound" data-testid={`${P}-notfound`}>
-          <p className="big">404</p>
-          <h1>{edit ? 'Không tìm thấy đánh giá' : 'Không tìm thấy sản phẩm'}</h1>
-          <Link className="btn btn-primary tight" href={edit ? '/me/reviews' : '/products'}>{edit ? 'Về Đánh giá của tôi' : 'Về danh sách sản phẩm'}</Link>
+      <main className="page page-narrow">
+        <section className="panel empty" data-testid={`${P}-notfound`}>
+          <span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span>
+          <h1>{edit ? 'Không thấy đánh giá' : 'Không thấy sản phẩm'}</h1>
+          <Link className="btn btn-primary tight" href={edit ? '/me/reviews' : '/products'}>{edit ? 'Đánh giá của tôi' : 'Sản phẩm'}</Link>
         </section>
       </main>
     );
   }
   if (view === 'rate') {
-    return (
-      <main className="center">
-        <section className="card rev-form-card">
-          <div role="alert" className="banner banner-error" data-testid={`${P}-ratelimit`}>{limit.left > 0 ? rateLimitedText(limit.left) : 'Bạn thao tác quá nhanh, thử lại sau ít phút.'}{' '}<button type="button" className="btn" onClick={() => void load()}>Thử lại</button></div>
-        </section>
-      </main>
-    );
+    return shell(<div role="alert" className="banner banner-error" data-testid={`${P}-ratelimit`}>{limit.left > 0 ? rateLimitedText(limit.left) : 'Thử lại sau ít phút.'}{' '}<button type="button" className="btn btn-sm" onClick={() => void load()}>Thử lại</button></div>);
   }
   if (view === 'error' || view === 'forbidden') {
-    return (
-      <main className="center">
-        <section className="card rev-form-card">
-          <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>
-            {view === 'forbidden' ? 'Không có quyền' : 'Không tải được form, thử lại.'}{' '}
-            {view === 'error' && <button type="button" className="btn" onClick={() => void load()}>Thử lại</button>}
-          </div>
-        </section>
-      </main>
+    return shell(
+      <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>
+        {view === 'forbidden' ? 'Không có quyền' : 'Không tải được form.'}{' '}
+        {view === 'error' && <button type="button" className="btn btn-sm" onClick={() => void load()}>Thử lại</button>}
+      </div>,
     );
   }
 
   if (done) {
+    const pending = done === 'pending';
     return (
-      <main className="center">
-        <section className="card rev-form-card">
-          {done === 'pending' ? (
-            <div role="status" className="banner banner-ok" data-testid={`${P}-success-pending`}>
-              <p>Đã gửi đánh giá. <span data-testid={`${P}-moderation-notice`}>Đánh giá sẽ hiện sau khi được duyệt.</span></p>
-              <Link href="/me/reviews">Đánh giá của tôi</Link>
-            </div>
-          ) : (
-            <div role="status" className="banner banner-ok" data-testid={`${P}-success-published`}>
-              <p>Đã đăng đánh giá của bạn.</p>
-              <Link href={`/products/${encodeURIComponent(targetId)}/reviews`}>Xem đánh giá của sản phẩm</Link>
-            </div>
-          )}
+      <main className="page page-narrow">
+        <section className="panel">
+          <div role="status" className="empty" data-testid={`${P}-success-${pending ? 'pending' : 'published'}`}>
+            <span className={`tile tile-lg ${pending ? 'amber' : 'green'}`}><span className={`i i-${pending ? 'clock' : 'okc'}`} aria-hidden="true" /></span>
+            <strong>Đã gửi đánh giá</strong>
+            {pending && <p className="small" data-testid={`${P}-moderation-notice`}>Sẽ hiện sau khi được duyệt.</p>}
+            {pending
+              ? <Link className="btn btn-sm" href="/me/reviews">Đánh giá của tôi</Link>
+              : <Link className="btn btn-sm" href={`/products/${encodeURIComponent(targetId)}/reviews`}>Xem đánh giá</Link>}
+          </div>
         </section>
       </main>
     );
@@ -271,25 +260,26 @@ export function ReviewForm(props: { mode: 'create'; productId: string } | { mode
   const countCp = codePoints(comment);
   const commentError = over ? 'Tối đa 2000 ký tự' : commentErr;
   return (
-    <main className="center">
-      <section className="card rev-form-card">
-        <h1>{edit ? 'Sửa đánh giá' : 'Viết đánh giá'}</h1>
-        <p className="between">
-          <span>Sản phẩm: <strong data-testid={`${P}-product`}>{productName}</strong></span>
-          {verified && <span className="badge rev-verified" data-testid={`${P}-verified`}><span aria-hidden="true">✓ </span>Đã mua hàng</span>}
-        </p>
+    <main className="page page-narrow">
+      <div className="page-head"><h1>{!edit && <><span className="i i-star" aria-hidden="true" />&nbsp;</>}{edit ? 'Sửa đánh giá' : 'Viết đánh giá'}</h1></div>
+      <section className="panel stack">
+        <div className="row">
+          <span className="tile gray"><span className="i i-box" aria-hidden="true" /></span>
+          <strong className="grow truncate" data-testid={`${P}-product`}>{productName}</strong>
+          {verified && <VerifiedBadge testid={`${P}-verified`} />}
+        </div>
 
         {lock?.kind === 'conflict' && <div role="alert" className="banner banner-error" data-testid={`${P}-conflict`}>{lock.text}. <Link href="/me/reviews">Đánh giá của tôi</Link></div>}
         {lock?.kind === 'ineligible' && <div role="alert" className="banner banner-error" data-testid={`${P}-ineligible`}>{lock.text}</div>}
         {lock?.kind === 'not-editable' && <div role="alert" className="banner banner-error" data-testid={`${P}-not-editable`}>{lock.text}. <Link href="/me/reviews">Đánh giá của tôi</Link></div>}
-        {edit && editNotice && !locked && <div className="banner banner-info" data-testid={`${P}-edit-notice`}>Sau khi lưu, đánh giá sẽ về trạng thái chờ duyệt và tạm ẩn khỏi trang sản phẩm.</div>}
+        {edit && editNotice && !locked && <div className="banner banner-info" data-testid={`${P}-edit-notice`}>Lưu xong, đánh giá chờ duyệt lại và tạm ẩn.</div>}
         {submitErr && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{submitErr}</div>}
         {rateOn && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid={`${P}-ratelimit`}>{rateLimitedText(limit.left)}</div>}
 
         <form noValidate onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-          <fieldset className="plain" disabled={busy || locked}>
+          <fieldset className="plain stack" disabled={busy || locked}>
             <div className="field">
-              <div className="rev-label" id="rev-rating-label">Điểm của bạn *</div>
+              <div className="rev-label" id="rev-rating-label">Điểm *</div>
               <div ref={ratingRef} role="radiogroup" aria-labelledby="rev-rating-label" aria-required="true" aria-invalid={ratingErr ? true : undefined} aria-describedby={ratingErr ? 'rev-rating-err' : undefined} className="rev-stars-input" data-testid={`${P}-rating`}>
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={`${n} sao`} tabIndex={rating === n || (rating === 0 && n === 1) ? 0 : -1}
@@ -300,47 +290,49 @@ export function ReviewForm(props: { mode: 'create'; productId: string } | { mode
             </div>
 
             <div className="field">
-              <label htmlFor="rev-comment">Nhận xét (không bắt buộc)</label>
-              <textarea id="rev-comment" rows={5} value={comment} autoComplete="off" aria-invalid={commentError ? true : undefined} aria-describedby="rev-comment-count" data-testid={`${P}-comment`}
-                onChange={(e) => { setComment(e.target.value); setCommentErr(null); }} />
               <div className="between">
-                <p className="field-error" role={commentError ? 'alert' : undefined} data-testid={commentError ? `${P}-comment-error` : undefined}>{commentError}</p>
-                <p id="rev-comment-count" className={`hint tabular${over ? ' rev-over' : ''}`} data-testid={`${P}-comment-counter`}>{countCp} / {COMMENT_MAX}</p>
+                <label htmlFor="rev-comment" className="rev-label">Nhận xét</label>
+                <p id="rev-comment-count" className={`small muted tabular${over ? ' rev-over' : ''}`} data-testid={`${P}-comment-counter`}>{countCp} / {COMMENT_MAX}</p>
               </div>
+              <textarea id="rev-comment" rows={5} value={comment} autoComplete="off" placeholder="Chia sẻ trải nghiệm của bạn" aria-invalid={commentError ? true : undefined} aria-describedby="rev-comment-count" data-testid={`${P}-comment`}
+                onChange={(e) => { setComment(e.target.value); setCommentErr(null); }} />
+              {commentError && <p className="field-error" role="alert" data-testid={`${P}-comment-error`}>{commentError}</p>}
             </div>
 
             <div className="field">
-              <div className="rev-label">Ảnh (tối đa 5, mỗi ảnh ≤ 5 MB, JPEG PNG WebP)</div>
-              <div className="rev-image-row">
-                <label className={`btn tight rev-file${full || uploading || imagesReadonly ? ' is-disabled' : ''}`}>
-                  + Thêm ảnh
-                  <input type="file" className="sr-only" accept={IMAGE_ACCEPT} multiple disabled={full || uploading || imagesReadonly || busy || locked} data-testid={`${P}-image-input`}
-                    onChange={(e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; if (fs.length) void onFiles(fs); }} />
-                </label>
-                <span className="hint tabular" data-testid={`${P}-image-count`}>{images.length} / {IMAGE_MAX}</span>
+              <div className="between">
+                <div className="rev-label">Ảnh</div>
+                <span className="small muted tabular" data-testid={`${P}-image-count`}>{images.length} / {IMAGE_MAX}</span>
               </div>
-              {(images.length > 0 || uploading) && (
-                <ul className="rev-thumbs">
-                  {images.map((im, i) => (
-                    <li key={im.k} data-testid={`${P}-image-item`}>
-                      <img src={im.url} alt={`Ảnh ${i + 1}`} />
-                      {!imagesReadonly && <button type="button" className="btn tight rev-thumb-x" aria-label={`Xóa ảnh ${i + 1}`} onClick={() => setImages((x) => x.filter((y) => y.k !== im.k))} data-testid={`${P}-image-remove`}>×</button>}
-                    </li>
-                  ))}
-                  {uploading && <li data-testid={`${P}-image-uploading`} role="status"><progress aria-label="Đang tải ảnh" /><span className="hint">Đang tải ảnh...</span></li>}
-                </ul>
-              )}
-              {imagesReadonly && <p className="hint">Ảnh hiện có được giữ nguyên.</p>}
+              <ul className="rev-thumbs rd-thumbs">
+                {images.map((im, i) => (
+                  <li key={im.k} data-testid={`${P}-image-item`}>
+                    <img src={im.url} alt={`Ảnh ${i + 1}`} />
+                    {!imagesReadonly && <button type="button" className="btn tight rev-thumb-x" aria-label={`Xóa ảnh ${i + 1}`} onClick={() => setImages((x) => x.filter((y) => y.k !== im.k))} data-testid={`${P}-image-remove`}><span className="i i-x" aria-hidden="true" /></button>}
+                  </li>
+                ))}
+                {uploading && <li className="rd-uploading" data-testid={`${P}-image-uploading`} role="status"><progress aria-label="Đang tải ảnh" /></li>}
+                {(
+                  <li hidden={full || imagesReadonly}>
+                    <label className={`rd-add${uploading ? ' is-disabled' : ''}`} title="Thêm ảnh">
+                      <span className="i i-upload" aria-hidden="true" /><span className="sr-only">Thêm ảnh</span>
+                      <input type="file" className="sr-only" accept={IMAGE_ACCEPT} multiple disabled={full || uploading || imagesReadonly || busy || locked} data-testid={`${P}-image-input`}
+                        onChange={(e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; if (fs.length) void onFiles(fs); }} />
+                    </label>
+                  </li>
+                )}
+              </ul>
+              <p className="small muted">≤ 5 MB · JPEG, PNG, WebP</p>
               {imageErr && <p role="alert" className="field-error" data-testid={`${P}-image-error`}>{imageErr}</p>}
             </div>
           </fieldset>
 
-          {noChange && <p className="hint" role="status">Bạn chưa thay đổi gì.</p>}
-          <div className="form-actions">
-            <button type="button" className="btn tight" disabled={busy} onClick={() => router.push(cancelHref)} data-testid={`${P}-cancel`}>Hủy</button>
+          {noChange && <p className="small muted" role="status">Chưa thay đổi gì.</p>}
+          <div className="rd-form-actions">
+            <button type="button" className="btn" disabled={busy} onClick={() => router.push(cancelHref)} data-testid={`${P}-cancel`}>Hủy</button>
             {edit
-              ? <button type="submit" className="btn btn-primary tight" disabled={busy || uploading || locked || over || limit.left > 0} aria-busy={busy} data-testid={`${P}-save`}>{busy && <Spin />}Lưu thay đổi</button>
-              : <button type="submit" className="btn btn-primary tight" disabled={busy || uploading || locked || over || limit.left > 0} aria-busy={busy} data-testid={`${P}-submit`}>{busy && <Spin />}Gửi đánh giá</button>}
+              ? <button type="submit" className="btn btn-primary tight" disabled={busy || uploading || locked || over || limit.left > 0} aria-busy={busy} data-testid={`${P}-save`}>{busy && <Spin />}Lưu</button>
+              : <button type="submit" className="btn btn-primary tight" disabled={busy || uploading || locked || over || limit.left > 0} aria-busy={busy} data-testid={`${P}-submit`}>{busy ? <Spin /> : <span className="i i-send" aria-hidden="true" />}Gửi</button>}
           </div>
         </form>
       </section>

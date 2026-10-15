@@ -88,59 +88,69 @@ function ProductList() {
   const items = data?.items ?? [];
   const emptyAll = view === 'ready' && items.length === 0;
 
+  const ic = (n: string) => <span className={`i i-${n}`} aria-hidden="true" />;
   return (
-    <main className="wide">
-      <div className="shop">
-        <button type="button" className="btn only-mobile" onClick={() => setDrawer(true)} aria-expanded={drawer}>Danh mục</button>
-        <aside className={`shop-cats${drawer ? ' open' : ''}`} aria-label="Danh mục">
-          <div className="between"><h2>Danh mục</h2><button type="button" className="btn btn-quiet only-mobile" onClick={() => setDrawer(false)}>Đóng</button></div>
+    <main className="page">
+      <div className="page-head">
+        <h1>{title}</h1>
+        {data && view === 'ready' && <span className="muted small">{data.total} sản phẩm</span>}
+      </div>
+      <div className="ct-shop">
+        <aside className={`ct-side${drawer ? ' open' : ''}`} aria-label="Danh mục">
+          <div className="ct-side-head"><h2>{ic('folder')} Danh mục</h2><button type="button" className="btn btn-ghost btn-icon ct-m" aria-label="Đóng" onClick={() => setDrawer(false)}>{ic('x')}</button></div>
           {cats.state === 'loading' && <div className="skeleton" />}
           {cats.state === 'error' && <div role="alert" className="banner banner-error" data-testid="prd-product-list-category-error">Không tải được danh mục. <button className="btn" onClick={() => void cats.reload()}>Thử lại</button></div>}
           {cats.state === 'ready' && cats.items.length === 0 && <p className="hint" data-testid="prd-product-list-category-empty">Chưa có danh mục.</p>}
           {cats.state === 'ready' && cats.items.length > 0 && <CategoryTree items={cats.items} selected={category} hrefFor={hrefFor} onPick={() => setDrawer(false)} />}
         </aside>
-        {drawer && <div className="scrim only-mobile" onClick={() => setDrawer(false)} />}
+        {drawer && <div className="scrim ct-m" onClick={() => setDrawer(false)} />}
 
-        <section className="shop-main">
-          <h1>{title}</h1>
-          <form className="toolbar" role="search" onSubmit={submitSearch}>
-            <input type="search" value={search} maxLength={100} placeholder="Tìm theo tên hoặc mã sku" aria-label="Tìm sản phẩm" onChange={(e) => setSearch(e.target.value)} data-testid="prd-product-list-search-input" />
-            <button className="btn btn-primary tight" disabled={locked} data-testid="prd-product-list-search-submit">Tìm</button>
-          </form>
-          {/* Dưới md: hàng lọc giá và sắp xếp nằm sau nút "Bộ lọc" (ui/product-list.md); từ md trở lên luôn hiện. spec/testids.md chưa có testid cho nút và panel. */}
-          <button type="button" className="btn only-mobile" aria-expanded={filters} aria-controls="shop-filters" onClick={() => setFilters((v) => !v)}>Bộ lọc</button>
-          <form id="shop-filters" className={`toolbar filter-panel${filters ? ' open' : ''}`} onSubmit={applyPrice}>
-            <input inputMode="numeric" value={min} placeholder="Giá từ" aria-label="Giá từ" onChange={(e) => setMin(e.target.value)} data-testid="prd-product-list-min-price" />
-            <input inputMode="numeric" value={max} placeholder="Giá đến" aria-label="Giá đến" onChange={(e) => setMax(e.target.value)} data-testid="prd-product-list-max-price" />
-            <button className="btn tight" disabled={locked} data-testid="prd-product-list-apply-price">Lọc giá</button>
-            <select value={sort} aria-label="Sắp xếp" disabled={locked} onChange={(e) => go({ sort: e.target.value })} data-testid="prd-product-list-sort">
-              {SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              {q && <option value="relevance">Liên quan</option>}
-            </select>
-            {filtering && !(emptyAll) && <button type="button" className="btn btn-quiet tight" onClick={clear} data-testid="prd-product-list-clear-filter">Xóa bộ lọc</button>}
-          </form>
+        <section className="ct-main">
+          <div className="ct-bar">
+            <form className="ct-search" role="search" onSubmit={submitSearch}>
+              {ic('search')}
+              <input type="search" value={search} maxLength={100} placeholder="Tìm tên hoặc mã" aria-label="Tìm sản phẩm" onChange={(e) => setSearch(e.target.value)} data-testid="prd-product-list-search-input" />
+              <button className="btn btn-primary tight" disabled={locked} data-testid="prd-product-list-search-submit">Tìm</button>
+            </form>
+            {/* Dưới md: lọc giá và sắp xếp nằm sau nút "Bộ lọc"; từ md trở lên luôn hiện. */}
+            <div className="ct-mbtns ct-m">
+              <button type="button" className="btn" onClick={() => setDrawer(true)} aria-expanded={drawer}>{ic('folder')} Danh mục</button>
+              <button type="button" className="btn" aria-expanded={filters} aria-controls="shop-filters" onClick={() => setFilters((v) => !v)}>{ic('sliders')} Bộ lọc</button>
+            </div>
+            <form id="shop-filters" className={`ct-filters${filters ? ' open' : ''}`} onSubmit={applyPrice}>
+              <input inputMode="numeric" value={min} placeholder="Giá từ" aria-label="Giá từ" onChange={(e) => setMin(e.target.value)} data-testid="prd-product-list-min-price" />
+              <span className="muted ct-dash" aria-hidden="true">–</span>
+              <input inputMode="numeric" value={max} placeholder="Giá đến" aria-label="Giá đến" onChange={(e) => setMax(e.target.value)} data-testid="prd-product-list-max-price" />
+              <button className="btn tight" disabled={locked} aria-label="Lọc giá" data-testid="prd-product-list-apply-price">{ic('check')} Lọc</button>
+              <select value={sort} aria-label="Sắp xếp" disabled={locked} onChange={(e) => go({ sort: e.target.value })} data-testid="prd-product-list-sort">
+                {SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                {q && <option value="relevance">Liên quan</option>}
+              </select>
+              {filtering && !(emptyAll) && <button type="button" className="btn btn-ghost tight" onClick={clear} data-testid="prd-product-list-clear-filter">{ic('x')} Xóa lọc</button>}
+            </form>
+          </div>
           {priceError && <p className="field-error" role="alert">{priceError}</p>}
 
           {view === 'rate' && locked && <div role="alert" className="banner banner-error" data-testid="prd-product-list-rate-limited">Bạn thao tác quá nhanh, thử lại sau ít giây. <span className="hint">({rateLimitedText(limit.left)})</span></div>}
           {view === 'error' && <div role="alert" className="banner banner-error" data-testid="prd-product-list-error">Không tải được danh sách sản phẩm. <button className="btn" onClick={() => { setView('loading'); void load(); }} data-testid="prd-product-list-retry">Thử lại</button></div>}
           {view === 'loading' && !data && (
-            <div className="grid" data-testid="prd-product-list-loading" aria-busy="true">{Array.from({ length: 8 }, (_, i) => <div key={i} className="skeleton skeleton-card" />)}</div>
+            <div className="ct-grid" data-testid="prd-product-list-loading" aria-busy="true">{Array.from({ length: 8 }, (_, i) => <div key={i} className="skeleton skeleton-card" />)}</div>
           )}
           {emptyAll && (filtering || page > 1
-            ? <div data-testid="prd-product-list-empty-filtered"><p>Không tìm thấy sản phẩm phù hợp.</p><button type="button" className="btn" onClick={clear} data-testid="prd-product-list-clear-filter">Xóa bộ lọc</button></div>
-            : <p className="hint" data-testid="prd-product-list-empty">Chưa có sản phẩm nào đang bán.</p>)}
+            ? <div className="empty" data-testid="prd-product-list-empty-filtered"><span className="tile tile-lg gray">{ic('search')}</span><strong>Không có kết quả</strong><button type="button" className="btn" onClick={clear} data-testid="prd-product-list-clear-filter">Xóa bộ lọc</button></div>
+            : <div className="empty" data-testid="prd-product-list-empty"><span className="tile tile-lg gray">{ic('inbox')}</span><strong>Chưa có sản phẩm</strong></div>)}
           {data && items.length > 0 && view !== 'error' && (
             <>
-              <ul className={`grid${view === 'ready' ? '' : ' dim'}`}>
+              <ul className={`ct-grid${view === 'ready' ? '' : ' dim'}`}>
                 {items.map((c) => {
                   const rating = formatRating(c.rating_avg, c.rating_count);
                   return (
-                    <li key={c.id}>
-                      <Link href={`/products/${c.id}`} className="pcard" data-testid="prd-product-list-card" data-id={c.id}>
-                        <div className="pcard-img" data-testid="prd-product-list-card-image">{c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : null}</div>
-                        <span className="pcard-name" data-testid="prd-product-list-card-name">{c.name}</span>
-                        <span className="strong" data-testid="prd-product-list-card-price">{formatPrice(c.price)}</span>
-                        <span className="hint" data-testid="prd-product-list-card-rating">{rating ?? 'Chưa có đánh giá'}</span>
+                    <li key={c.id} className="ct-card">
+                      <Link href={`/products/${c.id}`} className="ct-card-link" data-testid="prd-product-list-card" data-id={c.id}>
+                        <div className="ct-img" data-testid="prd-product-list-card-image">{c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : ic('image')}</div>
+                        <span className="ct-name" data-testid="prd-product-list-card-name">{c.name}</span>
+                        <span className="ct-price" data-testid="prd-product-list-card-price">{formatPrice(c.price)}</span>
+                        <span className="ct-meta"><span className={rating ? 'ct-rate' : 'muted'} data-testid="prd-product-list-card-rating">{rating ?? 'Chưa có đánh giá'}</span></span>
                         <StockLabel inStock={stock?.get(c.id)} testId="prd-product-list-card-stock" />
                       </Link>
                       <AddToCart productId={c.id} compact />

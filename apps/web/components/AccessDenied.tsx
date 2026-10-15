@@ -8,7 +8,7 @@ export function AccessDenied({ role, error, onRetry }: { role?: Role; error?: bo
     return (
       <main className="center">
         <div role="alert" className="banner banner-error" data-testid="auth-access-denied-error">
-          Không kiểm tra được quyền. Thử lại.{' '}
+          Không kiểm tra được quyền
           <button className="btn" data-testid="auth-access-denied-retry" onClick={onRetry}>Thử lại</button>
         </div>
       </main>
@@ -17,9 +17,12 @@ export function AccessDenied({ role, error, onRetry }: { role?: Role; error?: bo
   return (
     <main className="center">
       <section className="card" data-testid="auth-access-denied-container">
-        <h1>Không có quyền truy cập</h1>
-        <p data-testid="auth-access-denied-message">Bạn đang đăng nhập với vai trò {role ? ROLE_LABEL[role] : 'hiện tại'}. Trang này dành cho vai trò khác.</p>
-        <Link className="btn btn-primary" href="/" data-testid="auth-access-denied-home">Về trang chủ</Link>
+        <div className="empty">
+          <span className="tile tile-lg red"><span className="i i-ban" aria-hidden="true" /></span>
+          <h1>Không có quyền</h1>
+          <p data-testid="auth-access-denied-message">Vai trò {role ? ROLE_LABEL[role] : 'của bạn'} không vào được trang này.</p>
+        </div>
+        <Link className="btn btn-primary" href="/" data-testid="auth-access-denied-home">Trang chủ</Link>
       </section>
     </main>
   );

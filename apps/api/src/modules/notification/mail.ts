@@ -1,3 +1,4 @@
+import { createTransport } from 'nodemailer';
 import { ConfigError, signV4, sha256Hex, type ConfigService } from '../platform';
 import { SES_TIMEOUT_MS, type NtfConfig } from './config';
 
@@ -18,6 +19,36 @@ export class UnconfiguredTransport implements MailTransport {
 }
 
 export interface SesOptions { endpoint: string; region: string; accessKey: string; secretKey: string }
+export interface SmtpOptions { host: string; port: number; startTls: boolean; user: string; password: string; fromName: string }
+
+/**
+ * Gửi qua SMTP (Office 365 dùng cổng 587 + STARTTLS). nodemailer dựng MIME và từ chối xuống dòng trong header nên không có đường chèn `Bcc`/`Subject` (NTF-SEC T3); `requireTLS` bắt buộc nâng cấp TLS,
+ * không bao giờ gửi mật khẩu qua kênh thô. Lỗi chuẩn hóa về `MailError` như SES: không kèm thông điệp thô (có thể chứa địa chỉ).
+ */
+export class SmtpTransport implements MailTransport {
+  private readonly tx;
+  constructor(private readonly o: SmtpOptions) {
+    this.tx = createTransport({
+      host: o.host, port: o.port, secure: o.port === 465, requireTLS: o.startTls && o.port !== 465,
+      auth: { user: o.user, pass: o.password },
+      connectionTimeout: SES_TIMEOUT_MS, greetingTimeout: SES_TIMEOUT_MS, socketTimeout: SES_TIMEOUT_MS,
+    });
+  }
+
+  async send(m: MailMessage, signal?: AbortSignal): Promise<void> {
+    if (signal?.aborted) throw new MailError('smtp_timeout', false);
+    try {
+      await this.tx.sendMail({ from: this.o.fromName ? { name: this.o.fromName, address: m.from } : m.from, to: m.to, subject: m.subject, text: m.text, html: m.html });
+    } catch (e) {
+      const { code, responseCode } = e as { code?: string; responseCode?: number };
+      if (code === 'EAUTH' || responseCode === 535) throw new MailError('smtp_auth', true);
+      if (code === 'ETIMEDOUT' || (code === 'ESOCKET' && /timeout/i.test((e as Error).message))) throw new MailError('smtp_timeout', false);
+      if (responseCode && responseCode >= 500 && responseCode < 600 && responseCode !== 503) throw new MailError('smtp_rejected', true);
+      throw new MailError('smtp_error', false);
+    }
+  }
+}
+
 const amzDate = (d: Date): string => d.toISOString().replace(/[-:]|\.\d{3}/g, '');
 
 /**
@@ -67,6 +98,8 @@ export function createNtfConfig(c: ConfigService): NtfConfig {
   const v: NtfConfig = {
     SES_REGION: c.get<string>('SES_REGION'), MAIL_FROM: c.get<string>('MAIL_FROM'), APP_BASE_URL: c.get<string>('APP_BASE_URL'),
     SES_ACCESS_KEY: c.get<string>('SES_ACCESS_KEY'), SES_SECRET_KEY: c.get<string>('SES_SECRET_KEY'), SES_ENDPOINT: c.get<string>('SES_ENDPOINT'),
+    SMTP_HOST: c.get<string>('SMTP_HOST'), SMTP_PORT: c.get<number>('SMTP_PORT'), SMTP_STARTTLS: c.get<boolean>('SMTP_STARTTLS'),
+    SMTP_USER: c.get<string>('SMTP_USER'), SMTP_PASSWORD: c.get<string>('SMTP_PASSWORD'), MAIL_FROM_NAME: c.get<string>('MAIL_FROM_NAME'),
   };
   const dev = c.get('APP_ENV') === 'dev';
   const problems: { name: string; reason: string }[] = [];
@@ -78,6 +111,10 @@ export function createNtfConfig(c: ConfigService): NtfConfig {
 
 /** Bộ chuyển thư theo cấu hình: thiếu khóa, vùng hay người gửi thì `UnconfiguredTransport` (dev); ngoài dev, thiếu biến đã dừng ở bước nạp cấu hình. */
 export function createMailTransport(c: NtfConfig): MailTransport {
+  if (c.SMTP_HOST) {
+    if (!c.SMTP_USER || !c.SMTP_PASSWORD || !c.MAIL_FROM) return new UnconfiguredTransport();
+    return new SmtpTransport({ host: c.SMTP_HOST, port: c.SMTP_PORT, startTls: c.SMTP_STARTTLS, user: c.SMTP_USER, password: c.SMTP_PASSWORD, fromName: c.MAIL_FROM_NAME });
+  }
   const endpoint = c.SES_ENDPOINT || (c.SES_REGION ? `https://email.${c.SES_REGION}.amazonaws.com` : '');
   if (!endpoint || !c.SES_ACCESS_KEY || !c.SES_SECRET_KEY || !c.MAIL_FROM) return new UnconfiguredTransport();
   return new SesTransport({ endpoint, region: c.SES_REGION || 'us-east-1', accessKey: c.SES_ACCESS_KEY, secretKey: c.SES_SECRET_KEY });

@@ -10,14 +10,14 @@ export function Pager({ testPrefix, page, limit, total, shown, onPage, disabled,
   }
   return (
     <div className="pager">
-      <p className="hint" data-testid={`${testPrefix}-summary`}>{shown > 0 ? `${from} tới ${from + shown - 1} trong ${total} ${unit}` : `${total} ${unit}`}</p>
+      <p className="hint" data-testid={`${testPrefix}-summary`}>{shown > 0 ? `${from}–${from + shown - 1} / ${total} ${unit}` : `${total} ${unit}`}</p>
       {pages > 1 && (
         <nav aria-label="Phân trang" className="pages" data-testid={`${testPrefix}-pagination`}>
-          <button className="btn" disabled={disabled || page <= 1} onClick={() => onPage(page - 1)} aria-label="Trang trước">‹</button>
+          <button className="btn" disabled={disabled || page <= 1} onClick={() => onPage(page - 1)} aria-label="Trang trước"><span className="i i-left" aria-hidden="true" /></button>
           {nums.map((n) => typeof n === 'string' ? <span key={n} aria-hidden="true">…</span> : (
             <button key={n} className={`btn${n === page ? ' btn-current' : ''}`} aria-current={n === page ? 'page' : undefined} disabled={disabled} onClick={() => onPage(n)}>{n}</button>
           ))}
-          <button className="btn" disabled={disabled || page >= pages} onClick={() => onPage(page + 1)} aria-label="Trang sau">›</button>
+          <button className="btn" disabled={disabled || page >= pages} onClick={() => onPage(page + 1)} aria-label="Trang sau"><span className="i i-right" aria-hidden="true" /></button>
         </nav>
       )}
     </div>

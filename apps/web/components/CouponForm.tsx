@@ -110,54 +110,62 @@ export function CouponForm({ id }: { id?: string }) {
     <Field label={label} error={errors[k]} errorTestId={`${testid}-error`} field={k} hint={hint}>{input}</Field>
   );
 
-  if (view === 'loading') return <main className="wide"><div data-testid="prm-admin-coupon-edit-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div></main>;
-  if (view === 'notfound') return <main className="wide"><div className="notfound" data-testid="prm-admin-coupon-edit-not-found"><p className="big">404</p><h1>Coupon không còn tồn tại</h1><Link className="btn" href="/admin/coupons">Về danh sách coupon</Link></div></main>;
-  if (view === 'forbidden') return <main className="wide"><div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-edit-error">Bạn không có quyền</div></main>;
-  if (view === 'rate' && limit.left > 0) return <main className="wide"><div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-edit-error">{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid="prm-admin-coupon-edit-retry">Thử lại</button></div></main>;
-  if (view === 'error' || view === 'rate') return <main className="wide"><div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-edit-error">Không tải được coupon. <button className="btn" onClick={() => void load()} data-testid="prm-admin-coupon-edit-retry">Thử lại</button></div></main>;
+  if (view === 'loading') return <main className="page page-narrow"><div data-testid="prm-admin-coupon-edit-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div></main>;
+  if (view === 'notfound') return <main className="page page-narrow"><div className="empty panel" data-testid="prm-admin-coupon-edit-not-found"><span className="tile tile-lg gray"><span className="i i-ticket" aria-hidden="true" /></span><h1>Coupon không còn tồn tại</h1><Link className="btn" href="/admin/coupons">Về coupon</Link></div></main>;
+  if (view === 'forbidden') return <main className="page page-narrow"><div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-edit-error">Bạn không có quyền</div></main>;
+  if (view === 'rate' && limit.left > 0) return <main className="page page-narrow"><div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-edit-error">{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid="prm-admin-coupon-edit-retry">Thử lại</button></div></main>;
+  if (view === 'error' || view === 'rate') return <main className="page page-narrow"><div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-edit-error">Không tải được coupon. <button className="btn" onClick={() => void load()} data-testid="prm-admin-coupon-edit-retry">Thử lại</button></div></main>;
 
   const off = saving || locked;
+  const usedPct = coupon && coupon.usage_limit > 0 ? Math.min(100, Math.round((used / coupon.usage_limit) * 100)) : 0;
   return (
-    <main className="wide">
-      <p><Link href="/admin/coupons">‹ Coupon</Link></p>
-      <div className="between">
-        <h1>{editing ? coupon?.code : 'Tạo coupon'}</h1>
+    <main className="page page-narrow">
+      <Link href="/admin/coupons" className="back"><span className="i i-left" aria-hidden="true" /> Coupon</Link>
+      <div className="page-head">
+        <h1>{editing ? <span className="ip-code">{coupon?.code}</span> : 'Tạo coupon'}</h1>
         {coupon && <span className="badge" data-status={coupon.status} data-testid="prm-admin-coupon-edit-status-badge">{STATUS_LABEL[coupon.status]}</span>}
       </div>
-      {coupon && <p className="hint" data-testid="prm-admin-coupon-edit-usage-summary">Đã dùng {num(coupon.consumed_count)} · Đang giữ {num(coupon.reserved_count)} · Còn lại {num(coupon.remaining)} / {num(coupon.usage_limit)}</p>}
-      {locked && <div className="banner banner-info" data-testid="prm-admin-coupon-edit-not-editable">Không sửa được coupon đã hết hạn hoặc hết lượt</div>}
-      {banner === 'conflict' && <div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-edit-conflict-error">Coupon vừa được người khác sửa. Tải lại để xem bản mới. <button className="btn" onClick={() => void load()}>Tải lại</button></div>}
+      {coupon && (
+        <div className="panel ip-sum" style={{ marginBottom: '1rem' }}>
+          <p className="small muted" data-testid="prm-admin-coupon-edit-usage-summary">Đã dùng {num(coupon.consumed_count)} · Đang giữ {num(coupon.reserved_count)} · Còn lại {num(coupon.remaining)} / {num(coupon.usage_limit)}</p>
+          <span className="ip-bar" data-lv={coupon.status === 'exhausted' ? 'out' : 'brand'} aria-hidden="true"><i style={{ width: `${usedPct}%` }} /></span>
+        </div>
+      )}
+      {locked && <div className="banner banner-info" data-testid="prm-admin-coupon-edit-not-editable">Hết hạn hoặc hết lượt: không sửa được</div>}
+      {banner === 'conflict' && <div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-edit-conflict-error">Coupon vừa được người khác sửa. <button className="btn" onClick={() => void load()}>Tải lại</button></div>}
       {banner === 'other' && <div role="alert" className="banner banner-error">{limit.left > 0 ? limitedText(limit.left) : 'Không lưu được, thử lại.'}</div>}
 
-      <form onSubmit={(e) => { e.preventDefault(); void submit(); }} noValidate>
-        {row('Mã *', 'code', 'prm-admin-coupon-edit-code', (fid, d) => (
-          <input id={fid} aria-describedby={d} value={code} maxLength={20} disabled={off || editing} autoCapitalize="characters" onChange={(e) => setCode(e.target.value.toUpperCase())} data-testid="prm-admin-coupon-edit-code" />
-        ), '4 đến 20 ký tự')}
-        <div className="field">
-          <label htmlFor="prm-type">Loại *</label>
-          <select id="prm-type" value={type} disabled={off || editing} onChange={(e) => { setType(e.target.value as 'percentage' | 'fixed'); setErrors((x) => ({ ...x, value: undefined, max_discount: undefined })); }} data-testid="prm-admin-coupon-edit-type">
-            <option value="percentage">Phần trăm</option><option value="fixed">Số tiền cố định</option>
-          </select>
+      <form onSubmit={(e) => { e.preventDefault(); void submit(); }} noValidate className="panel">
+        <div className="ip-grid2">
+          {row('Mã *', 'code', 'prm-admin-coupon-edit-code', (fid, d) => (
+            <input id={fid} aria-describedby={d} value={code} maxLength={20} disabled={off || editing} autoCapitalize="characters" onChange={(e) => setCode(e.target.value.toUpperCase())} data-testid="prm-admin-coupon-edit-code" />
+          ))}
+          <div className="field">
+            <label htmlFor="prm-type">Loại *</label>
+            <select id="prm-type" value={type} disabled={off || editing} onChange={(e) => { setType(e.target.value as 'percentage' | 'fixed'); setErrors((x) => ({ ...x, value: undefined, max_discount: undefined })); }} data-testid="prm-admin-coupon-edit-type">
+              <option value="percentage">Phần trăm</option><option value="fixed">Số tiền cố định</option>
+            </select>
+          </div>
+          {row(`Giá trị * (${type === 'percentage' ? '%' : 'đ'})`, 'value', 'prm-admin-coupon-edit-value', (fid, d) => (
+            <input id={fid} aria-describedby={d} inputMode="numeric" value={value} disabled={off} onChange={(e) => setValue(e.target.value)} data-testid="prm-admin-coupon-edit-value" />
+          ))}
+          {type === 'percentage' && row('Giảm tối đa (đ)', 'max_discount', 'prm-admin-coupon-edit-max-discount', (fid, d) => (
+            <input id={fid} aria-describedby={d} inputMode="numeric" placeholder="Không trần" value={maxDiscount} disabled={off} onChange={(e) => setMaxDiscount(e.target.value)} data-testid="prm-admin-coupon-edit-max-discount" />
+          ))}
+          {row('Đơn tối thiểu (đ)', 'min_order_value', 'prm-admin-coupon-edit-min-order', (fid, d) => (
+            <input id={fid} aria-describedby={d} inputMode="numeric" value={minOrder} disabled={off} onChange={(e) => setMinOrder(e.target.value)} data-testid="prm-admin-coupon-edit-min-order" />
+          ))}
+          {row('Hết hạn * (giờ VN)', 'expires_at', 'prm-admin-coupon-edit-expires-at', (fid, d) => (
+            <input id={fid} aria-describedby={d} type="datetime-local" value={expiresAt} disabled={off} onChange={(e) => setExpiresAt(e.target.value)} data-testid="prm-admin-coupon-edit-expires-at" />
+          ))}
+          {row('Tổng lượt *', 'usage_limit', 'prm-admin-coupon-edit-usage-limit', (fid, d) => (
+            <input id={fid} aria-describedby={d} inputMode="numeric" value={usageLimit} disabled={off} onChange={(e) => setUsageLimit(e.target.value)} data-testid="prm-admin-coupon-edit-usage-limit" />
+          ))}
+          {row('Lượt mỗi người', 'per_user_limit', 'prm-admin-coupon-edit-per-user-limit', (fid, d) => (
+            <input id={fid} aria-describedby={d} inputMode="numeric" placeholder="Không giới hạn" value={perUser} disabled={off} onChange={(e) => setPerUser(e.target.value)} data-testid="prm-admin-coupon-edit-per-user-limit" />
+          ))}
         </div>
-        {row(`Giá trị * (${type === 'percentage' ? '%' : 'đ'})`, 'value', 'prm-admin-coupon-edit-value', (fid, d) => (
-          <input id={fid} aria-describedby={d} inputMode="numeric" value={value} disabled={off} onChange={(e) => setValue(e.target.value)} data-testid="prm-admin-coupon-edit-value" />
-        ))}
-        {type === 'percentage' && row('Giảm tối đa (đ)', 'max_discount', 'prm-admin-coupon-edit-max-discount', (fid, d) => (
-          <input id={fid} aria-describedby={d} inputMode="numeric" value={maxDiscount} disabled={off} onChange={(e) => setMaxDiscount(e.target.value)} data-testid="prm-admin-coupon-edit-max-discount" />
-        ), 'Để trống là không có trần')}
-        {row('Đơn tối thiểu (đ)', 'min_order_value', 'prm-admin-coupon-edit-min-order', (fid, d) => (
-          <input id={fid} aria-describedby={d} inputMode="numeric" value={minOrder} disabled={off} onChange={(e) => setMinOrder(e.target.value)} data-testid="prm-admin-coupon-edit-min-order" />
-        ), '0 là không đòi')}
-        {row('Hết hạn * (giờ Việt Nam)', 'expires_at', 'prm-admin-coupon-edit-expires-at', (fid, d) => (
-          <input id={fid} aria-describedby={d} type="datetime-local" value={expiresAt} disabled={off} onChange={(e) => setExpiresAt(e.target.value)} data-testid="prm-admin-coupon-edit-expires-at" />
-        ))}
-        {row('Số lượt dùng *', 'usage_limit', 'prm-admin-coupon-edit-usage-limit', (fid, d) => (
-          <input id={fid} aria-describedby={d} inputMode="numeric" value={usageLimit} disabled={off} onChange={(e) => setUsageLimit(e.target.value)} data-testid="prm-admin-coupon-edit-usage-limit" />
-        ), editing ? 'Không nhỏ hơn đã dùng cộng đang giữ' : undefined)}
-        {row('Lượt mỗi người', 'per_user_limit', 'prm-admin-coupon-edit-per-user-limit', (fid, d) => (
-          <input id={fid} aria-describedby={d} inputMode="numeric" value={perUser} disabled={off} onChange={(e) => setPerUser(e.target.value)} data-testid="prm-admin-coupon-edit-per-user-limit" />
-        ), 'Để trống là không giới hạn mỗi người')}
-        <div className="form-actions sticky-save">
+        <div className="form-actions sticky-save ip-formfoot">
           <button type="button" className="btn tight" onClick={() => router.push('/admin/coupons')} data-testid="prm-admin-coupon-edit-cancel">Hủy</button>
           {!locked && <button type="submit" className="btn btn-primary tight" disabled={saving} data-testid="prm-admin-coupon-edit-save">{saving ? 'Đang lưu...' : 'Lưu'}</button>}
         </div>

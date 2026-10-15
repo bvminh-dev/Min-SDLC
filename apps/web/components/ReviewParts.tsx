@@ -1,4 +1,5 @@
 'use client';
+import type { ReactNode } from 'react';
 import { clampStars, isHttpUrl, isReviewStatus, reviewStatusText, type ReviewImage } from '../lib/review';
 
 /** Số sao có chữ thay thế "4 trên 5 sao" (không chỉ dựa vào hình hay màu). Chữ nằm trong phần tử mang testid. */
@@ -42,16 +43,33 @@ export function ReviewerAvatar({ name, url }: { name: string; url?: string | nul
   );
 }
 
-/** Phân trang "‹ Trước  Trang 1 / 2  Sau ›" với testid `${testPrefix}-page-prev` và `-page-next`. */
+/** Phân trang gọn "‹ 1 / 2 ›" với testid `${testPrefix}-page-prev` và `-page-next`. */
 export function ReviewPager({ testPrefix, page, limit, total, onPage, disabled }: { testPrefix: string; page: number; limit: number; total: number; onPage: (p: number) => void; disabled?: boolean }) {
   const pages = Math.max(1, Math.ceil(total / limit));
   if (pages <= 1) return null;
   return (
     <nav className="rev-pager" aria-label="Phân trang">
-      <button type="button" className="btn tight" disabled={disabled || page <= 1} onClick={() => onPage(page - 1)} data-testid={`${testPrefix}-page-prev`}>‹ Trước</button>
-      <span className="tabular" aria-live="polite">Trang {page} / {pages}</span>
-      <button type="button" className="btn tight" disabled={disabled || page >= pages} onClick={() => onPage(page + 1)} data-testid={`${testPrefix}-page-next`}>Sau ›</button>
+      <button type="button" className="btn btn-icon" aria-label="Trang trước" disabled={disabled || page <= 1} onClick={() => onPage(page - 1)} data-testid={`${testPrefix}-page-prev`}><span className="i i-left" aria-hidden="true" /></button>
+      <span className="tabular" aria-live="polite"><span className="sr-only">Trang </span>{page} / {pages}</span>
+      <button type="button" className="btn btn-icon" aria-label="Trang sau" disabled={disabled || page >= pages} onClick={() => onPage(page + 1)} data-testid={`${testPrefix}-page-next`}><span className="i i-right" aria-hidden="true" /></button>
     </nav>
+  );
+}
+
+/** Huy hiệu "Đã mua" (đánh giá của người đã mua hàng). */
+export function VerifiedBadge({ testid }: { testid?: string }) {
+  return <span className="badge rev-verified" data-testid={testid}><span className="i i-check" aria-hidden="true" />Đã mua</span>;
+}
+
+/** Hộp thoại có ô icon màu ở tiêu đề (cùng hành vi `Modal` của SHP: Esc đóng, bấm nền đóng trừ khi `sticky`). */
+export function RevDialog({ title, testid, onClose, sticky, icon = 'alert', tone = 'red', children }: { title: string; testid?: string; onClose: () => void; sticky?: boolean; icon?: string; tone?: string; children: ReactNode }) {
+  return (
+    <div className="backdrop" onMouseDown={(e) => { if (!sticky && e.target === e.currentTarget) onClose(); }}>
+      <div className="dialog" role="dialog" aria-modal="true" aria-label={title} onKeyDown={(e) => e.key === 'Escape' && onClose()} data-testid={testid}>
+        <div className="dlg-head"><span className={`tile ${tone}`}><span className={`i i-${icon}`} aria-hidden="true" /></span><h2>{title}</h2></div>
+        {children}
+      </div>
+    </div>
   );
 }
 

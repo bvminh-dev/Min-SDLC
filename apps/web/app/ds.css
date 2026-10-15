@@ -1,0 +1,70 @@
+/* Design system v2 (phẳng, chữ gọn). Hợp đồng chung cho mọi màn: dùng các lớp dưới đây thay vì tự nặn. Chữ nội dung 14px; tên trang 20px; khối chỉ viền mảnh, không bóng (trừ lớp nổi). */
+:root { --r-lg: 14px; --r-md: 12px; --r-sm: 8px; --tb: var(--brand-soft); --tf: var(--brand-dark); }
+body { font-size: 14px; }
+input, select, textarea { font-size: 16px; } @media (min-width: 768px) { input, select, textarea { font-size: 14px; } }
+h1 { font-size: 1.25rem; } h2 { font-size: 1rem; }
+
+/* Khung trang */
+.page { width: 100%; max-width: 72rem; margin: 0 auto; padding: 1.25rem 16px 3rem; } @media (min-width: 640px) { .page { padding: 1.75rem 24px 3rem; } }
+.page-narrow { max-width: 40rem; } .page-mid { max-width: 56rem; }
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.page-head h1 { margin: 0; display: flex; align-items: center; min-width: 0; overflow-wrap: anywhere; } .page-head .actions { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.back { display: inline-flex; align-items: center; gap: .35rem; margin-bottom: .75rem; color: var(--muted); text-decoration: none; font-weight: 500; } .back:hover { color: var(--brand-dark); }
+
+/* Khối */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 1rem; } @media (min-width: 640px) { .panel { padding: 1.25rem; } }
+.panel-flush { padding: 0; overflow: hidden; } .panel-flush > table { border: 0; border-radius: 0; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; } .panel-head h2 { margin: 0; display: flex; align-items: center; gap: .5rem; }
+.stack { display: grid; gap: 1rem; } .stack-sm { display: grid; gap: .5rem; } .row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; } .row-between { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.split { display: grid; gap: 1rem; } @media (min-width: 900px) { .split { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; } .split-even { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.muted { color: var(--muted); } .small { font-size: .8125rem; } .strong { font-weight: 600; } .money { font-weight: 700; font-variant-numeric: tabular-nums; } .right { text-align: right; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+/* Ô icon màu: <span className="tile green"><span className="i i-box" /></span> */
+.tile { display: inline-grid; place-items: center; flex: none; width: 2.25rem; height: 2.25rem; border-radius: 10px; background: var(--tb); color: var(--tf); } .tile .i { width: 1.15rem; height: 1.15rem; }
+.tile-lg { width: 3rem; height: 3rem; border-radius: 12px; } .tile-lg .i { width: 1.5rem; height: 1.5rem; }
+.tile.green { --tb: var(--ok-bg); --tf: var(--ok); } .tile.amber { --tb: var(--warn-bg); --tf: var(--warn); } .tile.red { --tb: var(--danger-bg); --tf: var(--danger); } .tile.violet { --tb: var(--violet-bg); --tf: var(--violet); } .tile.gray { --tb: #f2f4f7; --tf: var(--muted); }
+
+/* Số liệu: <div className="stat-grid"><div className="stat"><span className="tile"><i/></span><div><b>23</b><span className="lbl">Đơn</span></div></div></div> */
+.stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; } @media (min-width: 900px) { .stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } .stat-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.stat { display: flex; align-items: center; gap: .75rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: .85rem; min-width: 0; }
+.stat b { display: block; font-size: 1.25rem; line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; } .stat .lbl { display: block; color: var(--muted); font-size: .8125rem; }
+
+/* Nhãn: giá trị */
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .5rem 1rem; margin: 0; align-items: baseline; } .kv dt { color: var(--muted); font-weight: 400; } .kv dd { margin: 0; overflow-wrap: anywhere; font-weight: 500; }
+
+/* Rỗng: <div className="empty"><span className="tile tile-lg gray"><span className="i i-inbox"/></span><strong>Chưa có đơn</strong>[nút]</div> */
+.empty { display: grid; justify-items: center; gap: .6rem; text-align: center; padding: 2.5rem 1rem; color: var(--muted); } .empty strong { color: var(--fg); font-weight: 600; } .empty p { margin: 0; }
+
+/* Dòng danh sách thay cho bảng khi hẹp / danh sách ngắn */
+.list { list-style: none; margin: 0; padding: 0; } .list > li { display: flex; align-items: center; gap: .75rem; padding: .75rem 0; border-bottom: 1px solid var(--line); min-width: 0; } .list > li:last-child { border-bottom: 0; } .list > li > .grow { flex: 1 1 auto; min-width: 0; }
+.panel .list > li { padding-left: 0; padding-right: 0; }
+
+/* Phân đoạn (tab lọc): <div className="seg"><button className="on">…</button></div> */
+.seg { display: inline-flex; gap: .15rem; padding: .2rem; background: #eceff3; border-radius: 999px; max-width: 100%; overflow-x: auto; scrollbar-width: none; } .seg::-webkit-scrollbar { display: none; }
+.seg > * { flex: none; border: 0; background: transparent; padding: .3rem .8rem; border-radius: 999px; font: inherit; font-weight: 500; color: var(--muted); cursor: pointer; text-decoration: none; white-space: nowrap; } .seg > .on, .seg > [aria-pressed='true'], .seg > [aria-selected='true'] { background: var(--surface); color: var(--fg); box-shadow: 0 0 0 1px var(--line); }
+
+/* Nút: kích thước đồng nhất với ô nhập (40px, 44px màn hẹp) */
+.btn { min-height: 2.5rem; display: inline-flex; align-items: center; justify-content: center; gap: .1rem; } @media (max-width: 767px) { .btn { min-height: 2.75rem; } }
+input, select { min-height: 2.5rem; } @media (max-width: 767px) { input, select { min-height: 2.75rem; } } input[type='checkbox'], input[type='radio'] { min-height: 0; }
+.btn-sm { min-height: 2rem; padding: .25rem .7rem; font-size: .8125rem; } .btn-icon { min-width: 2.5rem; padding: 0; } .btn-primary.tight, .btn.tight { width: auto; }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--muted); } .btn-ghost:hover:not([disabled]) { background: #f2f4f7; color: var(--fg); }
+
+/* Popup: <div className="backdrop"><div className="dialog" role="dialog"> .dlg-head (tile + h2) · .dlg-body · .actions </div></div> */
+.backdrop { background: rgba(16, 24, 40, .5); } .dialog { max-width: 24rem; padding: 1.25rem; border-radius: var(--r-lg); display: grid; gap: .75rem; }
+.dialog h2 { margin: 0; font-size: 1.0625rem; } .dialog p { margin: 0; color: var(--muted); } .dialog .actions { margin-top: .25rem; } .dialog .actions .btn { min-width: 5.5rem; }
+.dlg-head { display: flex; align-items: center; gap: .75rem; } .dlg-head h2 { flex: 1; min-width: 0; }
+@media (max-width: 480px) { .backdrop { align-items: end; padding: 0; } .dialog { max-width: none; border-radius: var(--r-lg) var(--r-lg) 0 0; } .dialog .actions { display: grid; grid-template-columns: 1fr 1fr; } }
+
+/* Banner gọn: một dòng chữ + icon tự có từ icons.css */
+.banner { font-size: .875rem; padding: .6rem .85rem; margin-bottom: .75rem; } .banner p { margin: 0; } .banner .btn { margin-left: .5rem; min-height: 1.75rem; padding: .1rem .6rem; font-size: .8125rem; }
+.hint { font-size: .8125rem; }
+
+/* Bảng + thanh công cụ gọn */
+.toolbar { gap: .5rem; align-items: center; } .toolbar > * { flex: 1 1 9rem; } .toolbar > .btn, .toolbar > .seg { flex: 0 0 auto; }
+th, td { padding: .6rem .75rem; } td .btn, td .badge { vertical-align: middle; }
+.table-wrap { overflow-x: auto; }
+
+/* Cùng một hàng thì ô nhập, select và nút phải bằng nhau (40px, 44px màn hẹp) để không lệch. */
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select { height: 2.5rem; } @media (max-width: 767px) { input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select { height: 2.75rem; } }
+.btn { padding-top: 0; padding-bottom: 0; } .btn-sm { padding-top: 0; padding-bottom: 0; }

@@ -89,52 +89,60 @@ function CouponList() {
   const emptyAll = view === 'ready' && items.length === 0;
   const clear = () => router.push('/admin/coupons', { scroll: false });
 
+  const pctUsed = (c: Coupon) => (c.usage_limit > 0 ? Math.min(100, Math.round(((c.consumed_count + c.reserved_count) / c.usage_limit) * 100)) : 0);
+
   return (
-    <main className="wide">
-      <div className="between">
+    <main className="page">
+      <div className="page-head">
         <h1>Coupon</h1>
-        <Link className="btn btn-primary tight" href="/admin/coupons/new" data-testid="prm-admin-coupon-list-create">+ Tạo coupon</Link>
+        <div className="actions"><Link className="btn btn-primary tight" href="/admin/coupons/new" data-testid="prm-admin-coupon-list-create">Tạo mã</Link></div>
       </div>
       <div className="toolbar">
         <select value={status} aria-label="Trạng thái" onChange={(e) => go({ status: e.target.value || null })} data-testid="prm-admin-coupon-list-status-filter">
           {FILTERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
-        <input type="search" value={search} maxLength={20} placeholder="Tìm mã bắt đầu bằng..." aria-label="Tìm mã bắt đầu bằng"
-          onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && go({ q: search.trim().slice(0, 20) || null })} data-testid="prm-admin-coupon-list-search" />
-        {filtering && !emptyAll && <button type="button" className="btn btn-quiet tight" onClick={clear} data-testid="prm-admin-coupon-list-clear-filter">Xóa bộ lọc</button>}
+        <div className="ip-search">
+          <span className="i i-search" aria-hidden="true" />
+          <input type="search" value={search} maxLength={20} placeholder="Mã bắt đầu bằng…" aria-label="Tìm mã bắt đầu bằng"
+            onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && go({ q: search.trim().slice(0, 20) || null })} data-testid="prm-admin-coupon-list-search" />
+        </div>
+        {filtering && !emptyAll && <button type="button" className="btn btn-ghost tight" onClick={clear} data-testid="prm-admin-coupon-list-clear-filter"><span className="i i-x" aria-hidden="true" /> Xóa lọc</button>}
       </div>
 
       {toggleError && <div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-list-toggle-error">{toggleError}</div>}
       {view === 'forbidden' && <div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-list-error">Bạn không có quyền xem trang này</div>}
       {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-list-error">{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid="prm-admin-coupon-list-retry">Thử lại</button></div>}
-      {view === 'error' && <div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-list-error">Không tải được danh sách coupon. <button className="btn" onClick={() => void load()} data-testid="prm-admin-coupon-list-retry">Thử lại</button></div>}
+      {view === 'error' && <div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-list-error">Không tải được coupon. <button className="btn" onClick={() => void load()} data-testid="prm-admin-coupon-list-retry">Thử lại</button></div>}
       {view === 'loading' && !data && <div data-testid="prm-admin-coupon-list-loading" aria-busy="true">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
       {emptyAll && (filtering || page > 1
-        ? <div data-testid="prm-admin-coupon-list-empty-filtered"><p>Không có coupon phù hợp.</p><button type="button" className="btn" onClick={clear} data-testid="prm-admin-coupon-list-clear-filter">Xóa bộ lọc</button></div>
-        : <div data-testid="prm-admin-coupon-list-empty"><p>Chưa có coupon nào.</p><Link className="btn" href="/admin/coupons/new">Tạo coupon</Link></div>)}
+        ? <div className="empty panel" data-testid="prm-admin-coupon-list-empty-filtered"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có kết quả</strong><button type="button" className="btn" onClick={clear} data-testid="prm-admin-coupon-list-clear-filter">Xóa lọc</button></div>
+        : <div className="empty panel" data-testid="prm-admin-coupon-list-empty"><span className="tile tile-lg gray"><span className="i i-ticket" aria-hidden="true" /></span><strong>Chưa có coupon</strong><Link className="btn btn-primary tight" href="/admin/coupons/new"><span className="i i-plus" aria-hidden="true" /> Tạo mã</Link></div>)}
       {data && items.length > 0 && (view === 'ready' || view === 'loading') && (
         <>
-          <div className={`table-wrap${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? 'prm-admin-coupon-list-loading' : undefined}>
-            <table className="stack-table">
-              <thead><tr><th>Mã</th><th>Giảm</th><th>Hết hạn</th><th className="num">Lượt dùng</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+          <div className={`panel panel-flush${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? 'prm-admin-coupon-list-loading' : undefined}>
+            <table className="stack-table ip-table">
+              <thead><tr><th>Mã</th><th>Giảm</th><th>Đã dùng</th><th>Hết hạn</th><th>Trạng thái</th><th><span className="ip-lbl">Thao tác</span></th></tr></thead>
               <tbody>
                 {items.map((c) => {
                   const closed = c.status === 'expired' || c.status === 'exhausted';
+                  const tone = c.status === 'active' ? 'green' : c.status === 'disabled' ? 'gray' : c.status === 'expired' ? 'amber' : 'red';
                   return (
                     <tr key={c.id} className="row-click" data-testid="prm-admin-coupon-list-row" data-id={c.id} onClick={() => router.push(`/admin/coupons/${c.id}`)}>
-                      <td data-label="Mã" className="mono" data-testid="prm-admin-coupon-list-code">{c.code}</td>
-                      <td data-label="Giảm" data-testid="prm-admin-coupon-list-discount">{describeDiscount(c)}</td>
-                      <td data-label="Hết hạn" data-testid="prm-admin-coupon-list-expires-at">{formatVn(c.expires_at)}</td>
-                      <td data-label="Lượt dùng" className="num" data-testid="prm-admin-coupon-list-usage">{`${num(c.consumed_count + c.reserved_count)}/${num(c.usage_limit)} (còn ${num(c.remaining)})`}</td>
+                      <td data-label="Mã"><span className="ip-name"><span className={`tile ${tone}`}><span className="i i-ticket" aria-hidden="true" /></span><span className="ip-code" data-testid="prm-admin-coupon-list-code">{c.code}</span></span></td>
+                      <td data-label="Giảm"><span className="ip-val" data-testid="prm-admin-coupon-list-discount">{describeDiscount(c)}</span></td>
+                      <td data-label="Đã dùng">
+                        <span className="ip-usage"><span className="small" data-testid="prm-admin-coupon-list-usage">{`${num(c.consumed_count + c.reserved_count)}/${num(c.usage_limit)} (còn ${num(c.remaining)})`}</span><span className="ip-bar" data-lv={c.status === 'exhausted' ? 'out' : 'brand'} aria-hidden="true"><i style={{ width: `${pctUsed(c)}%` }} /></span></span>
+                      </td>
+                      <td data-label="Hết hạn"><span data-testid="prm-admin-coupon-list-expires-at">{formatVn(c.expires_at)}</span></td>
                       <td data-label="Trạng thái">
                         <span className="badge" data-status={c.status} data-testid="prm-admin-coupon-list-status-badge">{STATUS_LABEL[c.status]}</span>
-                        {isOverdue(c) && <span className="hint"> quá hạn</span>}
+                        {isOverdue(c) && <span className="ip-late"> quá hạn</span>}
                       </td>
-                      <td data-label="Thao tác" onClick={(e) => e.stopPropagation()}>
-                        <span className="actions-row">
-                          <Link className="btn tight" href={`/admin/coupons/${c.id}`} data-testid="prm-admin-coupon-list-edit">{closed ? 'Xem' : 'Sửa'}</Link>
-                          {!closed && <button className="btn tight" disabled={busy !== null} onClick={() => void toggle(c)} data-testid="prm-admin-coupon-list-toggle">{c.status === 'active' ? 'Tắt' : 'Bật'}</button>}
-                          <button className="btn btn-danger-soft tight" onClick={() => setDel({ coupon: c, busy: false, error: null })} data-testid="prm-admin-coupon-list-delete">Xóa</button>
+                      <td data-label="" onClick={(e) => e.stopPropagation()}>
+                        <span className="ip-acts">
+                          <Link className="btn btn-ghost btn-icon ip-act" href={`/admin/coupons/${c.id}`} title={closed ? 'Xem' : 'Sửa'} data-testid="prm-admin-coupon-list-edit"><span className="ip-lbl">{closed ? 'Xem' : 'Sửa'}</span></Link>
+                          {!closed && <button className="btn btn-ghost btn-icon ip-act" disabled={busy !== null} title={c.status === 'active' ? 'Tắt' : 'Bật'} onClick={() => void toggle(c)} data-testid="prm-admin-coupon-list-toggle"><span className={`i i-${c.status === 'active' ? 'ban' : 'okc'}`} aria-hidden="true" /><span className="ip-lbl">{c.status === 'active' ? 'Tắt' : 'Bật'}</span></button>}
+                          <button className="btn btn-ghost btn-icon ip-act" style={{ color: 'var(--danger)' }} title="Xóa" onClick={() => setDel({ coupon: c, busy: false, error: null })} data-testid="prm-admin-coupon-list-delete"><span className="ip-lbl">Xóa</span></button>
                         </span>
                       </td>
                     </tr>
@@ -150,12 +158,12 @@ function CouponList() {
       {del && (
         <div className="backdrop">
           <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="prm-del-title" onKeyDown={(e) => e.key === 'Escape' && !del.busy && setDel(null)}>
-            <h2 id="prm-del-title">Xóa coupon {del.coupon.code}?</h2>
-            <p>Mã không còn dùng được và không thể khôi phục.</p>
+            <div className="dlg-head"><span className="tile red"><span className="i i-trash" aria-hidden="true" /></span><h2 id="prm-del-title">Xóa {del.coupon.code}?</h2></div>
+            <p>Không thể khôi phục.</p>
             {del.error && <p className="field-error" role="alert" data-testid="prm-admin-coupon-list-delete-error">{del.error}</p>}
             <div className="actions">
               <button className="btn" disabled={del.busy} onClick={() => setDel(null)} data-testid="prm-admin-coupon-list-delete-cancel">Hủy</button>
-              <button className="btn btn-danger-soft tight" disabled={del.busy} onClick={() => void confirmDelete()} data-testid="prm-admin-coupon-list-delete-confirm">{del.busy ? 'Đang xóa...' : 'Xóa'}</button>
+              <button className="btn btn-danger tight" disabled={del.busy} onClick={() => void confirmDelete()} data-testid="prm-admin-coupon-list-delete-confirm">{del.busy ? 'Đang xóa...' : 'Xóa'}</button>
             </div>
           </div>
         </div>

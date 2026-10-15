@@ -41,18 +41,17 @@ export default function ProductDetailPage() {
 
   if (view === 'loading') {
     return (
-      <main className="wide" data-testid="prd-product-detail-loading" aria-busy="true">
-        <div className="detail"><div className="skeleton skeleton-card" /><div><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div></div>
-        <div className="skeleton" style={{ height: '6rem' }} />
+      <main className="page" data-testid="prd-product-detail-loading" aria-busy="true">
+        <div className="ct-detail"><div className="skeleton skeleton-card" style={{ height: '24rem' }} /><div><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div></div>
       </main>
     );
   }
   if (view === 'notfound') {
-    return <main className="wide"><div data-testid="prd-product-detail-not-found"><p>Không tìm thấy sản phẩm.</p><Link href="/products">Về danh sách sản phẩm</Link></div></main>;
+    return <main className="page"><div className="empty" data-testid="prd-product-detail-not-found"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không tìm thấy sản phẩm</strong><Link className="btn" href="/products"><span className="i i-left" aria-hidden="true" /> Sản phẩm</Link></div></main>;
   }
   if (view === 'error' || !p) {
     return (
-      <main className="wide">
+      <main className="page">
         <div role="alert" className="banner banner-error" data-testid="prd-product-detail-error">
           {limit.left > 0 ? rateLimitedText(limit.left) : 'Không tải được sản phẩm.'}{' '}
           <button className="btn" disabled={limit.left > 0} onClick={() => void load()} data-testid="prd-product-detail-retry">Thử lại</button>
@@ -64,41 +63,45 @@ export default function ProductDetailPage() {
   const rating = formatRating(p.rating_avg, p.rating_count, true);
   const images = Array.isArray(p.images) ? p.images : [];
   const cat = p.category;
+  const crumbs = [...(cat?.path ?? []), ...(cat ? [{ id: cat.id, name: cat.name }] : [])];
   return (
-    <main className="wide">
-      <nav aria-label="Đường dẫn" className="crumbs" data-testid="prd-product-detail-breadcrumb">
-        {[...(cat?.path ?? []), ...(cat ? [{ id: cat.id, name: cat.name }] : [])].map((c) => (
-          <span key={c.id}><Link href={`/products?category=${encodeURIComponent(c.id)}`}>{c.name}</Link> › </span>
+    <main className="page">
+      <nav aria-label="Đường dẫn" className="ct-crumbs" data-testid="prd-product-detail-breadcrumb">
+        <Link href="/products">Sản phẩm</Link>
+        {crumbs.map((c) => (
+          <span key={c.id}><span className="i i-right" aria-hidden="true" /><Link href={`/products?category=${encodeURIComponent(c.id)}`}>{c.name}</Link></span>
         ))}
-        <span aria-current="page">{p.name}</span>
+        <span><span className="i i-right" aria-hidden="true" /><span aria-current="page">{p.name}</span></span>
       </nav>
-      <div className="detail">
+      <div className="ct-detail">
         <div>
-          <div className="gallery" data-testid="prd-product-detail-gallery">{images[img] ? <img src={images[img].url} alt={p.name} /> : null}</div>
+          <div className="ct-gallery" data-testid="prd-product-detail-gallery">{images[img] ? <img src={images[img].url} alt={p.name} /> : <span className="i i-image" aria-hidden="true" />}</div>
           {images.length > 0 && (
-            <div className="thumbs">
+            <div className="ct-thumbs">
               {images.map((im, i) => (
-                <button key={im.id} type="button" className={`thumb${i === img ? ' thumb-on' : ''}`} aria-label={`Ảnh ${i + 1}`} aria-pressed={i === img} onClick={() => setImg(i)} data-testid="prd-product-detail-thumbnail" data-id={im.id}><img src={im.url} alt="" /></button>
+                <button key={im.id} type="button" className={`ct-thumb${i === img ? ' on' : ''}`} aria-label={`Ảnh ${i + 1}`} aria-pressed={i === img} onClick={() => setImg(i)} data-testid="prd-product-detail-thumbnail" data-id={im.id}><img src={im.url} alt="" /></button>
               ))}
             </div>
           )}
         </div>
-        <div>
+        <div className="panel ct-info">
           <h1 data-testid="prd-product-detail-name">{p.name}</h1>
-          <p className="hint">Mã: <span data-testid="prd-product-detail-sku">{p.sku}</span></p>
-          <p className="price" data-testid="prd-product-detail-price">{formatPrice(p.price)}</p>
-          <div className="rating-line">
-            {rating ? <p data-testid="prd-product-detail-rating">{rating}</p> : <p className="hint" data-testid="prd-product-detail-rating-empty">Chưa có đánh giá</p>}
-            <Link href={`/products/${encodeURIComponent(p.id)}/reviews`}>Xem đánh giá</Link>
+          <div className="ct-subline">
+            <span className="muted"><span className="i i-tag" aria-hidden="true" /> <span data-testid="prd-product-detail-sku">{p.sku}</span></span>
+            {cat && <Link className="ct-chip" href={`/products?category=${encodeURIComponent(cat.id)}`} data-testid="prd-product-detail-category">{cat.name}</Link>}
           </div>
-          <p><StockLabel inStock={stock} testId="prd-product-detail-stock" /></p>
+          <p className="ct-bigprice" data-testid="prd-product-detail-price">{formatPrice(p.price)}</p>
+          <div className="ct-subline">
+            {rating ? <span className="ct-rate" data-testid="prd-product-detail-rating">{rating}</span> : <span className="muted" data-testid="prd-product-detail-rating-empty">Chưa có đánh giá</span>}
+            <Link href={`/products/${encodeURIComponent(p.id)}/reviews`}><span className="i i-message" aria-hidden="true" /> Xem đánh giá</Link>
+            <StockLabel inStock={stock} testId="prd-product-detail-stock" />
+          </div>
           <AddToCart productId={p.id} />
-          {cat && <p>Danh mục: <Link href={`/products?category=${encodeURIComponent(cat.id)}`} data-testid="prd-product-detail-category">{cat.name}</Link></p>}
         </div>
       </div>
       {p.description && p.description.trim() !== '' && (
-        <section>
-          <h2>Mô tả</h2>
+        <section className="panel ct-desc">
+          <div className="panel-head"><h2><span className="i i-list" aria-hidden="true" /> Mô tả</h2></div>
           <div className="pre" data-testid="prd-product-detail-description">{p.description}</div>
         </section>
       )}

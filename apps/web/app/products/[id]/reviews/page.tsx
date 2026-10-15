@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useParams, usePathname, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ImageStrip, ReviewPager, ReviewerAvatar, Stars, useQueryGo } from '../../../../components/ReviewParts';
+import { ImageStrip, ReviewPager, ReviewerAvatar, Stars, VerifiedBadge, useQueryGo } from '../../../../components/ReviewParts';
 import { useCountdown } from '../../../../components/useCountdown';
 import { api } from '../../../../lib/api';
 import { useAuth } from '../../../../lib/auth';
@@ -76,11 +76,11 @@ function ReviewsInner({ id }: { id: string }) {
 
   if (view === 'notfound') {
     return (
-      <main className="wide">
-        <section className="notfound" data-testid={`${P}-notfound`}>
-          <p className="big">404</p>
+      <main className="page page-narrow">
+        <section className="empty" data-testid={`${P}-notfound`}>
+          <span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span>
           <h1>Không tìm thấy sản phẩm</h1>
-          <Link className="btn btn-primary tight" href="/products">Về danh sách sản phẩm</Link>
+          <Link className="btn btn-primary tight" href="/products">Sản phẩm</Link>
         </section>
       </main>
     );
@@ -91,91 +91,95 @@ function ReviewsInner({ id }: { id: string }) {
   const emptyAll = view === 'ready' && items.length === 0;
   const emptyFiltered = emptyAll && Boolean(rating) && (sum?.count ?? 0) > 0;
   const next = path + (sp.toString() ? `?${sp.toString()}` : '');
+  const avg = sum && sum.count > 0 ? formatAvg(sum.avg) : null;
 
   return (
-    <main className="wide">
-      <nav aria-label="Đường dẫn" className="crumbs">
-        <Link href="/products">Sản phẩm</Link> › <Link href={`/products/${encodeURIComponent(id)}`}>{name ?? 'Chi tiết sản phẩm'}</Link> › <span aria-current="page">Đánh giá</span>
+    <main className="page page-mid">
+      <nav aria-label="Đường dẫn">
+        <Link className="back" href={`/products/${encodeURIComponent(id)}`}><span className="i i-left" aria-hidden="true" />{name ?? 'Sản phẩm'}</Link>
       </nav>
-      <h1>Đánh giá{name ? ` "${name}"` : ''}</h1>
+      <div className="page-head"><h1><span className="i i-star" aria-hidden="true" />&nbsp;Đánh giá</h1></div>
 
-      {view === 'rate' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được đánh giá, thử lại sau {limit.left > 0 ? `${limit.left} giây` : 'ít phút'}.{' '}<button type="button" className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
-      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được đánh giá.{' '}<button type="button" className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
+      {view === 'rate' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Thử lại sau {limit.left > 0 ? `${limit.left} giây` : 'ít phút'}. <button type="button" className="btn btn-sm" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
+      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được đánh giá. <button type="button" className="btn btn-sm" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
 
       {view === 'loading' && !data && (
-        <div className="rev-layout" data-testid={`${P}-loading`} aria-busy="true">
+        <div className="rd-layout" data-testid={`${P}-loading`} aria-busy="true">
           <div className="skeleton" style={{ height: '12rem' }} />
-          <div><div className="skeleton" /><div className="skeleton" style={{ height: '5rem' }} /><div className="skeleton" style={{ height: '5rem' }} /><div className="skeleton" style={{ height: '5rem' }} /></div>
+          <div><div className="skeleton" style={{ height: '5rem' }} /><div className="skeleton" style={{ height: '5rem' }} /><div className="skeleton" style={{ height: '5rem' }} /></div>
         </div>
       )}
 
       {data && sum && (
-        <div className="rev-layout">
-          <aside className="rev-side">
-            <section className="card-block" data-testid={`${P}-summary`} aria-label="Tóm tắt đánh giá">
-              <p className="rev-avg-line">
-                {sum.count > 0 && formatAvg(sum.avg)
-                  ? <><span className="rev-avg" data-testid={`${P}-avg`}>{formatAvg(sum.avg)}</span><span className="stars" aria-hidden="true">{'★'.repeat(Math.round(sum.avg ?? 0))}{'☆'.repeat(5 - Math.round(sum.avg ?? 0))}</span><span className="sr-only">Điểm trung bình {formatAvg(sum.avg)} trên 5 sao</span></>
-                  : <span className="hint" data-testid={`${P}-avg`}>Chưa có đánh giá</span>}
-              </p>
-              <p data-testid={`${P}-count`}>{sum.count} đánh giá</p>
-              <ul className="rev-dist" data-testid={`${P}-distribution`}>
+        <div className="rd-layout">
+          <aside className="rd-side">
+            <section className="panel rd-sum" data-testid={`${P}-summary`} aria-label="Tóm tắt đánh giá">
+              <div className="rd-avg-line">
+                {avg
+                  ? <><span className="rd-avg" data-testid={`${P}-avg`}>{avg}</span><span className="stars rd-avg-stars" aria-hidden="true">{'★'.repeat(Math.round(sum.avg ?? 0))}{'☆'.repeat(5 - Math.round(sum.avg ?? 0))}</span><span className="sr-only">Điểm trung bình {avg} trên 5 sao</span></>
+                  : <span className="muted" data-testid={`${P}-avg`}>Chưa có</span>}
+              </div>
+              <p className="small muted" data-testid={`${P}-count`}>{sum.count} đánh giá</p>
+              <ul className="rd-dist" data-testid={`${P}-distribution`}>
                 {[5, 4, 3, 2, 1].map((star) => {
                   const n = Number(sum.distribution?.[String(star)]) || 0;
                   const pct = sum.count > 0 ? Math.round((n / sum.count) * 100) : 0;
                   return (
                     <li key={star}>
-                      <span className="rev-dist-label">{star} sao</span>
-                      <span className="rev-bar" aria-hidden="true"><span style={{ width: `${pct}%` }} /></span>
-                      <span className="tabular rev-dist-n">{n}</span>
+                      <span className="rd-dist-label">{star}<span className="i i-star" aria-hidden="true" /><span className="sr-only"> sao</span></span>
+                      <span className="rd-bar" aria-hidden="true"><span style={{ width: `${pct}%` }} /></span>
+                      <span className="tabular small muted rd-dist-n">{n}</span>
                     </li>
                   );
                 })}
               </ul>
-              {authStatus === 'ready' && !user && <p><Link href={`/login?next=${encodeURIComponent(next)}`} data-testid={`${P}-login-prompt`}>Đăng nhập để viết đánh giá</Link></p>}
-              {role === 'customer' && elig?.eligible && <Link className="btn btn-primary" href={`${base}/new`} data-testid={`${P}-write-button`}>Viết đánh giá</Link>}
+              {authStatus === 'ready' && !user && <Link className="btn tight" href={`/login?next=${encodeURIComponent(next)}`} data-testid={`${P}-login-prompt`}><span className="i i-login" aria-hidden="true" />Đăng nhập để đánh giá</Link>}
+              {role === 'customer' && elig?.eligible && <Link className="btn btn-primary" href={`${base}/new`} data-testid={`${P}-write-button`}><span className="i i-pencil" aria-hidden="true" />Viết đánh giá</Link>}
               {role === 'customer' && elig && !elig.eligible && (
-                <div>
-                  <p className="hint" data-testid={`${P}-ineligible-reason`}>{ineligibleText(elig.reason)}</p>
-                  {elig.reason === 'already_reviewed' && <p><Link href="/me/reviews">Đánh giá của tôi</Link></p>}
+                <div className="rd-inelig">
+                  <p className="small muted" data-testid={`${P}-ineligible-reason`}><span className="i i-info" aria-hidden="true" /> {ineligibleText(elig.reason)}</p>
+                  {elig.reason === 'already_reviewed' && <Link className="btn btn-sm" href="/me/reviews">Đánh giá của tôi</Link>}
                 </div>
               )}
             </section>
           </aside>
 
-          <section className="rev-main">
-            <div className="toolbar">
+          <section className="rd-main">
+            <div className="rd-bar-tools">
               <select value={sort} aria-label="Sắp xếp" onChange={(e) => go({ sort: e.target.value === 'newest' ? null : e.target.value })} data-testid={`${P}-sort`}>
                 {SORTS.map((o) => <option key={o.v} value={o.v}>{o.t}</option>)}
               </select>
               <select value={rating} aria-label="Lọc theo sao" onChange={(e) => go({ rating: e.target.value || null })} data-testid={`${P}-filter-rating`}>
-                <option value="">Tất cả sao</option>
+                <option value="">Mọi sao</option>
                 {[5, 4, 3, 2, 1].map((n) => <option key={n} value={String(n)}>{n} sao</option>)}
               </select>
-              {rating && !emptyFiltered && <button type="button" className="btn btn-quiet tight" onClick={() => go({ rating: null })} data-testid={`${P}-filter-clear`}>Xóa bộ lọc</button>}
+              {rating && !emptyFiltered && <button type="button" className="btn btn-ghost btn-sm" onClick={() => go({ rating: null })} data-testid={`${P}-filter-clear`}><span className="i i-x" aria-hidden="true" />Bỏ lọc</button>}
             </div>
 
             {emptyFiltered && (
-              <div className="notfound" data-testid={`${P}-empty-filter`}>
-                <p>Không có đánh giá nào cho mức sao này</p>
-                <button type="button" className="btn tight" onClick={() => go({ rating: null })} data-testid={`${P}-filter-clear`}>Xóa bộ lọc</button>
+              <div className="empty" data-testid={`${P}-empty-filter`}>
+                <span className="tile tile-lg gray"><span className="i i-filter" aria-hidden="true" /></span>
+                <strong>Không có mức sao này</strong>
+                <button type="button" className="btn btn-sm" onClick={() => go({ rating: null })} data-testid={`${P}-filter-clear`}>Bỏ lọc</button>
               </div>
             )}
-            {emptyAll && !emptyFiltered && <div className="notfound" data-testid={`${P}-empty`}><p>Sản phẩm chưa có đánh giá</p></div>}
+            {emptyAll && !emptyFiltered && <div className="empty" data-testid={`${P}-empty`}><span className="tile tile-lg gray"><span className="i i-star" aria-hidden="true" /></span><strong>Chưa có đánh giá</strong></div>}
             {view === 'loading' && <div data-testid={`${P}-loading`} aria-busy="true"><div className="skeleton" style={{ height: '5rem' }} /><div className="skeleton" style={{ height: '5rem' }} /><div className="skeleton" style={{ height: '5rem' }} /></div>}
             {view === 'ready' && items.length > 0 && (
               <>
-                <ul className="rev-list" data-testid={`${P}-list`}>
+                <ul className="rd-cards" data-testid={`${P}-list`}>
                   {items.map((it) => (
-                    <li key={it.id} className="rev-item" data-testid={`${P}-item`} data-id={it.id}>
-                      <div className="rev-item-head">
-                        <Stars value={it.rating} testid={`${P}-item-rating`} />
-                        <span className="rev-reviewer" data-testid={`${P}-item-reviewer`}><ReviewerAvatar name={String(it.reviewer?.display_name ?? '')} url={it.reviewer?.avatar_url} /><span>{String(it.reviewer?.display_name ?? '')}</span></span>
-                        {it.verified_purchase !== false && <span className="badge rev-verified" data-testid={`${P}-item-verified`}><span aria-hidden="true">✓ </span>Đã mua hàng</span>}
-                        <span className="hint tabular" data-testid={`${P}-item-date`}>{formatDate(it.published_at)}</span>
-                        {it.edited_at && <span className="hint" data-testid={`${P}-item-edited`}>Đã chỉnh sửa</span>}
+                    <li key={it.id} className="rd-card" data-testid={`${P}-item`} data-id={it.id}>
+                      <div className="rd-card-head">
+                        <span className="rev-reviewer" data-testid={`${P}-item-reviewer`}><ReviewerAvatar name={String(it.reviewer?.display_name ?? '')} url={it.reviewer?.avatar_url} /><span className="truncate">{String(it.reviewer?.display_name ?? '')}</span></span>
+                        {it.verified_purchase !== false && <VerifiedBadge testid={`${P}-item-verified`} />}
+                        <span className="rd-card-meta">
+                          <Stars value={it.rating} testid={`${P}-item-rating`} />
+                          <span className="small muted tabular" data-testid={`${P}-item-date`}>{formatDate(it.published_at)}</span>
+                          {it.edited_at && <span className="small muted" data-testid={`${P}-item-edited`}>· sửa</span>}
+                        </span>
                       </div>
-                      {it.comment && <p className="pre rev-comment" data-testid={`${P}-item-comment`}>{it.comment}</p>}
+                      {it.comment && <p className="pre rd-comment" data-testid={`${P}-item-comment`}>{it.comment}</p>}
                       <ImageStrip images={it.images} testid={`${P}-item-images`} />
                     </li>
                   ))}
@@ -192,5 +196,5 @@ function ReviewsInner({ id }: { id: string }) {
 
 export default function ProductReviewsPage() {
   const { id } = useParams<{ id: string }>();
-  return <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><ReviewsInner key={id} id={id} /></Suspense>;
+  return <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><ReviewsInner key={id} id={id} /></Suspense>;
 }

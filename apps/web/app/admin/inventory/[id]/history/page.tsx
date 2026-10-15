@@ -55,48 +55,64 @@ function History() {
   const emptyAll = view === 'ready' && items.length === 0;
   const actorOf = (m: Movement) => (m.actor.id === null ? 'Hệ thống' : m.actor.name ?? shortId(m.actor.id));
 
+  const EV: Record<string, [string, string]> = { in: ['green', 'plus'], out: ['amber', 'minus'], adjust: ['violet', 'sliders'], sale: ['', 'cart'], return: ['gray', 'undo'], restock: ['gray', 'refresh'] };
+
   return (
-    <main className="wide">
-      <p><Link href={`/admin/inventory/${encodeURIComponent(id)}`} data-testid="inv-inventory-history-back">← Quay lại chi tiết tồn kho</Link></p>
-      <h1>Lịch sử biến động kho</h1>
-      <div className="toolbar">
-        <select multiple aria-label="Loại biến động" value={draft.type} onChange={(e) => setDraft({ ...draft, type: [...e.target.selectedOptions].map((o) => o.value) })} data-testid="inv-inventory-history-type-filter">
+    <main className="page page-mid">
+      <Link href={`/admin/inventory/${encodeURIComponent(id)}`} className="back" data-testid="inv-inventory-history-back"><span className="i i-left" aria-hidden="true" /> Chi tiết</Link>
+      <div className="page-head"><h1>Lịch sử kho</h1></div>
+      <div className="panel ip-filter" style={{ marginBottom: '1rem' }}>
+        <select multiple size={6} aria-label="Loại biến động" value={draft.type} onChange={(e) => setDraft({ ...draft, type: [...e.target.selectedOptions].map((o) => o.value) })} data-testid="inv-inventory-history-type-filter">
           {Object.entries(TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
-        <input type="date" aria-label="Từ ngày" value={draft.from} onChange={(e) => setDraft({ ...draft, from: e.target.value })} data-testid="inv-inventory-history-from" />
-        <input type="date" aria-label="Đến ngày" value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} data-testid="inv-inventory-history-to" />
-        <button type="button" className="btn btn-primary tight" onClick={apply} data-testid="inv-inventory-history-apply">Lọc</button>
-        {(filtering || draft.type.length > 0 || draft.from || draft.to) && <button type="button" className="btn btn-quiet tight" onClick={clear} data-testid="inv-inventory-history-clear-filter">Xoá lọc</button>}
+        <div className="ip-filter-side">
+          <input type="date" aria-label="Từ ngày" value={draft.from} onChange={(e) => setDraft({ ...draft, from: e.target.value })} data-testid="inv-inventory-history-from" />
+          <input type="date" aria-label="Đến ngày" value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} data-testid="inv-inventory-history-to" />
+          <div className="ip-btns">
+            <button type="button" className="btn btn-primary tight" onClick={apply} data-testid="inv-inventory-history-apply">Lọc</button>
+            {(filtering || draft.type.length > 0 || draft.from || draft.to) && <button type="button" className="btn btn-ghost tight" onClick={clear} data-testid="inv-inventory-history-clear-filter"><span className="i i-x" aria-hidden="true" /> Xoá lọc</button>}
+          </div>
+        </div>
       </div>
 
       {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="inv-inventory-history-error">{limitedText(limit.left)} <button className="btn" onClick={apply} data-testid="inv-inventory-history-retry">Thử lại</button></div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid="inv-inventory-history-error">{message} <button className="btn" onClick={apply} data-testid="inv-inventory-history-retry">Thử lại</button></div>}
       {view === 'notfound' && (
-        <div className="notfound" data-testid="inv-inventory-history-not-found"><p className="big">404</p><h2>Không tìm thấy bản ghi kho</h2><Link className="btn" href="/admin/inventory">Về danh sách tồn kho</Link></div>
+        <div className="empty panel" data-testid="inv-inventory-history-not-found"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không tìm thấy bản ghi kho</strong><Link className="btn" href="/admin/inventory">Về tồn kho</Link></div>
       )}
       {view === 'loading' && !data && <div data-testid="inv-inventory-history-loading" aria-busy="true">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
       {emptyAll && (filtering || page > 1
-        ? <div data-testid="inv-inventory-history-empty-filtered"><p>Không có biến động nào khớp.</p><button type="button" className="btn" onClick={clear}>Xoá lọc</button></div>
-        : <p className="hint" data-testid="inv-inventory-history-empty">Sản phẩm này chưa có biến động kho nào.</p>)}
+        ? <div className="empty panel" data-testid="inv-inventory-history-empty-filtered"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có kết quả</strong><button type="button" className="btn" onClick={clear}>Xoá lọc</button></div>
+        : <div className="empty panel" data-testid="inv-inventory-history-empty"><span className="tile tile-lg gray"><span className="i i-inbox" aria-hidden="true" /></span><strong>Chưa có biến động</strong></div>)}
       {data && items.length > 0 && (view === 'ready' || view === 'loading') && (
         <>
-          <div className={`table-wrap${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? 'inv-inventory-history-loading' : undefined}>
-            <table className="stack-table">
-              <thead><tr><th>Thời gian</th><th>Loại</th><th className="num">Thay đổi</th><th className="num">Còn lại</th><th>Lý do / Ghi chú</th><th>Người</th><th>Đơn</th></tr></thead>
-              <tbody>
-                {items.map((m) => (
-                  <tr key={m.id} data-testid="inv-inventory-history-row">
-                    <td data-label="Thời gian" data-testid="inv-inventory-history-time">{formatDateTime(m.created_at)}</td>
-                    <td data-label="Loại"><span className="badge" data-testid="inv-inventory-history-type">{TYPE_LABEL[m.type] ?? m.type}</span></td>
-                    <td data-label="Thay đổi" className="num" data-testid="inv-inventory-history-quantity">{signed(m.quantity)}</td>
-                    <td data-label="Còn lại" className="num" data-testid="inv-inventory-history-on-hand-after">{num(m.on_hand_after)}</td>
-                    <td data-label="Lý do / Ghi chú" data-testid="inv-inventory-history-reason">{[m.reason ? REASON_LABEL[m.reason] ?? m.reason : null, m.note].filter(Boolean).join(' · ') || '—'}</td>
-                    <td data-label="Người" data-testid="inv-inventory-history-actor">{actorOf(m)}</td>
-                    <td data-label="Đơn" className="mono" data-testid="inv-inventory-history-ref">{m.ref ? shortId(m.ref.id) : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className={`panel panel-flush${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? 'inv-inventory-history-loading' : undefined}>
+            <ul className="ip-tl">
+              {items.map((m) => {
+                const [tone, ic] = EV[m.type] ?? ['gray', 'list'];
+                const reasonText = [m.reason ? REASON_LABEL[m.reason] ?? m.reason : null, m.note].filter(Boolean).join(' · ');
+                return (
+                  <li key={m.id} className="ip-ev" data-testid="inv-inventory-history-row">
+                    <span className={`tile ${tone}`}><span className={`i i-${ic}`} aria-hidden="true" /></span>
+                    <div className="ip-ev-main">
+                      <div className="ip-ev-top">
+                        <span className="badge" data-testid="inv-inventory-history-type">{TYPE_LABEL[m.type] ?? m.type}</span>
+                        <span className="small muted" hidden={!reasonText} data-testid="inv-inventory-history-reason">{reasonText || '—'}</span>
+                      </div>
+                      <div className="ip-ev-meta">
+                        <span><span className="i i-clock" aria-hidden="true" /><span data-testid="inv-inventory-history-time">{formatDateTime(m.created_at)}</span></span>
+                        <span><span className="i i-user" aria-hidden="true" /><span data-testid="inv-inventory-history-actor">{actorOf(m)}</span></span>
+                        <span hidden={!m.ref}><span className="i i-receipt" aria-hidden="true" /><span className="mono" data-testid="inv-inventory-history-ref">{m.ref ? shortId(m.ref.id) : '—'}</span></span>
+                      </div>
+                    </div>
+                    <div className="ip-ev-qty">
+                      <b data-sign={m.quantity > 0 ? '+' : m.quantity < 0 ? '-' : ''} data-testid="inv-inventory-history-quantity">{signed(m.quantity)}</b>
+                      <small><span className="i i-right" aria-hidden="true" /><span data-testid="inv-inventory-history-on-hand-after">{num(m.on_hand_after)}</span></small>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
           <Pager testPrefix="inv-inventory-history" unit="dòng" page={data.page ?? page} limit={data.limit ?? LIMIT} total={data.total} shown={items.length} onPage={setPage} />
         </>

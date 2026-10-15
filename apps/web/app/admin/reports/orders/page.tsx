@@ -20,49 +20,58 @@ function Inner() {
   if (b.status === 'forbidden') return <ForbiddenView />;
   const applied = appliedRange(from, to);
   return (
-    <main className="wide">
-      <h1>Báo cáo đơn hàng</h1>
-      <p className="hint"><Link href="/admin/dashboard">Về dashboard</Link></p>
+    <main className="page">
+      <Link className="back" href="/admin/dashboard"><span className="i i-left" aria-hidden="true" />Dashboard</Link>
+      <div className="page-head"><h1>Đơn hàng</h1></div>
       <RateBanner testid={`${P}-rate-limit`} status={b.status} retryAfter={b.retryAfter} />
       <RangeBar p={P} applied={applied} invalid={b.status === 'invalid'} asOf={d?.as_of} onApply={(f, t) => go({ from: f || null, to: t || null })} onReset={() => go({ from: null, to: null })} />
       {b.status === 'loading' && !d && <Skeleton testid={`${P}-loading`} rows={6} />}
       {failed(b) && (
-        <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được báo cáo đơn hàng. <button type="button" className="btn tight" onClick={b.reload} data-testid={`${P}-retry`}>Thử lại</button></div>
+        <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được báo cáo. <button type="button" className="btn btn-sm" onClick={b.reload} data-testid={`${P}-retry`}>Thử lại</button></div>
       )}
       {d && !failed(b) && (
-        <>
-          <section className="dsh-kpis dsh-kpis-4" aria-label="Tổng">
-            <div className="dsh-kpi"><h2>Tổng đơn</h2><p className="dsh-big tabular" data-testid={`${P}-total`}>{count(d.totals.total)}</p></div>
-            <div className="dsh-kpi"><h2>Tỷ lệ hủy</h2><p className="dsh-big tabular" data-testid={`${P}-cancel-rate`}>{percentText(d.totals.cancel_rate)}</p></div>
-            <div className="dsh-kpi"><h2>Tỷ lệ hết hạn</h2><p className="dsh-big tabular" data-testid={`${P}-expired-rate`}>{percentText(d.totals.expired_rate)}</p></div>
-            <div className="dsh-kpi"><h2>Giá trị đơn trung bình</h2><p className="dsh-big tabular" data-testid={`${P}-aov`}>{moneyOrDash(d.totals.average_order_value)}</p></div>
+        <div className="stack">
+          <section className="stat-grid" aria-label="Tổng">
+            <div className="stat"><span className="tile"><span className="i i-receipt" aria-hidden="true" /></span><div><b className="tabular" data-testid={`${P}-total`}>{count(d.totals.total)}</b><span className="lbl">Tổng đơn</span></div></div>
+            <div className="stat"><span className="tile red"><span className="i i-xc" aria-hidden="true" /></span><div><b className="tabular" data-testid={`${P}-cancel-rate`}>{percentText(d.totals.cancel_rate)}</b><span className="lbl">Tỷ lệ hủy</span></div></div>
+            <div className="stat"><span className="tile amber"><span className="i i-clock" aria-hidden="true" /></span><div><b className="tabular" data-testid={`${P}-expired-rate`}>{percentText(d.totals.expired_rate)}</b><span className="lbl">Tỷ lệ hết hạn</span></div></div>
+            <div className="stat"><span className="tile green"><span className="i i-bag" aria-hidden="true" /></span><div><b className="tabular" data-testid={`${P}-aov`}>{moneyOrDash(d.totals.average_order_value)}</b><span className="lbl">Trung bình/đơn</span></div></div>
           </section>
-          {d.totals.total === 0 && <p className="hint" data-testid={`${P}-empty`}>Không có đơn từ {formatYmd(d.from)} tới {formatYmd(d.to)}.</p>}
-          <h2 data-testid={`${P}-granularity`}>Số đơn theo {GRAN_TEXT[d.granularity]}{d.granularity === 'week' ? ' (tuần bắt đầu thứ Hai)' : ''}</h2>
-          <Chart testid={`${P}-chart`} title={`Số đơn theo ${GRAN_TEXT[d.granularity]}`} unit="đơn" format={(n) => count(n)}
-            points={d.buckets.map((x) => ({ key: x.bucket_start, label: bucketLabel(d.granularity, x.bucket_start), value: x.total, text: `${count(x.total)} đơn` }))} />
-          <ul className="dsh-bars" data-testid={`${P}-by-status`}>
-            {STATUS_ORDER.map((s) => {
-              const n = d.totals.by_status[s], pct = d.totals.total ? (n * 100) / d.totals.total : 0;
-              return <li key={s}><span className="dsh-bar-label">{ORDER_STATUS_LABEL[s]}</span><span className="dsh-meter" aria-hidden="true"><span style={{ width: `${pct}%` }} /></span><strong className="tabular">{count(n)} ({d.totals.total ? percentText(pct) : '—'})</strong></li>;
-            })}
-          </ul>
-          <div className="table-wrap" data-testid={`${P}-table`}>
-            <table className="stack-table">
-              <thead><tr><th>Mốc</th><th className="num">Tổng</th>{STATUS_ORDER.map((s) => <th key={s} className="num">{ORDER_STATUS_LABEL[s]}</th>)}</tr></thead>
-              <tbody>
-                {d.buckets.map((x) => (
-                  <tr key={x.bucket_start} data-testid={`${P}-row`} data-bucket={x.bucket_start}>
-                    <td data-label="Mốc" className="tabular">{bucketLabel(d.granularity, x.bucket_start)}</td>
-                    <td data-label="Tổng" className="num tabular">{count(x.total)}</td>
-                    {STATUS_ORDER.map((s) => <td key={s} data-label={ORDER_STATUS_LABEL[s]} className="num tabular">{count(x.by_status[s])}</td>)}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {d.totals.total === 0 && (
+            <div className="empty" data-testid={`${P}-empty`}><span className="tile tile-lg gray"><span className="i i-inbox" aria-hidden="true" /></span><strong>Chưa có đơn</strong><span className="small">{formatYmd(d.from)} – {formatYmd(d.to)}</span></div>
+          )}
+          <section className="panel">
+            <div className="panel-head"><h2 data-testid={`${P}-granularity`}>Theo {GRAN_TEXT[d.granularity]}{d.granularity === 'week' ? ' (từ thứ Hai)' : ''}</h2></div>
+            <Chart testid={`${P}-chart`} title={`Số đơn theo ${GRAN_TEXT[d.granularity]}`} unit="đơn" format={(n) => count(n)}
+              points={d.buckets.map((x) => ({ key: x.bucket_start, label: bucketLabel(d.granularity, x.bucket_start), value: x.total, text: `${count(x.total)} đơn` }))} />
+          </section>
+          <section className="panel">
+            <div className="panel-head"><h2>Trạng thái</h2></div>
+            <ul className="dsh-bars rd-bars" data-testid={`${P}-by-status`}>
+              {STATUS_ORDER.map((s) => {
+                const n = d.totals.by_status[s], pct = d.totals.total ? (n * 100) / d.totals.total : 0;
+                return <li key={s}><span className="badge" data-status={s}>{ORDER_STATUS_LABEL[s]}</span><span className="dsh-meter" aria-hidden="true"><span style={{ width: `${pct}%` }} /></span><strong className="tabular">{count(n)} <span className="muted">({d.totals.total ? percentText(pct) : '—'})</span></strong></li>;
+              })}
+            </ul>
+          </section>
+          <div className="panel panel-flush" data-testid={`${P}-table`}>
+            <div className="table-wrap">
+              <table className="stack-table">
+                <thead><tr><th>Mốc</th><th className="num">Tổng</th>{STATUS_ORDER.map((s) => <th key={s} className="num">{ORDER_STATUS_LABEL[s]}</th>)}</tr></thead>
+                <tbody>
+                  {d.buckets.map((x) => (
+                    <tr key={x.bucket_start} data-testid={`${P}-row`} data-bucket={x.bucket_start}>
+                      <td data-label="Mốc" className="tabular">{bucketLabel(d.granularity, x.bucket_start)}</td>
+                      <td data-label="Tổng" className="num tabular strong">{count(x.total)}</td>
+                      {STATUS_ORDER.map((s) => <td key={s} data-label={ORDER_STATUS_LABEL[s]} className={`num tabular${x.by_status[s] ? '' : ' rd-zero'}`}>{count(x.by_status[s])}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <p className="hint" data-testid={`${P}-note`}>Đây là số đơn và giá trị đơn, không phải doanh thu. Doanh thu lấy ở báo cáo doanh thu (theo PAY); hai báo cáo có thể lệch ngắn hạn.</p>
-        </>
+          <p className="small muted" data-testid={`${P}-note`}><span className="i i-info" aria-hidden="true" /> Số đơn, không phải doanh thu.</p>
+        </div>
       )}
     </main>
   );
@@ -71,7 +80,7 @@ function Inner() {
 export default function OrdersReportPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
+      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
     </RequireRole>
   );
 }

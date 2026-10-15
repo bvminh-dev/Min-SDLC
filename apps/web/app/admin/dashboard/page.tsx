@@ -2,11 +2,11 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BlockError, ForbiddenView, RangeBar, RateBanner, ReportLink, Skeleton } from '../../../components/DashboardParts';
+import { BlockError, ForbiddenView, Kpi, RangeBar, RateBanner, ReportLink, Skeleton } from '../../../components/DashboardParts';
 import { useQueryGo } from '../../../components/ReviewParts';
 import { RequireRole } from '../../../components/RequireRole';
 import {
-  appliedRange, count, defaultRange, failed, formatYmd, money, rangeQuery, STATUS_ORDER, useBlock,
+  appliedRange, count, failed, money, rangeQuery, STATUS_ORDER, useBlock,
   type CustomersBlock, type LowStockBlock, type OrdersBlock, type ProductsBlock, type RecentBlock, type RevenueBlock,
 } from '../../../lib/dashboard';
 import { formatOrderTime, ORDER_STATUS_LABEL, paymentText } from '../../../lib/order';
@@ -36,114 +36,111 @@ function Inner() {
   const reportQ = rangeQuery(from, to);
 
   if (blocks.some((b) => b.status === 'forbidden')) return <ForbiddenView />;
+  const od = orders.data;
   return (
-    <main className="wide">
-      <h1>Dashboard</h1>
+    <main className="page">
+      <div className="page-head"><h1>Dashboard</h1></div>
       <RateBanner testid={`${P}-rate-limit`} status={limited?.status} retryAfter={limited?.retryAfter} />
       <RangeBar p={P} applied={applied} invalid={invalid} asOf={asOf}
         onApply={(f, t) => go({ from: f || null, to: t || null })} onReset={() => go({ from: null, to: null })}>
-        <button type="button" className="btn tight" onClick={refresh} data-testid={`${P}-refresh`}>Làm mới</button>
+        <button type="button" className="btn btn-icon" aria-label="Làm mới" onClick={refresh} data-testid={`${P}-refresh`}><span className="i i-refresh" aria-hidden="true" /></button>
       </RangeBar>
       {(revenue.data?.failed_refund_count ?? 0) > 0 && !failed(revenue) && (
         <div role="status" className="banner banner-info dsh-alert" data-testid={`${P}-refund-alert`}>
-          <span>{revenue.data!.failed_refund_count} hoàn tiền thất bại cần xử lý</span>{' '}
-          <Link href="/admin/refunds?status=failed" data-testid={`${P}-refund-alert-link`}>Xem hàng đợi hoàn tiền</Link>
+          <span>{revenue.data!.failed_refund_count} hoàn tiền lỗi</span>{' '}
+          <Link href="/admin/refunds?status=failed" data-testid={`${P}-refund-alert-link`}>Xử lý</Link>
         </div>
       )}
-      <section className="dsh-kpis" aria-label="Số liệu chính">
-        <div className="dsh-kpi">
-          <h2>Doanh thu thuần</h2>
-          <p className="hint">Tiền thu thành công trừ hoàn tiền (theo PAY)</p>
-          {revenue.status === 'loading' && !revenue.data && <Skeleton testid={`${P}-kpi-revenue-loading`} />}
+      <section className="stat-grid" aria-label="Số liệu chính">
+        <Kpi icon="trend" tone="green" label="Doanh thu"
+          aside={revenue.data && !failed(revenue) ? <ReportLink href={`/admin/reports/revenue${reportQ}`} testid={`${P}-kpi-revenue-report-link`}>Xem báo cáo</ReportLink> : undefined}>
+          {revenue.status === 'loading' && !revenue.data && <Skeleton testid={`${P}-kpi-revenue-loading`} rows={1} />}
           {failed(revenue) && <BlockError what="doanh thu" testid={`${P}-kpi-revenue-error`} retryTestid={`${P}-kpi-revenue-retry`} onRetry={revenue.reload} />}
           {revenue.data && !failed(revenue) && (
             <>
-              <p className="dsh-big tabular" data-testid={`${P}-kpi-revenue`}>{money(revenue.data.net)}</p>
-              <p className="hint tabular" data-testid={`${P}-kpi-revenue-detail`}>Thu {money(revenue.data.gross)} · Hoàn {money(revenue.data.refunded)} · {count(revenue.data.payment_count)} giao dịch</p>
-              {revenue.data.net < 0 && <p className="hint">Hoàn tiền của kỳ trước lớn hơn tiền thu trong khoảng.</p>}
-              <ReportLink href={`/admin/reports/revenue${reportQ}`} testid={`${P}-kpi-revenue-report-link`}>Xem báo cáo</ReportLink>
+              <b className="tabular" data-testid={`${P}-kpi-revenue`}>{money(revenue.data.net)}</b>
+              <span className="small muted tabular" data-testid={`${P}-kpi-revenue-detail`}>{count(revenue.data.payment_count)} giao dịch · hoàn {money(revenue.data.refunded)}</span>
+              {revenue.data.net < 0 && <span className="small muted">Hoàn kỳ trước lớn hơn thu.</span>}
             </>
           )}
-        </div>
-        <div className="dsh-kpi">
-          <h2>Tổng đơn</h2>
-          {orders.status === 'loading' && !orders.data && <Skeleton testid={`${P}-kpi-orders-loading`} />}
+        </Kpi>
+        <Kpi icon="receipt" label="Đơn"
+          aside={od && !failed(orders) ? <ReportLink href={`/admin/reports/orders${reportQ}`} testid={`${P}-kpi-orders-report-link`}>Xem báo cáo</ReportLink> : undefined}>
+          {orders.status === 'loading' && !od && <Skeleton testid={`${P}-kpi-orders-loading`} rows={1} />}
           {failed(orders) && <BlockError what="số đơn" testid={`${P}-kpi-orders-error`} retryTestid={`${P}-kpi-orders-retry`} onRetry={orders.reload} />}
-          {orders.data && !failed(orders) && (
+          {od && !failed(orders) && (
             <>
-              <p className="dsh-big tabular" data-testid={`${P}-kpi-orders`}>{count(orders.data.total)}</p>
-              <p className="hint tabular" data-testid={`${P}-kpi-orders-effective`}>Hiệu lực {count(orders.data.effective)}</p>
-              <ul className="dsh-statuses" data-testid={`${P}-kpi-orders-by-status`}>
-                {STATUS_ORDER.map((s) => <li key={s}><span>{ORDER_STATUS_LABEL[s]}</span> <strong className="tabular">{count(orders.data!.by_status[s])}</strong></li>)}
-              </ul>
-              <ReportLink href={`/admin/reports/orders${reportQ}`} testid={`${P}-kpi-orders-report-link`}>Xem báo cáo</ReportLink>
+              <b className="tabular" data-testid={`${P}-kpi-orders`}>{count(od.total)}</b>
+              <span className="small muted tabular" data-testid={`${P}-kpi-orders-effective`}>Hiệu lực {count(od.effective)}</span>
             </>
           )}
-        </div>
-        <div className="dsh-kpi">
-          <h2>Khách hàng</h2>
-          {customers.status === 'loading' && !customers.data && <Skeleton testid={`${P}-kpi-customers-loading`} />}
+        </Kpi>
+        <Kpi icon="users" tone="violet" label="Khách">
+          {customers.status === 'loading' && !customers.data && <Skeleton testid={`${P}-kpi-customers-loading`} rows={1} />}
           {failed(customers) && <BlockError what="số khách" testid={`${P}-kpi-customers-error`} retryTestid={`${P}-kpi-customers-retry`} onRetry={customers.reload} />}
           {customers.data && !failed(customers) && (
             <>
-              <p className="dsh-big tabular" data-testid={`${P}-kpi-customers`}>{count(customers.data.total)}</p>
-              <p className="hint tabular"><span data-testid={`${P}-kpi-customers-new`}>Mới {count(customers.data.new_in_range)}</span> · <span data-testid={`${P}-kpi-customers-locked`}>Khóa {count(customers.data.locked)}</span></p>
+              <b className="tabular" data-testid={`${P}-kpi-customers`}>{count(customers.data.total)}</b>
+              <span className="small muted tabular"><span data-testid={`${P}-kpi-customers-new`}>Mới {count(customers.data.new_in_range)}</span> · <span data-testid={`${P}-kpi-customers-locked`}>Khóa {count(customers.data.locked)}</span></span>
             </>
           )}
-        </div>
-        <div className="dsh-kpi">
-          <h2>Sản phẩm đang bán</h2>
-          {products.status === 'loading' && !products.data && <Skeleton testid={`${P}-kpi-products-loading`} />}
+        </Kpi>
+        <Kpi icon="tag" tone="amber" label="Sản phẩm">
+          {products.status === 'loading' && !products.data && <Skeleton testid={`${P}-kpi-products-loading`} rows={1} />}
           {failed(products) && <BlockError what="số sản phẩm" testid={`${P}-kpi-products-error`} retryTestid={`${P}-kpi-products-retry`} onRetry={products.reload} />}
           {products.data && !failed(products) && (
             <>
-              <p className="dsh-big tabular" data-testid={`${P}-kpi-products`}>{count(products.data.by_status.active)}</p>
-              <p className="hint tabular" data-testid={`${P}-kpi-products-breakdown`}>Tổng {count(products.data.total)} · Nháp {count(products.data.by_status.draft)} · Ngừng bán {count(products.data.by_status.archived)}</p>
+              <b className="tabular" data-testid={`${P}-kpi-products`}>{count(products.data.by_status.active)}</b>
+              <span className="small muted tabular" data-testid={`${P}-kpi-products-breakdown`}>Tổng {count(products.data.total)} · Nháp {count(products.data.by_status.draft)} · Ngừng {count(products.data.by_status.archived)}</span>
             </>
           )}
-        </div>
+        </Kpi>
       </section>
-      <p className="hint">Khoảng ngày {formatYmd(revenue.data?.from ?? defaultRange().from)} tới {formatYmd(revenue.data?.to ?? defaultRange().to)} áp cho Doanh thu, Tổng đơn và Khách mới; Sản phẩm, Tồn thấp và Đơn gần đây là số hiện tại.</p>
-      <div className="dsh-widgets">
-        <section className="dsh-widget dsh-widget-wide" aria-label="Đơn gần đây">
-          <div className="between"><h2>Đơn gần đây</h2>{recent.data && recent.data.items.length > 0 && <Link href="/admin/orders" data-testid={`${P}-recent-orders-view-all`}>Xem tất cả</Link>}</div>
+      {od && !failed(orders) && (
+        <ul className="rd-chips" data-testid={`${P}-kpi-orders-by-status`} aria-label="Đơn theo trạng thái">
+          {STATUS_ORDER.map((s) => <li key={s}><span className="badge" data-status={s}>{ORDER_STATUS_LABEL[s]} <b className="tabular">{count(od.by_status[s])}</b></span></li>)}
+        </ul>
+      )}
+      <div className="split rd-split">
+        <section className="panel" aria-label="Đơn gần đây">
+          <div className="panel-head"><h2><span className="tile gray"><span className="i i-clock" aria-hidden="true" /></span>Đơn gần đây</h2>{recent.data && recent.data.items.length > 0 && <Link className="btn btn-ghost btn-sm" href="/admin/orders" data-testid={`${P}-recent-orders-view-all`}>Tất cả<span className="i i-right" aria-hidden="true" /></Link>}</div>
           {recent.status === 'loading' && !recent.data && <Skeleton testid={`${P}-recent-orders-loading`} rows={5} />}
           {failed(recent) && <BlockError what="đơn gần đây" testid={`${P}-recent-orders-error`} retryTestid={`${P}-recent-orders-retry`} onRetry={recent.reload} />}
           {recent.data && !failed(recent) && (recent.data.items.length === 0
-            ? <p className="hint" data-testid={`${P}-recent-orders-empty`}>Chưa có đơn hàng nào</p>
+            ? <div className="empty" data-testid={`${P}-recent-orders-empty`}><span className="tile tile-lg gray"><span className="i i-inbox" aria-hidden="true" /></span><strong>Chưa có đơn</strong></div>
             : (
-              <div className="table-wrap">
-                <table className="stack-table">
-                  <thead><tr><th>Mã đơn</th><th>Tạo lúc</th><th>Trạng thái</th><th>Thanh toán</th><th className="num">Giá trị đơn</th></tr></thead>
-                  <tbody>
-                    {recent.data.items.map((o) => (
-                      <tr key={o.code} className="row-click" onClick={() => router.push(`/orders/${encodeURIComponent(o.code)}`)} data-testid={`${P}-recent-orders-row`} data-code={o.code}>
-                        <td data-label="Mã đơn" className="mono"><Link href={`/orders/${encodeURIComponent(o.code)}`} onClick={(e) => e.stopPropagation()} data-testid={`${P}-recent-orders-code`}>{o.code}</Link></td>
-                        <td data-label="Tạo lúc" className="tabular">{formatOrderTime(o.created_at)}</td>
-                        <td data-label="Trạng thái"><span className="badge" data-testid={`${P}-recent-orders-status`}>{ORDER_STATUS_LABEL[o.status] ?? o.status}</span></td>
-                        <td data-label="Thanh toán" data-testid={`${P}-recent-orders-payment`}>{paymentText(o.payment_method, o.payment_status)}</td>
-                        <td data-label="Giá trị đơn" className="num tabular" data-testid={`${P}-recent-orders-total`}>{money(o.grand_total)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ul className="list">
+                {recent.data.items.map((o) => (
+                  <li key={o.code} className="row-click rd-order" onClick={() => router.push(`/orders/${encodeURIComponent(o.code)}`)} data-testid={`${P}-recent-orders-row`} data-code={o.code}>
+                    <div className="grow">
+                      <Link className="mono strong" href={`/orders/${encodeURIComponent(o.code)}`} onClick={(e) => e.stopPropagation()} data-testid={`${P}-recent-orders-code`}>{o.code}</Link>
+                      <div className="small muted truncate"><span className="tabular">{formatOrderTime(o.created_at)}</span> · <span data-testid={`${P}-recent-orders-payment`}>{paymentText(o.payment_method, o.payment_status)}</span></div>
+                    </div>
+                    <span className="badge" data-status={o.status} data-testid={`${P}-recent-orders-status`}>{ORDER_STATUS_LABEL[o.status] ?? o.status}</span>
+                    <span className="money tabular rd-order-total" data-testid={`${P}-recent-orders-total`}>{money(o.grand_total)}</span>
+                  </li>
+                ))}
+              </ul>
             ))}
         </section>
-        <section className="dsh-widget" aria-label="Tồn thấp">
-          <div className="between">
-            <h2>Tồn thấp{low.data ? <> (<span data-testid={`${P}-low-stock-count`}>{count(low.data.count)}</span>)</> : ''}</h2>
-            {low.data && low.data.count > 0 && <Link href="/admin/inventory?tab=low" data-testid={`${P}-low-stock-view-all`}>Xem tất cả</Link>}
+        <section className="panel" aria-label="Tồn thấp">
+          <div className="panel-head">
+            <h2><span className="tile red"><span className="i i-alert" aria-hidden="true" /></span>Tồn thấp{low.data ? <span className="rd-n rd-n-red" data-testid={`${P}-low-stock-count`}>{count(low.data.count)}</span> : null}</h2>
+            {low.data && low.data.count > 0 && <Link className="btn btn-ghost btn-sm" href="/admin/inventory?tab=low" data-testid={`${P}-low-stock-view-all`}>Tất cả<span className="i i-right" aria-hidden="true" /></Link>}
           </div>
           {low.status === 'loading' && !low.data && <Skeleton testid={`${P}-low-stock-loading`} rows={5} />}
           {failed(low) && <BlockError what="tồn thấp" testid={`${P}-low-stock-error`} retryTestid={`${P}-low-stock-retry`} onRetry={low.reload} />}
           {low.data && !failed(low) && (low.data.count === 0
-            ? <p className="hint" data-testid={`${P}-low-stock-empty`}>Không có sản phẩm tồn thấp</p>
+            ? <div className="empty" data-testid={`${P}-low-stock-empty`}><span className="tile tile-lg green"><span className="i i-okc" aria-hidden="true" /></span><strong>Đủ hàng</strong></div>
             : (
-              <ul className="dsh-low">
+              <ul className="list rd-low">
                 {low.data.items.map((i) => (
                   <li key={i.product_id} data-testid={`${P}-low-stock-row`}>
-                    <Link href={`/admin/inventory/${encodeURIComponent(i.product_id)}`}><span>{i.name || '—'}</span> <span className="mono hint">{i.sku}</span> <strong className="tabular" aria-label={`còn bán ${i.available}`}>{count(i.available)}</strong></Link>
+                    <Link className="grow" href={`/admin/inventory/${encodeURIComponent(i.product_id)}`}>
+                      <span className="truncate strong">{i.name || '—'}</span>
+                      <span className="mono small muted truncate">{i.sku}</span>
+                    </Link>
+                    <strong className="rd-low-n tabular" aria-label={`còn bán ${i.available}`}>{count(i.available)}</strong>
                   </li>
                 ))}
               </ul>
@@ -157,7 +154,7 @@ function Inner() {
 export default function AdminDashboardPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
+      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
     </RequireRole>
   );
 }

@@ -2,14 +2,14 @@
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { PayBadge, RefundBadge, Spinner, refundError, useMoney } from '../../../../components/PaymentParts';
+import { MethodTag, PayBadge, RefundBadge, Spinner, refundError, useMoney } from '../../../../components/PaymentParts';
 import { RequireRole } from '../../../../components/RequireRole';
-import { Forbidden, Modal, ToastView, useToast } from '../../../../components/ShipmentParts';
+import { Forbidden, Modal, Note, Skel, ToastView, useToast } from '../../../../components/ShipmentParts';
 import { api, type ApiResult } from '../../../../lib/api';
 import { useAuth } from '../../../../lib/auth';
 import { formatPrice, parseMoney } from '../../../../lib/format';
 import { formatOrderTime } from '../../../../lib/order';
-import { attemptText, failSentence, methodText, refundReasonText, webhookResultText, type AdminPaymentDetail, type AdminRefund } from '../../../../lib/payment';
+import { attemptText, failSentence, refundReasonText, webhookResultText, type AdminPaymentDetail, type AdminRefund } from '../../../../lib/payment';
 import { useLoginRedirect } from '../../../../lib/prd';
 import { limitedText } from '../../../../lib/stock';
 
@@ -47,19 +47,21 @@ function CodDialog({ d, onDone, onClose, onStale }: { d: AdminPaymentDetail; onD
   };
   const msg = rateText ?? local ?? err;
   return (
-    <Modal title={`Ghi nhận đã thu COD cho đơn #${d.order_code}?`} testid={`${P}-cod-dialog`} sticky onClose={() => !busy && onClose()}>
-      <p>Số tiền phải thu <strong className="tabular" data-testid={`${P}-cod-due`}>{formatPrice(d.amount)}</strong></p>
-      <label>Số tiền đã thu
-        <input value={amount} inputMode="numeric" disabled={busy} autoComplete="off" onChange={(e) => setAmount(e.target.value)} data-testid={`${P}-cod-amount`} />
-      </label>
-      <label>Ghi chú (tùy chọn, tối đa {NOTE_MAX} ký tự)
-        <textarea value={note} rows={2} disabled={busy} onChange={(e) => setNote(e.target.value)} data-testid={`${P}-cod-note`} />
-      </label>
-      <p className={note.length > NOTE_MAX ? 'field-error' : 'hint'}>{note.length}/{NOTE_MAX}</p>
-      {msg && <div role="alert" className="field-error" data-testid={`${P}-cod-error`}>{msg}</div>}
+    <Modal title="Ghi nhận thu COD" icon="bag" tone="green" testid={`${P}-cod-dialog`} sticky onClose={() => !busy && onClose()}>
+      <p className="ps-sub">Đơn <span className="ps-code">{d.order_code}</span> · phải thu <strong data-testid={`${P}-cod-due`}>{formatPrice(d.amount)}</strong></p>
+      <div className="ps-form">
+        <label>Đã thu (đ)
+          <input value={amount} inputMode="numeric" disabled={busy} autoComplete="off" onChange={(e) => setAmount(e.target.value)} data-testid={`${P}-cod-amount`} />
+        </label>
+        <label>Ghi chú <span className="opt">(tùy chọn)</span>
+          <textarea value={note} rows={2} disabled={busy} onChange={(e) => setNote(e.target.value)} data-testid={`${P}-cod-note`} />
+        </label>
+        <p className={`ps-ctr${note.length > NOTE_MAX ? ' over' : ''}`}>{note.length}/{NOTE_MAX}</p>
+      </div>
+      {msg && <div role="alert" className="field-error" data-testid={`${P}-cod-error`}><span className="i i-alert" aria-hidden="true" />{msg}</div>}
       <div className="actions">
         <button type="button" className="btn" disabled={busy} onClick={onClose} data-testid={`${P}-cod-dismiss`}>Hủy</button>
-        <button type="button" className="btn btn-primary tight" disabled={busy} onClick={() => void submit()} data-testid={`${P}-cod-confirm`}>{busy ? <><Spinner /> Đang ghi...</> : 'Xác nhận đã thu'}</button>
+        <button type="button" className="btn btn-primary tight" disabled={busy} onClick={() => void submit()} data-testid={`${P}-cod-confirm`}>{busy ? <><Spinner />Đang ghi...</> : 'Đã thu'}</button>
       </div>
     </Modal>
   );
@@ -88,21 +90,22 @@ function RefundDialog({ d, retryOf, onDone, onClose, onStale }: { d: AdminPaymen
   const msg = rateText ?? local ?? err;
   const amount = formatPrice(retryOf?.amount ?? d.amount);
   return (
-    <Modal title={retry ? `Thử lại hoàn tiền ${amount} cho đơn #${d.order_code}?` : `Hoàn toàn phần ${amount} cho đơn #${d.order_code}?`} testid={`${P}-refund-dialog`} sticky={!retry} onClose={() => !busy && onClose()}>
-      <p className="banner banner-info" data-testid={`${P}-refund-warning`}>Hoàn tiền không thể hoàn tác và không đổi trạng thái đơn.</p>
+    <Modal title={retry ? 'Thử lại hoàn tiền' : 'Hoàn tiền'} icon="undo" tone="red" testid={`${P}-refund-dialog`} sticky={!retry} onClose={() => !busy && onClose()}>
+      <p className="ps-sub"><strong>{amount}</strong> · đơn <span className="ps-code">{d.order_code}</span></p>
+      <Note tone="warn" icon="alert" testid={`${P}-refund-warning`}>Không hoàn tác, không đổi trạng thái đơn.</Note>
       {!retry && (
-        <>
-          <label>Lý do (bắt buộc, {REASON_MIN} đến {REASON_MAX} ký tự)
+        <div className="ps-form">
+          <label>Lý do
             <textarea value={reason} rows={3} disabled={busy} onChange={(e) => setReason(e.target.value)} data-testid={`${P}-refund-reason`} />
           </label>
-          <p className={reason.length > REASON_MAX ? 'field-error' : 'hint'}>{reason.length}/{REASON_MAX}</p>
-        </>
+          <p className={`ps-ctr${reason.length > REASON_MAX ? ' over' : ''}`}>{reason.length}/{REASON_MAX}</p>
+        </div>
       )}
-      {msg && <div role="alert" className="field-error" data-testid={`${P}-refund-error`}>{msg}</div>}
+      {msg && <div role="alert" className="field-error" data-testid={`${P}-refund-error`}><span className="i i-alert" aria-hidden="true" />{msg}</div>}
       <div className="actions">
         <button type="button" className="btn" disabled={busy} onClick={onClose} data-testid={retry ? `${P}-refund-retry-dismiss` : `${P}-refund-dismiss`}>Hủy</button>
         <button type="button" className="btn btn-danger tight" disabled={busy} onClick={() => void submit()} data-testid={retry ? `${P}-refund-retry-confirm` : `${P}-refund-confirm`}>
-          {busy ? <><Spinner /> Đang gửi...</> : retry ? 'Xác nhận thử lại' : 'Xác nhận hoàn tiền'}
+          {busy ? <><Spinner />Đang gửi...</> : retry ? 'Thử lại' : 'Hoàn tiền'}
         </button>
       </div>
     </Modal>
@@ -158,12 +161,12 @@ function DetailView({ id }: { id: string }) {
   }, [hasRequested, pollKey, load]);
 
   if (view === 'forbidden') return <Forbidden testid={`${P}-forbidden`} />;
-  if (view === 'notfound') return <main className="wide"><p><Link href={backHref} data-testid={`${P}-back-link`}>← Về danh sách</Link></p><section className="card-block" data-testid={`${P}-notfound`}><p className="hint">404</p><h1>Không tìm thấy thanh toán</h1></section></main>;
-  if (view === 'loading' && !data) return <main className="wide" data-testid={`${P}-loading`} aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></main>;
+  if (view === 'notfound') return <main className="page page-narrow"><Link className="back" href={backHref} data-testid={`${P}-back-link`}><span className="i i-left" aria-hidden="true" />Thanh toán</Link><section className="empty" data-testid={`${P}-notfound`}><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><h1>Không tìm thấy thanh toán</h1></section></main>;
+  if (view === 'loading' && !data) return <main className="page" data-testid={`${P}-loading`} aria-busy="true"><Skel n={3} /></main>;
   if (view === 'error' || !data) {
     return (
-      <main className="wide">
-        <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{errText} <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>
+      <main className="page">
+        <Note tone="red" icon="alert" role="alert" testid={`${P}-error`}>{errText} <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></Note>
       </main>
     );
   }
@@ -173,71 +176,83 @@ function DetailView({ id }: { id: string }) {
   const canCod = d.method === 'cod' && d.status === 'pending';
   const canRefund = admin && d.method === 'vnpay' && d.status === 'succeeded' && d.refunds.length === 0;
   const done = (text: string, error?: boolean, testid?: string) => { show({ text, testid, error }); void load(); };
+  const attemptTone = (st: string) => (st === 'succeeded' ? 'green' : st === 'failed' ? 'red' : '');
+  const attemptIcon = (st: string) => (st === 'succeeded' ? 'check' : st === 'failed' ? 'x' : 'clock');
   return (
-    <main className="wide">
-      <p><Link href={backHref} data-testid={`${P}-back-link`}>← Về danh sách</Link></p>
-      <header className="row-link">
-        <h1>Thanh toán đơn <span className="mono" data-testid={`${P}-order-code`}>{d.order_code}</span></h1>
-        <PayBadge status={d.status} method={d.method} testid={`${P}-status-badge`} />
-      </header>
-      <p><span data-testid={`${P}-method`}>{methodText(d.method)}</span> · <span className="tabular" data-testid={`${P}-amount`}>{formatPrice(d.amount)}</span></p>
-      {stalled && <div role="status" className="banner banner-info">Đang xử lý, kiểm tra lại sau. <button className="btn" onClick={() => { setPollKey((k) => k + 1); void load(); }}>Kiểm tra lại</button></div>}
-      {(canCod || canRefund) && (
-        <div className="actions-row">
-          {canCod && <button type="button" className="btn tight" onClick={() => setDlg({ kind: 'cod' })} data-testid={`${P}-cod-button`}>Ghi nhận đã thu COD</button>}
-          {canRefund && <button type="button" className="btn btn-danger-soft tight" onClick={() => setDlg({ kind: 'refund' })} data-testid={`${P}-refund-button`}>Hoàn tiền</button>}
+    <main className="page">
+      <Link className="back" href={backHref} data-testid={`${P}-back-link`}><span className="i i-left" aria-hidden="true" />Thanh toán</Link>
+      <div className="ps-hero">
+        <div className="ps-hero-main">
+          <h1>Đơn <span className="ps-code" data-testid={`${P}-order-code`}>{d.order_code}</span><PayBadge status={d.status} method={d.method} testid={`${P}-status-badge`} /></h1>
+          <div className="sub"><span className="ps-amount sm" style={{ color: 'var(--fg)' }} data-testid={`${P}-amount`}>{formatPrice(d.amount)}</span><span data-testid={`${P}-method`}><MethodTag method={d.method} /></span></div>
         </div>
-      )}
+        {(canCod || canRefund) && (
+          <div className="ps-actions" style={{ margin: 0 }}>
+            {canCod && <button type="button" className="btn btn-primary tight" onClick={() => setDlg({ kind: 'cod' })} data-testid={`${P}-cod-button`}><span className="i i-bag" aria-hidden="true" />Đã thu COD</button>}
+            {canRefund && <button type="button" className="btn btn-danger-soft tight" onClick={() => setDlg({ kind: 'refund' })} data-testid={`${P}-refund-button`}><span className="i i-undo" aria-hidden="true" />Hoàn tiền</button>}
+          </div>
+        )}
+      </div>
+      {stalled && <Note tone="warn" icon="clock" role="status">Đang xử lý. <button className="btn" onClick={() => { setPollKey((k) => k + 1); void load(); }}>Kiểm tra lại</button></Note>}
 
-      <div className="cols">
-        <div>
-          <section className="card-block" data-testid={`${P}-info`}>
-            <h2>Thông tin</h2>
-            <dl className="view-fields">
-              <dt>Mã giao dịch cổng</dt><dd className="mono">{d.provider_ref || '—'}</dd>
-              <dt>User id</dt><dd className="mono">{d.user_id || '—'}</dd>
+      <div className="ps-cols">
+        <div className="ps-col">
+          <section className="ps-card" data-testid={`${P}-refund-list`}>
+            <h2><span className="i i-undo" aria-hidden="true" />Hoàn tiền{d.refunds.length > 0 && <span className="n">{d.refunds.length}</span>}</h2>
+            {d.refunds.length === 0 ? <p className="ps-empty-line">Chưa có</p> : (
+              <ul className="ps-tl">
+                {d.refunds.map((r) => (
+                  <li key={r.id} data-testid={`${P}-refund-item`}>
+                    <span className={`ps-dot ${r.status === 'succeeded' ? 'green' : r.status === 'failed' ? 'red' : 'amber'}`}><span className="i i-undo" aria-hidden="true" /></span>
+                    <span className="body">
+                      <span className="row"><span className="money">{formatPrice(r.amount)}</span><RefundBadge status={r.status} />
+                        {admin && r.status === 'failed' && d.status === 'succeeded' && <button type="button" className="btn btn-sm" style={{ marginLeft: 'auto' }} onClick={() => setDlg({ kind: 'refund', retryOf: r })} data-testid={`${P}-refund-retry`}>Thử lại</button>}
+                      </span>
+                      {refundReasonText(r.reason)}
+                      {r.auto_attempt_no != null && <span className="muted"> · tự thử {r.auto_attempt_no}</span>}
+                      {r.status === 'failed' && r.failure_reason && <> · <span className="ps-code">{r.failure_reason}</span></>}
+                      {r.note && <> · <span className="pre">{r.note}</span></>}
+                      <span className="ps-time">{formatOrderTime(r.created_at)}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+          <section className="ps-card" data-testid={`${P}-attempt-list`}>
+            <h2><span className="i i-refresh" aria-hidden="true" />Lượt thử{d.attempts.length > 0 && <span className="n">{d.attempts.length}</span>}</h2>
+            {d.attempts.length === 0 ? <p className="ps-empty-line">Chưa có</p> : (
+              <ul className="ps-tl">
+                {d.attempts.map((a) => (
+                  <li key={a.attempt_no} data-testid={`${P}-attempt-item`}>
+                    <span className={`ps-dot ${attemptTone(a.status)}`}><span className={`i i-${attemptIcon(a.status)}`} aria-hidden="true" /></span>
+                    <span className="body">
+                      Lượt {a.attempt_no} · {attemptText(a)}
+                      {a.status === 'failed' && !a.reason && <> · {failSentence(null)}</>}
+                      {a.gateway_code && <> · mã <span className="ps-code">{a.gateway_code}</span></>}
+                      {a.txn_ref && <> · <span className="ps-code muted">{a.txn_ref}</span></>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+        <div className="ps-col">
+          <section className="ps-card" data-testid={`${P}-info`}>
+            <h2><span className="i i-info" aria-hidden="true" />Thông tin</h2>
+            <dl className="kv">
+              <dt>Mã cổng</dt><dd className="ps-code">{d.provider_ref || '—'}</dd>
+              <dt>Khách</dt><dd className="ps-code">{d.user_id || '—'}</dd>
               {d.expires_at && <><dt>Hết hạn</dt><dd className="tabular">{formatOrderTime(d.expires_at)}</dd></>}
               {d.paid_at && <><dt>Thu lúc</dt><dd className="tabular">{formatOrderTime(d.paid_at)}</dd></>}
             </dl>
           </section>
-          <section className="card-block" data-testid={`${P}-webhook-list`}>
-            <h2>Nhật ký webhook</h2>
-            {webhooks.length === 0 ? <p className="hint">Chưa có</p> : (
-              <ul className="timeline">
-                {webhooks.map((w, i) => <li key={i} data-testid={`${P}-webhook-item`}><span className="hint tabular">{formatOrderTime(w.created_at)}</span> RspCode <span className="mono">{w.rsp_code}</span> · {webhookResultText(w.result)}</li>)}
-              </ul>
-            )}
-          </section>
-        </div>
-        <div>
-          <section className="card-block" data-testid={`${P}-refund-list`}>
-            <h2>Hoàn tiền</h2>
-            {d.refunds.length === 0 ? <p className="hint">Chưa có</p> : (
-              <ul className="timeline">
-                {d.refunds.map((r) => (
-                  <li key={r.id} data-testid={`${P}-refund-item`}>
-                    <span className="hint tabular">{formatOrderTime(r.created_at)}</span> <span className="tabular">{formatPrice(r.amount)}</span> · {refundReasonText(r.reason)} · <RefundBadge status={r.status} />
-                    {r.auto_attempt_no != null && <span className="hint"> (tự thử {r.auto_attempt_no})</span>}
-                    {r.status === 'failed' && r.failure_reason && <> · <span className="mono">{r.failure_reason}</span></>}
-                    {r.note && <> · <span className="pre">{r.note}</span></>}
-                    {admin && r.status === 'failed' && d.status === 'succeeded' && <> <button type="button" className="btn tight" onClick={() => setDlg({ kind: 'refund', retryOf: r })} data-testid={`${P}-refund-retry`}>Thử lại</button></>}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-          <section className="card-block" data-testid={`${P}-attempt-list`}>
-            <h2>Lượt thử</h2>
-            {d.attempts.length === 0 ? <p className="hint">Chưa có</p> : (
-              <ul className="timeline">
-                {d.attempts.map((a) => (
-                  <li key={a.attempt_no} data-testid={`${P}-attempt-item`}>
-                    Lượt {a.attempt_no} · {attemptText(a)}
-                    {a.status === 'failed' && !a.reason && <> · {failSentence(null)}</>}
-                    {a.gateway_code && <> · mã cổng <span className="mono">{a.gateway_code}</span></>}
-                    {a.txn_ref && <> · <span className="mono hint">{a.txn_ref}</span></>}
-                  </li>
-                ))}
+          <section className="ps-card" data-testid={`${P}-webhook-list`}>
+            <h2><span className="i i-link" aria-hidden="true" />Webhook{webhooks.length > 0 && <span className="n">{webhooks.length}</span>}</h2>
+            {webhooks.length === 0 ? <p className="ps-empty-line">Chưa có</p> : (
+              <ul className="ps-tl">
+                {webhooks.map((w, i) => <li key={i} data-testid={`${P}-webhook-item`}><span className="ps-dot blue"><span className="i i-link" aria-hidden="true" /></span><span className="body"><span className="ps-code">{w.rsp_code}</span> · {webhookResultText(w.result)}<span className="ps-time">{formatOrderTime(w.created_at)}</span></span></li>)}
               </ul>
             )}
           </section>
@@ -247,7 +262,7 @@ function DetailView({ id }: { id: string }) {
       {dlg?.kind === 'cod' && <CodDialog d={d} onClose={() => setDlg(null)} onStale={() => void load()} onDone={() => done('Đã ghi nhận thu tiền', false, `${P}-cod-success`)} />}
       {dlg?.kind === 'refund' && admin && (
         <RefundDialog d={d} retryOf={dlg.retryOf} onClose={() => setDlg(null)} onStale={() => void load()}
-          onDone={(st) => (st === 'failed' ? done('Cổng từ chối hoàn tiền, xem dòng hoàn tiền bên dưới.', true) : done(st === 'succeeded' ? 'Hoàn tiền thành công' : 'Đã gửi yêu cầu hoàn tiền', false, `${P}-refund-success`))} />
+          onDone={(st) => (st === 'failed' ? done('Cổng từ chối hoàn tiền.', true) : done(st === 'succeeded' ? 'Hoàn tiền thành công' : 'Đã gửi hoàn tiền', false, `${P}-refund-success`))} />
       )}
       <ToastView toast={toast} />
     </main>
@@ -258,7 +273,7 @@ function Guard() {
   const { user } = useAuth();
   const params = useParams<{ id: string }>();
   if (user?.role === 'customer') return <Forbidden testid={`${P}-forbidden`} />; // customer không gọi API (server vẫn trả 403)
-  return <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><DetailView id={String(params.id ?? '')} /></Suspense>;
+  return <Suspense fallback={<main className="page"><Skel n={1} /></main>}><DetailView id={String(params.id ?? '')} /></Suspense>;
 }
 
 export default function AdminPaymentDetailPage() {

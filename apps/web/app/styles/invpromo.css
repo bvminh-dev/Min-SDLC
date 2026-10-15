@@ -1,0 +1,86 @@
+/* invpromo: tồn kho, coupon, người dùng, khách hàng. Tiền tố lớp: ip- */
+.ip-lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ip-act::before { margin-right: 0 !important; }
+.ip-search { position: relative; flex: 1 1 14rem; }
+.ip-search > .i { position: absolute; left: .8rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.ip-search input { padding-left: 2.4rem; }
+.ip-bar { display: block; height: 6px; border-radius: 999px; background: #eceff3; overflow: hidden; min-width: 4.5rem; }
+.ip-bar > i { display: block; height: 100%; border-radius: 999px; background: var(--ok); }
+.ip-bar[data-lv='low'] > i { background: #f79009; } .ip-bar[data-lv='out'] > i { background: var(--danger); } .ip-bar[data-lv='off'] > i { background: #98a2b3; }
+.ip-bar[data-lv='brand'] > i { background: var(--brand); }
+.ip-name { display: flex; align-items: center; gap: .65rem; min-width: 0; }
+.ip-name > div { min-width: 0; } .ip-name a, .ip-name b { font-weight: 600; color: var(--fg); text-decoration: none; overflow-wrap: anywhere; } .ip-name a:hover { color: var(--brand-dark); }
+.ip-name small { display: block; color: var(--muted); }
+.ip-badges { display: inline-flex; gap: .35rem; flex-wrap: wrap; vertical-align: middle; margin-left: .35rem; }
+.ip-level { display: grid; gap: .35rem; min-width: 7rem; } .ip-level b { font-variant-numeric: tabular-nums; }
+.ip-table td { vertical-align: middle; }
+.panel-flush.ip-ov, .ip-ov table { overflow: visible; }
+.ip-ov thead th:first-child { border-top-left-radius: var(--r-md); } .ip-ov thead th:last-child { border-top-right-radius: var(--r-md); }
+.badge.ip-low { background: var(--warn-bg); color: #93370d; border-color: #fec84b; }
+.ip-cap { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.ip-grid2 { display: grid; gap: 0 1rem; } @media (min-width: 640px) { .ip-grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ip-dlg .field { margin: 0; } .ip-dlg .field-error, .ip-dlg p.field-error { margin: 0; }
+.ip-chip { display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .55rem; border-radius: 999px; background: #f2f4f7; font-size: .8125rem; color: var(--muted); }
+.ip-chip b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.ip-filter { display: grid; gap: .75rem; align-items: start; } @media (min-width: 640px) { .ip-filter { grid-template-columns: 12rem minmax(0, 1fr); } }
+.ip-filter select[multiple] { padding: .25rem; } .ip-filter select[multiple] option { padding: .25rem .5rem; border-radius: 6px; }
+.ip-filter-side { display: grid; gap: .5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); } .ip-filter-side .ip-btns { grid-column: 1 / -1; display: flex; gap: .5rem; flex-wrap: wrap; }
+
+/* Lịch sử kho: timeline */
+.ip-tl { list-style: none; margin: 0; padding: 0; }
+.ip-ev { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--line); min-width: 0; } .ip-ev:last-child { border-bottom: 0; }
+.ip-ev-main { flex: 1 1 0; min-width: 0; display: grid; gap: .15rem; }
+.ip-ev-top { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.ip-ev-meta { display: flex; gap: .25rem .75rem; flex-wrap: wrap; color: var(--muted); font-size: .8125rem; } .ip-ev-meta > span { display: inline-flex; align-items: center; gap: .25rem; }
+.ip-ev-qty { text-align: right; flex: none; } .ip-ev-qty b { display: block; font-size: 1.0625rem; font-variant-numeric: tabular-nums; } .ip-ev-qty small { color: var(--muted); font-size: .8125rem; display: inline-flex; align-items: center; gap: .2rem; }
+.ip-ev-qty b[data-sign='+'] { color: var(--ok); } .ip-ev-qty b[data-sign='-'] { color: var(--danger); }
+
+/* Coupon */
+.ip-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; font-size: .9375rem; letter-spacing: .02em; color: var(--fg); }
+.ip-val { font-weight: 600; } .ip-val small { display: block; font-weight: 400; color: var(--muted); font-size: .8125rem; }
+.ip-usage { display: grid; gap: .3rem; min-width: 7rem; font-variant-numeric: tabular-nums; }
+.ip-usage .ip-bar { height: 6px; }
+.ip-acts { display: inline-flex; gap: .25rem; align-items: center; justify-content: flex-end; }
+.ip-late { color: var(--danger); font-size: .8125rem; }
+.ip-sum { display: grid; gap: .5rem; }
+.ip-sum p { margin: 0; }
+.ip-formfoot { display: flex; gap: .5rem; justify-content: flex-end; margin-top: .5rem; }
+
+/* Người dùng */
+.ip-av { display: inline-grid; place-items: center; flex: none; width: 2.25rem; height: 2.25rem; border-radius: 50%; background: var(--brand-soft); color: var(--brand-dark); font-weight: 700; }
+.ip-av[data-role='admin'] { background: var(--violet-bg); color: var(--violet); } .ip-av[data-locked='true'] { background: #f2f4f7; color: var(--muted); }
+.ip-menu { position: relative; display: inline-block; }
+.ip-menu .menu-items { top: calc(100% + 4px); z-index: 20; }
+.ip-menu .menu-items button { display: flex; align-items: center; gap: .5rem; min-height: 2.5rem; white-space: nowrap; } .ip-menu .menu-items .ip-mi-danger { color: var(--danger); }
+.ip-pg { display: inline-flex; align-items: center; gap: .5rem; }
+@media (max-width: 639px) { .ip-ov td.ip-cell-menu { justify-content: flex-end; } .ip-ov .stack-table td.ip-cell-main { display: block; } .ip-menu .menu-items { right: 0; } }
+
+/* Khách */
+.ip-lookup { display: grid; gap: .75rem; }
+.ip-lookup form { display: flex; gap: .5rem; flex-wrap: wrap; align-items: flex-start; }
+.ip-lookup .ip-search { flex: 1 1 14rem; } .ip-lookup .field { margin: 0; } .ip-lookup .field label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.ip-lookup input { min-height: 3rem; font-size: 1rem; } .ip-lookup .btn { min-height: 3rem; }
+.ip-cust { margin-top: 1rem; display: grid; gap: 1rem; }
+.ip-cust-head { display: flex; align-items: center; gap: .85rem; flex-wrap: wrap; } .ip-cust-head h2 { margin: 0; font-size: 1.0625rem; overflow-wrap: anywhere; }
+.ip-cust-head .grow { flex: 1 1 10rem; min-width: 0; }
+.ip-kv dd:empty::before { content: '—'; color: var(--muted); }
+.ip-kv dt { display: inline-flex; align-items: center; gap: .4rem; }
+.ip-ok { color: var(--ok); } .ip-no { color: var(--warn); }
+.ip-addr { display: grid; gap: .5rem; list-style: none; margin: 0; padding: 0; } .ip-addr li { display: flex; gap: .65rem; align-items: flex-start; padding: .65rem .75rem; border: 1px solid var(--line); border-radius: var(--r-sm); } .ip-addr .tile { width: 2rem; height: 2rem; }
+.ip-addr .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ip-ev-meta > span[hidden] { display: none; }
+h1 .ip-code { font-size: inherit; }
+.ip-search .ip-hint { position: absolute; top: 100%; left: 0; margin: .15rem 0 0; white-space: nowrap; }
+.ip-lookup .ip-search > .i { top: 1.5rem; }
+.ip-ev-top > span[hidden] { display: none; }
+.ip-lookup .btn { margin: 0; }
+@media (max-width: 639px) {
+  .ip-table td:first-child::before, .ip-table td[data-label='']::before { display: none; }
+  .ip-table td:first-child { justify-content: flex-start; padding-bottom: .4rem; }
+  .ip-table tr { padding: .6rem 0; }
+}
+.stat-grid.ip-stats3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+@media (max-width: 639px) { .ip-stats3 .stat { flex-direction: column; align-items: flex-start; gap: .4rem; padding: .7rem; } }
+.panel .sticky-save { background: var(--surface); }
+[data-testid='prm-admin-coupon-list-delete-confirm']::before { --ic: var(--i-trash); }
+[data-testid='auth-admin-user-list-lock-confirm']::before { --ic: var(--i-ban); }

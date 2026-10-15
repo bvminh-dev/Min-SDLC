@@ -7,10 +7,13 @@ import { useCountdown } from '../../../components/useCountdown';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { formatPrice } from '../../../lib/format';
-import { ORDER_STATUS_LABEL, formatClock, formatOrderTime, paymentText, reasonText, type HistoryItem, type OrderDetail } from '../../../lib/order';
+import { ORDER_STATUS_LABEL, formatClock, formatOrderTime, paymentText, reasonText, type HistoryItem, type OrderDetail, type OrderStatus } from '../../../lib/order';
 import { useLoginRedirect } from '../../../lib/prd';
 import { limitedText } from '../../../lib/stock';
 
+/** Vị trí trên thanh tiến trình (Đặt, Thanh toán, Giao, Nhận); -1 = đơn đã hủy/hết hạn, không vẽ thanh. */
+const STAGE: Record<OrderStatus, number> = { pending: 0, confirmed: 0, paid: 1, shipped: 2, delivered: 3, returned: 3, cancelled: -1, expired: -1 };
+const STEPS: [string, string][] = [['receipt', 'Đặt'], ['card', 'Thanh toán'], ['truck', 'Giao'], ['box', 'Nhận']];
 type View = 'loading' | 'ready' | 'notfound' | 'error';
 
 /** Chi tiết đơn (ui/order-detail): thông tin đơn, lịch sử trạng thái (khối tải riêng, lỗi riêng) và hủy đơn (hộp thoại). Customer chỉ thấy đơn của mình; staff không thấy địa chỉ; staff và admin vào qua danh sách quản trị. */
@@ -47,83 +50,112 @@ function OrderDetailView({ code }: { code: string }) {
   useEffect(() => { void load(); }, [load]);
 
   const back = staffSide ? '/admin/orders' : '/orders';
-  if (view === 'loading' && !order) return <main className="wide" data-testid="ord-order-detail-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></main>;
+  if (view === 'loading' && !order) return <main className="page page-mid" data-testid="ord-order-detail-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></main>;
   if (view === 'notfound') {
     return (
-      <main className="center">
-        <section className="card" data-testid="ord-order-detail-notfound">
-          <p className="hint">404</p>
-          <h1>Không tìm thấy đơn hàng</h1>
-          <p>Đơn không tồn tại hoặc bạn không có quyền xem đơn này.</p>
-          <Link className="btn btn-primary" href={back} data-testid="ord-order-detail-notfound-back">Về danh sách đơn hàng</Link>
+      <main className="page page-narrow">
+        <section className="panel empty" data-testid="ord-order-detail-notfound">
+          <span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span>
+          <h1>Không thấy đơn</h1>
+          <p>Đơn không tồn tại hoặc bạn không có quyền xem.</p>
+          <Link className="btn btn-primary tight" href={back} data-testid="ord-order-detail-notfound-back">Về danh sách</Link>
         </section>
       </main>
     );
   }
   if (view === 'error' || !order) {
-    return <main className="wide"><div role="alert" className="banner banner-error" data-testid="ord-order-detail-error">Không tải được đơn hàng. <button className="btn" onClick={() => void load()} data-testid="ord-order-detail-retry">Thử lại</button></div></main>;
+    return <main className="page page-mid"><div role="alert" className="banner banner-error" data-testid="ord-order-detail-error">Không tải được đơn. <button className="btn" onClick={() => void load()} data-testid="ord-order-detail-retry">Thử lại</button></div></main>;
   }
 
   const customer = user?.role === 'customer';
+  const stage = STAGE[order.status];
   // dòng "shipped" thứ hai trở đi trong lịch sử là giao thất bại (ORD-API: `status` = shipped lần thứ hai kèm mã lý do)
   let shippedSeen = false;
   const rows = (history ?? []).map((h) => { const failed = h.status === 'shipped' && shippedSeen; if (h.status === 'shipped') shippedSeen = true; return { ...h, failed }; });
+  const addr = order.shipping_address;
+  const payTone = order.payment_status === 'succeeded' ? 'green' : order.payment_status === 'pending' || order.payment_status === 'processing' ? 'amber' : order.payment_status === 'failed' ? 'red' : 'gray';
+  const payTile = (
+    <>
+      <span className={`tile ${payTone}`}><span className="i i-card" aria-hidden="true" /></span>
+      <span className="ord-tile-text"><b>{paymentText(order.payment_method, order.payment_status)}</b>{order.payment_expires_at && <span className="muted small" data-testid="ord-order-detail-payment-expires"><span className="i i-clock" aria-hidden="true" /> {formatClock(order.payment_expires_at)}</span>}</span>
+    </>
+  );
   return (
-    <main className="wide">
-      <p><Link href={back} data-testid="ord-order-detail-back-link">← Quay lại danh sách</Link></p>
-      <header className="row-link">
-        <h1>Đơn <span className="mono" data-testid="ord-order-detail-code">{order.code}</span></h1>
-        <span className="badge" data-status={order.status} data-testid="ord-order-detail-status-badge">{ORDER_STATUS_LABEL[order.status]}</span>
-        <span className="hint" data-testid="ord-order-detail-created-at">{formatOrderTime(order.created_at)}</span>
-        {order.can_cancel && <CancelDialogButton order={order} onDone={() => { setCancelled(true); void load(); }} onReload={() => void load()} />}
-      </header>
+    <main className="page page-mid">
+      <Link className="back" href={back} data-testid="ord-order-detail-back-link"><span className="i i-left" aria-hidden="true" />Đơn hàng</Link>
+      <div className="page-head">
+        <h1>Đơn <span className="mono ord-h-code" data-testid="ord-order-detail-code">{order.code}</span></h1>
+        <div className="actions">
+          <span className="badge" data-status={order.status} data-testid="ord-order-detail-status-badge">{ORDER_STATUS_LABEL[order.status]}</span>
+          <span className="muted small" data-testid="ord-order-detail-created-at">{formatOrderTime(order.created_at)}</span>
+          {order.can_cancel && <CancelDialogButton order={order} onDone={() => { setCancelled(true); void load(); }} onReload={() => void load()} />}
+        </div>
+      </div>
       {cancelled && <div role="status" className="banner banner-ok" data-testid="ord-order-detail-cancel-success">Đã hủy đơn</div>}
 
-      <section data-testid="ord-order-detail-items">
-        <h2>Sản phẩm</h2>
-        <table className="stack-table">
-          <thead><tr><th>Sản phẩm</th><th className="num">Đơn giá</th><th className="num">Số lượng</th><th className="num">Thành tiền</th></tr></thead>
-          <tbody>{order.items.map((i, k) => <tr key={k}><td data-label="Sản phẩm">{i.name}</td><td data-label="Đơn giá" className="num">{formatPrice(i.unit_price)}</td><td data-label="Số lượng" className="num">× {i.quantity}</td><td data-label="Thành tiền" className="num">{formatPrice(i.line_total)}</td></tr>)}</tbody>
-        </table>
-      </section>
-      <section data-testid="ord-order-detail-totals">
-        <p>Tạm tính: {formatPrice(order.items_total)}</p>
-        <p>Giảm giá: {formatPrice(order.discount)}</p>
-        <p>Phí giao hàng: {formatPrice(order.shipping_fee)}</p>
-        <p className="strong">Tổng cộng: {formatPrice(order.grand_total)}</p>
-      </section>
+      {stage >= 0 && (
+        <ol className="ord-steps" aria-label="Tiến trình">
+          {STEPS.map(([icon, label], k) => <li key={label} className={k <= stage ? 'done' : ''} aria-current={k === stage ? 'step' : undefined}><span className="tile"><span className={`i i-${k < stage ? 'check' : icon}`} aria-hidden="true" /></span><span className="small">{label}</span></li>)}
+        </ol>
+      )}
 
-      <section>
-        <h2>Giao hàng</h2>
-        {order.shipping_address
-          ? <div data-testid="ord-order-detail-address"><p>{order.shipping_address.receiver}</p><p>{order.shipping_address.phone}</p><p>{[order.shipping_address.line1, order.shipping_address.ward, order.shipping_address.district, order.shipping_address.city].filter(Boolean).join(', ')}</p></div>
-          : <p className="hint" data-testid="ord-order-detail-address-hidden">Thông tin người nhận được ẩn theo chính sách dữ liệu</p>}
-        {order.tracking_number && <p>Mã vận đơn: <span className="mono" data-testid="ord-order-detail-tracking">{order.tracking_number}</span></p>}
-        {customer && order.tracking_number && <Link href={`/orders/${order.code}/shipment`} data-testid="ord-order-detail-tracking-link">Theo dõi vận chuyển ›</Link>}
-      </section>
+      <div className="split">
+        <div className="stack">
+          <section className="panel" data-testid="ord-order-detail-items">
+            <div className="panel-head"><h2><span className="i i-bag" aria-hidden="true" />Sản phẩm</h2></div>
+            <ul className="list">
+              {order.items.map((i, k) => (
+                <li key={k}>
+                  <span className="tile gray"><span className="i i-box" aria-hidden="true" /></span>
+                  <div className="grow"><div className="strong">{i.name}</div><div className="muted small">{formatPrice(i.unit_price)} × {i.quantity}</div></div>
+                  <span className="money">{formatPrice(i.line_total)}</span>
+                </li>
+              ))}
+            </ul>
+            <dl className="kv ord-totals" data-testid="ord-order-detail-totals">
+              <dt>Tạm tính</dt><dd className="right">{formatPrice(order.items_total)}</dd>
+              <dt>Giảm giá</dt><dd className="right">{formatPrice(order.discount)}</dd>
+              <dt>Giao hàng</dt><dd className="right">{formatPrice(order.shipping_fee)}</dd>
+              <dt className="strong">Tổng</dt><dd className="right money ord-grand">{formatPrice(order.grand_total)}</dd>
+            </dl>
+          </section>
 
-      <section data-testid="ord-order-detail-payment">
-        <h2>Thanh toán</h2>
-        <p>{paymentText(order.payment_method, order.payment_status)}</p>
-        {order.payment_expires_at && <p data-testid="ord-order-detail-payment-expires">Hạn thanh toán {formatClock(order.payment_expires_at)}</p>}
-        {customer && <Link href={`/orders/${order.code}/payment`} data-testid="ord-order-detail-payment-link">Xem thanh toán ›</Link>}
-      </section>
+          <section className="panel" data-testid="ord-order-detail-history">
+            <div className="panel-head"><h2><span className="i i-clock" aria-hidden="true" />Lịch sử</h2></div>
+            {histView === 'loading' && !history && <div aria-busy="true"><div className="skeleton" /></div>}
+            {histView === 'error' && <div role="alert" className="banner banner-error" data-testid="ord-order-detail-history-error">Không tải được lịch sử. <button className="btn" onClick={() => void loadHistory()} data-testid="ord-order-detail-history-retry">Thử lại</button></div>}
+            {histView === 'ready' && (
+              <ol className="ord-tl">
+                {rows.map((h, k) => (
+                  <li key={k} data-testid="ord-order-detail-history-item" className={h.failed || h.status === 'cancelled' ? 'bad' : ''}>
+                    <b>{h.failed ? 'Giao thất bại' : ORDER_STATUS_LABEL[h.status]}</b> <span className="muted small">{formatOrderTime(h.at)}</span>
+                    {h.reason && <div className="muted small" data-testid="ord-order-detail-history-reason">{reasonText(h.status, h.reason, h.failed)}</div>}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        </div>
 
-      <section data-testid="ord-order-detail-history">
-        <h2>Lịch sử trạng thái</h2>
-        {histView === 'loading' && !history && <div aria-busy="true"><div className="skeleton" /></div>}
-        {histView === 'error' && <div role="alert" className="banner banner-error" data-testid="ord-order-detail-history-error">Không tải được lịch sử. <button className="btn" onClick={() => void loadHistory()} data-testid="ord-order-detail-history-retry">Thử lại</button></div>}
-        {histView === 'ready' && (
-          <ol className="timeline">
-            {rows.map((h, k) => (
-              <li key={k} data-testid="ord-order-detail-history-item">
-                <span className="hint">{formatOrderTime(h.at)}</span> {h.failed ? 'Giao thất bại' : ORDER_STATUS_LABEL[h.status]}
-                {h.reason && <span> · <span data-testid="ord-order-detail-history-reason">Lý do: {reasonText(h.status, h.reason, h.failed)}</span></span>}
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+        <div className="stack">
+          <section className="panel">
+            <div className="panel-head"><h2><span className="i i-pin" aria-hidden="true" />Nhận hàng</h2></div>
+            {addr
+              ? <div className="ord-addr" data-testid="ord-order-detail-address"><b>{addr.receiver}</b><span className="muted"><span className="i i-phone" aria-hidden="true" /> {addr.phone}</span><span className="muted">{[addr.line1, addr.ward, addr.district, addr.city].filter(Boolean).join(', ')}</span></div>
+              : <p className="muted small" data-testid="ord-order-detail-address-hidden"><span className="i i-eyeoff" aria-hidden="true" /> Thông tin người nhận được ẩn theo chính sách dữ liệu</p>}
+          </section>
+
+          <section data-testid="ord-order-detail-payment">
+            {customer
+              ? <Link className="ord-tile" href={`/orders/${order.code}/payment`} data-testid="ord-order-detail-payment-link" aria-label="Xem thanh toán">{payTile}<span className="i i-right" aria-hidden="true" /></Link>
+              : <div className="ord-tile">{payTile}</div>}
+          </section>
+
+          {order.tracking_number && (customer
+            ? <Link className="ord-tile" href={`/orders/${order.code}/shipment`} data-testid="ord-order-detail-tracking-link" aria-label="Theo dõi vận chuyển"><span className="tile"><span className="i i-truck" aria-hidden="true" /></span><span className="ord-tile-text"><b className="mono" data-testid="ord-order-detail-tracking">{order.tracking_number}</b></span><span className="i i-right" aria-hidden="true" /></Link>
+            : <div className="ord-tile"><span className="tile"><span className="i i-truck" aria-hidden="true" /></span><span className="ord-tile-text"><b className="mono" data-testid="ord-order-detail-tracking">{order.tracking_number}</b></span></div>)}
+        </div>
+      </div>
     </main>
   );
 }
@@ -157,19 +189,19 @@ function CancelDialogButton({ order, onDone, onReload }: { order: OrderDetail; o
 
   return (
     <>
-      <button className="btn btn-danger-soft tight" onClick={() => setOpen(true)} data-testid="ord-order-detail-cancel-button">Hủy đơn</button>
+      <button className="btn btn-danger-soft btn-sm tight" onClick={() => setOpen(true)} data-testid="ord-order-detail-cancel-button"><span className="i i-ban" aria-hidden="true" />Hủy đơn</button>
       {open && (
         <div className="backdrop">
           <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="ord-cancel-title" onKeyDown={(e) => e.key === 'Escape' && close()} data-testid="ord-order-detail-cancel-dialog">
-            <h2 id="ord-cancel-title">Hủy đơn {order.code}?</h2>
-            {order.status === 'paid' && <p data-testid="ord-order-detail-cancel-refund-notice">Đơn đã thanh toán: hủy sẽ hoàn tiền tự động toàn phần; xem kết quả ở màn thanh toán. Không thể hoàn tác.</p>}
-            <label>Lý do (không bắt buộc)
-              <textarea value={reason} maxLength={500} rows={3} disabled={busy} onChange={(e) => setReason(e.target.value)} data-testid="ord-order-detail-cancel-reason" />
+            <div className="dlg-head"><span className="tile red"><span className="i i-ban" aria-hidden="true" /></span><h2 id="ord-cancel-title">Hủy đơn {order.code}?</h2></div>
+            {order.status === 'paid' && <p data-testid="ord-order-detail-cancel-refund-notice">Đã thanh toán: hoàn tiền toàn phần, không hoàn tác.</p>}
+            <label>Lý do
+              <textarea value={reason} maxLength={500} rows={3} disabled={busy} placeholder="Không bắt buộc" onChange={(e) => setReason(e.target.value)} data-testid="ord-order-detail-cancel-reason" />
             </label>
             {error && (
               <div role="alert" className="field-error" data-testid="ord-order-detail-cancel-error">
                 {error.text}
-                {error.reload && <> <button className="btn" onClick={() => { setOpen(false); setError(null); onReload(); }} data-testid="ord-order-detail-cancel-reload">Tải lại đơn</button></>}
+                {error.reload && <> <button className="btn btn-sm" onClick={() => { setOpen(false); setError(null); onReload(); }} data-testid="ord-order-detail-cancel-reload">Tải lại</button></>}
               </div>
             )}
             <div className="actions">

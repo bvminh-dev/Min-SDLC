@@ -7,7 +7,6 @@ export function CartBadge() {
   const n = useCartBadge(true);
   return (
     <Link href="/cart" className="cart-badge" aria-label={n > 0 ? `Giỏ hàng, ${n} sản phẩm` : 'Giỏ hàng'} data-testid="crt-add-to-cart-badge">
-      <span aria-hidden="true">Giỏ</span>
       {n > 0 && <span className="cart-count" data-testid="crt-add-to-cart-badge-count">{badgeText(n)}</span>}
     </Link>
   );

@@ -86,43 +86,48 @@ function Categories() {
     if (t !== null) setDel({ ...del, busy: false, error: t });
   };
 
-  const createRoot = <button className="btn btn-primary tight" onClick={() => openForm({})} data-testid="prd-admin-category-create-root">+ Thêm danh mục gốc</button>;
+  const ic = (n: string) => <span className={`i i-${n}`} aria-hidden="true" />;
+  const createRoot = <button className="btn btn-primary tight" onClick={() => openForm({})} data-testid="prd-admin-category-create-root">{ic('plus')} Thêm</button>;
   const empty = cats.state === 'ready' && rows.length === 0;
   return (
-    <main className="wide">
-      <div className="between">
+    <main className="page page-mid">
+      <div className="page-head">
         <h1>Danh mục</h1>
-        {cats.state === 'ready' && !forbidden && !empty && createRoot}
+        <div className="actions">{cats.state === 'ready' && !forbidden && !empty && createRoot}</div>
       </div>
       {forbidden && <div role="alert" className="banner banner-error" data-testid="prd-admin-category-error">Bạn không có quyền thực hiện thao tác này.</div>}
       {cats.state === 'error' && !forbidden && (
         <div role="alert" className="banner banner-error" data-testid="prd-admin-category-error">Không tải được danh mục. <button className="btn" onClick={() => void cats.reload()} data-testid="prd-admin-category-retry">Thử lại</button></div>
       )}
       {cats.state === 'loading' && !forbidden && <div data-testid="prd-admin-category-loading" aria-busy="true">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
-      {empty && !forbidden && <div data-testid="prd-admin-category-empty"><p>Chưa có danh mục nào.</p>{createRoot}</div>}
+      {empty && !forbidden && <div className="empty" data-testid="prd-admin-category-empty"><span className="tile tile-lg gray">{ic('folder')}</span><strong>Chưa có danh mục</strong>{createRoot}</div>}
       {cats.state === 'ready' && !empty && !forbidden && (
-        <ul className="tree admin-tree" data-testid="prd-admin-category-tree">
-          {visible.map((c) => (
-            <li key={c.id} className="tree-row admin-row" style={{ paddingLeft: c.depth * 20 }} data-testid="prd-admin-category-row" data-id={c.id}>
-              {hasKids(c.id)
-                ? <button type="button" className="tree-toggle" aria-expanded={!collapsed.has(c.id)} aria-label={`${collapsed.has(c.id) ? 'Mở' : 'Thu gọn'} ${c.name}`} onClick={() => toggle(c.id)}>{collapsed.has(c.id) ? '▸' : '▾'}</button>
-                : <span className="tree-toggle" aria-hidden="true" />}
-              <span className="grow">{c.name}</span>
-              <span className="hint" data-testid="prd-admin-category-product-count">{c.product_count} sản phẩm</span>
-              <span className="row-actions">
-                {c.depth < MAX_DEPTH_INDEX && <button className="btn btn-quiet" onClick={() => openForm({ parentId: c.id })} data-testid="prd-admin-category-create-child">+ Con</button>}
-                <button className="btn btn-quiet" onClick={() => openForm({ id: c.id, name: c.name, parentId: c.parent_id ?? '' })} data-testid="prd-admin-category-edit">Sửa</button>
-                <button className="btn btn-quiet" onClick={() => setDel({ row: c, busy: false })} data-testid="prd-admin-category-delete">Xóa</button>
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="panel panel-flush">
+          <ul className="tree admin-tree ct-admin-tree" data-testid="prd-admin-category-tree">
+            {visible.map((c) => (
+              <li key={c.id} className="tree-row admin-row ct-cat-row" data-testid="prd-admin-category-row" data-id={c.id}>
+                <span className="ct-indent" style={{ width: c.depth * 20 }} aria-hidden="true" />
+                {hasKids(c.id)
+                  ? <button type="button" className={`ct-tg${collapsed.has(c.id) ? '' : ' open'}`} aria-expanded={!collapsed.has(c.id)} aria-label={`${collapsed.has(c.id) ? 'Mở' : 'Thu gọn'} ${c.name}`} onClick={() => toggle(c.id)}>{ic('right')}</button>
+                  : <span className="ct-tg" aria-hidden="true" />}
+                <span className={`tile ct-tile ${['', 'violet', 'gray'][c.depth] ?? 'gray'}`}>{ic('folder')}</span>
+                <span className="grow ct-cat-name">{c.name}</span>
+                <span className="ct-count" data-testid="prd-admin-category-product-count" title="Sản phẩm">{ic('tag')}{c.product_count}</span>
+                <span className="ct-acts">
+                  {c.depth < MAX_DEPTH_INDEX && <button className="btn btn-sm btn-ghost btn-icon" aria-label={`Thêm con của ${c.name}`} title="Thêm con" onClick={() => openForm({ parentId: c.id })} data-testid="prd-admin-category-create-child">{ic('plus')}</button>}
+                  <button className="btn btn-sm btn-ghost btn-icon" aria-label={`Sửa ${c.name}`} title="Sửa" onClick={() => openForm({ id: c.id, name: c.name, parentId: c.parent_id ?? '' })} data-testid="prd-admin-category-edit"></button>
+                  <button className="btn btn-sm btn-ghost btn-icon ct-del" aria-label={`Xóa ${c.name}`} title="Xóa" onClick={() => setDel({ row: c, busy: false })} data-testid="prd-admin-category-delete"></button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {form && (
         <div className="backdrop">
           <form className="dialog" role="dialog" aria-modal="true" aria-labelledby="cat-title" noValidate onSubmit={save} onKeyDown={(e) => e.key === 'Escape' && !form.busy && setForm(null)}>
-            <h2 id="cat-title">{form.id ? 'Sửa danh mục' : 'Thêm danh mục'}</h2>
+            <div className="dlg-head"><span className="tile">{ic('folder')}</span><h2 id="cat-title">{form.id ? 'Sửa danh mục' : 'Thêm danh mục'}</h2></div>
             <Field label="Tên *" error={form.nameError} errorTestId="prd-admin-category-name-error" field="name">
               {(id, d) => <input id={id} aria-describedby={d} value={form.name} maxLength={100} autoFocus disabled={form.busy} onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="prd-admin-category-name" />}
             </Field>
@@ -147,7 +152,7 @@ function Categories() {
       {del && (
         <div className="backdrop">
           <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="del-title" onKeyDown={(e) => e.key === 'Escape' && !del.busy && setDel(null)}>
-            <h2 id="del-title">Xóa danh mục {del.row.name}?</h2>
+            <div className="dlg-head"><span className="tile red">{ic('trash')}</span><h2 id="del-title">Xóa danh mục {del.row.name}?</h2></div>
             <p>Không thể khôi phục.</p>
             {del.error && <p className="field-error" role="alert" data-testid="prd-admin-category-delete-error">{del.error}</p>}
             {locked && <p className="field-error" role="alert">{rateLimitedText(limit.left)}</p>}

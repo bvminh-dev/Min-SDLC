@@ -161,15 +161,16 @@ export function ProductEditor({ id }: { id?: string }) {
     setArchive({ busy: false, error: 'Không thực hiện được. Thử lại.' });
   };
 
-  const back = <Link href="/admin/products">‹ Sản phẩm</Link>;
+  const ic = (n: string) => <span className={`i i-${n}`} aria-hidden="true" />;
+  const back = <Link className="back" href="/admin/products">{ic('left')} Sản phẩm</Link>;
   if (view === 'loading') {
-    return <main className="wide" data-testid="prd-admin-product-edit-loading" aria-busy="true"><div className="skeleton" /><div className="edit-grid"><div><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div><div className="skeleton skeleton-card" /></div></main>;
+    return <main className="page" data-testid="prd-admin-product-edit-loading" aria-busy="true"><div className="skeleton" /><div className="ct-edit-grid"><div><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div><div className="skeleton skeleton-card" /></div></main>;
   }
-  if (view === 'notfound') return <main className="wide"><div data-testid="prd-admin-product-edit-not-found"><p>Không tìm thấy sản phẩm.</p><Link href="/admin/products">Về danh sách sản phẩm</Link></div></main>;
-  if (view === 'forbidden') return <main className="wide"><div role="alert" className="banner banner-error" data-testid="prd-admin-product-edit-error">Bạn không có quyền xem sản phẩm này.</div></main>;
+  if (view === 'notfound') return <main className="page"><div className="empty" data-testid="prd-admin-product-edit-not-found"><span className="tile tile-lg gray">{ic('search')}</span><strong>Không tìm thấy sản phẩm</strong><Link className="btn" href="/admin/products">{ic('left')} Sản phẩm</Link></div></main>;
+  if (view === 'forbidden') return <main className="page"><div role="alert" className="banner banner-error" data-testid="prd-admin-product-edit-error">Bạn không có quyền xem sản phẩm này.</div></main>;
   if (view === 'error' && !p) {
     return (
-      <main className="wide">
+      <main className="page">
         <div role="alert" className="banner banner-error" data-testid="prd-admin-product-edit-error">
           {locked ? rateLimitedText(limit.left) : error?.text || 'Không tải hoặc không lưu được.'}{' '}
           <button className="btn" disabled={locked} onClick={() => void load()} data-testid="prd-admin-product-edit-retry">Thử lại</button>
@@ -184,20 +185,17 @@ export function ProductEditor({ id }: { id?: string }) {
   const checklist: [string, boolean][] = [['Tên', !!base.name.trim()], ['Mã', !!base.sku.trim()], ['Giá', parseMoney(base.price) !== null], ['Danh mục', !!base.categoryId], ['Có ảnh', images.length > 0]];
   const ro = !canWrite;
   const fieldsDisabled = ro || busy;
+  const showStatus = !!id && canWrite;
 
   return (
-    <main className="wide">
-      <div className="editbar">
-        {back}
+    <main className="page">
+      {back}
+      <div className="page-head ct-editbar">
         <h1>{id ? (p?.name ?? '') : 'Tạo sản phẩm'}</h1>
-        {status && <span className="badge" data-status={status} data-testid="prd-admin-product-edit-status-badge">{STATUS_LABEL[status]}</span>}
-        {canWrite && (
-          <span className="row-actions">
-            <button type="submit" form="product-form" className="btn btn-primary tight" disabled={busy || locked} data-testid="prd-admin-product-edit-save">{busy ? 'Đang xử lý...' : 'Lưu'}</button>
-            {id && status === 'draft' && <button type="button" className="btn tight" disabled={busy || locked} onClick={() => void publish()} data-testid="prd-admin-product-edit-publish">Công bố</button>}
-            {id && <button type="button" className="btn btn-danger tight" disabled={busy || locked} onClick={() => setArchive({ busy: false })} data-testid="prd-admin-product-edit-archive">{status === 'draft' ? 'Hủy nháp' : 'Ngừng bán'}</button>}
-          </span>
-        )}
+        <div className="actions">
+          {status && <span className="badge" data-status={status} data-testid="prd-admin-product-edit-status-badge">{STATUS_LABEL[status]}</span>}
+          {canWrite && <button type="submit" form="product-form" className="btn btn-primary tight" disabled={busy || locked} data-testid="prd-admin-product-edit-save">{busy ? 'Đang xử lý...' : 'Lưu'}</button>}
+        </div>
       </div>
 
       {(error && (locked || !error.rate)) && (
@@ -211,56 +209,71 @@ export function ProductEditor({ id }: { id?: string }) {
           Sản phẩm đã được người khác sửa, hãy tải lại. <button className="btn" onClick={() => void load()}>Tải lại</button>
         </div>
       )}
-      {saved && <p role="status" className="hint">{saved}</p>}
+      {saved && <p role="status" className="ct-ok">{ic('okc')}{saved}</p>}
       {id && status === 'archived' && <p className="banner banner-info" data-testid="prd-admin-product-edit-archived-note">Sản phẩm đã lưu trữ, không sửa được</p>}
       {id && !isAdmin && <p className="banner banner-info" data-testid="prd-admin-product-edit-readonly-note">Bạn chỉ có quyền xem</p>}
 
-      <div className="edit-grid">
-        {!isAdmin && p ? (
-          <dl className="view-fields" data-testid="prd-admin-product-edit-view-fields">
-            <dt>Tên</dt><dd>{p.name}</dd>
-            <dt>Mã sku</dt><dd>{p.sku}</dd>
-            <dt>Danh mục</dt><dd>{p.category?.name ?? categoryName}</dd>
-            <dt>Giá</dt><dd>{formatPrice(p.price)}</dd>
-            <dt>Mô tả</dt><dd className="pre">{p.description ?? ''}</dd>
-          </dl>
-        ) : (
-          <form id="product-form" noValidate onSubmit={onSave}>
-            <Field label="Tên *" error={fieldErrors.name} errorTestId="prd-admin-product-edit-field-error" field="name">
-              {(i, d) => <input id={i} aria-describedby={d} value={form.name} maxLength={200} disabled={fieldsDisabled} onChange={(e) => set('name', e.target.value)} data-testid="prd-admin-product-edit-name" />}
-            </Field>
-            <Field label="Mã sku *" error={fieldErrors.sku} errorTestId="prd-admin-product-edit-field-error" field="sku" hint={id && status !== 'draft' ? 'Khóa khi đã đang bán' : 'Chữ, số, dấu - và _'}>
-              {(i, d) => <input id={i} aria-describedby={d} value={form.sku} maxLength={64} disabled={fieldsDisabled || (!!id && status !== 'draft')} autoComplete="off" onChange={(e) => set('sku', e.target.value)} data-testid="prd-admin-product-edit-sku" />}
-            </Field>
-            <Field label="Danh mục *" error={fieldErrors.category_id} errorTestId="prd-admin-product-edit-field-error" field="category_id">
-              {(i, d) => (
-                <select id={i} aria-describedby={d} value={form.categoryId} disabled={fieldsDisabled} onChange={(e) => set('categoryId', e.target.value)} data-testid="prd-admin-product-edit-category">
-                  <option value="">Chọn danh mục</option>
-                  {flattenTree(cats.items).map((c) => <option key={c.id} value={c.id} style={{ paddingLeft: c.depth * 14 }}>{c.name}</option>)}
-                  {form.categoryId && !cats.items.some((c) => c.id === form.categoryId) && <option value={form.categoryId}>{p?.category?.name ?? form.categoryId}</option>}
-                </select>
-              )}
-            </Field>
-            <Field label="Giá (đ) *" error={fieldErrors.price} errorTestId="prd-admin-product-edit-field-error" field="price" hint={priceNum !== null ? formatPrice(priceNum) : undefined}>
-              {(i, d) => <input id={i} aria-describedby={d} inputMode="numeric" value={form.price} disabled={fieldsDisabled} onChange={(e) => set('price', e.target.value)} data-testid="prd-admin-product-edit-price" />}
-            </Field>
-            <Field label="Mô tả" error={fieldErrors.description} errorTestId="prd-admin-product-edit-field-error" field="description">
-              {(i, d) => <textarea id={i} aria-describedby={d} rows={6} maxLength={5000} value={form.description} disabled={fieldsDisabled} onChange={(e) => set('description', e.target.value)} data-testid="prd-admin-product-edit-description" />}
-            </Field>
-          </form>
-        )}
+      <div className="ct-edit-grid">
+        <section className="panel" aria-label="Thông tin">
+          <div className="panel-head"><h2>{ic('list')} Thông tin</h2></div>
+          {!isAdmin && p ? (
+            <dl className="kv" data-testid="prd-admin-product-edit-view-fields">
+              <dt>Tên</dt><dd>{p.name}</dd>
+              <dt>Mã</dt><dd>{p.sku}</dd>
+              <dt>Danh mục</dt><dd>{p.category?.name ?? categoryName}</dd>
+              <dt>Giá</dt><dd className="money">{formatPrice(p.price)}</dd>
+              <dt>Mô tả</dt><dd className="pre">{p.description ?? ''}</dd>
+            </dl>
+          ) : (
+            <form id="product-form" className="ct-form" noValidate onSubmit={onSave}>
+              <Field label="Tên *" error={fieldErrors.name} errorTestId="prd-admin-product-edit-field-error" field="name">
+                {(i, d) => <input id={i} aria-describedby={d} value={form.name} maxLength={200} disabled={fieldsDisabled} onChange={(e) => set('name', e.target.value)} data-testid="prd-admin-product-edit-name" />}
+              </Field>
+              <div className="ct-form-2">
+                <Field label="Mã sku *" error={fieldErrors.sku} errorTestId="prd-admin-product-edit-field-error" field="sku" hint={id && status !== 'draft' ? 'Đã khóa' : 'Chữ, số, - và _'}>
+                  {(i, d) => <input id={i} aria-describedby={d} value={form.sku} maxLength={64} disabled={fieldsDisabled || (!!id && status !== 'draft')} autoComplete="off" onChange={(e) => set('sku', e.target.value)} data-testid="prd-admin-product-edit-sku" />}
+                </Field>
+                <Field label="Giá (đ) *" error={fieldErrors.price} errorTestId="prd-admin-product-edit-field-error" field="price" hint={priceNum !== null ? formatPrice(priceNum) : undefined}>
+                  {(i, d) => <input id={i} aria-describedby={d} inputMode="numeric" value={form.price} disabled={fieldsDisabled} onChange={(e) => set('price', e.target.value)} data-testid="prd-admin-product-edit-price" />}
+                </Field>
+              </div>
+              <Field label="Danh mục *" error={fieldErrors.category_id} errorTestId="prd-admin-product-edit-field-error" field="category_id">
+                {(i, d) => (
+                  <select id={i} aria-describedby={d} value={form.categoryId} disabled={fieldsDisabled} onChange={(e) => set('categoryId', e.target.value)} data-testid="prd-admin-product-edit-category">
+                    <option value="">Chọn danh mục</option>
+                    {flattenTree(cats.items).map((c) => <option key={c.id} value={c.id} style={{ paddingLeft: c.depth * 14 }}>{c.name}</option>)}
+                    {form.categoryId && !cats.items.some((c) => c.id === form.categoryId) && <option value={form.categoryId}>{p?.category?.name ?? form.categoryId}</option>}
+                  </select>
+                )}
+              </Field>
+              <Field label="Mô tả" error={fieldErrors.description} errorTestId="prd-admin-product-edit-field-error" field="description">
+                {(i, d) => <textarea id={i} aria-describedby={d} rows={6} maxLength={5000} value={form.description} disabled={fieldsDisabled} onChange={(e) => set('description', e.target.value)} data-testid="prd-admin-product-edit-description" />}
+              </Field>
+            </form>
+          )}
+        </section>
 
-        <div>
+        <div className="stack">
           {id && p ? <ProductImages productId={id} images={images} editable={canWrite} onChanged={() => load({ reset: false, silent: true })} onOther={(r) => fail(r, () => undefined)} /> : null}
-          {!id && <p className="hint">Lưu bản nháp xong mới thêm được ảnh.</p>}
-          {canWrite && id && status === 'draft' && (
-            <section aria-label="Điều kiện công bố">
-              <h2>Điều kiện công bố</h2>
-              <ul className="checks">{checklist.map(([l, ok]) => <li key={l} className={ok ? 'check-ok' : 'check-no'}>{ok ? '✔' : '✖'} {l}</li>)}</ul>
-              {missing && (
-                <div role="alert" className="field-error" data-testid="prd-admin-product-edit-publish-missing">
-                  <p>Chưa đủ điều kiện công bố:</p>
-                  <ul>{(missing.length ? missing : ['']).map((m) => <li key={m}>{m ? MISSING_MSG[m] ?? `Thiếu: ${m}` : 'Còn thiếu dữ liệu bắt buộc'}</li>)}</ul>
+          {!id && <div className="panel"><div className="panel-head"><h2>{ic('image')} Ảnh</h2></div><p className="hint">Lưu nháp để thêm ảnh.</p></div>}
+          {showStatus && (
+            <section className="panel" aria-label="Trạng thái">
+              <div className="panel-head"><h2>{ic('okc')} Trạng thái</h2></div>
+              {canWrite && status === 'draft' && (
+                <>
+                  <ul className="ct-checks" aria-label="Điều kiện công bố">{checklist.map(([l, ok]) => <li key={l} className={ok ? 'ok' : 'no'}>{ic(ok ? 'check' : 'x')} {l}</li>)}</ul>
+                  {missing && (
+                    <div role="alert" className="field-error" data-testid="prd-admin-product-edit-publish-missing">
+                      <p>Chưa đủ điều kiện công bố:</p>
+                      <ul>{(missing.length ? missing : ['']).map((m) => <li key={m}>{m ? MISSING_MSG[m] ?? `Thiếu: ${m}` : 'Còn thiếu dữ liệu bắt buộc'}</li>)}</ul>
+                    </div>
+                  )}
+                </>
+              )}
+              {canWrite && (
+                <div className="row ct-status-actions">
+                  {status === 'draft' && <button type="button" className="btn btn-primary tight" disabled={busy || locked} onClick={() => void publish()} data-testid="prd-admin-product-edit-publish">{ic('upload')} Công bố</button>}
+                  <button type="button" className="btn btn-danger-soft tight" disabled={busy || locked} onClick={() => setArchive({ busy: false })} data-testid="prd-admin-product-edit-archive">{ic('archive')} {status === 'draft' ? 'Hủy nháp' : 'Ngừng bán'}</button>
                 </div>
               )}
             </section>
@@ -271,8 +284,8 @@ export function ProductEditor({ id }: { id?: string }) {
       {archive && (
         <div className="backdrop">
           <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="arc-title" onKeyDown={(e) => e.key === 'Escape' && !archive.busy && setArchive(null)}>
-            <h2 id="arc-title">{status === 'draft' ? 'Hủy nháp' : 'Ngừng bán'} {p?.name}?</h2>
-            <p>Không thể khôi phục. Sản phẩm sẽ ở trạng thái Đã lưu trữ và không sửa được nữa.</p>
+            <div className="dlg-head"><span className="tile red">{ic('archive')}</span><h2 id="arc-title">{status === 'draft' ? 'Hủy nháp' : 'Ngừng bán'} {p?.name}?</h2></div>
+            <p>Không thể khôi phục.</p>
             {archive.error && <p className="field-error" role="alert">{archive.error}</p>}
             {locked && <p className="field-error" role="alert">{rateLimitedText(limit.left)}</p>}
             <div className="actions">

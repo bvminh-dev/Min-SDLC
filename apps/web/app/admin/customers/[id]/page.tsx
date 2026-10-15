@@ -27,13 +27,13 @@ function ById() {
   }, [id, router]);
   if (view === 'forbidden') return <AccessDenied role={user?.role} />;
   return (
-    <main className="wide">
-      <h1>Hồ sơ khách</h1>
-      {view === 'loading' && <div className="skeleton" data-testid="usr-customer-lookup-loading" />}
-      {view === 'notfound' && <p data-testid="usr-customer-lookup-not-found">Không có khách nào dùng mã này.</p>}
+    <main className="page page-mid">
+      <Link href="/admin/customers" className="back"><span className="i i-left" aria-hidden="true" /> Tra cứu</Link>
+      <div className="page-head"><h1>Hồ sơ khách</h1></div>
+      {view === 'loading' && <div className="skeleton" style={{ height: '7rem' }} data-testid="usr-customer-lookup-loading" />}
+      {view === 'notfound' && <div className="empty panel" data-testid="usr-customer-lookup-not-found"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có khách này</strong></div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid="usr-customer-lookup-error">Không tra cứu được.</div>}
       {view === 'ready' && c && <CustomerCard c={c} role="admin" />}
-      <p className="row-link"><Link href="/admin/customers">‹ Tra cứu khách</Link></p>
     </main>
   );
 }

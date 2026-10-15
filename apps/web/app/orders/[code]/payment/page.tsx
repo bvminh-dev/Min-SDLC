@@ -2,13 +2,14 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { PayBadge, RefundBadge, Spinner, useRemaining } from '../../../../components/PaymentParts';
+import { MethodTag, PayBadge, RefundBadge, Spinner, useRemaining } from '../../../../components/PaymentParts';
 import { RequireRole } from '../../../../components/RequireRole';
+import { Note, Skel } from '../../../../components/ShipmentParts';
 import { useCountdown } from '../../../../components/useCountdown';
 import { api } from '../../../../lib/api';
 import { formatPrice } from '../../../../lib/format';
 import { formatOrderTime } from '../../../../lib/order';
-import { attemptText, failSentence, formatRemaining, methodText, newIdemKey, safeRedirect, type PaymentDetail, type PaymentList } from '../../../../lib/payment';
+import { attemptText, failSentence, formatRemaining, newIdemKey, safeRedirect, type PaymentDetail, type PaymentList } from '../../../../lib/payment';
 import { useLoginRedirect } from '../../../../lib/prd';
 import { limitedText } from '../../../../lib/stock';
 
@@ -37,7 +38,7 @@ function kindOf(d: PaymentDetail, ov: Override | null): Kind {
   }
 }
 
-const CLOSED_TEXT: Record<string, string> = { 'closed-expired': 'Đơn đã hết hạn thanh toán', 'closed-cancelled': 'Đơn đã bị hủy', 'closed-other': 'Đơn không còn thanh toán được (đã hết hạn hoặc đã bị hủy)' };
+const CLOSED_TEXT: Record<string, string> = { 'closed-expired': 'Đơn đã hết hạn thanh toán', 'closed-cancelled': 'Đơn đã bị hủy', 'closed-other': 'Đơn không còn thanh toán được' };
 
 /** Thanh toán đơn (ui/order-payment): trạng thái chỉ đọc từ `GET /payments/{id}`; mọi tham số `vnp_*` trên địa chỉ bị bỏ qua. */
 function Pay({ code }: { code: string }) {
@@ -154,23 +155,23 @@ function Pay({ code }: { code: string }) {
     }
   };
 
-  const back = <p><Link href={`/orders/${encodeURIComponent(code)}`} data-testid={`${P}-back-link`}>← Về đơn hàng</Link></p>;
-  const rate = limit.left > 0 ? <div role="alert" className="banner banner-error" data-testid={`${P}-ratelimited`}>{limitedText(limit.left)}</div> : null;
+  const back = <Link className="back" href={`/orders/${encodeURIComponent(code)}`} data-testid={`${P}-back-link`}><span className="i i-left" aria-hidden="true" />Đơn hàng</Link>;
+  const rate = limit.left > 0 ? <Note tone="red" icon="clock" role="alert" testid={`${P}-ratelimited`}>{limitedText(limit.left)}</Note> : null;
 
   const errorBanner = (!data && view === 'error') || pollStale ? (
-    <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>
-      {pollStale ? 'Chưa nhận được kết quả thanh toán. Hãy kiểm tra lại.' : 'Không tải được thông tin thanh toán.'}{' '}
+    <Note tone="red" icon="alert" role="alert" testid={`${P}-error`}>
+      {pollStale ? 'Chưa có kết quả thanh toán.' : 'Không tải được thanh toán.'}
       <button className="btn" onClick={() => { tries.current = 0; setPollKey((k) => k + 1); void load(); }} data-testid={`${P}-error-retry`}>{pollStale ? 'Kiểm tra lại' : 'Thử lại'}</button>
-    </div>
+    </Note>
   ) : null;
 
   if (view === 'notfound') {
-    return <main className="wide">{back}<section className="card-block" data-testid={`${P}-notfound`}><p className="hint">404</p><h1>Không tìm thấy thanh toán</h1><p>Thanh toán không tồn tại hoặc bạn không có quyền xem.</p></section></main>;
+    return <main className="page page-narrow">{back}<section className="empty" data-testid={`${P}-notfound`}><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><h1>Không tìm thấy thanh toán</h1></section></main>;
   }
   if (!data) {
-    if (view === 'error') return <main className="wide">{back}{rate}{errorBanner}</main>;
-    if (view === 'preparing') return <main className="wide">{back}<p role="status" className="banner banner-info" data-testid={`${P}-preparing`}><Spinner /> Đang chuẩn bị thanh toán...</p></main>;
-    return <main className="wide" data-testid={`${P}-loading`} aria-busy="true">{back}<div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></main>;
+    if (view === 'error') return <main className="page page-narrow">{back}{rate}{errorBanner}</main>;
+    if (view === 'preparing') return <main className="page page-narrow">{back}<Note tone="blue" role="status" testid={`${P}-preparing`}><Spinner />Đang chuẩn bị thanh toán...</Note></main>;
+    return <main className="page page-narrow" data-testid={`${P}-loading`} aria-busy="true">{back}<Skel n={3} /></main>;
   }
 
   const kind = kindOf(data, override);
@@ -178,66 +179,72 @@ function Pay({ code }: { code: string }) {
   const lastFail = [...data.attempts].sort((a, b) => b.attempt_no - a.attempt_no).find((a) => a.status === 'failed');
   const timed = online && data.expires_at && (kind === 'ready' || kind === 'processing' || kind === 'failed');
   const busy = acting || redirecting || limit.left > 0;
+  const payLabel = (text: string) => (acting || redirecting ? <><Spinner />Đang chuyển...</> : text);
   return (
-    <main className="wide">
+    <main className="page page-narrow">
       {back}
       {rate}
       {errorBanner}
-      <section className="card-block" data-testid={`${P}-summary`}>
-        <header className="row-link">
-          <h1>Thanh toán đơn <span className="mono">{data.order_code}</span></h1>
+      <section className="panel ps-pay" data-testid={`${P}-summary`}>
+        <div className="ps-top">
+          <h1>Đơn <span className="ps-code">{data.order_code}</span></h1>
           <PayBadge status={data.status} method={data.method} testid={`${P}-status-badge`} />
-        </header>
-        <p className="price tabular" data-testid={`${P}-amount`}>{formatPrice(data.amount)}</p>
-        <p>{methodText(data.method)}{online && <span className="hint tabular"> · <span data-testid={`${P}-attempts-count`}>Lượt {data.attempt_no}/{data.max_attempts}</span></span>}</p>
+        </div>
+        <p className="ps-amount" style={{ margin: 0 }} data-testid={`${P}-amount`}>{formatPrice(data.amount)}</p>
+        <div className="meta">
+          <MethodTag method={data.method} />
+          {online && <><span className="sep" aria-hidden="true" /><span className="ps-attempt-n" data-testid={`${P}-attempts-count`}>Lượt {data.attempt_no}/{data.max_attempts}</span></>}
+        </div>
         {timed && (
-          <p className="tabular" data-testid={`${P}-countdown`}>{left === null ? '' : left > 0 ? `Còn ${formatRemaining(left)} để thanh toán` : 'Đã hết thời gian dự kiến, đang kiểm tra lại với hệ thống'}</p>
+          <span className={`ps-count${left !== null && left > 0 && left <= 60 ? ' low' : ''}`} data-testid={`${P}-countdown`}>
+            <span className="i i-clock" aria-hidden="true" />{left === null ? '' : left > 0 ? `Còn ${formatRemaining(left)}` : 'Đang kiểm tra...'}
+          </span>
         )}
 
-        {kind === 'cod' && <div className="banner banner-info" data-testid={`${P}-cod-notice`}>Thanh toán khi nhận hàng. Tiền được ghi nhận tự động khi đơn giao xong.</div>}
-        {kind === 'success' && <div role="status" className="banner banner-ok" data-testid={`${P}-success`}>✓ Thanh toán thành công</div>}
-        {kind === 'refunded' && <p className="hint">Đơn đã được hoàn tiền.</p>}
-        {kind === 'amount' && <div role="alert" className="banner banner-error" data-testid={`${P}-amount-error`}>Số tiền đơn không thanh toán được qua VNPay, vui lòng liên hệ cửa hàng.</div>}
-        {(kind === 'closed-expired' || kind === 'closed-cancelled' || kind === 'closed-other') && <div role="status" className="banner banner-info" data-testid={`${P}-closed`}>{CLOSED_TEXT[kind]}</div>}
+        {kind === 'cod' && <Note tone="blue" icon="bag" className="center" testid={`${P}-cod-notice`}>Thanh toán khi nhận hàng</Note>}
+        {kind === 'success' && <Note tone="green" icon="okc" className="center" role="status" testid={`${P}-success`}>Thanh toán thành công</Note>}
+        {kind === 'refunded' && <Note icon="undo" className="center">Đã hoàn tiền</Note>}
+        {kind === 'amount' && <Note tone="red" icon="alert" role="alert" testid={`${P}-amount-error`}>Số tiền này không thanh toán được qua VNPay. Liên hệ cửa hàng.</Note>}
+        {(kind === 'closed-expired' || kind === 'closed-cancelled' || kind === 'closed-other') && <Note icon="ban" className="center" role="status" testid={`${P}-closed`}>{CLOSED_TEXT[kind]}</Note>}
         {kind === 'exhausted' && (
-          <div role="status" className="banner banner-error" data-testid={`${P}-exhausted`}>
-            Đã hết {data.max_attempts} lượt thanh toán. Đơn sẽ bị hủy.{lastFail && <> {failSentence(lastFail.reason)}.</>}
-          </div>
+          <Note tone="red" icon="alert" role="status" testid={`${P}-exhausted`}>
+            Hết {data.max_attempts} lượt. Đơn sẽ bị hủy.{lastFail && <> {failSentence(lastFail.reason)}.</>}
+          </Note>
         )}
-        {kind === 'reconciling' && <div role="status" className="banner banner-info" data-testid={`${P}-reconciling`}><Spinner /> Ngân hàng chưa báo kết quả, hệ thống đang đối soát. Đang đối soát với ngân hàng...</div>}
+        {kind === 'reconciling' && <Note tone="blue" role="status" testid={`${P}-reconciling`}><Spinner />Đang đối soát với ngân hàng...</Note>}
 
         {kind === 'ready' && (
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void act('initiate')} data-testid={`${P}-pay-button`}>{acting || redirecting ? <><Spinner /> Đang chuyển tới VNPay...</> : 'Thanh toán qua VNPay'}</button>
+          <button type="button" className="btn btn-primary ps-big" disabled={busy} onClick={() => void act('initiate')} data-testid={`${P}-pay-button`}>{payLabel('Thanh toán')}</button>
         )}
         {kind === 'processing' && (
-          <div data-testid={`${P}-processing`}>
-            <p role="status"><Spinner /> Đang xác nhận thanh toán với ngân hàng, vui lòng không đóng trang.</p>
-            <button type="button" className="btn" disabled={busy} onClick={() => void act('initiate')} data-testid={`${P}-reopen-link`}>Mở lại trang thanh toán</button>
+          <div className="ps-retry-line" data-testid={`${P}-processing`}>
+            <Note tone="blue" role="status"><Spinner />Đang xác nhận với ngân hàng, đừng đóng trang.</Note>
+            <button type="button" className="btn" disabled={busy} onClick={() => void act('initiate')} data-testid={`${P}-reopen-link`}><span className="i i-link" aria-hidden="true" />Mở lại</button>
           </div>
         )}
         {kind === 'failed' && (
-          <div data-testid={`${P}-failed`}>
-            <p className="banner banner-error" role="status" data-testid={`${P}-failed-reason`}>{failSentence(lastFail?.reason)}</p>
-            <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void act('retry')} data-testid={`${P}-retry-button`}>{acting || redirecting ? <><Spinner /> Đang chuyển tới VNPay...</> : 'Thử lại thanh toán'}</button>
+          <div className="ps-retry-line" data-testid={`${P}-failed`}>
+            <Note tone="red" icon="alert" role="status" testid={`${P}-failed-reason`}>{failSentence(lastFail?.reason)}</Note>
+            <button type="button" className="btn btn-primary ps-big" disabled={busy} onClick={() => void act('retry')} data-testid={`${P}-retry-button`}>{acting || redirecting ? <><Spinner />Đang chuyển...</> : <><span className="i i-refresh" aria-hidden="true" />Thử lại</>}</button>
           </div>
         )}
-        {(acting || redirecting) && <p className="hint" role="status" data-testid={`${P}-redirecting`}>Đang chuyển tới VNPay...</p>}
-        {actErr && <p role="alert" className="field-error">{actErr}</p>}
+        {(acting || redirecting) && <p className="muted small" style={{ margin: 0 }} role="status" data-testid={`${P}-redirecting`}>Đang chuyển tới VNPay...</p>}
+        {actErr && <Note tone="red" icon="alert" role="alert">{actErr}</Note>}
       </section>
 
       {data.attempts.length > 0 && (
-        <section className="card-block">
-          <h2>Các lượt thanh toán</h2>
-          <ul className="timeline" data-testid={`${P}-attempt-list`}>
-            {data.attempts.map((a) => <li key={a.attempt_no} data-testid={`${P}-attempt-item`}>Lượt {a.attempt_no} · {attemptText(a)} <span className="hint tabular">{formatOrderTime(a.created_at)}</span></li>)}
+        <section className="ps-card">
+          <h2><span className="i i-refresh" aria-hidden="true" />Lượt thử<span className="n">{data.attempts.length}</span></h2>
+          <ul className="ps-tl" data-testid={`${P}-attempt-list`}>
+            {data.attempts.map((a) => <li key={a.attempt_no} data-testid={`${P}-attempt-item`}><span className={`ps-dot ${a.status === 'succeeded' ? 'green' : a.status === 'failed' ? 'red' : ''}`}><span className={`i i-${a.status === 'succeeded' ? 'check' : a.status === 'failed' ? 'x' : 'clock'}`} aria-hidden="true" /></span><span className="body">Lượt {a.attempt_no} · {attemptText(a)}<span className="ps-time">{formatOrderTime(a.created_at)}</span></span></li>)}
           </ul>
         </section>
       )}
       {data.refunds.length > 0 && (
-        <section className="card-block">
-          <h2>Hoàn tiền</h2>
-          <ul className="timeline" data-testid={`${P}-refund-list`}>
-            {data.refunds.map((r, i) => <li key={i} data-testid={`${P}-refund-item`}><span className="tabular">{formatPrice(r.amount)}</span> · <RefundBadge status={r.status} customer /> <span className="hint tabular">{formatOrderTime(r.created_at)}</span></li>)}
+        <section className="ps-card">
+          <h2><span className="i i-undo" aria-hidden="true" />Hoàn tiền</h2>
+          <ul className="ps-tl" data-testid={`${P}-refund-list`}>
+            {data.refunds.map((r, i) => <li key={i} data-testid={`${P}-refund-item`}><span className="ps-dot violet"><span className="i i-undo" aria-hidden="true" /></span><span className="body"><span className="tabular">{formatPrice(r.amount)}</span> · <RefundBadge status={r.status} customer /><span className="ps-time">{formatOrderTime(r.created_at)}</span></span></li>)}
           </ul>
         </section>
       )}

@@ -66,40 +66,43 @@ function OrderListInner({ admin }: { admin: boolean }) {
   const clear = () => router.push(base, { scroll: false });
 
   return (
-    <main className="wide">
-      <h1>{admin ? 'Quản lý đơn hàng' : 'Đơn hàng của tôi'}</h1>
-      <div className="toolbar">
-        <select value={status} aria-label="Trạng thái" onChange={(e) => go({ status: e.target.value || null })} data-testid={`${p}-status-filter`}>
-          <option value="">Trạng thái: Tất cả</option>
-          {STATUS_ORDER.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABEL[s]}</option>)}
-        </select>
+    <main className="page">
+      <div className="page-head"><h1>{admin ? 'Đơn hàng' : 'Đơn của tôi'}</h1></div>
+      <div className="ord-bar">
+        <div className="seg" role="group" aria-label="Trạng thái" data-testid={`${p}-status-filter`}>
+          <button type="button" aria-pressed={status === ''} onClick={() => go({ status: null })}>Tất cả</button>
+          {STATUS_ORDER.map((s) => <button key={s} type="button" aria-pressed={status === s} onClick={() => go({ status: s })}>{ORDER_STATUS_LABEL[s]}</button>)}
+        </div>
         {admin && (
-          <input type="search" value={search} maxLength={32} placeholder="Tìm theo mã đơn" aria-label="Tìm theo mã đơn" autoComplete="off"
-            onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && go({ code: search.trim().slice(0, 32) || null })} data-testid={`${p}-search`} />
+          <div className="ord-search">
+            <span className="i i-search" aria-hidden="true" />
+            <input type="search" value={search} maxLength={32} placeholder="Mã đơn" aria-label="Tìm theo mã đơn" autoComplete="off"
+              onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && go({ code: search.trim().slice(0, 32) || null })} data-testid={`${p}-search`} />
+          </div>
         )}
-        {filtering && !emptyAll && <button type="button" className="btn btn-quiet tight" onClick={clear} data-testid={`${p}-clear-filter`}>Xoá lọc</button>}
+        {filtering && !emptyAll && <button type="button" className="btn btn-quiet btn-sm tight" onClick={clear} data-testid={`${p}-clear-filter`}><span className="i i-x" aria-hidden="true" />Xoá lọc</button>}
       </div>
 
       {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid={`${p}-error`}>{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid={`${p}-retry`}>Thử lại</button></div>}
-      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${p}-error`}>Không tải được danh sách đơn. <button className="btn" onClick={() => void load()} data-testid={`${p}-retry`}>Thử lại</button></div>}
+      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${p}-error`}>Không tải được đơn. <button className="btn" onClick={() => void load()} data-testid={`${p}-retry`}>Thử lại</button></div>}
       {view === 'loading' && !data && <div data-testid={`${p}-loading`} aria-busy="true">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
       {emptyAll && (filtering || page > 1
-        ? <div data-testid={`${p}-empty-filtered`}><p>{admin ? 'Không có đơn nào khớp.' : 'Không có đơn nào ở trạng thái này.'}</p><button type="button" className="btn" onClick={clear} data-testid={`${p}-clear-filter`}>Xoá lọc</button></div>
-        : <div data-testid={`${p}-empty`}><p className="hint">{admin ? 'Chưa có đơn hàng nào.' : 'Bạn chưa có đơn hàng nào.'}</p>{!admin && <Link href="/products">Tiếp tục mua sắm</Link>}</div>)}
+        ? <div className="empty" data-testid={`${p}-empty-filtered`}><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có đơn khớp</strong><button type="button" className="btn" onClick={clear} data-testid={`${p}-clear-filter`}>Xoá lọc</button></div>
+        : <div className="empty" data-testid={`${p}-empty`}><span className="tile tile-lg gray"><span className="i i-receipt" aria-hidden="true" /></span><strong>Chưa có đơn</strong>{!admin && <Link className="btn btn-primary tight" href="/products">Mua sắm</Link>}</div>)}
       {data && items.length > 0 && (view === 'ready' || view === 'loading') && (
         <>
-          <div className={`table-wrap${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? `${p}-loading` : undefined}>
-            <table className="stack-table">
-              <thead><tr><th>Mã đơn</th><th>Ngày tạo</th><th>Trạng thái</th>{admin && <th>Thanh toán</th>}<th className="num">Sản phẩm</th><th className="num">Tổng</th></tr></thead>
+          <div className={`panel panel-flush table-wrap${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? `${p}-loading` : undefined}>
+            <table className="stack-table ord-table">
+              <thead><tr><th>Mã đơn</th><th>Ngày</th><th>Trạng thái</th>{admin && <th>Thanh toán</th>}<th className="num">SP</th><th className="num">Tổng</th></tr></thead>
               <tbody>
                 {items.map((o) => (
                   <tr key={o.code} className="row-click" data-testid={`${p}-row`} data-code={o.code} onClick={() => router.push(`/orders/${o.code}`)}>
-                    <td data-label="Mã đơn" className="mono"><Link href={`/orders/${o.code}`} onClick={(e) => e.stopPropagation()} data-testid={`${p}-code`}>{o.code}</Link></td>
-                    <td data-label="Ngày tạo" data-testid={`${p}-created-at`}>{formatOrderTime(o.created_at)}</td>
+                    <td data-label="Mã đơn" className="mono ord-code ord-c1"><Link href={`/orders/${o.code}`} onClick={(e) => e.stopPropagation()} data-testid={`${p}-code`}>{o.code}</Link></td>
+                    <td data-label="Ngày" className="muted" data-testid={`${p}-created-at`}>{formatOrderTime(o.created_at)}</td>
                     <td data-label="Trạng thái"><span className="badge" data-status={o.status} data-testid={`${p}-status-badge`}>{ORDER_STATUS_LABEL[o.status]}</span></td>
-                    {admin && <td data-label="Thanh toán" data-testid={`${p}-payment`}>{paymentText(o.payment_method, o.payment_status)}</td>}
-                    <td data-label="Sản phẩm" className="num" data-testid={`${p}-item-count`}>{o.item_count} sản phẩm</td>
-                    <td data-label="Tổng" className="num" data-testid={`${p}-total`}>{formatPrice(o.grand_total)}</td>
+                    {admin && <td data-label="Thanh toán" data-testid={`${p}-payment`}><span className="badge" data-status={`pay-${o.payment_status}`}>{paymentText(o.payment_method, o.payment_status)}</span></td>}
+                    <td data-label="SP" className="num" data-testid={`${p}-item-count`} aria-label={`${o.item_count} sản phẩm`}><span className="ord-count"><span className="i i-box" aria-hidden="true" />{o.item_count}</span></td>
+                    <td data-label="Tổng" className="num money ord-c2" data-testid={`${p}-total`}>{formatPrice(o.grand_total)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -113,5 +116,5 @@ function OrderListInner({ admin }: { admin: boolean }) {
 }
 
 export function OrderList({ admin }: { admin: boolean }) {
-  return <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><OrderListInner admin={admin} /></Suspense>;
+  return <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><OrderListInner admin={admin} /></Suspense>;
 }

@@ -13,13 +13,13 @@ export function Field({ label, error, errorTestId, field, hint, children }: { la
   );
 }
 
-/** Ô mật khẩu có nút Hiện/Ẩn (không có ô nhập lại mật khẩu, theo màn đăng ký). */
+/** Ô mật khẩu có nút icon mắt Hiện/Ẩn (không có ô nhập lại mật khẩu, theo màn đăng ký). */
 export function PasswordInput({ toggleTestId, id, describedBy, ...rest }: InputHTMLAttributes<HTMLInputElement> & { toggleTestId: string; describedBy?: string }) {
   const [show, setShow] = useState(false);
   return (
     <div className="pw">
       <input {...rest} id={id} aria-describedby={describedBy} type={show ? 'text' : 'password'} />
-      <button type="button" className="btn btn-quiet" aria-pressed={show} onClick={() => setShow((s) => !s)} data-testid={toggleTestId}>{show ? 'Ẩn' : 'Hiện'}</button>
+      <button type="button" className="pw-toggle" aria-label={show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={show} onClick={() => setShow((s) => !s)} data-testid={toggleTestId}><span className={`i ${show ? 'i-eyeoff' : 'i-eye'}`} aria-hidden="true" /></button>
     </div>
   );
 }

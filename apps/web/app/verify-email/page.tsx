@@ -73,46 +73,51 @@ export default function VerifyEmailPage() {
   const isCustomer = user?.role === 'customer';
   // không `disabled` trong lúc đếm ngược (chỉ mờ đi): bấm sớm vẫn gọi API và nhận 429, server là nơi chặn (xem report.md, Lệch spec)
   const resendButton = (
-    <button className={`btn btn-primary ${left > 0 ? 'dim' : ''}`} onClick={() => void resend()} data-testid="auth-verify-email-resend">Gửi lại email xác minh</button>
+    <button className={`btn btn-primary ${left > 0 ? 'dim' : ''}`} onClick={() => void resend()} data-testid="auth-verify-email-resend">Gửi lại email</button>
   );
 
   return (
-    <main className="center"><section className="card">
+    <main className="center"><section className="card auth-card">
+      <span className="auth-logo" aria-hidden="true">E</span>
       <h1>Xác minh email</h1>
-      {(view === 'init' || view === 'verifying') && <p data-testid="auth-verify-email-verifying" role="status">Đang xác minh...</p>}
+      {(view === 'init' || view === 'verifying') && <p className="auth-done muted" data-testid="auth-verify-email-verifying" role="status"><span className="tile tile-lg gray"><span className="i i-clock" aria-hidden="true" /></span>Đang xác minh...</p>}
       {view === 'success' && (
-        <div data-testid="auth-verify-email-success">
-          <div role="status" className="banner banner-ok">Đã xác minh email</div>
+        <div className="auth-done" data-testid="auth-verify-email-success">
+          <span className="tile tile-lg green"><span className="i i-okc" aria-hidden="true" /></span>
+          <strong role="status">Đã xác minh email</strong>
           {user ? <Link className="btn btn-primary" href="/" data-testid="auth-verify-email-continue">Tiếp tục mua sắm</Link>
             : <Link className="btn btn-primary" href="/login" data-testid="auth-verify-email-login-link">Đăng nhập</Link>}
         </div>
       )}
       {view === 'invalid' && (
-        <div data-testid="auth-verify-email-invalid-link">
-          <p>Liên kết không còn hiệu lực. Nếu bạn đã xác minh, hãy đăng nhập.</p>
+        <div className="auth-done" data-testid="auth-verify-email-invalid-link">
+          <span className="tile tile-lg red"><span className="i i-link" aria-hidden="true" /></span>
+          <strong>Liên kết hết hiệu lực</strong>
+          <span className="muted">Đã xác minh rồi? Hãy đăng nhập.</span>
           {isCustomer ? resendButton : <Link className="btn btn-primary" href="/login" data-testid="auth-verify-email-login-link">Đăng nhập</Link>}
         </div>
       )}
       {view === 'pending' && (
-        <div>
-          {already ? (
-            <div data-testid="auth-verify-email-already-verified">
-              <div role="status" className="banner banner-ok">Email của bạn đã được xác minh.</div>
-              <Link className="btn btn-primary" href="/" data-testid="auth-verify-email-continue">Tiếp tục mua sắm</Link>
-            </div>
-          ) : (
-            <div data-testid="auth-verify-email-pending">
-              <p>Chúng tôi đã gửi email xác minh tới <strong>{user?.email}</strong>. Hãy mở liên kết trong email.</p>
-              {sent && <p role="status" data-testid="auth-verify-email-resend-sent">Đã gửi lại. Kiểm tra hộp thư của bạn.{left > 0 ? ` Gửi lại được sau ${left} giây.` : ''}</p>}
-              {limited !== null && <div role="alert" className="banner banner-error" data-testid="auth-verify-email-rate-limited">Bạn gửi quá nhanh, thử lại sau {secondsText(limited)}.</div>}
-              {resendButton}
-            </div>
-          )}
-        </div>
+        already ? (
+          <div className="auth-done" data-testid="auth-verify-email-already-verified">
+            <span className="tile tile-lg green"><span className="i i-okc" aria-hidden="true" /></span>
+            <strong role="status">Email đã được xác minh</strong>
+            <Link className="btn btn-primary" href="/" data-testid="auth-verify-email-continue">Tiếp tục mua sắm</Link>
+          </div>
+        ) : (
+          <div className="auth-done" data-testid="auth-verify-email-pending">
+            <span className="tile tile-lg"><span className="i i-mail" aria-hidden="true" /></span>
+            <strong>Kiểm tra hộp thư</strong>
+            <span className="muted">Đã gửi email xác minh tới <b className="auth-email">{user?.email}</b></span>
+            {sent && <p className="auth-sent" role="status" data-testid="auth-verify-email-resend-sent"><span className="i i-check" aria-hidden="true" />Đã gửi lại{left > 0 ? `, thử lại sau ${left} giây` : ''}</p>}
+            {limited !== null && <div role="alert" className="banner banner-error" data-testid="auth-verify-email-rate-limited">Gửi quá nhanh, chờ {secondsText(limited)}.</div>}
+            {resendButton}
+          </div>
+        )
       )}
       {view === 'error' && (
         <div role="alert" className="banner banner-error" data-testid="auth-verify-email-error">
-          Không thực hiện được. Thử lại. <button className="btn" onClick={() => (token.current ? void verify() : router.refresh())} data-testid="auth-verify-email-retry">Thử lại</button>
+          Không thực hiện được. <button className="btn" onClick={() => (token.current ? void verify() : router.refresh())} data-testid="auth-verify-email-retry">Thử lại</button>
         </div>
       )}
     </section></main>

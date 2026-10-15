@@ -29,23 +29,40 @@ export function useCall() {
   return { busy, err, rateText: rate && limit.left > 0 ? limitedText(limit.left) : null, call };
 }
 
-/** Hộp thoại: `sticky` (có ô nhập) không đóng khi bấm ra ngoài (luật I20 của evon); Escape luôn đóng. */
-export function Modal({ title, testid, onClose, sticky, children }: { title: string; testid?: string; onClose: () => void; sticky?: boolean; children: ReactNode }) {
+/** Hộp thoại: `sticky` (có ô nhập) không đóng khi bấm ra ngoài (luật I20 của evon); Escape luôn đóng. `icon` + `tone` vẽ ô icon màu cạnh tiêu đề. */
+export function Modal({ title, testid, onClose, sticky, icon, tone, children }: { title: string; testid?: string; onClose: () => void; sticky?: boolean; icon?: string; tone?: string; children: ReactNode }) {
   return (
     <div className="backdrop" onMouseDown={(e) => { if (!sticky && e.target === e.currentTarget) onClose(); }}>
       <div className="dialog" role="dialog" aria-modal="true" aria-label={title} onKeyDown={(e) => e.key === 'Escape' && onClose()} data-testid={testid}>
-        <h2>{title}</h2>
+        <div className="dlg-head">
+          {icon && <span className={`tile ${tone ?? ''}`}><span className={`i i-${icon}`} aria-hidden="true" /></span>}
+          <h2>{title}</h2>
+        </div>
         {children}
       </div>
     </div>
   );
 }
 
+/** Dòng thông báo gọn: icon + một dòng chữ (+ nút). `tone`: warn, red, green, blue; mặc định trung tính. */
+export function Note({ tone, icon, role, testid, className, children }: { tone?: 'warn' | 'red' | 'green' | 'blue'; icon?: string; role?: 'alert' | 'status'; testid?: string; className?: string; children: ReactNode }) {
+  return (
+    <div className={`ps-note${tone ? ` ${tone}` : ''}${className ? ` ${className}` : ''}`} role={role} data-testid={testid}>
+      {icon && <span className={`i i-${icon}`} aria-hidden="true" />}
+      {children}
+    </div>
+  );
+}
+
+/** Khung chờ tải. */
+export const Skel = ({ n = 3, testid }: { n?: number; testid?: string }) => <div className="ps-skel" data-testid={testid} aria-busy="true">{Array.from({ length: n }, (_, i) => <div key={i} className="skeleton" />)}</div>;
+
 /** Trang "không có quyền" của SHP (customer mở màn của staff, admin hoặc API trả 403). */
 export function Forbidden({ testid }: { testid: string }) {
   return (
-    <main className="center">
-      <section className="card" data-testid={testid}>
+    <main className="page page-narrow">
+      <section className="empty" data-testid={testid}>
+        <span className="tile tile-lg red"><span className="i i-shield" aria-hidden="true" /></span>
         <h1>Bạn không có quyền xem trang này</h1>
         <Link className="btn btn-primary" href="/">Về trang chủ</Link>
       </section>
@@ -56,11 +73,11 @@ export function Forbidden({ testid }: { testid: string }) {
 /** Khối "không tìm thấy" dùng chung: cùng một giao diện cho mã sai định dạng, không tồn tại và đơn của người khác (SB-06). */
 export function NotFound({ testid, backTestid, backHref, backLabel }: { testid: string; backTestid: string; backHref: string; backLabel: string }) {
   return (
-    <main className="center">
-      <section className="card" data-testid={testid}>
-        <p className="hint">404</p>
+    <main className="page page-narrow">
+      <section className="empty" data-testid={testid}>
+        <span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span>
         <h1>Không tìm thấy đơn hàng</h1>
-        <p>Đơn không tồn tại hoặc bạn không có quyền xem đơn này.</p>
+        <p className="small">Đơn không tồn tại hoặc bạn không có quyền xem đơn này.</p>
         <Link className="btn btn-primary" href={backHref} data-testid={backTestid}>{backLabel}</Link>
       </section>
     </main>

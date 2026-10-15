@@ -69,54 +69,71 @@ function InventoryList() {
   const emptyAll = view === 'ready' && items.length === 0;
   const clear = () => router.push('/admin/inventory', { scroll: false });
   const open = (id: string) => router.push(`/admin/inventory/${id}`);
+  // Mức tồn: đầy khi còn bán >= 3 lần ngưỡng.
+  const lv = (p: StockItem) => (p.archived ? 'off' : p.available <= 0 ? 'out' : p.is_low_stock ? 'low' : 'ok');
+  const pct = (p: StockItem) => (p.low_stock_threshold > 0 ? Math.min(100, Math.round((p.available / (p.low_stock_threshold * 3)) * 100)) : p.available > 0 ? 100 : 0);
 
   return (
-    <main className="wide">
-      <h1>Tồn kho</h1>
-      <div className="toolbar" role="tablist">
-        <button role="tab" aria-selected={!low} className={`btn${!low ? ' btn-current' : ''}`} onClick={() => go({ tab: null, q: null })} data-testid="inv-inventory-list-tab-all">Tất cả</button>
-        <button role="tab" aria-selected={low} className={`btn${low ? ' btn-current' : ''}`} onClick={() => go({ tab: 'low', q: null, archived: null, sort: null })} data-testid="inv-inventory-list-tab-low-stock">Tồn thấp{lowCount !== null ? ` (${lowCount})` : ''}</button>
+    <main className="page">
+      <div className="page-head">
+        <h1>Tồn kho</h1>
+        <div className="seg" role="tablist">
+          <button role="tab" aria-selected={!low} className={!low ? 'on' : ''} onClick={() => go({ tab: null, q: null })} data-testid="inv-inventory-list-tab-all">Tất cả</button>
+          <button role="tab" aria-selected={low} className={low ? 'on' : ''} onClick={() => go({ tab: 'low', q: null, archived: null, sort: null })} data-testid="inv-inventory-list-tab-low-stock"><span className="i i-alert" aria-hidden="true" /> Sắp hết{lowCount !== null ? ` (${lowCount})` : ''}</button>
+        </div>
       </div>
       {!low && (
         <div className="toolbar">
-          <input type="search" value={search} maxLength={100} placeholder="Tìm theo tên hoặc sku" aria-label="Tìm theo tên hoặc sku"
-            onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && go({ q: search.trim().slice(0, 100) || null })} data-testid="inv-inventory-list-search" />
+          <div className="ip-search">
+            <span className="i i-search" aria-hidden="true" />
+            <input type="search" value={search} maxLength={100} placeholder="Tên hoặc SKU" aria-label="Tìm theo tên hoặc sku"
+              onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && go({ q: search.trim().slice(0, 100) || null })} data-testid="inv-inventory-list-search" />
+          </div>
           <select value={archived} aria-label="Ngừng bán" onChange={(e) => go({ archived: e.target.value || null })} data-testid="inv-inventory-list-archived-filter">
-            <option value="">Ngừng bán: Tất cả</option><option value="true">Chỉ ngừng bán</option><option value="false">Chỉ đang bán</option>
+            <option value="">Mọi trạng thái</option><option value="true">Ngừng bán</option><option value="false">Đang bán</option>
           </select>
           <select value={sort} aria-label="Sắp xếp" onChange={(e) => go({ sort: e.target.value || null })} data-testid="inv-inventory-list-sort">
-            <option value="">Mới nhất</option><option value="available_asc">Còn bán tăng dần</option>
+            <option value="">Mới nhất</option><option value="available_asc">Ít hàng trước</option>
           </select>
-          {filtering && !emptyAll && <button type="button" className="btn btn-quiet tight" onClick={clear} data-testid="inv-inventory-list-clear-filter">Xoá lọc</button>}
+          {filtering && !emptyAll && <button type="button" className="btn btn-ghost tight" onClick={clear} data-testid="inv-inventory-list-clear-filter"><span className="i i-x" aria-hidden="true" /> Xoá lọc</button>}
         </div>
       )}
 
       {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="inv-inventory-list-error">{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid="inv-inventory-list-retry">Thử lại</button></div>}
-      {view === 'error' && <div role="alert" className="banner banner-error" data-testid="inv-inventory-list-error">Không tải được danh sách tồn kho. <button className="btn" onClick={() => void load()} data-testid="inv-inventory-list-retry">Thử lại</button></div>}
+      {view === 'error' && <div role="alert" className="banner banner-error" data-testid="inv-inventory-list-error">Không tải được tồn kho. <button className="btn" onClick={() => void load()} data-testid="inv-inventory-list-retry">Thử lại</button></div>}
       {view === 'loading' && !data && <div data-testid="inv-inventory-list-loading" aria-busy="true">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
       {emptyAll && (low
-        ? <p className="hint" data-testid="inv-inventory-list-empty-low-stock">Không có sản phẩm nào tồn thấp.</p>
+        ? <div className="empty panel" data-testid="inv-inventory-list-empty-low-stock"><span className="tile tile-lg green"><span className="i i-okc" aria-hidden="true" /></span><strong>Không có hàng sắp hết</strong></div>
         : filtering || page > 1
-          ? <div data-testid="inv-inventory-list-empty-filtered"><p>Không có sản phẩm nào khớp.</p><button type="button" className="btn" onClick={clear} data-testid="inv-inventory-list-clear-filter">Xoá lọc</button></div>
-          : <div data-testid="inv-inventory-list-empty"><p>Chưa có sản phẩm nào có bản ghi kho.</p><p className="hint">Bản ghi kho tạo khi sản phẩm được công bố.</p></div>)}
+          ? <div className="empty panel" data-testid="inv-inventory-list-empty-filtered"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có kết quả</strong><button type="button" className="btn" onClick={clear} data-testid="inv-inventory-list-clear-filter">Xoá lọc</button></div>
+          : <div className="empty panel" data-testid="inv-inventory-list-empty"><span className="tile tile-lg gray"><span className="i i-layers" aria-hidden="true" /></span><strong>Chưa có bản ghi kho</strong></div>)}
       {data && items.length > 0 && (view === 'ready' || view === 'loading') && (
         <>
-          <div className={`table-wrap${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? 'inv-inventory-list-loading' : undefined}>
-            <table className="stack-table">
-              <thead><tr><th>Sản phẩm</th><th>Sku</th><th className="num">Đang có</th><th className="num">Đang giữ</th><th className="num">Còn bán</th><th className="num">Ngưỡng</th></tr></thead>
+          <div className={`panel panel-flush${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? 'inv-inventory-list-loading' : undefined}>
+            <table className="stack-table ip-table">
+              <thead><tr><th>Sản phẩm</th><th>Còn bán</th><th className="num">Có</th><th className="num">Giữ</th><th className="num">Ngưỡng</th></tr></thead>
               <tbody>
                 {items.map((p) => (
                   <tr key={p.product_id} className="row-click" data-testid="inv-inventory-list-row" data-id={p.product_id} onClick={() => open(p.product_id)}>
                     <td data-label="Sản phẩm">
-                      <a href={`/admin/inventory/${p.product_id}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); open(p.product_id); }} data-testid="inv-inventory-list-name">{p.product?.name ?? '—'}</a>{' '}
-                      {p.is_low_stock && !p.archived && <span className="badge badge-low" data-testid="inv-inventory-list-low-badge">⚠ Tồn thấp</span>}{' '}
-                      {p.archived && <span className="badge" data-status="archived" data-testid="inv-inventory-list-archived-badge">Ngừng bán</span>}
+                      <div className="ip-name">
+                        <span className={`tile ${p.archived ? 'gray' : p.is_low_stock ? 'amber' : 'green'}`}><span className="i i-box" aria-hidden="true" /></span>
+                        <div>
+                          <a href={`/admin/inventory/${p.product_id}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); open(p.product_id); }} data-testid="inv-inventory-list-name">{p.product?.name ?? '—'}</a>
+                          <span className="ip-badges">
+                            {p.is_low_stock && !p.archived && <span className="badge ip-low" data-testid="inv-inventory-list-low-badge">Sắp hết</span>}
+                            {p.archived && <span className="badge" data-status="archived" data-testid="inv-inventory-list-archived-badge">Ngừng bán</span>}
+                          </span>
+                          <small className="mono" data-testid="inv-inventory-list-sku">{p.product?.sku ?? '—'}</small>
+                        </div>
+                      </div>
                     </td>
-                    <td data-label="Sku" className="mono" data-testid="inv-inventory-list-sku">{p.product?.sku ?? '—'}</td>
-                    <td data-label="Đang có" className="num" data-testid="inv-inventory-list-on-hand">{num(p.on_hand)}</td>
-                    <td data-label="Đang giữ" className="num" data-testid="inv-inventory-list-reserved">{num(p.reserved)}</td>
-                    <td data-label="Còn bán" className="num" data-testid="inv-inventory-list-available">{num(p.available)}</td>
-                    <td data-label="Ngưỡng" className="num" data-testid="inv-inventory-list-threshold">{num(p.low_stock_threshold)}</td>
+                    <td data-label="Còn bán">
+                      <div className="ip-level"><b data-testid="inv-inventory-list-available">{num(p.available)}</b><span className="ip-bar" data-lv={lv(p)} aria-hidden="true"><i style={{ width: `${pct(p)}%` }} /></span></div>
+                    </td>
+                    <td data-label="Có" className="num" data-testid="inv-inventory-list-on-hand">{num(p.on_hand)}</td>
+                    <td data-label="Giữ" className="num" data-testid="inv-inventory-list-reserved">{num(p.reserved)}</td>
+                    <td data-label="Ngưỡng" className="num muted" data-testid="inv-inventory-list-threshold">{num(p.low_stock_threshold)}</td>
                   </tr>
                 ))}
               </tbody>

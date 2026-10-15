@@ -32,7 +32,15 @@ const sessionIdFromUrl = (): string | null => (typeof window === 'undefined' ? n
 const setUrl = (id: string | null) => { if (typeof window !== 'undefined') window.history.replaceState(null, '', id ? `/checkout?session=${encodeURIComponent(id)}` : '/checkout'); };
 
 function Radio({ testid, name, checked, disabled, onChange, children }: { testid: string; name: string; checked: boolean; disabled: boolean; onChange: () => void; children: React.ReactNode }) {
-  return <label className="radio-line"><input type="radio" name={name} checked={checked} disabled={disabled} onChange={onChange} data-testid={testid} /> <span>{children}</span></label>;
+  return <label className="crt-opt"><input type="radio" name={name} checked={checked} disabled={disabled} onChange={onChange} data-testid={testid} /> <span className="grow">{children}</span></label>;
+}
+
+/** Khung chờ hai cột của màn checkout (bốn khối và tóm tắt); `testid` phân biệt bước tạo phiên với bước đọc phiên. */
+function CheckoutSkeleton({ testid }: { testid: string }) {
+  return (
+    <main className="page" aria-busy="true" data-testid={testid}><div className="page-head"><h1>Thanh toán</h1></div>
+      <div className="crt-grid"><div className="stack"><div className="skeleton crt-sk" /><div className="skeleton crt-sk" /><div className="skeleton crt-sk" /></div><div className="skeleton crt-sk-sum" /></div></main>
+  );
 }
 
 export function Checkout() {
@@ -278,21 +286,19 @@ export function Checkout() {
   };
 
   // ---------------------------------------------------------------- hiển thị
-  if (screen.k === 'creating') return <main className="center"><section className="card card-block" aria-busy="true" data-testid="chk-checkout-blocked-loading"><div className="skeleton" /><div className="skeleton" /></section></main>;
+  // Tạo phiên và đọc phiên dùng CÙNG một khung hai cột: kết quả thường gặp là màn checkout, nên không đổi độ rộng giữa hai bước (màn bị chặn hiếm hơn và tự đổi sang khung hẹp)
+  if (screen.k === 'creating') return <CheckoutSkeleton testid="chk-checkout-blocked-loading" />;
   if (screen.k === 'blocked') {
     const b = screen.block.kind === 'rate-limited' ? { kind: 'rate-limited' as const, seconds: createWait.left > 0 ? createWait.left : screen.block.seconds } : screen.block;
     return <Blocked block={b} onRetry={() => void start(false)} onRestart={() => void start(true)} onVerified={() => void start(false)} />;
   }
-  if (screen.k === 'login-expired') return <main className="wide"><div role="alert" className="banner banner-error" data-testid="chk-checkout-login-expired">Phiên đăng nhập đã hết hạn. <a href={LOGIN_HREF}>Đăng nhập</a></div></main>;
+  if (screen.k === 'login-expired') return <main className="page"><div role="alert" className="banner banner-error" data-testid="chk-checkout-login-expired">Phiên đăng nhập đã hết hạn. <a href={LOGIN_HREF}>Đăng nhập</a></div></main>;
   if (screen.k === 'loading' || (!view && screen.k === 'ready')) {
-    return (
-      <main className="wide" aria-busy="true" data-testid="chk-checkout-loading"><h1>Thanh toán</h1>
-        <div className="cols"><div><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div><div className="skeleton" /></div></main>
-    );
+    return <CheckoutSkeleton testid="chk-checkout-loading" />;
   }
   if (screen.k === 'error' || !view) {
     return (
-      <main className="wide"><div role="alert" className="banner banner-error" data-testid="chk-checkout-error">Không tải được thông tin thanh toán.{' '}
+      <main className="page"><div className="page-head"><h1>Thanh toán</h1></div><div role="alert" className="banner banner-error" data-testid="chk-checkout-error">Không tải được thanh toán.{' '}
         <button type="button" className="btn" onClick={() => void start(false)} data-testid="chk-checkout-retry">Thử lại</button></div>
         <button type="button" className="btn btn-primary" disabled data-testid="chk-checkout-place-order">Đặt hàng</button></main>
     );
@@ -314,17 +320,17 @@ export function Checkout() {
   const showUnavailable = notice?.k === 'unavailable' || blockers.includes('cart_unavailable_items');
 
   return (
-    <main className="wide">
-      <div className="between">
-        <p className="crumbs">Giỏ hàng › <strong>Thanh toán</strong></p>
-        <div className="actions-row">
-          {left !== null && <span className={`timer${left < WARN_SECONDS ? ' timer-warn' : ''}`} role="timer" data-warn={left < WARN_SECONDS} data-testid="chk-checkout-session-timer">Phiên còn {formatRemaining(left)}</span>}
-          <button type="button" className="btn" disabled={off} onClick={cancel} data-testid="chk-checkout-cancel">Quay lại giỏ hàng</button>
+    <main className="page">
+      <div className="page-head">
+        <h1>Thanh toán</h1>
+        <div className="actions">
+          {left !== null && <span className={`timer crt-timer${left < WARN_SECONDS ? ' timer-warn' : ''}`} role="timer" data-warn={left < WARN_SECONDS} data-testid="chk-checkout-session-timer"><span className="i i-clock" aria-hidden="true" /><span className="crt-vh">Phiên còn </span>{formatRemaining(left)}</span>}
+          <button type="button" className="btn btn-sm" disabled={off} onClick={cancel} data-testid="chk-checkout-cancel"><span className="i i-left" aria-hidden="true" />Giỏ hàng<span className="crt-vh"> (quay lại)</span></button>
         </div>
       </div>
       {errs.cancel && <p role="alert" className="field-error">{errs.cancel}</p>}
 
-      {loadErr && <div role="alert" className="banner banner-error" data-testid="chk-checkout-error">Không tải được thông tin thanh toán.{' '}<button type="button" className="btn" onClick={() => void refresh()} data-testid="chk-checkout-retry">Thử lại</button></div>}
+      {loadErr && <div role="alert" className="banner banner-error" data-testid="chk-checkout-error">Không tải được thanh toán.{' '}<button type="button" className="btn" onClick={() => void refresh()} data-testid="chk-checkout-retry">Thử lại</button></div>}
       {notice?.k === 'price' && (
         <div role="alert" className="banner banner-info" data-testid="chk-checkout-price-changed">
           <p><strong>Giá đã đổi:</strong> tổng cũ {formatPrice(notice.previous)} → mới {formatPrice(Number.isFinite(notice.next) ? notice.next : view.grand_total)}</p>
@@ -333,59 +339,59 @@ export function Checkout() {
         </div>
       )}
       {notice?.k === 'cart-changed' && (
-        <div role="alert" className="banner banner-info" data-testid="chk-checkout-cart-changed">Giỏ hàng đã thay đổi ở nơi khác. Hãy xem lại tóm tắt rồi đặt hàng.{' '}
-          <button type="button" className="btn" disabled={off} onClick={() => void act('reload', async () => { await refresh(); })} data-testid="chk-checkout-cart-changed-reload">Tải lại tóm tắt</button></div>
+        <div role="alert" className="banner banner-info" data-testid="chk-checkout-cart-changed">Giỏ hàng đã đổi ở nơi khác.{' '}
+          <button type="button" className="btn" disabled={off} onClick={() => void act('reload', async () => { await refresh(); })} data-testid="chk-checkout-cart-changed-reload">Tải lại</button></div>
       )}
-      {showUnavailable && <div role="alert" className="banner banner-error" data-testid="chk-checkout-unavailable-items">Có sản phẩm không còn bán, hãy xóa ở giỏ hàng. <Link href="/cart">Về giỏ hàng</Link></div>}
+      {showUnavailable && <div role="alert" className="banner banner-error" data-testid="chk-checkout-unavailable-items">Có sản phẩm ngừng bán. <Link href="/cart">Về giỏ hàng</Link></div>}
       {notice?.k === 'stock' && (
         <div role="alert" className="banner banner-error" data-testid="chk-checkout-stock-error">
-          <p>Một số sản phẩm không đủ hàng. Chưa có đơn nào được tạo.</p>
+          <p>Không đủ hàng. Chưa có đơn nào được tạo.</p>
           <ul>{notice.items.map((i, k) => <li key={k} data-testid="chk-checkout-stock-error-item">{i.name}: cần {i.requested}, còn {i.available}</li>)}</ul>
-          <Link href="/cart" className="btn tight" data-testid="chk-checkout-stock-error-back">Quay lại giỏ hàng</Link>
+          <Link href="/cart" className="btn tight" data-testid="chk-checkout-stock-error-back">Về giỏ hàng</Link>
         </div>
       )}
       {notice?.k === 'place-error' && (notice.text !== '' || placeWait.left > 0) && (
         <div role="alert" className="banner banner-error" data-testid="chk-checkout-place-error">{notice.text || `${waitText(placeWait.left)}. Chưa có đơn nào được tạo.`}</div>
       )}
 
-      <div className="cols">
+      <div className="crt-grid">
         <div>
-          <fieldset className="plain" disabled={off}>
-            <section className="card-block" data-testid="chk-checkout-address-section">
-              <h2>1. Địa chỉ giao hàng</h2>
+          <fieldset className="plain crt-steps" disabled={off}>
+            <section className="panel" data-testid="chk-checkout-address-section">
+              <div className="crt-step"><span className={`crt-num${addrOk ? ' done' : ''}`}>{addrOk ? <span className="i i-check" aria-hidden="true" /> : '1'}</span><h2>Địa chỉ</h2>
+                <Link href="/account/addresses/new" className="btn btn-sm crt-step-act" data-testid="chk-checkout-address-add">Địa chỉ mới</Link></div>
               {addresses === null && <div className="skeleton" aria-busy="true" />}
-              {addresses !== null && addresses.length === 0 && <div data-testid="chk-checkout-address-empty"><p>Bạn chưa có địa chỉ giao hàng</p></div>}
+              {addresses !== null && addresses.length === 0 && <p className="crt-note" data-testid="chk-checkout-address-empty">Chưa có địa chỉ</p>}
               {addresses !== null && addresses.length > 0 && (
-                <div role="radiogroup" aria-label="Địa chỉ giao hàng">
+                <div role="radiogroup" aria-label="Địa chỉ giao hàng" className="crt-opts">
                   {addresses.map((a) => (
                     <Radio key={a.id} testid="chk-checkout-address-option" name="chk-address" checked={addrOk?.address_id === a.id} disabled={off} onChange={() => chooseAddress(a)}>
-                      <strong>{a.receiver}</strong> · {a.phone}{a.is_default && <> <span className="badge">Mặc định</span></>}<br /><span className="hint">{addressText(a)}</span>
+                      <strong>{a.receiver}</strong> · {a.phone}{a.is_default && <> <span className="badge" data-status="paid">Mặc định</span></>}<span className="crt-sub">{addressText(a)}</span>
                     </Radio>
                   ))}
                 </div>
               )}
-              <p><Link href="/account/addresses/new" className="btn tight" data-testid="chk-checkout-address-add">+ Thêm địa chỉ mới</Link></p>
               {addrChangedShown && addrOk && (
                 <div role="alert" className="banner banner-info" data-testid="chk-checkout-address-changed">
-                  <p><strong>Địa chỉ đã được cập nhật:</strong> {addrOk.receiver} · {addrOk.phone}, {addressText(addrOk)}</p>
-                  <button type="button" className="btn btn-primary tight" disabled={off} onClick={confirmAddress} data-testid="chk-checkout-address-confirm">Dùng địa chỉ đã cập nhật</button>
+                  <p><strong>Địa chỉ đã cập nhật:</strong> {addrOk.receiver} · {addrOk.phone}, {addressText(addrOk)}</p>
+                  <button type="button" className="btn btn-primary tight" disabled={off} onClick={confirmAddress} data-testid="chk-checkout-address-confirm">Dùng địa chỉ mới</button>
                 </div>
               )}
-              {addrGoneShown && <p role="alert" className="field-error" data-testid="chk-checkout-address-unavailable">Địa chỉ bạn chọn không còn, hãy chọn lại</p>}
+              {addrGoneShown && <p role="alert" className="field-error" data-testid="chk-checkout-address-unavailable">Địa chỉ đã chọn không còn, hãy chọn lại</p>}
               {errs.address && <p role="alert" className="field-error" data-testid="chk-checkout-address-error">{errs.address}</p>}
             </section>
 
-            <section className={`card-block${opts?.k === 'needs-address' ? ' dim' : ''}`} data-testid="chk-checkout-shipping-section">
-              <h2>2. Vận chuyển</h2>
+            <section className={`panel${opts?.k === 'needs-address' ? ' dim' : ''}`} data-testid="chk-checkout-shipping-section">
+              <div className="crt-step"><span className={`crt-num${shipId ? ' done' : ''}`}>{shipId ? <span className="i i-check" aria-hidden="true" /> : '2'}</span><h2>Vận chuyển</h2></div>
               {opts === null && <div className="skeleton" aria-busy="true" />}
-              {opts?.k === 'needs-address' && <p className="hint" data-testid="chk-checkout-shipping-needs-address">Chọn địa chỉ để xem phí</p>}
+              {opts?.k === 'needs-address' && <p className="crt-note" data-testid="chk-checkout-shipping-needs-address">Chọn địa chỉ để xem phí</p>}
               {opts?.k === 'empty' && <p role="alert" className="field-error" data-testid="chk-checkout-shipping-empty">Chưa có phương thức vận chuyển nào đang bật</p>}
-              {opts?.k === 'error' && <p role="alert" className="field-error" data-testid="chk-checkout-shipping-error">Không tính được phí, thử lại <button type="button" className="btn" onClick={() => void refresh()}>Thử lại</button></p>}
+              {opts?.k === 'error' && <p role="alert" className="field-error" data-testid="chk-checkout-shipping-error">Không tính được phí <button type="button" className="btn btn-sm" onClick={() => void refresh()}>Thử lại</button></p>}
               {opts?.k === 'ok' && (
-                <div role="radiogroup" aria-label="Phương thức vận chuyển">
+                <div role="radiogroup" aria-label="Phương thức vận chuyển" className="crt-opts">
                   {opts.options.map((o) => (
                     <Radio key={o.method_id} testid="chk-checkout-shipping-option" name="chk-shipping" checked={shipId === o.method_id} disabled={off} onChange={() => chooseShipping(o)}>
-                      {o.name}{' '}{o.free_shipping ? <span className="badge" data-testid="chk-checkout-shipping-free">Miễn phí</span> : <span className="hint">{formatPrice(o.fee)}</span>}
+                      <span className="crt-optrow">{o.name}{o.free_shipping ? <span className="badge" data-status="paid" data-testid="chk-checkout-shipping-free">Miễn phí</span> : <span className="muted">{formatPrice(o.fee)}</span>}</span>
                     </Radio>
                   ))}
                 </div>
@@ -394,15 +400,15 @@ export function Checkout() {
               {errs.shipping && <p role="alert" className="field-error" data-testid="chk-checkout-shipping-error">{errs.shipping}</p>}
             </section>
 
-            <section className="card-block" data-testid="chk-checkout-payment-section">
-              <h2>3. Thanh toán</h2>
-              <div role="radiogroup" aria-label="Phương thức thanh toán">
-                <Radio testid="chk-checkout-payment-vnpay" name="chk-pay" checked={view.payment_method === 'vnpay'} disabled={off} onChange={() => choosePayment('vnpay')}>VNPay <span className="hint">Giữ hàng có thời hạn, trả ngay online</span></Radio>
-                <Radio testid="chk-checkout-payment-cod" name="chk-pay" checked={view.payment_method === 'cod'} disabled={off} onChange={() => choosePayment('cod')}>COD <span className="hint">Xác nhận ngay, trả tiền khi nhận hàng</span></Radio>
+            <section className="panel" data-testid="chk-checkout-payment-section">
+              <div className="crt-step"><span className={`crt-num${view.payment_method ? ' done' : ''}`}>{view.payment_method ? <span className="i i-check" aria-hidden="true" /> : '3'}</span><h2>Thanh toán</h2></div>
+              <div role="radiogroup" aria-label="Phương thức thanh toán" className="crt-opts">
+                <Radio testid="chk-checkout-payment-vnpay" name="chk-pay" checked={view.payment_method === 'vnpay'} disabled={off} onChange={() => choosePayment('vnpay')}><span className="crt-optrow"><span><span className="i i-card" aria-hidden="true" /> VNPay</span><span className="muted">Trả online</span></span></Radio>
+                <Radio testid="chk-checkout-payment-cod" name="chk-pay" checked={view.payment_method === 'cod'} disabled={off} onChange={() => choosePayment('cod')}><span className="crt-optrow"><span><span className="i i-bag" aria-hidden="true" /> COD</span><span className="muted">Trả khi nhận</span></span></Radio>
               </div>
               {view.payment_note && (
-                <p className="hint" data-testid="chk-checkout-payment-note">
-                  {view.payment_note.confirmed_immediately ? 'Đơn được xác nhận ngay, không có hạn chờ; trả tiền khi nhận hàng.' : `Hàng được giữ ${view.payment_note.hold_minutes} phút kể từ lúc đặt, hãy thanh toán trong thời gian đó.`}
+                <p className="crt-note" data-testid="chk-checkout-payment-note"><span className="i i-info" aria-hidden="true" />
+                  {view.payment_note.confirmed_immediately ? 'Xác nhận ngay, trả tiền khi nhận hàng.' : `Giữ hàng ${view.payment_note.hold_minutes} phút sau khi đặt, hãy thanh toán trong thời gian đó.`}
                 </p>
               )}
               {payErr?.kind === 'range' && <p role="alert" className="field-error" data-testid="chk-checkout-payment-error-range">{payErrorText(payErr)}</p>}
@@ -411,18 +417,18 @@ export function Checkout() {
               {errs.payText && <p role="alert" className="field-error">{errs.payText}</p>}
             </section>
 
-            <section className="card-block" data-testid="chk-checkout-coupon-section">
-              <h2>4. Mã giảm giá</h2>
+            <section className="panel" data-testid="chk-checkout-coupon-section">
+              <div className="crt-step"><span className="crt-num alt"><span className="i i-ticket" aria-hidden="true" /></span><h2>Mã giảm giá</h2></div>
               {coupon?.applied && (
-                <p className="between" data-testid="chk-checkout-coupon-applied"><span>✓ <strong>{coupon.code}</strong> {minus(coupon.discount)}</span>
-                  <button type="button" className="btn btn-quiet" disabled={off} onClick={removeCoupon} data-testid="chk-checkout-coupon-remove">Gỡ</button></p>
+                <p className="crt-applied" data-testid="chk-checkout-coupon-applied"><span className="grow"><strong>{coupon.code}</strong> <span className="crt-off">{minus(coupon.discount)}</span></span>
+                  <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label="Gỡ mã" disabled={off} onClick={removeCoupon} data-testid="chk-checkout-coupon-remove"><span className="i i-x" aria-hidden="true" /></button></p>
               )}
               {coupon && !coupon.applied && (
-                <div role="alert" className="banner banner-info" data-testid="chk-checkout-coupon-invalid">⚠ {couponWarning(coupon)}{' '}
+                <div role="alert" className="banner banner-info" data-testid="chk-checkout-coupon-invalid">{couponWarning(coupon)}{' '}
                   <button type="button" className="btn btn-quiet" disabled={off} onClick={removeCoupon} data-testid="chk-checkout-coupon-remove">Gỡ</button></div>
               )}
               {!coupon?.applied && (
-                <form onSubmit={applyCoupon} className="coupon-row">
+                <form onSubmit={applyCoupon} className="crt-coupon">
                   <input value={code} maxLength={60} aria-label="Mã giảm giá" placeholder="Nhập mã" disabled={off} onChange={(e) => setCode(e.target.value)} data-testid="chk-checkout-coupon-input" />
                   <button className="btn" disabled={off || couponWait.left > 0 || code.trim() === ''} aria-busy={busy === 'coupon'} data-testid="chk-checkout-coupon-apply">{busy === 'coupon' && <Spinner />}Áp dụng</button>
                 </form>
@@ -433,36 +439,36 @@ export function Checkout() {
           </fieldset>
         </div>
 
-        <aside className="card-block cart-summary" aria-label="Đơn của bạn" data-testid="chk-checkout-summary">
-          <h2>Đơn của bạn</h2>
-          <ul className="cart-list">
+        <aside className="panel crt-sum" aria-label="Đơn của bạn" data-testid="chk-checkout-summary">
+          <h2><span className="i i-bag" aria-hidden="true" />Đơn của bạn</h2>
+          <ul className="crt-slines">
             {view.lines.map((l) => {
               const av = availabilityText(l.availability);
               return (
-                <li key={l.product_id} className="between" data-testid="chk-checkout-line">
-                  <span className="grow">{l.name} <span className="hint">× {l.quantity} · {formatPrice(l.unit_price)}</span>
-                    {av && <><br /><span className="field-error" data-testid="chk-checkout-line-availability">⚠ {av}</span></>}</span>
-                  <strong>{formatPrice(l.line_total)}</strong>
+                <li key={l.product_id} data-testid="chk-checkout-line">
+                  <span className="grow">{l.name} <span className="muted">× {l.quantity}</span>
+                    {av && <span className="crt-warn" data-testid="chk-checkout-line-availability"><span className="i i-alert" aria-hidden="true" />{av}</span>}</span>
+                  <strong className="money">{formatPrice(l.line_total)}</strong>
                 </li>
               );
             })}
           </ul>
-          <hr />
-          <p className="between"><span>Tạm tính</span><strong data-testid="chk-checkout-summary-subtotal">{formatPrice(view.items_subtotal)}</strong></p>
-          <p className="between"><span>Giảm giá{coupon?.applied ? ` (${coupon.code})` : ''}</span><strong data-testid="chk-checkout-summary-discount">{view.discount > 0 ? minus(view.discount) : formatPrice(view.discount)}</strong></p>
-          <p className="between"><span>Phí vận chuyển</span>
-            <strong data-testid="chk-checkout-summary-shipping-fee">{view.shipping_fee === null ? 'Chưa chọn' : sh && !('error' in sh) && sh.free_shipping ? 'Miễn phí' : formatPrice(view.shipping_fee)}</strong></p>
-          <p className="between big"><span>Tổng cộng</span><strong data-testid="chk-checkout-summary-total">{formatPrice(view.grand_total)}</strong></p>
-          {view.total_is_estimate && <p className="hint" data-testid="chk-checkout-summary-total-estimate">Chưa gồm phí vận chuyển</p>}
-          {addrOk && <p className="hint" data-testid="chk-checkout-summary-address">Giao tới: {addrOk.receiver}, {addressText(addrOk)}</p>}
-          <hr />
+          <dl className="crt-rows">
+            <div><dt>Tạm tính</dt><dd data-testid="chk-checkout-summary-subtotal">{formatPrice(view.items_subtotal)}</dd></div>
+            <div className={view.discount > 0 ? 'crt-off' : undefined}><dt>Giảm giá{coupon?.applied ? ` (${coupon.code})` : ''}</dt><dd data-testid="chk-checkout-summary-discount">{view.discount > 0 ? minus(view.discount) : formatPrice(view.discount)}</dd></div>
+            <div><dt>Vận chuyển</dt>
+              <dd data-testid="chk-checkout-summary-shipping-fee">{view.shipping_fee === null ? 'Chưa chọn' : sh && !('error' in sh) && sh.free_shipping ? 'Miễn phí' : formatPrice(view.shipping_fee)}</dd></div>
+            <div className="crt-grand"><dt>Tổng cộng</dt><dd data-testid="chk-checkout-summary-total">{formatPrice(view.grand_total)}</dd></div>
+          </dl>
+          {view.total_is_estimate && <p className="crt-note" data-testid="chk-checkout-summary-total-estimate">Chưa gồm phí vận chuyển</p>}
+          {addrOk && <p className="crt-note" data-testid="chk-checkout-summary-address"><span className="i i-pin" aria-hidden="true" />{addrOk.receiver}, {addressText(addrOk)}</p>}
           {!view.can_place_order && (
-            <ul className="checks" data-testid="chk-checkout-blockers" aria-label="Còn thiếu">
-              {blockers.length > 0 ? blockers.map((b) => <li key={b}>{blockerText(b)}</li>) : <li>Chưa kiểm tra được đầy đủ thông tin, hãy tải lại.</li>}
+            <ul className="crt-todo" data-testid="chk-checkout-blockers" aria-label="Còn thiếu">
+              {blockers.length > 0 ? blockers.map((b) => <li key={b}><span className="i i-alert" aria-hidden="true" />{blockerText(b)}</li>) : <li><span className="i i-alert" aria-hidden="true" />Chưa kiểm tra đủ thông tin, hãy tải lại.</li>}
             </ul>
           )}
-          <button type="button" className="btn btn-primary" disabled={!canPlace} aria-busy={placing} onClick={() => void place()} data-testid="chk-checkout-place-order">{placing && <Spinner />}Đặt hàng</button>
-          {placing && <p role="status" className="hint" data-testid="chk-checkout-placing"><Spinner />Đang đặt hàng...</p>}
+          <button type="button" className="btn btn-primary crt-go" disabled={!canPlace} aria-busy={placing} onClick={() => void place()} data-testid="chk-checkout-place-order">{placing ? <Spinner /> : <span className="i i-check" aria-hidden="true" />}Đặt hàng</button>
+          {placing && <p role="status" className="crt-note" data-testid="chk-checkout-placing">Đang đặt hàng...</p>}
         </aside>
       </div>
     </main>

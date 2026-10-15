@@ -20,52 +20,64 @@ function Inner() {
   const applied = appliedRange(from, to);
   const empty = d && d.totals.gross === 0 && d.totals.refunded === 0 && d.totals.payment_count === 0;
   return (
-    <main className="wide">
-      <h1>Báo cáo doanh thu</h1>
-      <p className="hint"><Link href="/admin/dashboard">Về dashboard</Link></p>
+    <main className="page">
+      <Link className="back" href="/admin/dashboard"><span className="i i-left" aria-hidden="true" />Dashboard</Link>
+      <div className="page-head"><h1>Doanh thu</h1></div>
       <RateBanner testid={`${P}-rate-limit`} status={b.status} retryAfter={b.retryAfter} />
       <RangeBar p={P} applied={applied} invalid={b.status === 'invalid'} asOf={d?.as_of} onApply={(f, t) => go({ from: f || null, to: t || null })} onReset={() => go({ from: null, to: null })} />
       {b.status === 'loading' && !d && <Skeleton testid={`${P}-loading`} rows={6} />}
       {failed(b) && (
-        <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được báo cáo doanh thu. <button type="button" className="btn tight" onClick={b.reload} data-testid={`${P}-retry`}>Thử lại</button></div>
+        <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được báo cáo. <button type="button" className="btn btn-sm" onClick={b.reload} data-testid={`${P}-retry`}>Thử lại</button></div>
       )}
       {d && !failed(b) && (
-        <>
-          <section className="dsh-kpis dsh-kpis-4" aria-label="Tổng">
-            <div className="dsh-kpi"><h2>Thu</h2><p className="dsh-big tabular" data-testid={`${P}-total-gross`}>{money(d.totals.gross)}</p></div>
-            <div className="dsh-kpi"><h2>Hoàn tiền</h2><p className="dsh-big tabular" data-testid={`${P}-total-refunded`}>{money(d.totals.refunded)}</p></div>
-            <div className="dsh-kpi"><h2>Doanh thu thuần</h2><p className="dsh-big tabular" data-testid={`${P}-total-net`}>{money(d.totals.net)}</p></div>
-            <div className="dsh-kpi"><h2>Số giao dịch</h2><p className="dsh-big tabular" data-testid={`${P}-total-count`}>{count(d.totals.payment_count)}</p></div>
+        <div className="stack">
+          <section className="stat-grid" aria-label="Tổng">
+            <div className="stat"><span className="tile green"><span className="i i-trend" aria-hidden="true" /></span><div><b className="tabular" data-testid={`${P}-total-gross`}>{money(d.totals.gross)}</b><span className="lbl">Thu</span></div></div>
+            <div className="stat"><span className="tile red"><span className="i i-undo" aria-hidden="true" /></span><div><b className="tabular" data-testid={`${P}-total-refunded`}>{money(d.totals.refunded)}</b><span className="lbl">Hoàn tiền</span></div></div>
+            <div className="stat"><span className="tile"><span className="i i-card" aria-hidden="true" /></span><div><b className="tabular" data-testid={`${P}-total-net`}>{money(d.totals.net)}</b><span className="lbl">Thuần</span></div></div>
+            <div className="stat"><span className="tile violet"><span className="i i-receipt" aria-hidden="true" /></span><div><b className="tabular" data-testid={`${P}-total-count`}>{count(d.totals.payment_count)}</b><span className="lbl">Giao dịch</span></div></div>
           </section>
           {empty && (
-            <p className="hint" data-testid={`${P}-empty`}>Không có giao dịch từ {formatYmd(d.from)} tới {formatYmd(d.to)}. <Link href="/admin/reports/revenue" onClick={() => go({ from: null, to: null })}>30 ngày qua</Link></p>
+            <div className="empty" data-testid={`${P}-empty`}><span className="tile tile-lg gray"><span className="i i-inbox" aria-hidden="true" /></span><strong>Chưa có giao dịch</strong><span className="small">{formatYmd(d.from)} – {formatYmd(d.to)}</span><Link className="btn btn-sm" href="/admin/reports/revenue" onClick={() => go({ from: null, to: null })}>30 ngày</Link></div>
           )}
-          <h2 data-testid={`${P}-granularity`}>Doanh thu theo {GRAN_TEXT[d.granularity]}{d.granularity === 'week' ? ' (tuần bắt đầu thứ Hai)' : ''}</h2>
-          <Chart testid={`${P}-chart`} title={`Doanh thu thuần theo ${GRAN_TEXT[d.granularity]}`} unit="đồng"
-            points={d.buckets.map((x) => ({ key: x.bucket_start, label: bucketLabel(d.granularity, x.bucket_start), value: x.net, text: `thuần ${money(x.net)}, thu ${money(x.gross)}, hoàn ${money(x.refunded)}` }))} />
-          <div className="table-wrap" data-testid={`${P}-table`}>
-            <table className="stack-table">
-              <thead><tr><th>Mốc</th><th className="num">Thu</th><th className="num">Hoàn tiền</th><th className="num">Thuần</th><th className="num">Giao dịch</th></tr></thead>
-              <tbody>
-                {d.buckets.map((x) => (
-                  <tr key={x.bucket_start} data-testid={`${P}-row`} data-bucket={x.bucket_start}>
-                    <td data-label="Mốc" className="tabular">{bucketLabel(d.granularity, x.bucket_start)}</td>
-                    <td data-label="Thu" className="num tabular">{money(x.gross)}</td>
-                    <td data-label="Hoàn tiền" className="num tabular">{money(x.refunded)}</td>
-                    <td data-label="Thuần" className="num tabular">{money(x.net)}</td>
-                    <td data-label="Giao dịch" className="num tabular">{count(x.payment_count)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <section className="panel">
+            <div className="panel-head"><h2 data-testid={`${P}-granularity`}>Theo {GRAN_TEXT[d.granularity]}{d.granularity === 'week' ? ' (từ thứ Hai)' : ''}</h2></div>
+            <Chart testid={`${P}-chart`} title={`Doanh thu thuần theo ${GRAN_TEXT[d.granularity]}`} unit="đồng"
+              points={d.buckets.map((x) => ({ key: x.bucket_start, label: bucketLabel(d.granularity, x.bucket_start), value: x.net, text: `thuần ${money(x.net)}, thu ${money(x.gross)}, hoàn ${money(x.refunded)}` }))} />
+          </section>
+          <div className="panel panel-flush" data-testid={`${P}-table`}>
+            <div className="table-wrap">
+              <table className="stack-table">
+                <thead><tr><th>Mốc</th><th className="num">Thu</th><th className="num">Hoàn</th><th className="num">Thuần</th><th className="num">GD</th></tr></thead>
+                <tbody>
+                  {d.buckets.map((x) => (
+                    <tr key={x.bucket_start} data-testid={`${P}-row`} data-bucket={x.bucket_start}>
+                      <td data-label="Mốc" className="tabular">{bucketLabel(d.granularity, x.bucket_start)}</td>
+                      <td data-label="Thu" className="num tabular">{money(x.gross)}</td>
+                      <td data-label="Hoàn" className="num tabular">{money(x.refunded)}</td>
+                      <td data-label="Thuần" className="num tabular strong">{money(x.net)}</td>
+                      <td data-label="GD" className="num tabular">{count(x.payment_count)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <h2>Theo phương thức</h2>
-          <ul className="dsh-methods">
-            <li data-testid={`${P}-method-vnpay`}><strong>VNPay</strong> Thu {money(d.by_method.vnpay.gross)} · Hoàn {money(d.by_method.vnpay.refunded)} · Thuần {money(d.by_method.vnpay.net)}</li>
-            <li data-testid={`${P}-method-cod`}><strong>COD</strong> Thu {money(d.by_method.cod.gross)} · Hoàn {money(d.by_method.cod.refunded)} · Thuần {money(d.by_method.cod.net)}</li>
-          </ul>
-          <p className="hint" data-testid={`${P}-note`}>Tiền theo PAY: thu thành công trừ hoàn tiền thành công. Hoàn tiền tính vào ngày hoàn.</p>
-        </>
+          <section className="panel">
+            <div className="panel-head"><h2>Phương thức</h2></div>
+            <ul className="list rd-methods">
+              {([['vnpay', 'VNPay', 'card', ''], ['cod', 'COD', 'bag', 'amber']] as const).map(([k, label, ic, tone]) => (
+                <li key={k} data-testid={`${P}-method-${k}`}>
+                  <span className={`tile ${tone}`}><span className={`i i-${ic}`} aria-hidden="true" /></span>
+                  <strong className="grow">{label}</strong>
+                  <span className="small muted tabular">Thu {money(d.by_method[k].gross)} · Hoàn {money(d.by_method[k].refunded)}</span>
+                  <span className="money tabular">{money(d.by_method[k].net)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <p className="small muted" data-testid={`${P}-note`}><span className="i i-info" aria-hidden="true" /> Thu trừ hoàn; hoàn tính theo ngày hoàn.</p>
+        </div>
       )}
     </main>
   );
@@ -74,7 +86,7 @@ function Inner() {
 export default function RevenueReportPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
+      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
     </RequireRole>
   );
 }

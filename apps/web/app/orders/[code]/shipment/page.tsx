@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { NotFound, ShipmentBadge } from '../../../../components/ShipmentParts';
+import { NotFound, Note, ShipmentBadge, Skel } from '../../../../components/ShipmentParts';
 import { RequireRole } from '../../../../components/RequireRole';
 import { useCountdown } from '../../../../components/useCountdown';
 import { api } from '../../../../lib/api';
@@ -12,6 +12,7 @@ import { historyText, type HistoryEntry, type Shipment, type ShipmentView } from
 import { limitedText } from '../../../../lib/stock';
 
 const STEPS = ['Đã tạo', 'Đang giao', 'Đã giao'];
+const STEP_ICONS = ['box', 'truck', 'check'];
 /** Bước hiện tại của thanh tiến trình (0 tới 2); hủy hoặc hoàn không nằm trên đường đi bình thường nên không có thanh. */
 const stepOf = (s: Shipment['status']): number | null => (s === 'pending' ? 0 : s === 'shipped' || s === 'failed' ? 1 : s === 'delivered' ? 2 : null);
 
@@ -29,7 +30,7 @@ function CopyButton({ text }: { text: string }) {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setState('idle'), 2000);
   };
-  return <button type="button" className="btn tight" onClick={() => void copy()} data-testid="shp-shipment-tracking-copy">{state === 'copied' ? 'Đã chép' : state === 'failed' ? 'Không chép được' : 'Sao chép'}</button>;
+  return <button type="button" className="btn btn-sm ps-copy" onClick={() => void copy()} data-testid="shp-shipment-tracking-copy"><span className={`i i-${state === 'copied' ? 'check' : 'copy'}`} aria-hidden="true" />{state === 'copied' ? 'Đã chép' : state === 'failed' ? 'Không chép được' : 'Sao chép'}</button>;
 }
 
 /** Theo dõi vận chuyển (ui/shipment-tracking): customer xem vận đơn của đơn mình; không thấy lý do, ghi chú, số tiền thu hộ hay người nhận. */
@@ -68,14 +69,14 @@ function Tracking({ code }: { code: string }) {
   // Hết giờ chờ (429) thì tự tải lại; nút Thử lại bấm được ngay (trạng thái có thời hạn có đường thoát).
   useEffect(() => { if (limit.left > 0) wasLimited.current = true; else if (wasLimited.current) { wasLimited.current = false; void load(); } }, [limit.left, load]);
 
-  if (view === 'notfound') return <NotFound testid="shp-shipment-tracking-not-found" backTestid="shp-shipment-tracking-not-found-back" backHref="/orders" backLabel="Về danh sách đơn hàng" />;
-  if (view === 'loading' && !data) return <main className="wide" data-testid="shp-shipment-tracking-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></main>;
+  if (view === 'notfound') return <NotFound testid="shp-shipment-tracking-not-found" backTestid="shp-shipment-tracking-not-found-back" backHref="/orders" backLabel="Đơn hàng" />;
+  if (view === 'loading' && !data) return <main className="page page-narrow" data-testid="shp-shipment-tracking-loading" aria-busy="true"><Skel n={3} /></main>;
   if (view === 'error' || view === 'rate' || !data) {
     return (
-      <main className="wide">
-        <div role="alert" className="banner banner-error" data-testid="shp-shipment-tracking-error">
-          {view === 'rate' && limit.left > 0 ? limitedText(limit.left) : 'Không tải được thông tin vận chuyển.'} <button className="btn" onClick={() => void load()} data-testid="shp-shipment-tracking-retry">Thử lại</button>
-        </div>
+      <main className="page page-narrow">
+        <Note tone="red" icon="alert" role="alert" testid="shp-shipment-tracking-error">
+          {view === 'rate' && limit.left > 0 ? limitedText(limit.left) : 'Không tải được vận chuyển.'} <button className="btn" onClick={() => void load()} data-testid="shp-shipment-tracking-retry">Thử lại</button>
+        </Note>
       </main>
     );
   }
@@ -83,29 +84,28 @@ function Tracking({ code }: { code: string }) {
   const s = data.shipment;
   const step = s ? stepOf(s.status) : null;
   return (
-    <main className="wide">
-      <p><Link href={`/orders/${encodeURIComponent(code)}`} data-testid="shp-shipment-tracking-back-link">← Quay lại đơn hàng</Link></p>
-      <header className="row-link">
-        <h1>Vận chuyển đơn <span className="mono" data-testid="shp-shipment-tracking-order-code">{data.order_code}</span></h1>
+    <main className="page page-narrow">
+      <Link className="back" href={`/orders/${encodeURIComponent(code)}`} data-testid="shp-shipment-tracking-back-link"><span className="i i-left" aria-hidden="true" />Đơn hàng</Link>
+      <div className="page-head">
+        <h1>Vận chuyển <span className="ps-code" data-testid="shp-shipment-tracking-order-code">{data.order_code}</span></h1>
         {s && <ShipmentBadge status={s.status} testid="shp-shipment-tracking-status-badge" />}
-      </header>
+      </div>
 
-      {!s && <p className="hint" data-testid="shp-shipment-tracking-no-shipment">Đơn chưa được bàn giao cho vận chuyển.</p>}
+      {!s && <div className="empty" data-testid="shp-shipment-tracking-no-shipment"><span className="tile tile-lg amber"><span className="i i-box" aria-hidden="true" /></span><strong>Đơn chưa được bàn giao cho vận chuyển.</strong></div>}
       {s && (
         <>
           {step !== null && (
-            <ol className="stepper" data-testid="shp-shipment-tracking-stepper" data-current={step}>
-              {STEPS.map((t, i) => <li key={t} className={i <= step ? 'step-done' : ''} aria-current={i === step ? 'step' : undefined}>{t}</li>)}
+            <ol className="ps-steps" data-testid="shp-shipment-tracking-stepper" data-current={step}>
+              {STEPS.map((t, i) => <li key={t} className={`${i <= step ? 'step-done' : ''}${s.status === 'failed' && i === step ? ' bad' : ''}`} aria-current={i === step ? 'step' : undefined}><span className="dot"><span className={`i i-${s.status === 'failed' && i === step ? 'alert' : STEP_ICONS[i]}`} aria-hidden="true" /></span>{t}</li>)}
             </ol>
           )}
-          {s.status === 'failed' && <div role="status" className="banner banner-info" data-testid="shp-shipment-tracking-failed-notice">Giao hàng chưa thành công. Shop sẽ liên hệ với bạn.</div>}
-          {s.status === 'cancelled' && <div role="status" className="banner banner-info" data-testid="shp-shipment-tracking-closed-notice">Vận đơn đã bị hủy.</div>}
-          {s.status === 'returned' && <div role="status" className="banner banner-info" data-testid="shp-shipment-tracking-closed-notice">Hàng đã hoàn về kho.</div>}
-          <section className="card-block">
-            <h2>Thông tin</h2>
-            <dl className="view-fields">
+          {s.status === 'failed' && <Note tone="red" icon="alert" role="status" testid="shp-shipment-tracking-failed-notice">Giao hàng chưa thành công. Shop sẽ liên hệ với bạn.</Note>}
+          {s.status === 'cancelled' && <Note icon="ban" role="status" testid="shp-shipment-tracking-closed-notice">Vận đơn đã bị hủy.</Note>}
+          {s.status === 'returned' && <Note icon="undo" role="status" testid="shp-shipment-tracking-closed-notice">Hàng đã hoàn về kho.</Note>}
+          <section className="ps-card">
+            <dl className="kv">
               <dt>Phương thức</dt><dd data-testid="shp-shipment-tracking-method">{s.method_name}</dd>
-              {s.tracking_number && <><dt>Mã vận đơn</dt><dd><span className="mono" data-testid="shp-shipment-tracking-number">{s.tracking_number}</span> <CopyButton text={s.tracking_number} /></dd></>}
+              {s.tracking_number && <><dt>Mã vận đơn</dt><dd><span className="ps-track-no" style={{ justifyContent: 'flex-start' }}><span className="ps-code" data-testid="shp-shipment-tracking-number">{s.tracking_number}</span><CopyButton text={s.tracking_number} /></span></dd></>}
               {s.shipped_at && <><dt>Bàn giao</dt><dd className="tabular" data-testid="shp-shipment-tracking-shipped-at">{formatOrderTime(s.shipped_at)}</dd></>}
               {s.delivered_at && <><dt>Giao xong</dt><dd className="tabular" data-testid="shp-shipment-tracking-delivered-at">{formatOrderTime(s.delivered_at)}</dd></>}
             </dl>
@@ -113,16 +113,17 @@ function Tracking({ code }: { code: string }) {
         </>
       )}
 
-      <section className="card-block" data-testid="shp-shipment-tracking-history">
-        <h2>Hành trình</h2>
-        {histView === 'loading' && !history && <div aria-busy="true"><div className="skeleton" /></div>}
-        {histView === 'error' && <div role="alert" className="banner banner-error" data-testid="shp-shipment-tracking-history-error">Không tải được hành trình. <button className="btn" onClick={() => void loadHistory()} data-testid="shp-shipment-tracking-history-retry">Thử lại</button></div>}
-        {histView !== 'error' && history && history.length === 0 && <p className="hint" data-testid="shp-shipment-tracking-history-empty">Chưa có hành trình.</p>}
+      <section className="ps-card" data-testid="shp-shipment-tracking-history">
+        <h2><span className="i i-nav" aria-hidden="true" />Hành trình</h2>
+        {histView === 'loading' && !history && <Skel n={1} />}
+        {histView === 'error' && <Note tone="red" icon="alert" role="alert" testid="shp-shipment-tracking-history-error">Không tải được. <button className="btn" onClick={() => void loadHistory()} data-testid="shp-shipment-tracking-history-retry">Thử lại</button></Note>}
+        {histView !== 'error' && history && history.length === 0 && <p className="ps-empty-line" data-testid="shp-shipment-tracking-history-empty">Chưa có hành trình.</p>}
         {histView !== 'error' && history && history.length > 0 && (
-          <ol className="timeline">
+          <ol className="ps-tl">
             {history.map((h, k) => (
               <li key={k} data-testid="shp-shipment-tracking-history-item">
-                <span className="hint tabular" data-testid="shp-shipment-tracking-history-time">{formatOrderTime(h.at)}</span> {historyText(h, true)}
+                <span className={`ps-dot ${k === history.length - 1 ? 'blue' : ''}`}><span className={`i i-${k === history.length - 1 ? 'truck' : 'check'}`} aria-hidden="true" /></span>
+                <span className="body">{historyText(h, true)}<span className="ps-time" data-testid="shp-shipment-tracking-history-time">{formatOrderTime(h.at)}</span></span>
               </li>
             ))}
           </ol>

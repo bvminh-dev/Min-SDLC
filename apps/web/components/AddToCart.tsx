@@ -50,21 +50,24 @@ export function AddToCart({ productId, compact }: { productId: string; compact?:
   };
   const next = typeof window === 'undefined' ? path : window.location.pathname + window.location.search;
   const gone = msg?.kind === 'gone';
+  const ic = (n: string) => <span className={`i i-${n}`} aria-hidden="true" />;
   return (
-    <div className="add-to-cart">
-      {!compact && (
-        <div className="qty-row">
-          <label htmlFor={`atc-${productId}`}>Số lượng</label>
-          <button type="button" className="btn" aria-label="Giảm" disabled={busy || gone || n <= 1} onClick={() => set((valid ? n : 1) - 1)} data-testid="crt-add-to-cart-quantity-decrease">−</button>
-          <input id={`atc-${productId}`} inputMode="numeric" value={qty} disabled={busy || gone} aria-invalid={!valid} onChange={(e) => setQty(e.target.value)} data-testid="crt-add-to-cart-quantity" />
-          <button type="button" className="btn" aria-label="Tăng" disabled={busy || gone || n >= MAX_QTY} onClick={() => set((valid ? n : 0) + 1)} data-testid="crt-add-to-cart-quantity-increase">+</button>
-        </div>
-      )}
+    <div className={`add-to-cart ct-atc${compact ? ' compact' : ''}`}>
+      <div className="ct-atc-row">
+        {!compact && (
+          <div className="ct-qty">
+            <label htmlFor={`atc-${productId}`} className="sr-only">Số lượng</label>
+            <button type="button" className="btn btn-ghost btn-icon" aria-label="Giảm" disabled={busy || gone || n <= 1} onClick={() => set((valid ? n : 1) - 1)} data-testid="crt-add-to-cart-quantity-decrease"></button>
+            <input id={`atc-${productId}`} inputMode="numeric" value={qty} disabled={busy || gone} aria-invalid={!valid} onChange={(e) => setQty(e.target.value)} data-testid="crt-add-to-cart-quantity" />
+            <button type="button" className="btn btn-ghost btn-icon" aria-label="Tăng" disabled={busy || gone || n >= MAX_QTY} onClick={() => set((valid ? n : 0) + 1)} data-testid="crt-add-to-cart-quantity-increase"></button>
+          </div>
+        )}
+        <button type="button" className="btn btn-primary" disabled={busy || gone || (!compact && !valid)} aria-busy={busy} onClick={() => void submit()} data-testid="crt-add-to-cart-submit">
+          {busy ? <Spinner /> : ic('cart')}Thêm vào giỏ
+        </button>
+      </div>
       {msg?.kind === 'quantity' && <p className="field-error" role="alert" data-testid="crt-add-to-cart-error-quantity">Chọn từ 1 đến {MAX_QTY}</p>}
-      <button type="button" className="btn btn-primary" disabled={busy || gone || (!compact && !valid)} aria-busy={busy} onClick={() => void submit()} data-testid="crt-add-to-cart-submit">
-        {busy && <Spinner />}Thêm vào giỏ
-      </button>
-      {msg?.kind === 'success' && <p role="status" aria-live="polite" className="hint" data-testid="crt-add-to-cart-success"><span>Đã thêm vào giỏ</span> <Link href="/cart" data-testid="crt-add-to-cart-view-cart">Xem giỏ</Link></p>}
+      {msg?.kind === 'success' && <p role="status" aria-live="polite" className="ct-ok" data-testid="crt-add-to-cart-success">{ic('okc')}<span>Đã thêm vào giỏ</span> <Link href="/cart" data-testid="crt-add-to-cart-view-cart">Xem giỏ</Link></p>}
       {msg?.kind === 'stock' && <p role="alert" className="field-error" data-testid="crt-add-to-cart-error-stock">{msg.text}</p>}
       {(msg?.kind === 'limit' || msg?.kind === 'rate') && <p role="alert" className="field-error" data-testid="crt-add-to-cart-error-limit">{msg.text}</p>}
       {gone && <p role="alert" className="field-error" data-testid="crt-add-to-cart-unavailable">Sản phẩm không còn bán</p>}

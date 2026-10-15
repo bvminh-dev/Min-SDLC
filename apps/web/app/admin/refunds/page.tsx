@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { PayPager, RefundBadge, Spinner, refundError, useMoney } from '../../../components/PaymentParts';
 import { RequireRole } from '../../../components/RequireRole';
-import { Forbidden, Modal, ToastView, useToast } from '../../../components/ShipmentParts';
+import { Forbidden, Modal, Note, Skel, ToastView, useToast } from '../../../components/ShipmentParts';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { formatPrice } from '../../../lib/format';
@@ -31,12 +31,12 @@ function RetryDialog({ row, onDone, onClose, onStale }: { row: RefundRow; onDone
   };
   const msg = rateText ?? err;
   return (
-    <Modal title={`Thử lại hoàn tiền ${formatPrice(row.amount)} cho đơn #${row.order_code}?`} testid={`${P}-retry-dialog`} onClose={() => !busy && onClose()}>
-      <p>Hoàn tiền không thể hoàn tác và không đổi trạng thái đơn.</p>
-      {msg && <div role="alert" className="field-error" data-testid={`${P}-retry-error`}>{msg}</div>}
+    <Modal title="Thử lại hoàn tiền" icon="undo" tone="amber" testid={`${P}-retry-dialog`} onClose={() => !busy && onClose()}>
+      <p className="ps-sub"><strong>{formatPrice(row.amount)}</strong> · đơn <span className="ps-code">{row.order_code}</span>. Không hoàn tác được.</p>
+      {msg && <div role="alert" className="field-error" data-testid={`${P}-retry-error`}><span className="i i-alert" aria-hidden="true" />{msg}</div>}
       <div className="actions">
         <button type="button" className="btn" disabled={busy} onClick={onClose} data-testid={`${P}-retry-dismiss`}>Hủy</button>
-        <button type="button" className="btn btn-danger tight" disabled={busy} onClick={() => void submit()} data-testid={`${P}-retry-confirm`}>{busy ? <><Spinner /> Đang gửi...</> : 'Xác nhận thử lại'}</button>
+        <button type="button" className="btn btn-danger tight" disabled={busy} onClick={() => void submit()} data-testid={`${P}-retry-confirm`}>{busy ? <><Spinner />Đang gửi...</> : 'Thử lại'}</button>
       </div>
     </Modal>
   );
@@ -104,38 +104,38 @@ function QueueInner() {
   const items = data?.items ?? [];
   const empty = view === 'ready' && data !== null && items.length === 0 && !filterErr;
   return (
-    <main className="wide">
-      <h1>Hoàn tiền</h1>
-      <form className="toolbar" onSubmit={(e) => { e.preventDefault(); go({ status: draft || null }); }}>
+    <main className="page">
+      <div className="page-head"><h1>Hoàn tiền</h1></div>
+      <form className="ps-filters" onSubmit={(e) => { e.preventDefault(); go({ status: draft || null }); }}>
         <select value={draft} aria-label="Trạng thái hoàn tiền" onChange={(e) => setDraft(e.target.value)} data-testid={`${P}-filter-status`}>
           <option value="">Tất cả</option>
           {REFUND_STATUSES.map((s) => <option key={s} value={s}>{refundStatusText(s)}</option>)}
         </select>
         <button type="submit" className="btn tight" data-testid={`${P}-filter-apply`}>Lọc</button>
       </form>
-      {filterErr && <p role="alert" className="field-error" data-testid={`${P}-filter-error`}>Bộ lọc không hợp lệ.</p>}
-      {stalled && <div role="status" className="banner banner-info">Đang xử lý, kiểm tra lại sau. <button className="btn" onClick={() => { setPollKey((k) => k + 1); void load(); }}>Kiểm tra lại</button></div>}
+      {filterErr && <p role="alert" className="ps-err" data-testid={`${P}-filter-error`}><span className="i i-alert" aria-hidden="true" />Bộ lọc không hợp lệ.</p>}
+      {stalled && <Note tone="warn" icon="clock" role="status">Đang xử lý. <button className="btn" onClick={() => { setPollKey((k) => k + 1); void load(); }}>Kiểm tra lại</button></Note>}
 
-      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{errText} <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
-      {view === 'loading' && !data && <div data-testid={`${P}-loading`} aria-busy="true">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
+      {view === 'error' && <Note tone="red" icon="alert" role="alert" testid={`${P}-error`}>{errText} <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></Note>}
+      {view === 'loading' && !data && <div data-testid={`${P}-loading`}><Skel n={6} /></div>}
       {empty && (status === 'failed'
-        ? <div data-testid={`${P}-no-failed`}><p>Không có hoàn tiền thất bại cần xử lý.</p></div>
-        : <div data-testid={`${P}-empty`}><p className="hint">{status ? 'Không có hoàn tiền nào ở trạng thái này.' : 'Chưa có hoàn tiền nào.'}</p></div>)}
+        ? <div className="empty" data-testid={`${P}-no-failed`}><span className="tile tile-lg green"><span className="i i-okc" aria-hidden="true" /></span><strong>Không có hoàn tiền lỗi</strong></div>
+        : <div className="empty" data-testid={`${P}-empty`}><span className="tile tile-lg gray"><span className="i i-undo" aria-hidden="true" /></span><strong>{status ? 'Không có kết quả' : 'Chưa có hoàn tiền'}</strong></div>)}
       {data && items.length > 0 && (
         <>
-          <div className={`table-wrap${view === 'loading' ? ' dim' : ''}`} data-testid={`${P}-table`}>
-            <table className="stack-table">
-              <thead><tr><th>Mã đơn</th><th className="num">Số tiền</th><th>Lý do</th><th>Trạng thái</th><th>Lần tự thử</th><th>Tạo lúc</th>{admin && <th><span className="sr-only">Thao tác</span></th>}</tr></thead>
+          <div className={`panel panel-flush${view === 'loading' ? ' dim' : ''}`} data-testid={`${P}-table`}>
+            <table className="stack-table ps-table">
+              <thead><tr><th>Đơn</th><th className="num">Số tiền</th><th>Lý do</th><th>Trạng thái</th><th>Tự thử</th><th>Tạo lúc</th>{admin && <th><span className="sr-only">Thao tác</span></th>}</tr></thead>
               <tbody>
                 {items.map((r) => (
                   <tr key={r.id} data-testid={`${P}-row`} data-code={r.order_code}>
-                    <td data-label="Mã đơn" className="mono"><Link href={`/admin/payments/${encodeURIComponent(r.payment_id)}`} data-testid={`${P}-order-link`}>{r.order_code}</Link></td>
-                    <td data-label="Số tiền" className="num">{formatPrice(r.amount)}</td>
+                    <td data-label="Đơn"><Link className="ps-code" href={`/admin/payments/${encodeURIComponent(r.payment_id)}`} data-testid={`${P}-order-link`}>{r.order_code}</Link></td>
+                    <td data-label="Số tiền" className="num money">{formatPrice(r.amount)}</td>
                     <td data-label="Lý do">{refundReasonText(r.reason)}</td>
                     <td data-label="Trạng thái"><RefundBadge status={r.status} testid={`${P}-row-status`} /></td>
-                    <td data-label="Lần tự thử" className="tabular">{r.auto_attempt_no != null ? `${r.auto_attempt_no}/${AUTO_MAX}` : '-'}</td>
-                    <td data-label="Tạo lúc" className="tabular">{formatOrderTime(r.created_at)}</td>
-                    {admin && <td>{r.status === 'failed' && <button type="button" className="btn tight" onClick={() => setRetryRow(r)} data-testid={`${P}-refund-retry`}>Thử lại</button>}</td>}
+                    <td data-label="Tự thử" className="tabular">{r.auto_attempt_no != null ? `${r.auto_attempt_no}/${AUTO_MAX}` : '-'}</td>
+                    <td data-label="Tạo lúc" className="ps-time">{formatOrderTime(r.created_at)}</td>
+                    {admin && <td className="ps-act">{r.status === 'failed' && <button type="button" className="btn btn-sm" onClick={() => setRetryRow(r)} data-testid={`${P}-refund-retry`}>Thử lại</button>}</td>}
                   </tr>
                 ))}
               </tbody>
@@ -147,7 +147,7 @@ function QueueInner() {
 
       {admin && retryRow && (
         <RetryDialog row={retryRow} onClose={() => setRetryRow(null)} onStale={() => void load()}
-          onDone={(st) => { show(st === 'failed' ? { text: 'Cổng từ chối hoàn tiền, dòng vẫn ở trạng thái thất bại.', error: true } : { text: st === 'succeeded' ? 'Hoàn tiền thành công' : 'Đã gửi yêu cầu thử lại hoàn tiền', testid: `${P}-retry-success` }); void load(); }} />
+          onDone={(st) => { show(st === 'failed' ? { text: 'Cổng từ chối, vẫn thất bại.', error: true } : { text: st === 'succeeded' ? 'Hoàn tiền thành công' : 'Đã gửi yêu cầu thử lại', testid: `${P}-retry-success` }); void load(); }} />
       )}
       <ToastView toast={toast} />
     </main>
@@ -157,7 +157,7 @@ function QueueInner() {
 function Guard() {
   const { user } = useAuth();
   if (user?.role === 'customer') return <Forbidden testid={`${P}-forbidden`} />; // customer không gọi API (server vẫn trả 403)
-  return <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><QueueInner /></Suspense>;
+  return <Suspense fallback={<main className="page"><Skel n={1} /></main>}><QueueInner /></Suspense>;
 }
 
 export default function AdminRefundsPage() {

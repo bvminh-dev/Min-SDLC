@@ -38,20 +38,23 @@ function Lookup() {
   const busy = state === 'searching';
   const role = user?.role === 'admin' ? 'admin' : 'staff';
   return (
-    <main className="wide">
-      <h1>Tra cứu khách</h1>
-      {limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="usr-customer-lookup-rate-limited">Bạn tra cứu quá nhanh, thử lại sau {secondsText(limit.left)}.</div>}
+    <main className="page page-mid">
+      <div className="page-head"><h1>Tra cứu khách</h1></div>
+      {limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="usr-customer-lookup-rate-limited">Tra cứu quá nhanh, thử lại sau {secondsText(limit.left)}.</div>}
       {state === 'error' && <div role="alert" className="banner banner-error" data-testid="usr-customer-lookup-error">Không tra cứu được. <button type="button" className="btn" onClick={() => void submit()} data-testid="usr-customer-lookup-retry">Thử lại</button></div>}
-      <form onSubmit={submit} noValidate aria-busy={busy} style={{ display: 'flex', gap: '.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 16rem' }}>
-          <Field label="Email khách" error={fieldError ? 'Nhập email đầy đủ' : undefined} errorTestId="usr-customer-lookup-field-error" field="email" hint="Nhập email đầy đủ, ví dụ an@shop.vn">
-            {(id, d) => <input id={id} aria-describedby={d} value={email} disabled={busy} autoComplete="off" onChange={(e) => setEmail(e.target.value)} data-testid="usr-customer-lookup-email" />}
-          </Field>
-        </div>
-        <button className="btn btn-primary" style={{ width: 'auto', marginTop: '1.75rem' }} disabled={busy || limit.left > 0} data-testid="usr-customer-lookup-submit">{busy ? 'Đang tìm...' : 'Tra cứu'}</button>
-      </form>
-      {busy && <div className="skeleton" data-testid="usr-customer-lookup-loading" />}
-      {state === 'notfound' && <p data-testid="usr-customer-lookup-not-found">Không có khách nào dùng email này.</p>}
+      <div className="panel ip-lookup">
+        <form onSubmit={submit} noValidate aria-busy={busy}>
+          <div className="ip-search">
+            <span className="i i-mail" aria-hidden="true" />
+            <Field label="Email khách" error={fieldError ? 'Nhập email đầy đủ' : undefined} errorTestId="usr-customer-lookup-field-error" field="email">
+              {(id, d) => <input id={id} aria-describedby={d} type="text" placeholder="an@shop.vn" value={email} disabled={busy} autoComplete="off" onChange={(e) => setEmail(e.target.value)} data-testid="usr-customer-lookup-email" />}
+            </Field>
+          </div>
+          <button className="btn btn-primary tight" disabled={busy || limit.left > 0} data-testid="usr-customer-lookup-submit"><span className="i i-search" aria-hidden="true" /> {busy ? 'Đang tìm...' : 'Tìm'}</button>
+        </form>
+      </div>
+      {busy && <div className="skeleton" style={{ marginTop: '1rem', height: '7rem' }} data-testid="usr-customer-lookup-loading" />}
+      {state === 'notfound' && <div className="empty panel" style={{ marginTop: '1rem' }} data-testid="usr-customer-lookup-not-found"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có khách này</strong></div>}
       {result && !busy && <CustomerCard c={result} role={role} />}
     </main>
   );

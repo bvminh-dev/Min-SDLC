@@ -25,54 +25,52 @@ function Inner() {
   if (b.status === 'forbidden') return <ForbiddenView />;
   const applied = appliedRange(from, to);
   return (
-    <main className="wide">
-      <h1>Sản phẩm bán chạy</h1>
-      <p className="hint"><Link href="/admin/dashboard">Về dashboard</Link></p>
+    <main className="page">
+      <Link className="back" href="/admin/dashboard"><span className="i i-left" aria-hidden="true" />Dashboard</Link>
+      <div className="page-head"><h1>Bán chạy</h1></div>
       <RateBanner testid={`${P}-rate-limit`} status={b.status} retryAfter={b.retryAfter} />
       <RangeBar p={P} applied={applied} invalid={false} asOf={d?.as_of} onApply={(f, t) => go({ from: f || null, to: t || null })} onReset={() => go({ from: null, to: null, sort: null, limit: null })}>
-        <label className="dsh-field">Xếp theo
-          <select value={sort} onChange={(e) => go({ sort: e.target.value === 'units' ? null : e.target.value })} data-testid={`${P}-sort`}>
-            <option value="units">Số lượng</option><option value="amount">Giá trị</option>
-          </select>
-        </label>
-        <label className="dsh-field">Số dòng
-          <select value={limit} onChange={(e) => go({ limit: e.target.value === '10' ? null : e.target.value })} data-testid={`${P}-limit`}>
-            {LIMITS.map((l) => <option key={l} value={l}>{l}</option>)}
-          </select>
-        </label>
+        <select value={sort} aria-label="Xếp theo" onChange={(e) => go({ sort: e.target.value === 'units' ? null : e.target.value })} data-testid={`${P}-sort`}>
+          <option value="units">Số lượng</option><option value="amount">Giá trị</option>
+        </select>
+        <select value={limit} aria-label="Số dòng" onChange={(e) => go({ limit: e.target.value === '10' ? null : e.target.value })} data-testid={`${P}-limit`}>
+          {LIMITS.map((l) => <option key={l} value={l}>{l} dòng</option>)}
+        </select>
       </RangeBar>
-      {b.status === 'invalid' && <div role="alert" className="field-error" data-testid={`${P}-filter-error`}>Tham số không hợp lệ: khoảng tối đa 366 ngày, không sau hôm nay, Từ không sau Đến.</div>}
+      {b.status === 'invalid' && <div role="alert" className="banner banner-error" data-testid={`${P}-filter-error`}>Khoảng tối đa 366 ngày, không sau hôm nay, Từ không sau Đến.</div>}
       {b.status === 'loading' && !d && <Skeleton testid={`${P}-loading`} rows={6} />}
       {failed(b) && (
-        <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được báo cáo sản phẩm. <button type="button" className="btn tight" onClick={b.reload} data-testid={`${P}-retry`}>Thử lại</button></div>
+        <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được báo cáo. <button type="button" className="btn btn-sm" onClick={b.reload} data-testid={`${P}-retry`}>Thử lại</button></div>
       )}
       {d && !failed(b) && (
-        <>
-          <section className="dsh-kpis dsh-kpis-2" aria-label="Tổng của cả khoảng">
-            <div className="dsh-kpi"><h2>Tổng số lượng bán</h2><p className="dsh-big tabular" data-testid={`${P}-units-total`}>{count(d.units_total)}</p></div>
-            <div className="dsh-kpi"><h2>Sản phẩm khác nhau</h2><p className="dsh-big tabular" data-testid={`${P}-distinct`}>{count(d.distinct_products)}</p></div>
+        <div className="stack">
+          <section className="stat-grid rd-two" aria-label="Tổng của cả khoảng">
+            <div className="stat"><span className="tile green"><span className="i i-box" aria-hidden="true" /></span><div><b className="tabular" data-testid={`${P}-units-total`}>{count(d.units_total)}</b><span className="lbl">Đã bán</span></div></div>
+            <div className="stat"><span className="tile violet"><span className="i i-tag" aria-hidden="true" /></span><div><b className="tabular" data-testid={`${P}-distinct`}>{count(d.distinct_products)}</b><span className="lbl">Sản phẩm</span></div></div>
           </section>
           {d.items.length === 0
-            ? <p className="hint" data-testid={`${P}-empty`}>Không có sản phẩm bán từ {formatYmd(d.from)} tới {formatYmd(d.to)}.</p>
+            ? <div className="empty" data-testid={`${P}-empty`}><span className="tile tile-lg gray"><span className="i i-inbox" aria-hidden="true" /></span><strong>Chưa bán được</strong><span className="small">{formatYmd(d.from)} – {formatYmd(d.to)}</span></div>
             : (
-              <div className="table-wrap" data-testid={`${P}-table`}>
-                <table className="stack-table">
-                  <thead><tr><th>Hạng</th><th>Sản phẩm</th><th className="num">Số lượng</th><th className="num">Giá trị hàng bán</th></tr></thead>
-                  <tbody>
-                    {d.items.map((x, i) => (
-                      <tr key={x.product_id} data-testid={`${P}-row`} data-product={x.product_id}>
-                        <td data-label="Hạng" className="tabular">{i + 1}</td>
-                        <td data-label="Sản phẩm">{x.name || '—'}</td>
-                        <td data-label="Số lượng" className="num tabular">{count(x.units_sold)}</td>
-                        <td data-label="Giá trị hàng bán" className="num tabular">{money(x.items_amount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="panel panel-flush" data-testid={`${P}-table`}>
+                <div className="table-wrap">
+                  <table className="stack-table">
+                    <thead><tr><th>#</th><th>Sản phẩm</th><th className="num">SL</th><th className="num">Giá trị</th></tr></thead>
+                    <tbody>
+                      {d.items.map((x, i) => (
+                        <tr key={x.product_id} data-testid={`${P}-row`} data-product={x.product_id}>
+                          <td data-label="Hạng"><span className={`rd-rank${i < 3 ? ' top' : ''}`}>{i + 1}</span></td>
+                          <td data-label="Sản phẩm" className="strong">{x.name || '—'}</td>
+                          <td data-label="SL" className="num tabular">{count(x.units_sold)}</td>
+                          <td data-label="Giá trị" className="num tabular">{money(x.items_amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
-          <p className="hint" data-testid={`${P}-note`}>Giá trị hàng bán là giá lúc đặt nhân số lượng, không phải doanh thu. Chỉ tính đơn đã thu tiền (theo ngày thu), không tính đơn hủy, hết hạn, hoàn về hay đã hoàn tiền.</p>
-        </>
+          <p className="small muted" data-testid={`${P}-note`}><span className="i i-info" aria-hidden="true" /> Chỉ đơn đã thu tiền; không phải doanh thu.</p>
+        </div>
       )}
     </main>
   );
@@ -81,7 +79,7 @@ function Inner() {
 export default function ProductsReportPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
+      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
     </RequireRole>
   );
 }

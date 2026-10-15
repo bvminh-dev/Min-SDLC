@@ -37,32 +37,37 @@ export default function RegisterPage() {
 
   if (state === 'done') {
     return (
-      <main className="center"><section className="card">
-        <div role="status" className="banner banner-ok" data-testid="auth-register-success">Chúng tôi đã nhận đăng ký. Hãy kiểm tra email để xác minh rồi đăng nhập.</div>
+      <main className="center"><section className="card auth-card">
+        <div role="status" className="auth-done" data-testid="auth-register-success">
+          <span className="tile tile-lg green"><span className="i i-mail" aria-hidden="true" /></span>
+          <strong>Đã nhận đăng ký</strong>
+          <span className="muted">Kiểm tra email để xác minh, rồi đăng nhập.</span>
+        </div>
         <Link className="btn btn-primary" href="/login" data-testid="auth-register-login-link">Đăng nhập</Link>
       </section></main>
     );
   }
   const busy = state === 'sending';
   return (
-    <main className="center"><section className="card">
-      <h1>Đăng ký tài khoản</h1>
-      {state === 'limited' && <div role="alert" className="banner banner-error" data-testid="auth-register-rate-limited">Bạn thử quá nhiều lần, thử lại sau {minutesText(retry)}.</div>}
-      {state === 'error' && <div role="alert" className="banner banner-error" data-testid="auth-register-error">Không tạo được tài khoản. Thử lại. <button type="button" className="btn" onClick={(e) => void submit(e as unknown as FormEvent)} data-testid="auth-register-retry">Thử lại</button></div>}
-      <form onSubmit={submit} noValidate data-testid="auth-register-form" aria-busy={busy}>
+    <main className="center"><section className="card auth-card">
+      <span className="auth-logo" aria-hidden="true">E</span>
+      <h1>Đăng ký</h1>
+      {state === 'limited' && <div role="alert" className="banner banner-error" data-testid="auth-register-rate-limited">Thử quá nhiều lần, chờ {minutesText(retry)}.</div>}
+      {state === 'error' && <div role="alert" className="banner banner-error" data-testid="auth-register-error">Không tạo được tài khoản. <button type="button" className="btn" onClick={(e) => void submit(e as unknown as FormEvent)} data-testid="auth-register-retry">Thử lại</button></div>}
+      <form className="auth-form" onSubmit={submit} noValidate data-testid="auth-register-form" aria-busy={busy}>
         <Field label="Họ tên" error={text('full_name', errors.full_name)} errorTestId="auth-register-field-error" field="full_name">
           {(id, d) => <input id={id} aria-describedby={d} autoComplete="name" value={form.full_name} disabled={busy} onChange={(e) => setForm({ ...form, full_name: e.target.value })} data-testid="auth-register-full-name" />}
         </Field>
         <Field label="Email" error={text('email', errors.email)} errorTestId="auth-register-field-error" field="email">
           {(id, d) => <input id={id} aria-describedby={d} type="email" autoComplete="email" value={form.email} disabled={busy} onChange={(e) => setForm({ ...form, email: e.target.value })} data-testid="auth-register-email" />}
         </Field>
-        <Field label="Mật khẩu" error={text('password', errors.password)} errorTestId="auth-register-field-error" field="password" hint="Từ 10 đến 128 ký tự">
+        <Field label="Mật khẩu" error={text('password', errors.password)} errorTestId="auth-register-field-error" field="password" hint="10–128 ký tự">
           {(id, d) => <PasswordInput id={id} describedBy={d} autoComplete="new-password" value={form.password} disabled={busy} onChange={(e) => setForm({ ...form, password: e.target.value })} data-testid="auth-register-password" toggleTestId="auth-register-password-toggle" />}
         </Field>
         <button className="btn btn-primary" disabled={busy || state === 'limited'} data-testid="auth-register-submit">{busy ? 'Đang tạo...' : 'Tạo tài khoản'}</button>
-        {busy && <span className="hint" data-testid="auth-register-loading"> Đang gửi...</span>}
+        {busy && <span className="sr-only" role="status" data-testid="auth-register-loading">Đang gửi...</span>}
       </form>
-      <p className="row-link"><span>Đã có tài khoản?</span><Link href="/login" data-testid="auth-register-login-link">Đăng nhập</Link></p>
+      <p className="auth-alt"><span>Đã có tài khoản?</span><Link href="/login" data-testid="auth-register-login-link">Đăng nhập</Link></p>
     </section></main>
   );
 }

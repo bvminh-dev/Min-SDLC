@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { Forbidden, Modal, ToastView, useCall, useToast } from '../../../components/ShipmentParts';
+import { Forbidden, Modal, Note, Skel, ToastView, useCall, useToast } from '../../../components/ShipmentParts';
 import { RequireRole } from '../../../components/RequireRole';
 import { useCountdown } from '../../../components/useCountdown';
 import { api } from '../../../lib/api';
@@ -81,43 +81,50 @@ function MethodForm({ initial, onClose, onSaved, onReload }: { initial: Form; on
   const fieldErr = (k: Field) => { const m = shown(k); return m ? <p role="alert" className="field-error" data-testid={`${P}-field-error`} data-field={k}>{m}</p> : null; };
 
   return (
-    <Modal title={f.id ? 'Sửa phương thức vận chuyển' : 'Thêm phương thức vận chuyển'} testid={`${P}-form`} sticky onClose={() => !busy && onClose()}>
-      <fieldset disabled={busy} className="plain">
+    <Modal title={f.id ? 'Sửa phương thức' : 'Thêm phương thức'} icon="truck" tone={f.id ? 'violet' : ''} testid={`${P}-form`} sticky onClose={() => !busy && onClose()}>
+      <fieldset disabled={busy} className="plain ps-form">
         <label>Tên
           <input value={f.name} autoComplete="off" autoFocus onChange={(e) => edit({ name: e.target.value }, 'name')} data-testid={`${P}-name-input`} />
         </label>
         {fieldErr('name')}
         {taken && <p role="alert" className="field-error" data-testid={`${P}-name-taken`}>Tên này đã được dùng</p>}
-        <label>Phí cơ bản (đ)
-          <input inputMode="numeric" value={f.base_fee} autoComplete="off" onChange={(e) => edit({ base_fee: e.target.value }, 'base_fee')} data-testid={`${P}-base-fee-input`} />
-        </label>
-        {fieldErr('base_fee')}
-        <label>Miễn phí từ (đ)
-          <input inputMode="numeric" value={f.free_over} autoComplete="off" onChange={(e) => edit({ free_over: e.target.value }, 'free_over')} data-testid={`${P}-free-over-input`} />
-        </label>
-        <p className="hint">Để trống nếu không miễn phí</p>
-        {fieldErr('free_over')}
+        <div className="ps-grid2">
+          <div className="ps-form">
+            <label>Phí (đ)
+              <input inputMode="numeric" value={f.base_fee} autoComplete="off" onChange={(e) => edit({ base_fee: e.target.value }, 'base_fee')} data-testid={`${P}-base-fee-input`} />
+            </label>
+            {fieldErr('base_fee')}
+          </div>
+          <div className="ps-form">
+            <label>Miễn phí từ (đ)
+              <input inputMode="numeric" value={f.free_over} placeholder="Để trống = không miễn" autoComplete="off" onChange={(e) => edit({ free_over: e.target.value }, 'free_over')} data-testid={`${P}-free-over-input`} />
+            </label>
+            {fieldErr('free_over')}
+          </div>
+        </div>
         <label>Phụ thu vùng xa (đ)
           <input inputMode="numeric" value={f.surcharge} autoComplete="off" onChange={(e) => edit({ surcharge: e.target.value }, 'surcharge')} data-testid={`${P}-surcharge-input`} />
         </label>
         {fieldErr('surcharge')}
         <label htmlFor={`${uid}-city`}>Thành phố phụ thu</label>
-        <div className="chips">
-          {f.cities.map((c) => <span key={c} className="chip">{c} <button type="button" className="chip-x" aria-label={`Bỏ ${c}`} onClick={() => edit({ cities: f.cities.filter((x) => x !== c) }, 'cities')}>✕</button></span>)}
-        </div>
-        <div className="pw">
+        {f.cities.length > 0 && (
+          <div className="chips">
+            {f.cities.map((c) => <span key={c} className="chip">{c}<button type="button" className="chip-x" aria-label={`Bỏ ${c}`} onClick={() => edit({ cities: f.cities.filter((x) => x !== c) }, 'cities')}><span className="i i-x" aria-hidden="true" style={{ width: '.8rem', height: '.8rem' }} /></button></span>)}
+          </div>
+        )}
+        <div className="ps-addrow">
           <input id={`${uid}-city`} value={f.city} autoComplete="off" placeholder="Tên thành phố" onChange={(e) => edit({ city: e.target.value }, 'cities')} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCity(); } }} data-testid={`${P}-cities-input`} />
-          <button type="button" className="btn" onClick={addCity}>Thêm</button>
+          <button type="button" className="btn btn-icon" aria-label="Thêm thành phố" onClick={addCity}><span className="i i-plus" aria-hidden="true" /></button>
         </div>
         {fieldErr('cities')}
       </fieldset>
       {conflict && (
-        <div role="alert" className="banner banner-error" data-testid={`${P}-conflict`}>
-          Phương thức đã được người khác sửa <button type="button" className="btn" onClick={() => void reload()} data-testid={`${P}-conflict-reload`}>Tải lại dữ liệu</button>
-        </div>
+        <Note tone="red" icon="alert" role="alert" testid={`${P}-conflict`}>
+          Đã có người sửa trước <button type="button" className="btn" onClick={() => void reload()} data-testid={`${P}-conflict-reload`}>Tải lại</button>
+        </Note>
       )}
-      {formError && <div role="alert" className="field-error" data-testid={`${P}-form-error`}>{formError}</div>}
-      {busy && <p className="hint" role="status" data-testid={`${P}-saving`}>Đang lưu...</p>}
+      {formError && <div role="alert" className="field-error" data-testid={`${P}-form-error`}><span className="i i-alert" aria-hidden="true" />{formError}</div>}
+      {busy && <p className="muted small" style={{ margin: 0 }} role="status" data-testid={`${P}-saving`}>Đang lưu...</p>}
       <div className="actions">
         <button type="button" className="btn" disabled={busy} onClick={onClose} data-testid={`${P}-cancel`}>Hủy</button>
         <button type="button" className="btn btn-primary tight" disabled={busy || Object.keys(errors).length > 0} onClick={() => void save()} data-testid={`${P}-save`}>Lưu</button>
@@ -174,52 +181,57 @@ function Methods() {
   if (view === 'forbidden') return <Forbidden testid={`${P}-forbidden`} />;
   const full = total >= MAX_METHODS;
   return (
-    <main className="wide">
-      <div className="between">
-        <h1>Phương thức vận chuyển</h1>
-        <button type="button" className="btn btn-primary tight" disabled={full || view !== 'ready'} onClick={() => setForm(blank())} data-testid={`${P}-add`}>+ Thêm phương thức</button>
+    <main className="page page-mid">
+      <div className="page-head">
+        <h1>Vận chuyển</h1>
+        <div className="actions">
+          {view === 'ready' && <span className="muted small" data-testid={`${P}-count`}>{total} trên {MAX_METHODS} phương thức tối đa</span>}
+          <button type="button" className="btn btn-primary tight" disabled={full || view !== 'ready'} onClick={() => setForm(blank())} data-testid={`${P}-add`}>Thêm</button>
+        </div>
       </div>
-      {view === 'ready' && <p className="hint" data-testid={`${P}-count`}>{total} trên {MAX_METHODS} phương thức tối đa</p>}
-      {view === 'ready' && full && <p className="hint" data-testid={`${P}-limit-note`}>Đã đủ {MAX_METHODS} phương thức, tắt hoặc sửa phương thức có sẵn</p>}
+      {view === 'ready' && full && <Note tone="warn" icon="info" testid={`${P}-limit-note`}>Đã đủ {MAX_METHODS} phương thức, tắt hoặc sửa phương thức có sẵn</Note>}
 
-      {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
-      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được danh sách. <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
-      {view === 'loading' && <div data-testid={`${P}-loading`} aria-busy="true">{Array.from({ length: 3 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
-      {view === 'ready' && items.length === 0 && <p className="hint" data-testid={`${P}-empty`}>Chưa có phương thức vận chuyển nào. Khách chưa thể đặt hàng.</p>}
+      {view === 'rate' && limit.left > 0 && <Note tone="red" icon="clock" role="alert" testid={`${P}-error`}>{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></Note>}
+      {view === 'error' && <Note tone="red" icon="alert" role="alert" testid={`${P}-error`}>Không tải được danh sách. <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></Note>}
+      {view === 'loading' && <div data-testid={`${P}-loading`}><Skel n={3} /></div>}
+      {view === 'ready' && items.length === 0 && <div className="empty" data-testid={`${P}-empty`}><span className="tile tile-lg gray"><span className="i i-truck" aria-hidden="true" /></span><strong>Chưa có phương thức</strong><span className="small">Khách chưa thể đặt hàng.</span></div>}
       {view === 'ready' && items.length > 0 && (
-        <div className="table-wrap">
-          <table className="stack-table" data-testid={`${P}-table`}>
-            <thead><tr><th>Tên</th><th className="num">Phí cơ bản</th><th className="num">Miễn phí từ</th><th className="num">Phụ thu</th><th>Trạng thái</th><th><span className="sr-only">Thao tác</span></th></tr></thead>
-            <tbody>
-              {items.map((m) => (
-                <tr key={m.id} data-testid={`${P}-row`} data-id={m.id}>
-                  <td data-label="Tên" data-testid={`${P}-name`}>{m.name}</td>
-                  <td data-label="Phí cơ bản" className="num" data-testid={`${P}-base-fee`}>{formatPrice(m.base_fee)}</td>
-                  <td data-label="Miễn phí từ" className="num" data-testid={`${P}-free-over`}>{m.rule?.free_over == null ? '—' : formatPrice(m.rule.free_over)}</td>
-                  <td data-label="Phụ thu" className="num" data-testid={`${P}-surcharge`}>{m.rule?.surcharge ? `+${formatPrice(m.rule.surcharge)} · ${m.rule.surcharge_cities?.length ?? 0} TP` : '—'}</td>
-                  <td data-label="Trạng thái"><span className="badge" data-status={m.is_active ? 'ship-method-on' : 'ship-method-off'} data-testid={`${P}-status`}>{m.is_active ? 'Đang bật' : 'Đã tắt'}</span></td>
-                  <td className="menu">
-                    <button type="button" className="btn" aria-haspopup="menu" aria-expanded={menu === m.id} aria-label={`Thao tác với ${m.name}`} onClick={() => setMenu(menu === m.id ? null : m.id)} data-testid={`${P}-row-menu`}>⋯</button>
-                    {menu === m.id && (
-                      <div className="menu-items" role="menu" onKeyDown={(e) => e.key === 'Escape' && setMenu(null)}>
-                        <button type="button" role="menuitem" onClick={() => { setMenu(null); setForm(fromMethod(m)); }} data-testid={`${P}-edit`}>Sửa...</button>
-                        {m.is_active
-                          ? <button type="button" role="menuitem" onClick={() => { setMenu(null); setOff({ m, busy: false }); }} data-testid={`${P}-disable`}>Tắt phương thức...</button>
-                          : <button type="button" role="menuitem" disabled={toggling} onClick={() => void toggle(m, true)} data-testid={`${P}-enable`}>Bật phương thức</button>}
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="ps-mlist" data-testid={`${P}-table`}>
+          {items.map((m) => (
+            <div key={m.id} className={`ps-mrow${m.is_active ? '' : ' off'}`} data-testid={`${P}-row`} data-id={m.id}>
+              <span className={`tile${m.is_active ? ' green' : ' gray'}`}><span className="i i-truck" aria-hidden="true" /></span>
+              <div className="ps-mmain">
+                <div className="ps-mhead">
+                  <span className="ps-mname" data-testid={`${P}-name`}>{m.name}</span>
+                  <span className="badge" data-status={m.is_active ? 'ship-method-on' : 'ship-method-off'} data-testid={`${P}-status`}>{m.is_active ? 'Đang bật' : 'Đã tắt'}</span>
+                </div>
+                <div className="ps-mmeta">
+                  <span className="ps-chipv"><span className="i i-tag" aria-hidden="true" /><span data-testid={`${P}-base-fee`}>{formatPrice(m.base_fee)}</span></span>
+                  {m.rule?.free_over != null && <span className="ps-chipv green"><span className="i i-gift" aria-hidden="true" />Từ <span data-testid={`${P}-free-over`}>{formatPrice(m.rule.free_over)}</span></span>}
+                  {m.rule?.surcharge ? <span className="ps-chipv violet"><span className="i i-pin" aria-hidden="true" /><span data-testid={`${P}-surcharge`}>{`+${formatPrice(m.rule.surcharge)} · ${m.rule.surcharge_cities?.length ?? 0} TP`}</span></span> : null}
+                </div>
+              </div>
+              <div className="ps-mctl">
+                <button type="button" role="switch" className="ps-switch" aria-checked={m.is_active} aria-label={`${m.is_active ? 'Tắt' : 'Bật'} ${m.name}`} disabled={toggling} onClick={() => (m.is_active ? setOff({ m, busy: false }) : void toggle(m, true))} />
+                <button type="button" className="btn btn-ghost btn-icon" aria-haspopup="menu" aria-expanded={menu === m.id} aria-label={`Thao tác với ${m.name}`} onClick={() => setMenu(menu === m.id ? null : m.id)} data-testid={`${P}-row-menu`}><span className="i i-dots" aria-hidden="true" /></button>
+                {menu === m.id && (
+                  <div className="menu-items" role="menu" onKeyDown={(e) => e.key === 'Escape' && setMenu(null)}>
+                    <button type="button" role="menuitem" onClick={() => { setMenu(null); setForm(fromMethod(m)); }} data-testid={`${P}-edit`}>Sửa</button>
+                    {m.is_active
+                      ? <button type="button" role="menuitem" onClick={() => { setMenu(null); setOff({ m, busy: false }); }} data-testid={`${P}-disable`}>Tắt</button>
+                      : <button type="button" role="menuitem" disabled={toggling} onClick={() => void toggle(m, true)} data-testid={`${P}-enable`}>Bật</button>}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {form && <MethodForm initial={form} onClose={() => setForm(null)} onSaved={onSaved} onReload={reloadOne} />}
       {off && (
-        <Modal title="Tắt phương thức" testid={`${P}-disable-confirm`} onClose={() => !toggling && setOff(null)}>
-          <p>Tắt {off.m.name}? Khách sẽ không chọn được phương thức này; đơn đã tạo không đổi.</p>
+        <Modal title="Tắt phương thức" icon="ban" tone="red" testid={`${P}-disable-confirm`} onClose={() => !toggling && setOff(null)}>
+          <p>{off.m.name}: khách sẽ không chọn được; đơn đã tạo không đổi.</p>
           <div className="actions">
             <button type="button" className="btn" disabled={toggling} onClick={() => setOff(null)} data-testid={`${P}-disable-confirm-no`}>Giữ bật</button>
             <button type="button" className="btn btn-danger tight" disabled={toggling} onClick={() => void toggle(off.m, false)} data-testid={`${P}-disable-confirm-yes`}>Tắt</button>

@@ -116,75 +116,92 @@ function InventoryDetail() {
   const title = item?.product?.name ?? 'Sản phẩm';
   const thresholdLive = k === 'threshold' && threshold !== '' && (parseInt0(threshold) === null || Number(threshold) > 1_000_000) ? THRESHOLD_ERR : null;
 
+  const lvl = item ? (item.archived ? 'off' : item.available <= 0 ? 'out' : item.is_low_stock ? 'low' : 'ok') : 'ok';
+  const pct = item ? (item.low_stock_threshold > 0 ? Math.min(100, Math.round((item.available / (item.low_stock_threshold * 3)) * 100)) : item.available > 0 ? 100 : 0) : 0;
+
   return (
-    <main className="wide">
-      <p><Link href="/admin/inventory" data-testid="inv-inventory-detail-back">← Quay lại danh sách</Link></p>
+    <main className="page page-mid">
+      <Link href="/admin/inventory" className="back" data-testid="inv-inventory-detail-back"><span className="i i-left" aria-hidden="true" /> Tồn kho</Link>
 
       {view === 'loading' && !item && <div data-testid="inv-inventory-detail-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div>}
       {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="inv-inventory-detail-error">{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid="inv-inventory-detail-retry">Thử lại</button></div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid="inv-inventory-detail-error">Không tải được tồn kho. <button className="btn" onClick={() => void load()} data-testid="inv-inventory-detail-retry">Thử lại</button></div>}
       {view === 'notfound' && (
-        <div className="notfound" data-testid="inv-inventory-detail-not-found">
-          <p className="big">404</p><h1>Không tìm thấy bản ghi kho</h1>
-          <p className="hint">Sản phẩm chưa được công bố hoặc không tồn tại.</p>
-          <Link className="btn" href="/admin/inventory">Về danh sách tồn kho</Link>
+        <div className="empty panel" data-testid="inv-inventory-detail-not-found">
+          <span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span>
+          <h1>Không tìm thấy bản ghi kho</h1>
+          <Link className="btn" href="/admin/inventory">Về tồn kho</Link>
         </div>
       )}
 
       {item && view !== 'notfound' && (
-        <>
-          <div className="between">
-            <h1><span data-testid="inv-inventory-detail-name">{title}</span> <span className="mono" data-testid="inv-inventory-detail-sku">{item.product?.sku ?? ''}</span></h1>
-            <span>
-              {item.is_low_stock && !item.archived && <span className="badge badge-low" data-testid="inv-inventory-detail-low-badge">⚠ Tồn thấp</span>}{' '}
+        <div className="stack">
+          <div className="page-head" style={{ marginBottom: 0 }}>
+            <h1><span data-testid="inv-inventory-detail-name">{title}</span><span className="mono muted" data-testid="inv-inventory-detail-sku" style={{ marginLeft: '.6rem' }}>{item.product?.sku ?? ''}</span></h1>
+            <span className="ip-badges">
+              {item.is_low_stock && !item.archived && <span className="badge ip-low" data-testid="inv-inventory-detail-low-badge">Sắp hết</span>}
               {item.archived && <span className="badge" data-status="archived">Ngừng bán</span>}
             </span>
           </div>
-          {item.archived && <div className="banner banner-info" data-testid="inv-inventory-detail-archived-notice">Sản phẩm đã ngừng bán: không nhập thêm được.</div>}
-          <dl className="stats">
-            <div><dt>Đang có</dt><dd data-testid="inv-inventory-detail-on-hand">{num(item.on_hand)}</dd></div>
-            <div><dt>Đang giữ</dt><dd data-testid="inv-inventory-detail-reserved">{num(item.reserved)}</dd></div>
-            <div><dt>Còn bán được</dt><dd data-testid="inv-inventory-detail-available">{num(item.available)}</dd></div>
-            <div><dt>Ngưỡng tồn thấp</dt><dd><span data-testid="inv-inventory-detail-threshold">{num(item.low_stock_threshold)}</span> <button className="btn tight" disabled={view === 'loading'} onClick={() => open('threshold')} data-testid="inv-inventory-detail-edit-threshold">Đổi ngưỡng</button></dd></div>
-          </dl>
-          <div className="actions-row">
-            <button className="btn" disabled={view === 'loading' || item.archived} title={item.archived ? 'Sản phẩm đã ngừng bán' : undefined} onClick={() => open('in')} data-testid="inv-inventory-detail-stock-in">Nhập kho</button>
-            <button className="btn" disabled={view === 'loading'} onClick={() => open('out')} data-testid="inv-inventory-detail-stock-out">Xuất kho</button>
-            <button className="btn" disabled={view === 'loading'} onClick={() => open('adjust')} data-testid="inv-inventory-detail-adjust">Điều chỉnh theo kiểm kê</button>
-            <Link href={`/admin/inventory/${encodeURIComponent(id)}/history`} className="grow" style={{ textAlign: 'right' }} data-testid="inv-inventory-detail-history-link">Xem lịch sử →</Link>
+          {item.archived && <div className="banner banner-info" style={{ margin: 0 }} data-testid="inv-inventory-detail-archived-notice">Đã ngừng bán: không nhập thêm được.</div>}
+
+          <div className="stat-grid stat-grid-3 ip-stats3">
+            <div className="stat"><span className="tile"><span className="i i-box" aria-hidden="true" /></span><div><b data-testid="inv-inventory-detail-on-hand">{num(item.on_hand)}</b><span className="lbl">Có</span></div></div>
+            <div className="stat"><span className="tile amber"><span className="i i-clock" aria-hidden="true" /></span><div><b data-testid="inv-inventory-detail-reserved">{num(item.reserved)}</b><span className="lbl">Giữ</span></div></div>
+            <div className="stat"><span className="tile green"><span className="i i-okc" aria-hidden="true" /></span><div><b data-testid="inv-inventory-detail-available">{num(item.available)}</b><span className="lbl">Còn bán</span></div></div>
           </div>
-        </>
+
+          <div className="panel ip-sum">
+            <div className="ip-cap">
+              <span className="row"><span className="i i-alert" aria-hidden="true" /> Ngưỡng <b data-testid="inv-inventory-detail-threshold">{num(item.low_stock_threshold)}</b></span>
+              <button className="btn btn-sm btn-ghost" disabled={view === 'loading'} onClick={() => open('threshold')} data-testid="inv-inventory-detail-edit-threshold" aria-label="Đổi ngưỡng"><span className="i i-pencil" aria-hidden="true" /> Đổi</button>
+            </div>
+            <span className="ip-bar" data-lv={lvl} aria-hidden="true"><i style={{ width: `${pct}%` }} /></span>
+          </div>
+
+          <div className="row">
+            <button className="btn btn-primary tight" disabled={view === 'loading' || item.archived} title={item.archived ? 'Đã ngừng bán' : undefined} onClick={() => open('in')} data-testid="inv-inventory-detail-stock-in"><span className="i i-plus" aria-hidden="true" /> Nhập kho</button>
+            <button className="btn tight" disabled={view === 'loading'} onClick={() => open('out')} data-testid="inv-inventory-detail-stock-out"><span className="i i-minus" aria-hidden="true" /> Xuất kho</button>
+            <button className="btn tight" disabled={view === 'loading'} onClick={() => open('adjust')} data-testid="inv-inventory-detail-adjust"><span className="i i-sliders" aria-hidden="true" /> Kiểm kê</button>
+            <Link href={`/admin/inventory/${encodeURIComponent(id)}/history`} className="btn btn-ghost tight" style={{ marginLeft: 'auto' }} data-testid="inv-inventory-detail-history-link"><span className="i i-clock" aria-hidden="true" /> Lịch sử</Link>
+          </div>
+        </div>
       )}
 
       {toast && <div className="toast" role="status" data-testid="inv-inventory-detail-toast">{toast}</div>}
 
       {dlg && item && (
         <div className="backdrop">
-          <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="inv-dlg-title" onKeyDown={(e) => e.key === 'Escape' && close()}>
-            <h2 id="inv-dlg-title">{k === 'in' ? 'Nhập kho' : k === 'out' ? 'Xuất kho' : k === 'adjust' ? 'Điều chỉnh' : 'Đổi ngưỡng tồn thấp'}: {title}</h2>
+          <div className="dialog ip-dlg" role="dialog" aria-modal="true" aria-labelledby="inv-dlg-title" onKeyDown={(e) => e.key === 'Escape' && close()}>
+            <div className="dlg-head">
+              <span className={`tile ${k === 'in' ? 'green' : k === 'out' ? 'amber' : k === 'adjust' ? 'violet' : ''}`}><span className={`i i-${k === 'in' ? 'plus' : k === 'out' ? 'minus' : k === 'adjust' ? 'sliders' : 'alert'}`} aria-hidden="true" /></span>
+              <h2 id="inv-dlg-title">{k === 'in' ? 'Nhập kho' : k === 'out' ? 'Xuất kho' : k === 'adjust' ? 'Điều chỉnh' : 'Đổi ngưỡng'}</h2>
+            </div>
+            <p className="small truncate">{title}</p>
             {(k === 'in' || k === 'out') && (
               <>
-                {k === 'out' && <p className="hint">Tối đa xuất được: <strong data-testid="inv-inventory-detail-stock-out-max">{num(item.available)}</strong></p>}
-                <div className="field"><label htmlFor="inv-qty">Số lượng (1-100000)</label>
-                  <input id="inv-qty" inputMode="numeric" value={qty} disabled={dlg.busy} autoFocus onChange={(e) => setQty(e.target.value)} data-testid={`${pre}-quantity`} /></div>
-                <div className="field"><label htmlFor="inv-reason">Lý do</label>
-                  <select id="inv-reason" value={reason} disabled={dlg.busy} onChange={(e) => setReason(e.target.value)} data-testid={`${pre}-reason`}>{(k === 'in' ? IN_REASONS : OUT_REASONS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
-                <div className="field"><label htmlFor="inv-note">Ghi chú{reason === 'other' ? ' (bắt buộc)' : ''}</label>
+                {k === 'out' && <p className="small">Tối đa <strong data-testid="inv-inventory-detail-stock-out-max">{num(item.available)}</strong></p>}
+                <div className="ip-grid2">
+                  <div className="field"><label htmlFor="inv-qty">Số lượng</label>
+                    <input id="inv-qty" inputMode="numeric" value={qty} disabled={dlg.busy} autoFocus onChange={(e) => setQty(e.target.value)} data-testid={`${pre}-quantity`} /></div>
+                  <div className="field"><label htmlFor="inv-reason">Lý do</label>
+                    <select id="inv-reason" value={reason} disabled={dlg.busy} onChange={(e) => setReason(e.target.value)} data-testid={`${pre}-reason`}>{(k === 'in' ? IN_REASONS : OUT_REASONS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+                </div>
+                <div className="field"><label htmlFor="inv-note">Ghi chú{reason === 'other' ? ' *' : ''}</label>
                   <input id="inv-note" value={note} maxLength={200} disabled={dlg.busy} onChange={(e) => setNote(e.target.value)} data-testid={`${pre}-note`} /></div>
               </>
             )}
             {k === 'adjust' && (
               <>
-                <p>Đang có {num(item.on_hand)}, đang giữ {num(item.reserved)}</p>
+                <div className="row"><span className="ip-chip">Có <b>{num(item.on_hand)}</b></span><span className="ip-chip">Giữ <b>{num(item.reserved)}</b></span><span className="ip-chip">Chênh <b data-testid="inv-inventory-detail-adjust-delta">{parseInt0(onHand) === null ? '—' : signed(parseInt0(onHand)! - item.on_hand)}</b></span></div>
                 <div className="field"><label htmlFor="inv-new">Số đếm thực</label>
                   <input id="inv-new" inputMode="numeric" value={onHand} disabled={dlg.busy} autoFocus onChange={(e) => setOnHand(e.target.value)} data-testid="inv-inventory-detail-adjust-new-on-hand" /></div>
-                <p className="hint">Chênh lệch: <strong data-testid="inv-inventory-detail-adjust-delta">{parseInt0(onHand) === null ? '—' : signed(parseInt0(onHand)! - item.on_hand)}</strong></p>
-                <div className="field"><label htmlFor="inv-note">Ghi chú (bắt buộc, 5-200 ký tự)</label>
+                <div className="field"><label htmlFor="inv-note">Ghi chú *</label>
                   <input id="inv-note" value={note} maxLength={200} disabled={dlg.busy} onChange={(e) => setNote(e.target.value)} data-testid="inv-inventory-detail-adjust-note" /></div>
               </>
             )}
             {k === 'threshold' && (
-              <div className="field"><label htmlFor="inv-th">Ngưỡng mới (0-1000000)</label>
+              <div className="field"><label htmlFor="inv-th">Ngưỡng mới</label>
                 <input id="inv-th" inputMode="numeric" value={threshold} disabled={dlg.busy} autoFocus onChange={(e) => setThreshold(e.target.value)} data-testid="inv-inventory-detail-threshold-input" /></div>
             )}
             {(dlg.error || thresholdLive) && <p className="field-error" role="alert" data-testid={`${pre}-error`}>{dlg.error ?? thresholdLive}</p>}

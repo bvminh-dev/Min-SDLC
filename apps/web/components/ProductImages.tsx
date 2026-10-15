@@ -52,31 +52,35 @@ export function ProductImages({ productId, images, editable, onChanged, onOther 
   };
   const remove = (id: string) => void run(() => api(`${base}/${id}`, { method: 'DELETE' }), 'Không xóa được ảnh cuối của sản phẩm đang bán');
 
+  const ic = (n: string) => <span className={`i i-${n}`} aria-hidden="true" />;
   return (
-    <section aria-label="Ảnh">
-      <h2>Ảnh ({images.length} trên {MAX_IMAGES})</h2>
-      {editable && (
-        <p>
-          <input type="file" accept="image/jpeg,image/png,image/webp" aria-label="Tải ảnh lên" disabled={busy} onChange={upload} data-testid="prd-admin-product-edit-image-upload" />
-        </p>
-      )}
+    <section className="panel" aria-label="Ảnh">
+      <div className="panel-head">
+        <h2>{ic('image')} Ảnh <span className="muted small">{images.length}/{MAX_IMAGES}</span></h2>
+        {editable && (
+          <label className="btn btn-sm ct-upload" aria-disabled={busy}>
+            {ic('upload')} Tải lên
+            <input type="file" className="ct-file" accept="image/jpeg,image/png,image/webp" aria-label="Tải ảnh lên" disabled={busy} onChange={upload} data-testid="prd-admin-product-edit-image-upload" />
+          </label>
+        )}
+      </div>
       {error && <p className="field-error" role="alert" data-testid="prd-admin-product-edit-image-error">{error}</p>}
-      {images.length === 0 && <p className="hint">Chưa có ảnh.</p>}
-      <ul className="img-list">
+      {images.length === 0 && <div className="empty ct-empty-sm"><span className="tile gray">{ic('image')}</span><strong>Chưa có ảnh</strong></div>}
+      <ul className="ct-imgs">
         {images.map((im, i) => (
-          <li key={im.id} className="img-item" {...(editable ? { 'data-testid': 'prd-admin-product-edit-image-item' } : {})} data-id={im.id}>
+          <li key={im.id} className="ct-img-item" {...(editable ? { 'data-testid': 'prd-admin-product-edit-image-item' } : {})} data-id={im.id}>
             <img src={im.url} alt={`Ảnh ${i + 1}`} />
+            {i === 0 && <span className="ct-cover" title="Ảnh đại diện">{ic('star')}</span>}
             {editable && (
-              <div className="img-actions">
-                <button type="button" className="btn" disabled={busy || i === 0} aria-label="Chuyển sang trái" data-dir="left" onClick={() => move(i, -1)} data-testid="prd-admin-product-edit-image-move">‹</button>
-                <button type="button" className="btn" disabled={busy || i === images.length - 1} aria-label="Chuyển sang phải" data-dir="right" onClick={() => move(i, 1)} data-testid="prd-admin-product-edit-image-move">›</button>
-                <button type="button" className="btn btn-quiet" disabled={busy} aria-label="Xóa ảnh" onClick={() => remove(im.id)} data-testid="prd-admin-product-edit-image-delete">Xóa</button>
+              <div className="ct-img-acts">
+                <button type="button" className="btn btn-sm btn-icon" disabled={busy || i === 0} aria-label="Chuyển sang trái" data-dir="left" onClick={() => move(i, -1)} data-testid="prd-admin-product-edit-image-move">{ic('left')}</button>
+                <button type="button" className="btn btn-sm btn-icon" disabled={busy || i === images.length - 1} aria-label="Chuyển sang phải" data-dir="right" onClick={() => move(i, 1)} data-testid="prd-admin-product-edit-image-move">{ic('right')}</button>
+                <button type="button" className="btn btn-sm btn-icon ct-del" disabled={busy} aria-label="Xóa ảnh" onClick={() => remove(im.id)} data-testid="prd-admin-product-edit-image-delete"></button>
               </div>
             )}
           </li>
         ))}
       </ul>
-      {images.length > 0 && <p className="hint">Ảnh đầu là ảnh đại diện.</p>}
     </section>
   );
 }

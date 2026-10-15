@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { Forbidden, Modal, NotFound, ShipmentBadge, ToastView, useCall, useToast, type Err } from '../../../../components/ShipmentParts';
+import { Forbidden, Modal, NotFound, Note, ShipmentBadge, Skel, ToastView, useCall, useToast, type Err } from '../../../../components/ShipmentParts';
 import { RequireRole } from '../../../../components/RequireRole';
 import { useCountdown } from '../../../../components/useCountdown';
 import { api, type ApiResult } from '../../../../lib/api';
@@ -16,6 +16,9 @@ import { limitedText } from '../../../../lib/stock';
 const P = 'shp-shipment-admin-detail';
 const FORMAT_MSG = 'Mã gồm 8 tới 30 ký tự chữ, số hoặc gạch nối';
 const NOTE_MAX = 300;
+const STEPS = ['Đã tạo', 'Đang giao', 'Đã giao'];
+const STEP_ICONS = ['box', 'truck', 'check'];
+const stepOf = (st: string): number | null => (st === 'pending' ? 0 : st === 'shipped' || st === 'failed' ? 1 : st === 'delivered' ? 2 : null);
 
 /** Lỗi chung của mọi thao tác; `specific` xử lý mã riêng của từng hộp thoại trước. */
 const baseError = (r: ApiResult, specific?: (r: ApiResult) => Err | null): Err =>
@@ -50,21 +53,23 @@ function TrackingDialog({ code, mode, current, version, onDone, onClose, onReloa
   const msg = rateText ?? err?.text;
   const inline = !rateText && err?.field;
   return (
-    <Modal title={ship ? 'Bàn giao vận đơn' : 'Sửa mã vận đơn'} testid={`${t}-form`} sticky onClose={() => !busy && onClose()}>
-      <label>{ship ? 'Mã vận đơn' : 'Mã vận đơn mới'}
-        <input value={value} autoFocus disabled={busy} autoComplete="off" onChange={(e) => setValue(upperTracking(e.target.value))} onKeyDown={(e) => e.key === 'Enter' && trimmed && !busy && void submit()} data-testid={`${t}-${ship ? 'tracking-input' : 'input'}`} />
-      </label>
-      {msg && inline && <p role="alert" className="field-error" data-testid={`${t}-error`}>{msg}</p>}
+    <Modal title={ship ? 'Bàn giao' : 'Sửa mã vận đơn'} icon="truck" tone={ship ? '' : 'violet'} testid={`${t}-form`} sticky onClose={() => !busy && onClose()}>
+      <div className="ps-form">
+        <label>{ship ? 'Mã vận đơn' : 'Mã mới'}
+          <input value={value} autoFocus disabled={busy} autoComplete="off" onChange={(e) => setValue(upperTracking(e.target.value))} onKeyDown={(e) => e.key === 'Enter' && trimmed && !busy && void submit()} data-testid={`${t}-${ship ? 'tracking-input' : 'input'}`} />
+        </label>
+      </div>
+      {msg && inline && <p role="alert" className="field-error" data-testid={`${t}-error`}><span className="i i-alert" aria-hidden="true" />{msg}</p>}
       {msg && !inline && (
         <div role="alert" className="field-error" data-testid={ship ? `${t}-blocked` : `${t}-error`}>
-          {msg}
-          {err?.reload && !rateText && <> <button type="button" className="btn" onClick={onReload} data-testid={ship ? `${P}-result-reload` : `${t}-reload`}>Tải lại vận đơn</button></>}
+          <span className="i i-alert" aria-hidden="true" />{msg}
+          {err?.reload && !rateText && <> <button type="button" className="btn btn-sm" onClick={onReload} data-testid={ship ? `${P}-result-reload` : `${t}-reload`}>Tải lại</button></>}
         </div>
       )}
-      {busy && ship && <p className="hint" role="status" data-testid={`${t}-loading`}>Đang bàn giao...</p>}
+      {busy && ship && <p className="muted small" style={{ margin: 0 }} role="status" data-testid={`${t}-loading`}>Đang bàn giao...</p>}
       <div className="actions">
         <button type="button" className="btn" disabled={busy} onClick={onClose} data-testid={`${t}-cancel`}>Hủy</button>
-        <button type="button" className="btn btn-primary tight" disabled={busy || !trimmed || (!ship && trimmed === current)} onClick={() => void submit()} data-testid={ship ? `${t}-confirm` : `${t}-save`}>{ship ? 'Bàn giao' : 'Lưu mã'}</button>
+        <button type="button" className="btn btn-primary tight" disabled={busy || !trimmed || (!ship && trimmed === current)} onClick={() => void submit()} data-testid={ship ? `${t}-confirm` : `${t}-save`}>{ship ? 'Bàn giao' : 'Lưu'}</button>
       </div>
     </Modal>
   );
@@ -82,36 +87,36 @@ function ResultDialog({ code, kind, onDone, onClose, onReload }: DlgProps & { ki
     if (r) { onClose(); onDone({ text: 'Đã cập nhật vận đơn', testid: `${P}-toast-result` }); }
   };
   const msg = rateText ?? err?.text;
-  const title = kind === 'deliver' ? 'Xác nhận giao xong' : kind === 'return' ? 'Xác nhận hàng về kho' : 'Giao thất bại';
+  const title = kind === 'deliver' ? 'Giao xong' : kind === 'return' ? 'Hàng về kho' : 'Giao thất bại';
   return (
-    <Modal title={title} sticky={kind === 'fail'} onClose={() => !busy && onClose()}>
-      {kind === 'deliver' && <p>Xác nhận đơn đã giao thành công? Không thể hoàn tác.</p>}
-      {kind === 'return' && <p>Xác nhận hàng đã hoàn về kho? Không thể hoàn tác. Hàng nhập lại kho trừ khi lý do thất bại là Hàng hỏng.</p>}
+    <Modal title={title} icon={kind === 'deliver' ? 'check' : kind === 'return' ? 'undo' : 'alert'} tone={kind === 'deliver' ? 'green' : kind === 'return' ? 'violet' : 'red'} sticky={kind === 'fail'} onClose={() => !busy && onClose()}>
+      {kind === 'deliver' && <p className="ps-sub">Đơn đã giao thành công? Không hoàn tác được.</p>}
+      {kind === 'return' && <p className="ps-sub">Hàng đã về kho? Không hoàn tác được. Hàng nhập lại kho trừ khi lý do là Hàng hỏng.</p>}
       {kind === 'fail' && (
-        <>
+        <div className="ps-form">
           <label>Lý do
             <select value={reason} disabled={busy} onChange={(e) => setReason(e.target.value)} data-testid={`${P}-fail-reason`}>
               <option value="">Chọn lý do</option>
               {FAIL_REASONS.map((o) => <option key={o.code} value={o.code}>{o.label}</option>)}
             </select>
           </label>
-          <label>Ghi chú (không bắt buộc)
+          <label>Ghi chú <span className="opt">(tùy chọn)</span>
             <textarea value={note} rows={3} disabled={busy} onChange={(e) => setNote(e.target.value)} data-testid={`${P}-fail-note`} />
           </label>
-          <p className={over ? 'field-error' : 'hint'}>{note.length}/{NOTE_MAX}{over ? ' (quá dài)' : ''}</p>
-        </>
+          <p className={`ps-ctr${over ? ' over' : ''}`}>{note.length}/{NOTE_MAX}</p>
+        </div>
       )}
       {msg && (
         <div role="alert" className="field-error" data-testid={`${P}-result-error`}>
-          {msg}
-          {err?.reload && !rateText && <> <button type="button" className="btn" onClick={onReload} data-testid={`${P}-result-reload`}>Tải lại vận đơn</button></>}
+          <span className="i i-alert" aria-hidden="true" />{msg}
+          {err?.reload && !rateText && <> <button type="button" className="btn btn-sm" onClick={onReload} data-testid={`${P}-result-reload`}>Tải lại</button></>}
         </div>
       )}
-      {busy && <p className="hint" role="status" data-testid={`${P}-result-loading`}>Đang cập nhật...</p>}
+      {busy && <p className="muted small" style={{ margin: 0 }} role="status" data-testid={`${P}-result-loading`}>Đang cập nhật...</p>}
       <div className="actions">
         <button type="button" className="btn" disabled={busy} onClick={onClose} data-testid={`${P}-result-cancel`}>Hủy</button>
         <button type="button" className={`btn tight ${kind === 'fail' ? 'btn-danger' : 'btn-primary'}`} disabled={busy || (kind === 'fail' && (!reason || over))} onClick={() => void submit()}
-          data-testid={`${P}-${kind === 'deliver' ? 'deliver-confirm' : kind === 'fail' ? 'fail-confirm' : 'return-confirm'}`}>{kind === 'fail' ? 'Xác nhận thất bại' : 'Xác nhận'}</button>
+          data-testid={`${P}-${kind === 'deliver' ? 'deliver-confirm' : kind === 'fail' ? 'fail-confirm' : 'return-confirm'}`}>Xác nhận</button>
       </div>
     </Modal>
   );
@@ -159,71 +164,88 @@ function DetailView({ code }: { code: string }) {
   const done: Done = (t) => { show(t); void load(); };
 
   if (view === 'forbidden') return <Forbidden testid={`${P}-forbidden`} />;
-  if (view === 'notfound') return <NotFound testid={`${P}-not-found`} backTestid={`${P}-not-found-back`} backHref={back} backLabel="Về danh sách vận đơn" />;
-  if (view === 'loading' && !data) return <main className="wide" data-testid={`${P}-loading`} aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></main>;
+  if (view === 'notfound') return <NotFound testid={`${P}-not-found`} backTestid={`${P}-not-found-back`} backHref={back} backLabel="Vận đơn" />;
+  if (view === 'loading' && !data) return <main className="page" data-testid={`${P}-loading`} aria-busy="true"><Skel n={3} /></main>;
   if (view === 'error' || view === 'rate' || !data) {
     return (
-      <main className="wide">
-        <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>
+      <main className="page">
+        <Note tone="red" icon="alert" role="alert" testid={`${P}-error`}>
           {view === 'rate' && limit.left > 0 ? limitedText(limit.left) : 'Không tải được vận đơn.'} <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button>
-        </div>
+        </Note>
       </main>
     );
   }
 
   const s = data.shipment;
   const rec = s ? (s.recipient ?? data.recipient ?? null) : null;
-  const actions = !s ? [] : s.status === 'pending' ? [['ship', 'Bàn giao']] : s.status === 'shipped' ? [['deliver', 'Giao xong'], ['fail', 'Giao thất bại'], ['edit', 'Sửa mã vận đơn']] : s.status === 'failed' ? [['return', 'Hàng đã về kho']] : [];
+  const actions = !s ? [] : s.status === 'pending' ? [['ship', 'Bàn giao']] : s.status === 'shipped' ? [['deliver', 'Giao xong'], ['fail', 'Giao thất bại'], ['edit', 'Sửa mã']] : s.status === 'failed' ? [['return', 'Về kho']] : [];
   const actionId: Record<string, string> = { ship: 'ship', deliver: 'deliver', fail: 'fail', edit: 'edit-tracking', return: 'return' };
+  const actionStyle: Record<string, [string, string]> = { ship: ['btn btn-primary tight', 'truck'], deliver: ['btn btn-primary tight', 'check'], fail: ['btn btn-danger-soft tight', 'alert'], edit: ['btn tight', 'pencil'], return: ['btn btn-primary tight', 'undo'] };
+  const step = s ? stepOf(s.status) : null;
   return (
-    <main className="wide">
-      <p><Link href={back} data-testid={`${P}-back-link`}>← Quay lại danh sách</Link></p>
-      <header className="row-link">
-        <h1>Vận đơn đơn <span className="mono" data-testid={`${P}-order-code`}>{data.order_code}</span></h1>
-        {s && <ShipmentBadge status={s.status} testid={`${P}-status-badge`} />}
-      </header>
-      {!s && <p className="hint" data-testid={`${P}-no-shipment`}>Đơn này chưa có vận đơn.</p>}
-      {actions.length > 0 && (
-        <div className="actions-row">
-          {actions.map(([k, label]) => <button key={k} type="button" className={`btn tight${k === 'ship' ? ' btn-current' : ''}`} onClick={() => setDlg(k as typeof dlg)} data-testid={`${P}-${actionId[k]}`}>{label}</button>)}
+    <main className="page">
+      <Link className="back" href={back} data-testid={`${P}-back-link`}><span className="i i-left" aria-hidden="true" />Vận đơn</Link>
+      <div className="ps-hero">
+        <div className="ps-hero-main">
+          <h1>Đơn <span className="ps-code" data-testid={`${P}-order-code`}>{data.order_code}</span>{s && <ShipmentBadge status={s.status} testid={`${P}-status-badge`} />}</h1>
+          {s?.tracking_number && <div className="sub"><span className="i i-tag" aria-hidden="true" style={{ width: '1rem', height: '1rem' }} /><span className="ps-code" data-testid={`${P}-tracking`}>{s.tracking_number}</span></div>}
         </div>
+        {actions.length > 0 && (
+          <div className="ps-actions" style={{ margin: 0 }}>
+            {actions.map(([k, label]) => <button key={k} type="button" className={actionStyle[k][0]} onClick={() => setDlg(k as typeof dlg)} data-testid={`${P}-${actionId[k]}`}><span className={`i i-${actionStyle[k][1]}`} aria-hidden="true" />{label}</button>)}
+          </div>
+        )}
+      </div>
+      {!s && <div className="empty" data-testid={`${P}-no-shipment`}><span className="tile tile-lg gray"><span className="i i-box" aria-hidden="true" /></span><strong>Chưa có vận đơn</strong></div>}
+      {step !== null && (
+        <ol className="ps-steps">
+          {STEPS.map((t, i) => <li key={t} className={`${i <= step ? 'step-done' : ''}${s?.status === 'failed' && i === step ? ' bad' : ''}`} aria-current={i === step ? 'step' : undefined}><span className="dot"><span className={`i i-${s?.status === 'failed' && i === step ? 'alert' : STEP_ICONS[i]}`} aria-hidden="true" /></span>{t}</li>)}
+        </ol>
       )}
 
-      <div className="cols">
-        <section className="card-block" data-testid={`${P}-history`}>
-          <h2>Hành trình</h2>
-          {histView === 'loading' && !history && <div aria-busy="true"><div className="skeleton" /></div>}
-          {histView === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-history-error`}>Không tải được lịch sử. <button className="btn" onClick={() => void loadHistory()} data-testid={`${P}-history-retry`}>Thử lại</button></div>}
-          {histView !== 'error' && history && history.length === 0 && <p className="hint" data-testid={`${P}-history-empty`}>Chưa có lịch sử.</p>}
+      <div className="ps-cols">
+        <section className="ps-card" data-testid={`${P}-history`}>
+          <h2><span className="i i-nav" aria-hidden="true" />Hành trình</h2>
+          {histView === 'loading' && !history && <Skel n={1} />}
+          {histView === 'error' && <Note tone="red" icon="alert" role="alert" testid={`${P}-history-error`}>Không tải được. <button className="btn" onClick={() => void loadHistory()} data-testid={`${P}-history-retry`}>Thử lại</button></Note>}
+          {histView !== 'error' && history && history.length === 0 && <p className="ps-empty-line" data-testid={`${P}-history-empty`}>Chưa có lịch sử.</p>}
           {histView !== 'error' && history && history.length > 0 && (
-            <ol className="timeline">
-              {history.map((h, k) => (
-                <li key={k} data-testid={`${P}-history-item`}>
-                  <span className="hint tabular" data-testid={`${P}-history-time`}>{formatOrderTime(h.at)}</span> {historyText(h, false)}
-                  {h.event === 'status_changed' && h.status === 'failed' && (h.reason_code || h.note) && (
-                    <> · <span className="pre" data-testid={`${P}-history-reason`}>{[h.reason_code ? failReasonText(h.reason_code) : '', h.note ?? ''].filter(Boolean).join(' · ')}</span></>
-                  )}
-                </li>
-              ))}
+            <ol className="ps-tl">
+              {history.map((h, k) => {
+                const bad = h.event === 'status_changed' && h.status === 'failed';
+                return (
+                  <li key={k} data-testid={`${P}-history-item`}>
+                    <span className={`ps-dot ${bad ? 'red' : k === history.length - 1 ? 'blue' : ''}`}><span className={`i i-${bad ? 'alert' : k === history.length - 1 ? 'truck' : 'check'}`} aria-hidden="true" /></span>
+                    <span className="body">
+                      {historyText(h, false)}
+                      {bad && (h.reason_code || h.note) && (
+                        <> · <span className="pre" data-testid={`${P}-history-reason`}>{[h.reason_code ? failReasonText(h.reason_code) : '', h.note ?? ''].filter(Boolean).join(' · ')}</span></>
+                      )}
+                      <span className="ps-time" data-testid={`${P}-history-time`}>{formatOrderTime(h.at)}</span>
+                    </span>
+                  </li>
+                );
+              })}
             </ol>
           )}
         </section>
 
         {s && (
-          <aside>
-            <section className="card-block">
-              <h2>Người nhận</h2>
+          <aside className="ps-col">
+            <section className="ps-card">
+              <h2><span className="i i-user" aria-hidden="true" />Người nhận</h2>
               {rec
-                ? <div data-testid={`${P}-recipient`}><p>{rec.receiver}</p><p>{rec.phone}</p><p>{rec.line1}, {rec.ward}, {rec.city}</p></div>
-                : <p className="hint" data-testid={`${P}-recipient-hidden`}>Thông tin người nhận được ẩn theo chính sách dữ liệu</p>}
+                ? <div className="ps-person" data-testid={`${P}-recipient`}><div><span className="i i-user" aria-hidden="true" /><span>{rec.receiver}</span></div><div><span className="i i-phone" aria-hidden="true" /><span>{rec.phone}</span></div><div><span className="i i-pin" aria-hidden="true" /><span>{rec.line1}, {rec.ward}, {rec.city}</span></div></div>
+                : <p className="ps-empty-line" data-testid={`${P}-recipient-hidden`}>Thông tin người nhận được ẩn theo chính sách dữ liệu</p>}
             </section>
-            <section className="card-block">
-              <h2>Vận chuyển</h2>
-              <p data-testid={`${P}-method`}>{s.method_name}</p>
-              {s.tracking_number && <p>Mã vận đơn <span className="mono" data-testid={`${P}-tracking`}>{s.tracking_number}</span></p>}
-              {typeof s.cod_amount === 'number' && s.cod_amount > 0 && <p data-testid={`${P}-cod`}>Thu hộ (COD) <span className="tabular">{formatPrice(s.cod_amount)}</span></p>}
-              {s.shipped_at && <p>Bàn giao <span className="tabular" data-testid={`${P}-shipped-at`}>{formatOrderTime(s.shipped_at)}</span></p>}
-              {s.delivered_at && <p>Giao xong <span className="tabular" data-testid={`${P}-delivered-at`}>{formatOrderTime(s.delivered_at)}</span></p>}
+            <section className="ps-card">
+              <h2><span className="i i-truck" aria-hidden="true" />Vận chuyển</h2>
+              <dl className="kv">
+                <dt>Phương thức</dt><dd data-testid={`${P}-method`}>{s.method_name}</dd>
+                {typeof s.cod_amount === 'number' && s.cod_amount > 0 && <><dt>COD</dt><dd className="money" data-testid={`${P}-cod`}>{formatPrice(s.cod_amount)}</dd></>}
+                {s.shipped_at && <><dt>Bàn giao</dt><dd className="tabular" data-testid={`${P}-shipped-at`}>{formatOrderTime(s.shipped_at)}</dd></>}
+                {s.delivered_at && <><dt>Giao xong</dt><dd className="tabular" data-testid={`${P}-delivered-at`}>{formatOrderTime(s.delivered_at)}</dd></>}
+              </dl>
             </section>
           </aside>
         )}
@@ -241,7 +263,7 @@ function Guard() {
   const { user } = useAuth();
   const params = useParams<{ code: string }>();
   if (user?.role === 'customer') return <Forbidden testid={`${P}-forbidden`} />; // customer không gọi API (server vẫn trả 403)
-  return <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><DetailView code={String(params.code ?? '')} /></Suspense>;
+  return <Suspense fallback={<main className="page"><Skel n={1} /></main>}><DetailView code={String(params.code ?? '')} /></Suspense>;
 }
 
 export default function AdminShipmentDetailPage() {

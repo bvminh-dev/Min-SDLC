@@ -46,27 +46,29 @@ export default function ResetPasswordPage() {
     setState('error'); // token vẫn giữ trong bộ nhớ trang
   };
 
-  if (!ready) return <main className="center"><p>Đang tải...</p></main>;
+  if (!ready) return <main className="center"><section className="card auth-card" aria-busy="true"><div className="skeleton" /><div className="skeleton" /></section></main>;
   if (state === 'invalid') {
     return (
-      <main className="center"><section className="card" data-testid="auth-reset-password-invalid-link">
-        <h1>Liên kết không còn hiệu lực</h1>
-        <Link className="btn btn-primary" href="/forgot-password" data-testid="auth-reset-password-request-new">Yêu cầu liên kết mới</Link>
+      <main className="center"><section className="card auth-card" data-testid="auth-reset-password-invalid-link">
+        <span className="tile tile-lg red"><span className="i i-link" aria-hidden="true" /></span>
+        <h1>Liên kết hết hiệu lực</h1>
+        <Link className="btn btn-primary" href="/forgot-password" data-testid="auth-reset-password-request-new">Gửi liên kết mới</Link>
       </section></main>
     );
   }
   const busy = state === 'sending';
   return (
-    <main className="center"><section className="card">
-      <h1>Đặt mật khẩu mới</h1>
-      {state === 'limited' && <div role="alert" className="banner banner-error" data-testid="auth-reset-password-rate-limited">Bạn thử quá nhiều lần, thử lại sau {minutesText(retry)}.</div>}
-      {state === 'error' && <div role="alert" className="banner banner-error" data-testid="auth-reset-password-error">Không đặt lại được. Thử lại. <button type="button" className="btn" onClick={() => void submit()} data-testid="auth-reset-password-retry">Thử lại</button></div>}
-      <form onSubmit={submit} noValidate data-testid="auth-reset-password-form" aria-busy={busy}>
-        <Field label="Mật khẩu mới" error={fieldError} errorTestId="auth-reset-password-field-error" field="new_password" hint="Từ 10 đến 128 ký tự, không phải mật khẩu phổ biến">
+    <main className="center"><section className="card auth-card">
+      <span className="auth-logo" aria-hidden="true">E</span>
+      <h1>Mật khẩu mới</h1>
+      {state === 'limited' && <div role="alert" className="banner banner-error" data-testid="auth-reset-password-rate-limited">Thử quá nhiều lần, chờ {minutesText(retry)}.</div>}
+      {state === 'error' && <div role="alert" className="banner banner-error" data-testid="auth-reset-password-error">Không đặt lại được. <button type="button" className="btn" onClick={() => void submit()} data-testid="auth-reset-password-retry">Thử lại</button></div>}
+      <form className="auth-form" onSubmit={submit} noValidate data-testid="auth-reset-password-form" aria-busy={busy}>
+        <Field label="Mật khẩu mới" error={fieldError} errorTestId="auth-reset-password-field-error" field="new_password" hint="10–128 ký tự, không quá phổ biến">
           {(id, d) => <PasswordInput id={id} describedBy={d} autoComplete="new-password" value={password} disabled={busy} onChange={(e) => setPassword(e.target.value)} data-testid="auth-reset-password-new-password" toggleTestId="auth-reset-password-toggle" />}
         </Field>
-        <button className="btn btn-primary" disabled={busy || state === 'limited'} data-testid="auth-reset-password-submit">{busy ? 'Đang lưu...' : 'Đặt mật khẩu mới'}</button>
-        {busy && <span className="hint" data-testid="auth-reset-password-loading"> Đang lưu...</span>}
+        <button className="btn btn-primary" disabled={busy || state === 'limited'} data-testid="auth-reset-password-submit">{busy ? 'Đang lưu...' : 'Lưu mật khẩu'}</button>
+        {busy && <span className="sr-only" role="status" data-testid="auth-reset-password-loading">Đang lưu...</span>}
       </form>
     </section></main>
   );

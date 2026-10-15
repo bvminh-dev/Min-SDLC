@@ -24,10 +24,18 @@ export const NTF_VARS = {
   SES_SECRET_KEY: secret(),
   /** Gốc dịch vụ SES (mặc định `https://email.<SES_REGION>.amazonaws.com`); chỉ đặt khi dùng bộ giả lập hay điểm cuối riêng. */
   SES_ENDPOINT: origin(),
+  /** SMTP thay cho SES: đặt `SMTP_HOST` thì dùng SMTP (ưu tiên hơn SES). Mật khẩu là bí mật, không có giá trị mặc định thật; người gửi vẫn là `MAIL_FROM`, `MAIL_FROM_NAME` chỉ là tên hiển thị (không lấy từ dữ liệu người dùng). */
+  SMTP_HOST: cfg.string({ default: '' }),
+  SMTP_PORT: cfg.int({ default: 587, min: 1, max: 65535 }),
+  SMTP_STARTTLS: cfg.bool({ default: true }),
+  SMTP_USER: cfg.string({ default: '' }),
+  SMTP_PASSWORD: { zod: z.string(), sensitive: true, default: '' } as ConfigVar,
+  MAIL_FROM_NAME: { zod: z.string().refine((s) => !/[\r\n<>"]/.test(s), { message: 'không chứa xuống dòng, <, > hay dấu nháy kép' }), sensitive: false, default: '' } as ConfigVar,
 };
 registerConfigSchema(NTF_VARS);
 
-export interface NtfConfig { SES_REGION: string; MAIL_FROM: string; APP_BASE_URL: string; SES_ACCESS_KEY: string; SES_SECRET_KEY: string; SES_ENDPOINT: string }
+export interface NtfConfig { SES_REGION: string; MAIL_FROM: string; APP_BASE_URL: string; SES_ACCESS_KEY: string; SES_SECRET_KEY: string; SES_ENDPOINT: string;
+  SMTP_HOST: string; SMTP_PORT: number; SMTP_STARTTLS: boolean; SMTP_USER: string; SMTP_PASSWORD: string; MAIL_FROM_NAME: string }
 
 // Hạn lưu (NTF-REQ-20261006-103208460 BR9, NTF-REQ-20261006-103208551 BR10, ADR-022)
 export const NOTIFICATION_RETENTION_DAYS = 180;

@@ -1,9 +1,9 @@
 'use client';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ImageStrip, ReviewPager, ReviewStatusBadge, Spin, Stars, useQueryGo } from '../../../components/ReviewParts';
+import { ImageStrip, ReviewPager, ReviewStatusBadge, RevDialog, Spin, Stars, useQueryGo } from '../../../components/ReviewParts';
 import { RequireRole } from '../../../components/RequireRole';
-import { Modal, ToastView, useToast } from '../../../components/ShipmentParts';
+import { ToastView, useToast } from '../../../components/ShipmentParts';
 import { api, type ApiResult } from '../../../lib/api';
 import { formatDateTime } from '../../../lib/format';
 import { useLoginRedirect } from '../../../lib/prd';
@@ -14,7 +14,7 @@ const P = 'rev-admin-moderation';
 const BASE = '/admin/reviews';
 type Kind = 'approve' | 'reject' | 'hide' | 'unhide' | 'delete';
 const DONE: Record<Kind, string> = { approve: 'Đã duyệt đánh giá', reject: 'Đã từ chối đánh giá', hide: 'Đã ẩn đánh giá', unhide: 'Đã bỏ ẩn đánh giá', delete: 'Đã xóa đánh giá' };
-const TITLE: Record<'reject' | 'hide' | 'delete', string> = { reject: 'Từ chối đánh giá của', hide: 'Ẩn đánh giá của', delete: 'Xóa đánh giá của' };
+const TITLE: Record<'reject' | 'hide' | 'delete', string> = { reject: 'Từ chối đánh giá', hide: 'Ẩn đánh giá', delete: 'Xóa đánh giá' };
 const CONFIRM: Record<'reject' | 'hide', string> = { reject: 'Từ chối', hide: 'Ẩn' };
 interface ActErr { text: string; reload?: boolean }
 
@@ -82,10 +82,10 @@ function ModerationInner() {
 
   const fail = (r: ApiResult) => {
     if (r.status === 404) setActErr({ text: 'Đánh giá không còn tồn tại', reload: true });
-    else if (r.status === 409) setActErr({ text: 'Đánh giá đã được xử lý hoặc không còn ở trạng thái này', reload: true });
+    else if (r.status === 409) setActErr({ text: 'Đánh giá đã được xử lý', reload: true });
     else if (r.status === 403) setActErr({ text: 'Không có quyền' });
     else if (r.status === 429) setActErr({ text: `Bạn thao tác quá nhanh, thử lại sau ${r.retryAfter ?? 60} giây.` });
-    else setActErr({ text: 'Không thực hiện được, thử lại' });
+    else setActErr({ text: 'Không thực hiện được' });
   };
 
   const run = async (kind: Kind, row: AdminReview, body?: { reason: string }) => {
@@ -120,93 +120,92 @@ function ModerationInner() {
   const errBox = actErr && (
     <div role="alert" className="banner banner-error" data-testid={`${P}-action-error`}>
       {actErr.text}
-      {actErr.reload && <>{' '}<button type="button" className="btn" onClick={() => { setDialog(null); setActErr(null); void load(); }} data-testid={`${P}-action-reload`}>Tải lại danh sách</button></>}
+      {actErr.reload && <>{' '}<button type="button" className="btn" onClick={() => { setDialog(null); setActErr(null); void load(); }} data-testid={`${P}-action-reload`}>Tải lại</button></>}
     </div>
   );
 
   return (
-    <main className="wide">
-      <h1>Kiểm duyệt đánh giá</h1>
-      <div className="tabs" role="tablist" aria-label="Trạng thái đánh giá" data-testid={`${P}-tabs`}>
+    <main className="page">
+      <div className="page-head"><h1>Đánh giá</h1></div>
+      <div className="seg rd-seg" role="tablist" aria-label="Trạng thái đánh giá" data-testid={`${P}-tabs`}>
         {tabs.map((t) => (
-          <button key={t.v} type="button" role="tab" aria-selected={status === t.v} className={`btn tight${status === t.v ? ' btn-current' : ''}`} onClick={() => go({ status: t.v === 'pending' ? null : t.v })}>
-            {t.t}{t.v === 'pending' && pendingCount !== null && <> (<span data-testid={`${P}-pending-count`}>{pendingCount}</span>)</>}
+          <button key={t.v} type="button" role="tab" aria-selected={status === t.v} onClick={() => go({ status: t.v === 'pending' ? null : t.v })}>
+            {t.t}{t.v === 'pending' && pendingCount !== null && <span className="rd-n rd-n-amber" data-testid={`${P}-pending-count`}>{pendingCount}</span>}
           </button>
         ))}
       </div>
-      <div className="toolbar">
-        <div>
-          <input type="text" value={prodInput} placeholder="Mã sản phẩm (uuid)" aria-label="Lọc theo mã sản phẩm" autoComplete="off" aria-invalid={prodInvalid ? true : undefined} onChange={(e) => setProdInput(e.target.value)} data-testid={`${P}-filter-product`} />
-          {prodInvalid && <p className="field-error">Mã sản phẩm phải là mã uuid hợp lệ</p>}
+      <div className="rd-bar-tools">
+        <div className="rd-search">
+          <span className="i i-search" aria-hidden="true" />
+          <input type="text" value={prodInput} placeholder="Mã sản phẩm" aria-label="Lọc theo mã sản phẩm" autoComplete="off" aria-invalid={prodInvalid ? true : undefined} onChange={(e) => setProdInput(e.target.value)} data-testid={`${P}-filter-product`} />
+          {prodInvalid && <p className="field-error">Mã sản phẩm phải là uuid</p>}
         </div>
         <select value={rating} aria-label="Lọc theo sao" onChange={(e) => go({ rating: e.target.value || null })} data-testid={`${P}-filter-rating`}>
-          <option value="">Tất cả sao</option>
+          <option value="">Mọi sao</option>
           {[5, 4, 3, 2, 1].map((n) => <option key={n} value={String(n)}>{n} sao</option>)}
         </select>
-        {(filtering || prodInvalid) && !emptyAll && <button type="button" className="btn btn-quiet tight" onClick={clear} data-testid={`${P}-filter-clear`}>Xóa bộ lọc</button>}
+        {(filtering || prodInvalid) && !emptyAll && <button type="button" className="btn btn-ghost btn-sm" onClick={clear} data-testid={`${P}-filter-clear`}><span className="i i-x" aria-hidden="true" />Bỏ lọc</button>}
       </div>
 
       {!dialog && errBox}
-      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{errStatus === 403 ? 'Không có quyền' : 'Không tải được danh sách.'}{errStatus !== 403 && <>{' '}<button type="button" className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></>}</div>}
-      {view === 'loading' && <div data-testid={`${P}-loading`} aria-busy="true">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
+      {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{errStatus === 403 ? 'Không có quyền' : 'Không tải được danh sách.'}{errStatus !== 403 && <>{' '}<button type="button" className="btn btn-sm" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></>}</div>}
+      {view === 'loading' && <div data-testid={`${P}-loading`} aria-busy="true">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton" style={{ height: '5rem' }} />)}</div>}
 
       {emptyAll && (filtering || page > 1
-        ? <div className="notfound" data-testid={`${P}-empty-filter`}><p>Không có đánh giá nào khớp bộ lọc</p><button type="button" className="btn tight" onClick={clear} data-testid={`${P}-filter-clear`}>Xóa bộ lọc</button></div>
-        : <div className="notfound" data-testid={`${P}-empty`}><p>{status === 'pending' ? 'Không có đánh giá nào chờ duyệt' : 'Không có đánh giá nào ở trạng thái này'}</p></div>)}
+        ? <div className="empty" data-testid={`${P}-empty-filter`}><span className="tile tile-lg gray"><span className="i i-filter" aria-hidden="true" /></span><strong>Không khớp bộ lọc</strong><button type="button" className="btn btn-sm" onClick={clear} data-testid={`${P}-filter-clear`}>Bỏ lọc</button></div>
+        : <div className="empty" data-testid={`${P}-empty`}><span className="tile tile-lg green"><span className="i i-okc" aria-hidden="true" /></span><strong>{status === 'pending' ? 'Hết đánh giá chờ duyệt' : 'Chưa có đánh giá'}</strong></div>)}
 
       {data && view === 'ready' && items.length > 0 && (
         <>
-          <div className="table-wrap">
-            <table className="stack-table" data-testid={`${P}-list`}>
-              <thead><tr><th>Sản phẩm</th><th>Người viết</th><th>Sao</th><th>Nội dung</th><th>Ngày</th><th>Thao tác</th></tr></thead>
-              <tbody>
-                {items.map((it) => {
-                  const isOpen = open.has(it.id);
-                  const long = (it.comment ?? '').length > 120 || (it.comment ?? '').includes('\n');
-                  const cur = acting?.id === it.id ? acting.kind : null;
-                  return (
-                    <tr key={it.id} className="row-click" data-testid={`${P}-row`} data-id={it.id} data-status={it.status} onClick={() => toggle(it.id)}>
-                      <td data-label="Sản phẩm" data-testid={`${P}-row-product`}>{it.product?.name}</td>
-                      <td data-label="Người viết" data-testid={`${P}-row-reviewer`}>{it.reviewer?.display_name}</td>
-                      <td data-label="Sao"><Stars value={it.rating} testid={`${P}-row-rating`} /></td>
-                      <td data-label="Nội dung">
-                        <div>
-                          <ReviewStatusBadge status={it.status} />
-                          {it.comment && <p className={`pre rev-clamp${isOpen ? ' open' : ''}`} data-testid={`${P}-row-comment`}>{it.comment}</p>}
-                          {long && <button type="button" className="btn-link" aria-expanded={isOpen} onClick={(e) => { e.stopPropagation(); toggle(it.id); }}>{isOpen ? 'Thu gọn' : 'Xem đầy đủ'}</button>}
-                          <ImageStrip images={it.images} testid={`${P}-row-images`} />
-                          {it.moderation_reason && <p className="rev-reason"><strong>Lý do: </strong><span className="pre" data-testid={`${P}-row-reason`}>{it.moderation_reason}</span></p>}
+          <ul className="rd-cards" data-testid={`${P}-list`}>
+            {items.map((it) => {
+              const isOpen = open.has(it.id);
+              const long = (it.comment ?? '').length > 120 || (it.comment ?? '').includes('\n');
+              const cur = acting?.id === it.id ? acting.kind : null;
+              return (
+                <li key={it.id} className="rd-card rd-mod" data-testid={`${P}-row`} data-id={it.id} data-status={it.status}>
+                  <div className="rd-mod-main">
+                    <div className="rd-card-head">
+                      <div className="rev-prod grow">
+                        <span className="tile gray"><span className="i i-box" aria-hidden="true" /></span>
+                        <div className="rd-mod-who">
+                          <span className="strong truncate" data-testid={`${P}-row-product`}>{it.product?.name}</span>
+                          <span className="small muted truncate"><span data-testid={`${P}-row-reviewer`}>{it.reviewer?.display_name}</span> · <span className="tabular">{formatDateTime(it.created_at)}</span></span>
                         </div>
-                      </td>
-                      <td data-label="Ngày" className="tabular">{formatDateTime(it.created_at)}</td>
-                      <td data-label="Thao tác" onClick={(e) => e.stopPropagation()}>
-                        <div className="row-actions">
-                          {it.status === 'pending' && <button type="button" className="btn btn-primary tight" disabled={busy} aria-busy={cur === 'approve'} onClick={() => void run('approve', it)} data-testid={`${P}-row-approve`}>{cur === 'approve' && <Spin />}Duyệt</button>}
-                          {it.status === 'pending' && <button type="button" className="btn tight" disabled={busy} onClick={() => openDialog('reject', it)} data-testid={`${P}-row-reject`}>Từ chối</button>}
-                          {it.status === 'published' && <button type="button" className="btn tight" disabled={busy} onClick={() => openDialog('hide', it)} data-testid={`${P}-row-hide`}>Ẩn</button>}
-                          {it.status === 'hidden' && <button type="button" className="btn tight" disabled={busy} aria-busy={cur === 'unhide'} onClick={() => void run('unhide', it)} data-testid={`${P}-row-unhide`}>{cur === 'unhide' && <Spin />}Bỏ ẩn</button>}
-                          <button type="button" className="btn btn-danger-soft tight" disabled={busy} onClick={() => openDialog('delete', it)} data-testid={`${P}-row-delete`}>Xóa</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                      <Stars value={it.rating} testid={`${P}-row-rating`} />
+                      <ReviewStatusBadge status={it.status} />
+                    </div>
+                    {it.comment && <p className={`pre rd-comment rev-clamp${isOpen ? ' open' : ''}`} data-testid={`${P}-row-comment`} onClick={() => long && toggle(it.id)}>{it.comment}</p>}
+                    {long && <button type="button" className="btn-link small" aria-expanded={isOpen} onClick={() => toggle(it.id)}>{isOpen ? 'Thu gọn' : 'Xem thêm'}</button>}
+                    <ImageStrip images={it.images} testid={`${P}-row-images`} />
+                    {it.moderation_reason && <p className="rd-reason"><span className="i i-alert" aria-hidden="true" /><span className="strong">Lý do: </span><span className="pre" data-testid={`${P}-row-reason`}>{it.moderation_reason}</span></p>}
+                  </div>
+                  <div className="rd-mod-actions">
+                    {it.status === 'pending' && <button type="button" className="btn btn-primary btn-icon" aria-label="Duyệt" title="Duyệt" disabled={busy} aria-busy={cur === 'approve'} onClick={() => void run('approve', it)} data-testid={`${P}-row-approve`}>{cur === 'approve' ? <Spin /> : <span className="i i-check" aria-hidden="true" />}</button>}
+                    {it.status === 'pending' && <button type="button" className="btn btn-icon" aria-label="Từ chối" title="Từ chối" disabled={busy} onClick={() => openDialog('reject', it)} data-testid={`${P}-row-reject`}><span className="i i-xc" aria-hidden="true" /></button>}
+                    {it.status === 'published' && <button type="button" className="btn btn-icon" aria-label="Ẩn" title="Ẩn" disabled={busy} onClick={() => openDialog('hide', it)} data-testid={`${P}-row-hide`}><span className="i i-eyeoff" aria-hidden="true" /></button>}
+                    {it.status === 'hidden' && <button type="button" className="btn btn-icon" aria-label="Bỏ ẩn" title="Bỏ ẩn" disabled={busy} aria-busy={cur === 'unhide'} onClick={() => void run('unhide', it)} data-testid={`${P}-row-unhide`}>{cur === 'unhide' ? <Spin /> : <span className="i i-eye" aria-hidden="true" />}</button>}
+                    <button type="button" className="btn btn-icon btn-danger-soft" aria-label="Xóa" title="Xóa" disabled={busy} onClick={() => openDialog('delete', it)} data-testid={`${P}-row-delete`} />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
           <ReviewPager testPrefix={P} page={page} limit={LIMIT} total={data.total} onPage={(n) => go({ page: n > 1 ? String(n) : null }, true)} />
         </>
       )}
 
       {dialog && dialog.kind !== 'delete' && (
-        <Modal sticky title={`${TITLE[dialog.kind]} ${dialog.row.reviewer?.display_name ?? ''}?`} testid={`${P}-${dialog.kind}-dialog`} onClose={closeDialog}>
+        <RevDialog sticky title={`${TITLE[dialog.kind]}?`} icon={dialog.kind === 'reject' ? 'xc' : 'eyeoff'} tone={dialog.kind === 'reject' ? 'red' : 'violet'} testid={`${P}-${dialog.kind}-dialog`} onClose={closeDialog}>
+          <p>{dialog.row.reviewer?.display_name} · {dialog.row.product?.name}</p>
           <div className="field">
-            <label htmlFor="rev-mod-reason">Lý do (bắt buộc, 1 đến 500 ký tự). Khách chủ đánh giá sẽ thấy lý do này.</label>
-            <textarea id="rev-mod-reason" rows={4} value={reason} autoComplete="off" aria-invalid={reasonError ? true : undefined} disabled={busy}
+            <label htmlFor="rev-mod-reason">Lý do</label>
+            <textarea id="rev-mod-reason" rows={3} value={reason} placeholder="Khách sẽ thấy lý do này" autoComplete="off" aria-invalid={reasonError ? true : undefined} disabled={busy}
               onChange={(e) => { setReason(e.target.value); setReasonErr(null); }} data-testid={`${P}-${dialog.kind}-reason`} />
             <div className="between">
               <p className="field-error" role={reasonError ? 'alert' : undefined} data-testid={reasonError ? `${P}-reason-error` : undefined}>{reasonError}</p>
-              <p className={`hint tabular${reasonOver ? ' rev-over' : ''}`}>{codePoints(reason.trim())} / {REASON_MAX}</p>
+              <p className={`small muted tabular${reasonOver ? ' rev-over' : ''}`}>{codePoints(reason.trim())} / {REASON_MAX}</p>
             </div>
           </div>
           {errBox}
@@ -214,17 +213,17 @@ function ModerationInner() {
             <button type="button" className="btn" disabled={busy} onClick={closeDialog} data-testid={`${P}-${dialog.kind}-dismiss`}>Giữ nguyên</button>
             <button type="button" className="btn btn-danger" disabled={busy} aria-busy={busy} onClick={confirmReason} data-testid={`${P}-${dialog.kind}-confirm`}>{busy && <Spin />}{CONFIRM[dialog.kind]}</button>
           </div>
-        </Modal>
+        </RevDialog>
       )}
       {dialog && dialog.kind === 'delete' && (
-        <Modal title={`${TITLE.delete} ${dialog.row.reviewer?.display_name ?? ''}?`} testid={`${P}-delete-dialog`} onClose={closeDialog}>
-          <p>Đánh giá sẽ biến mất khỏi trang sản phẩm và không thể khôi phục.</p>
+        <RevDialog title={`${TITLE.delete}?`} icon="trash" testid={`${P}-delete-dialog`} onClose={closeDialog}>
+          <p>{dialog.row.reviewer?.display_name} · không khôi phục được</p>
           {errBox}
           <div className="actions">
             <button type="button" className="btn" disabled={busy} onClick={closeDialog} data-testid={`${P}-delete-dismiss`}>Giữ nguyên</button>
-            <button type="button" className="btn btn-danger" disabled={busy} aria-busy={busy} onClick={() => void run('delete', dialog.row)} data-testid={`${P}-delete-confirm`}>{busy && <Spin />}Xóa đánh giá</button>
+            <button type="button" className="btn btn-danger" disabled={busy} aria-busy={busy} onClick={() => void run('delete', dialog.row)} data-testid={`${P}-delete-confirm`}>{busy && <Spin />}Xóa</button>
           </div>
-        </Modal>
+        </RevDialog>
       )}
       <ToastView toast={toast} />
     </main>
@@ -234,7 +233,7 @@ function ModerationInner() {
 export default function AdminReviewsPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="wide"><div aria-busy="true"><div className="skeleton" /></div></main>}><ModerationInner /></Suspense>
+      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><ModerationInner /></Suspense>
     </RequireRole>
   );
 }

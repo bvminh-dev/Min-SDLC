@@ -17,29 +17,29 @@ function CartLineRow({ line, busy, error, onQty, onRemove }: { line: CartLine; b
   const shown = draft ?? String(line.quantity);
   const commit = () => { if (draft !== null && draft !== String(line.quantity)) onQty(line, null, draft); setDraft(null); };
   return (
-    <li className={`cart-line${gone || busy === 'remove' ? ' dim' : ''}`} data-testid="crt-cart-line" data-id={line.id}>
-      <div className="cart-img" data-testid="crt-cart-line-image">{line.image_url ? <img src={line.image_url} alt="" loading="lazy" /> : null}</div>
-      <div className="cart-info">
-        <Link href={`/products/${line.product_id}`} className="strong" data-testid="crt-cart-line-name">{line.name}</Link>
-        {gone && <span className="badge" data-testid="crt-cart-line-unavailable">Ngừng bán</span>}
-        <p className="hint">
+    <li className={`crt-line${gone || busy === 'remove' ? ' dim' : ''}`} data-testid="crt-cart-line" data-id={line.id}>
+      <div className="crt-img" data-testid="crt-cart-line-image">{line.image_url ? <img src={line.image_url} alt="" loading="lazy" /> : <span className="i i-image" aria-hidden="true" />}</div>
+      <div className="crt-info">
+        <Link href={`/products/${line.product_id}`} className="crt-name" data-testid="crt-cart-line-name">{line.name}</Link>
+        <p className="crt-price">
           <span data-testid="crt-cart-line-unit-price">{formatPrice(line.unit_price)}</span>
           {line.previous_unit_price !== undefined && <> <s data-testid="crt-cart-line-previous-price">{formatPrice(line.previous_unit_price)}</s></>}
+          {gone && <span className="badge" data-status="cancelled" data-testid="crt-cart-line-unavailable">Ngừng bán</span>}
         </p>
-        {a.status === 'insufficient' && <p className="field-error" data-testid="crt-cart-line-stock-warning">⚠ Chỉ còn {a.available} sản phẩm</p>}
-        {a.status === 'out_of_stock' && <p className="field-error" data-testid="crt-cart-line-stock-warning">⚠ Hết hàng</p>}
-        {gone && <p className="field-error">Sản phẩm không còn bán.</p>}
-        {a.status === 'unknown' && <p className="hint" data-testid="crt-cart-stock-unknown">Chưa kiểm được tồn kho</p>}
-        {error && <p role="alert" className="field-error" data-testid="crt-cart-line-error">{error}</p>}
+        {a.status === 'insufficient' && <p className="crt-warn" data-testid="crt-cart-line-stock-warning"><span className="i i-alert" aria-hidden="true" />Chỉ còn {a.available} sản phẩm</p>}
+        {a.status === 'out_of_stock' && <p className="crt-warn" data-testid="crt-cart-line-stock-warning"><span className="i i-alert" aria-hidden="true" />Hết hàng</p>}
+        {gone && <p className="crt-warn"><span className="i i-ban" aria-hidden="true" />Không còn bán</p>}
+        {a.status === 'unknown' && <p className="crt-note" data-testid="crt-cart-stock-unknown">Chưa kiểm được tồn kho</p>}
+        {error && <p role="alert" className="crt-warn" data-testid="crt-cart-line-error">{error}</p>}
       </div>
-      <div className="cart-qty">
-        <button type="button" className="btn" aria-label="Giảm" disabled={!!busy || line.quantity <= 1} onClick={() => onQty(line, line.quantity - 1)} data-testid="crt-cart-line-quantity-decrease">−</button>
+      <div className="crt-qty">
+        <button type="button" aria-label="Giảm" disabled={!!busy || line.quantity <= 1} onClick={() => onQty(line, line.quantity - 1)} data-testid="crt-cart-line-quantity-decrease" />
         <input inputMode="numeric" aria-label={`Số lượng ${line.name}`} value={shown} disabled={!!busy || gone} onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); }} data-testid="crt-cart-line-quantity" />
-        <button type="button" className="btn" aria-label="Tăng" disabled={!!busy || gone || line.quantity >= MAX_QTY} onClick={() => onQty(line, line.quantity + 1)} data-testid="crt-cart-line-quantity-increase">+</button>
+        <button type="button" aria-label="Tăng" disabled={!!busy || gone || line.quantity >= MAX_QTY} onClick={() => onQty(line, line.quantity + 1)} data-testid="crt-cart-line-quantity-increase" />
         {busy === 'qty' && <span data-testid="crt-cart-line-updating"><Spinner /></span>}
       </div>
-      <p className="strong cart-total" data-testid="crt-cart-line-total">{formatPrice(line.line_total)}</p>
-      <button type="button" className="btn btn-quiet" disabled={!!busy} onClick={() => onRemove(line)} data-testid="crt-cart-line-remove">Xóa</button>
+      <p className="crt-total" data-testid="crt-cart-line-total">{formatPrice(line.line_total)}</p>
+      <button type="button" className="btn btn-ghost btn-icon crt-del" aria-label={`Xóa ${line.name}`} disabled={!!busy} onClick={() => onRemove(line)} data-testid="crt-cart-line-remove" />
     </li>
   );
 }
@@ -111,49 +111,53 @@ function CartPage() {
   };
 
   if (view === 'loading') return (
-    <main className="wide" aria-busy="true" data-testid="crt-cart-loading"><h1>Giỏ hàng</h1><div className="cols"><div><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div><div className="skeleton" data-testid="crt-cart-summary-loading" /></div></main>
+    <main className="page" aria-busy="true" data-testid="crt-cart-loading"><div className="page-head"><h1>Giỏ hàng</h1></div><div className="crt-grid"><div className="panel"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div><div className="skeleton crt-sk-sum" data-testid="crt-cart-summary-loading" /></div></main>
   );
   // Khối tóm tắt khi giỏ không tải được (ui/cart-summary, trạng thái `lỗi`, `hết phiên`): tổng tiền không tính được nên nút thanh toán khóa; số tiền luôn do máy chủ tính, giao diện không đoán.
   const loginHref = `/login?next=${encodeURIComponent('/cart')}&reason=expired`;
   if (view === 'expired') return (
-    <main className="wide"><div role="alert" className="banner banner-error" data-testid="crt-cart-session-expired">Phiên đã hết hạn. <a href={loginHref}>Đăng nhập</a></div>
-      <aside className="card-block cart-summary" aria-label="Tóm tắt đơn"><h2>Tóm tắt đơn</h2>
-        <p role="alert" className="field-error" data-testid="crt-cart-summary-session-expired">Phiên đã hết hạn. <a href={loginHref}>Đăng nhập</a></p></aside></main>
+    <main className="page"><div className="page-head"><h1>Giỏ hàng</h1></div>
+      <div role="alert" className="banner banner-error" data-testid="crt-cart-session-expired">Phiên đã hết hạn. <a href={loginHref}>Đăng nhập</a></div>
+      <div className="crt-grid"><div />
+        <aside className="panel crt-sum" aria-label="Tóm tắt đơn"><h2><span className="i i-receipt" aria-hidden="true" />Tóm tắt</h2>
+          <p role="alert" className="crt-warn" data-testid="crt-cart-summary-session-expired">Phiên đã hết hạn. <a href={loginHref}>Đăng nhập</a></p></aside></div></main>
   );
   if (view === 'error' || !cart) return (
-    <main className="wide"><div role="alert" className="banner banner-error" data-testid="crt-cart-error">{errText} <button type="button" className="btn" onClick={() => void load()} data-testid="crt-cart-retry">Thử lại</button></div>
-      <aside className="card-block cart-summary" aria-label="Tóm tắt đơn"><h2>Tóm tắt đơn</h2>
-        <div role="alert" className="banner banner-error" data-testid="crt-cart-summary-error">Không tính được tổng tiền. <button type="button" className="btn" onClick={() => void load()} data-testid="crt-cart-summary-retry">Thử lại</button></div>
-        <span className="btn btn-primary" role="link" aria-disabled="true">Tiến hành thanh toán</span></aside></main>
+    <main className="page"><div className="page-head"><h1>Giỏ hàng</h1></div>
+      <div role="alert" className="banner banner-error" data-testid="crt-cart-error">{errText} <button type="button" className="btn" onClick={() => void load()} data-testid="crt-cart-retry">Thử lại</button></div>
+      <div className="crt-grid"><div />
+        <aside className="panel crt-sum" aria-label="Tóm tắt đơn"><h2><span className="i i-receipt" aria-hidden="true" />Tóm tắt</h2>
+          <div role="alert" className="banner banner-error" data-testid="crt-cart-summary-error">Không tính được tổng. <button type="button" className="btn" onClick={() => void load()} data-testid="crt-cart-summary-retry">Thử lại</button></div>
+          <span className="btn btn-primary crt-go" role="link" aria-disabled="true">Thanh toán</span></aside></div></main>
   );
 
   const empty = cart.items.length === 0;
   const problems = blockerLines(cart);
   return (
-    <main className="wide">
-      <div className="between"><h1>Giỏ hàng{!empty && ` (${cart.item_count} sản phẩm)`}</h1>
-        {!empty && <button type="button" className="btn btn-quiet" onClick={() => { setClearErr(false); setClearOpen(true); }} data-testid="crt-cart-clear">Làm trống giỏ</button>}</div>
+    <main className="page">
+      <div className="page-head"><h1>Giỏ hàng{!empty && <span className="badge crt-count">{cart.item_count}</span>}</h1>
+        {!empty && <button type="button" className="btn btn-sm btn-ghost" onClick={() => { setClearErr(false); setClearOpen(true); }} data-testid="crt-cart-clear"><span className="i i-trash" aria-hidden="true" />Làm trống</button>}</div>
       {cleared && <p role="status" aria-live="polite" className="banner banner-ok" data-testid="crt-cart-clear-success">Đã làm trống giỏ</p>}
       {cart.price_changed && (
-        <div role="status" className="banner banner-info" data-testid="crt-cart-price-changed-banner">Giá một số sản phẩm đã đổi từ lúc bạn thêm.{' '}
+        <div role="status" className="banner banner-info" data-testid="crt-cart-price-changed-banner">Giá đã đổi.{' '}
           <button type="button" className="btn" disabled={refreshing} aria-busy={refreshing} onClick={() => void refresh()} data-testid="crt-cart-refresh-prices">{refreshing && <Spinner />}Cập nhật giá</button></div>
       )}
       {problems > 0 && <div role="alert" className="banner banner-error" data-testid="crt-cart-blockers-notice">Cần xử lý {problems} sản phẩm trước khi thanh toán</div>}
       {empty ? (
-        <div className="cols"><div data-testid="crt-cart-empty"><p>Giỏ hàng trống</p><Link href="/products" className="btn btn-primary" data-testid="crt-cart-empty-shop-link">Tiếp tục mua sắm</Link></div><CartSummary cart={cart} onCart={apply} /></div>
+        <div className="crt-grid"><div className="panel" data-testid="crt-cart-empty"><div className="empty"><span className="tile tile-lg gray"><span className="i i-cart" aria-hidden="true" /></span><strong>Giỏ hàng trống</strong><Link href="/products" className="btn btn-primary" data-testid="crt-cart-empty-shop-link"><span className="i i-tag" aria-hidden="true" />Mua sắm</Link></div></div><CartSummary cart={cart} onCart={apply} /></div>
       ) : (
-        <div className="cols">
-          <ul className="cart-list" data-testid="crt-cart-list">
+        <div className="crt-grid">
+          <div className="panel panel-flush"><ul className="crt-list" data-testid="crt-cart-list">
             {cart.items.map((l) => <CartLineRow key={l.id} line={l} busy={busy[l.id]} error={lineErr[l.id]} onQty={(x, q, raw) => void onQty(x, q, raw)} onRemove={(x) => void onRemove(x)} />)}
-          </ul>
+          </ul></div>
           <CartSummary cart={cart} onCart={apply} />
         </div>
       )}
       {clearOpen && (
         <div className="backdrop"> {/* không đóng khi bấm ra ngoài: hành động không hoàn tác (ui/cart) */}
           <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="clear-title" onKeyDown={(e) => { if (e.key === 'Escape' && !clearBusy) setClearOpen(false); }} data-testid="crt-cart-clear-dialog">
-            <h2 id="clear-title">Làm trống giỏ hàng?</h2>
-            <p>Mọi sản phẩm, mã giảm giá và lựa chọn vận chuyển sẽ bị xóa. Không thể hoàn tác.</p>
+            <div className="dlg-head"><span className="tile red"><span className="i i-trash" aria-hidden="true" /></span><h2 id="clear-title">Làm trống giỏ hàng?</h2></div>
+            <p>Xóa mọi sản phẩm, mã giảm giá và vận chuyển. Không hoàn tác được.</p>
             {clearErr && <p role="alert" className="field-error" data-testid="crt-cart-clear-error">Không làm trống được giỏ. Thử lại.</p>}
             <div className="actions">
               <button type="button" className="btn" disabled={clearBusy} onClick={() => setClearOpen(false)} data-testid="crt-cart-clear-dismiss">Giữ giỏ</button>

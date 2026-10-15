@@ -16,7 +16,7 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
   useEffect(() => {
     if (guest) router.replace(`/login?next=${encodeURIComponent(path)}&reason=required`);
   }, [guest, path, router]);
-  if (status === 'loading' || guest) return <main className="center"><p>Đang tải...</p></main>;
+  if (status === 'loading' || guest) return <main className="center"><p className="muted"><span className="spinner" aria-hidden="true" />Đang tải…</p></main>;
   if (status === 'error') return <AccessDenied error onRetry={() => void refresh()} />;
   if (!user || !roles.includes(user.role)) return <AccessDenied role={user?.role} />;
   return <>{children}</>;

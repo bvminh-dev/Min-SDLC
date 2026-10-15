@@ -7,7 +7,7 @@ import { api } from '../../lib/api';
 import { homeFor, useAuth, type User } from '../../lib/auth';
 import { safeNext } from '../../lib/safe-next';
 
-const CREDENTIALS = 'Email hoặc mật khẩu không đúng, hoặc tài khoản đang bị khóa tạm thời.';
+const CREDENTIALS = 'Sai email hoặc mật khẩu, hoặc tài khoản đang bị khóa tạm.';
 
 function LoginForm() {
   const params = useSearchParams();
@@ -49,14 +49,15 @@ function LoginForm() {
 
   const busy = state === 'sending';
   return (
-    <main className="center"><section className="card">
+    <main className="center"><section className="card auth-card">
+      <span className="auth-logo" aria-hidden="true">E</span>
       <h1>Đăng nhập</h1>
-      {params.get('reset') === 'ok' && <div role="status" className="banner banner-ok">Đã đổi mật khẩu. Hãy đăng nhập lại.</div>}
-      {reason === 'expired' && <div role="status" className="banner banner-info" data-testid="auth-login-session-expired">Phiên đã hết hạn, hãy đăng nhập lại</div>}
-      {reason === 'required' && <div role="status" className="banner banner-info" data-testid="auth-login-login-required">Hãy đăng nhập để tiếp tục</div>}
-      {state === 'limited' && <div role="alert" className="banner banner-error" data-testid="auth-login-rate-limited">Bạn thử quá nhiều lần, thử lại sau {secondsText(retry)}.</div>}
-      {state === 'error' && <div role="alert" className="banner banner-error" data-testid="auth-login-error">Không đăng nhập được. Thử lại. <button type="button" className="btn" onClick={() => void submit()} data-testid="auth-login-retry">Thử lại</button></div>}
-      <form onSubmit={submit} noValidate data-testid="auth-login-form" aria-busy={busy}>
+      {params.get('reset') === 'ok' && <div role="status" className="banner banner-ok">Đã đổi mật khẩu</div>}
+      {reason === 'expired' && <div role="status" className="banner banner-info" data-testid="auth-login-session-expired">Phiên đã hết hạn</div>}
+      {reason === 'required' && <div role="status" className="banner banner-info" data-testid="auth-login-login-required">Đăng nhập để tiếp tục</div>}
+      {state === 'limited' && <div role="alert" className="banner banner-error" data-testid="auth-login-rate-limited">Thử quá nhiều lần, chờ {secondsText(retry)}.</div>}
+      {state === 'error' && <div role="alert" className="banner banner-error" data-testid="auth-login-error">Không đăng nhập được. <button type="button" className="btn" onClick={() => void submit()} data-testid="auth-login-retry">Thử lại</button></div>}
+      <form className="auth-form" onSubmit={submit} noValidate data-testid="auth-login-form" aria-busy={busy}>
         <Field label="Email" error={missing.email} errorTestId="auth-login-field-error" field="email">
           {(id, d) => <input id={id} aria-describedby={d} type="email" autoComplete="username" value={email} disabled={busy} onChange={(e) => setEmail(e.target.value)} data-testid="auth-login-email" />}
         </Field>
@@ -64,11 +65,11 @@ function LoginForm() {
           {(id, d) => <PasswordInput id={id} describedBy={d} autoComplete="current-password" value={password} disabled={busy} onChange={(e) => setPassword(e.target.value)} data-testid="auth-login-password" toggleTestId="auth-login-password-toggle" />}
         </Field>
         {state === 'credentials' && <p className="field-error" role="alert" data-testid="auth-login-credentials-error">{CREDENTIALS}</p>}
-        <p className="hint"><Link href="/forgot-password" data-testid="auth-login-forgot-link">Quên mật khẩu?</Link></p>
+        <p className="auth-forgot"><Link href="/forgot-password" data-testid="auth-login-forgot-link">Quên mật khẩu?</Link></p>
         <button className="btn btn-primary" disabled={busy || state === 'limited'} data-testid="auth-login-submit">{busy ? 'Đang đăng nhập...' : 'Đăng nhập'}</button>
-        {busy && <span className="hint" data-testid="auth-login-loading"> Đang gửi...</span>}
+        {busy && <span className="sr-only" role="status" data-testid="auth-login-loading">Đang gửi...</span>}
       </form>
-      <p className="row-link"><span>Chưa có tài khoản?</span><Link href="/register" data-testid="auth-login-register-link">Đăng ký</Link></p>
+      <p className="auth-alt"><span>Chưa có tài khoản?</span><Link href="/register" data-testid="auth-login-register-link">Đăng ký</Link></p>
     </section></main>
   );
 }

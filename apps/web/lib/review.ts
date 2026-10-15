@@ -60,8 +60,8 @@ export const formatAvg = (avg: number | null | undefined): string | null => (typ
 /** Số code point (NFC) của chuỗi: emoji, chữ có dấu tổ hợp tính một; không dùng `.length` (UTF-16). */
 export const codePoints = (s: string): number => Array.from(s.normalize('NFC')).length;
 
-/** Chỉ http(s) mới được dùng làm nguồn ảnh (avatar_url, url ảnh) từ API. */
-export const isHttpUrl = (u: unknown): u is string => typeof u === 'string' && /^https?:\/\//i.test(u);
+/** Chỉ http(s), hoặc đường dẫn cùng origin `/media/...` (ảnh qua proxy của web, xem rewrites ở next.config.mjs), mới được dùng làm nguồn ảnh (avatar_url, url ảnh) từ API. */
+export const isHttpUrl = (u: unknown): u is string => typeof u === 'string' && /^(https?:\/\/|\/media\/)/i.test(u);
 
 export const formatDate = (iso: string | null | undefined): string => {
   if (!iso) return '';

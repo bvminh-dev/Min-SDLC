@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { api } from '../lib/api';
 import { CITY_MAX } from '../lib/cart-const';
@@ -91,61 +92,65 @@ export function CartSummary({ cart, onCart }: { cart: Cart; onCart: (c: Cart) =>
   const coupon = cart.coupon;
   const locked = wait.left > 0;
   return (
-    <aside className="card-block cart-summary" aria-label="Tóm tắt đơn">
-      <h2>Tóm tắt đơn</h2>
-      <p className="between"><span>Tạm tính</span><strong data-testid="crt-cart-summary-subtotal">{formatPrice(cart.subtotal)}</strong></p>
+    <aside className="panel crt-sum" aria-label="Tóm tắt đơn">
+      <h2><span className="i i-receipt" aria-hidden="true" />Tóm tắt</h2>
 
-      <h3 className="h3">Mã giảm giá</h3>
-      {coupon?.applied && (
-        <p className="between" data-testid="crt-cart-summary-coupon-applied"><span>✓ <strong>{coupon.code}</strong> {minus(coupon.discount)}</span>
-          <button type="button" className="btn btn-quiet" disabled={couponBusy} onClick={() => void remove()} data-testid="crt-cart-summary-coupon-remove">Gỡ</button></p>
-      )}
-      {coupon && !coupon.applied && (
-        <div role="alert" className="banner banner-info" data-testid="crt-cart-summary-coupon-invalid">⚠ {couponWarning(coupon)}{' '}
-          <button type="button" className="btn btn-quiet" disabled={couponBusy} onClick={() => void remove()} data-testid="crt-cart-summary-coupon-remove">Gỡ</button></div>
-      )}
-      {!coupon?.applied && (
-        <form onSubmit={(e) => void apply(e)} className="coupon-row">
-          <input value={code} maxLength={60} aria-label="Mã giảm giá" placeholder="Nhập mã" disabled={couponBusy || empty} onChange={(e) => setCode(e.target.value)} data-testid="crt-cart-summary-coupon-input" />
-          <button className="btn" disabled={couponBusy || locked || empty || code.trim() === ''} aria-busy={couponBusy} data-testid="crt-cart-summary-coupon-apply">{couponBusy && <Spinner />}Áp dụng</button>
-        </form>
-      )}
-      {locked && <p role="alert" className="field-error" data-testid="crt-cart-summary-coupon-retry-after">Bạn thử quá nhiều lần, thử lại sau {wait.left} giây</p>}
-      {couponErr && !locked && <p role="alert" className="field-error" data-testid="crt-cart-summary-coupon-error">{couponErr}</p>}
+      <div className="crt-sec">
+        <h3 className="crt-lbl"><span className="i i-ticket" aria-hidden="true" />Mã giảm giá</h3>
+        {coupon?.applied && (
+          <p className="crt-applied" data-testid="crt-cart-summary-coupon-applied"><span className="grow"><strong>{coupon.code}</strong> <span className="crt-off">{minus(coupon.discount)}</span></span>
+            <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label="Gỡ mã" disabled={couponBusy} onClick={() => void remove()} data-testid="crt-cart-summary-coupon-remove"><span className="i i-x" aria-hidden="true" /></button></p>
+        )}
+        {coupon && !coupon.applied && (
+          <div role="alert" className="banner banner-info" data-testid="crt-cart-summary-coupon-invalid">{couponWarning(coupon)}{' '}
+            <button type="button" className="btn btn-quiet" disabled={couponBusy} onClick={() => void remove()} data-testid="crt-cart-summary-coupon-remove">Gỡ</button></div>
+        )}
+        {!coupon?.applied && (
+          <form onSubmit={(e) => void apply(e)} className="crt-coupon">
+            <input value={code} maxLength={60} aria-label="Mã giảm giá" placeholder="Nhập mã" disabled={couponBusy || empty} onChange={(e) => setCode(e.target.value)} data-testid="crt-cart-summary-coupon-input" />
+            <button className="btn" disabled={couponBusy || locked || empty || code.trim() === ''} aria-busy={couponBusy} data-testid="crt-cart-summary-coupon-apply">{couponBusy && <Spinner />}Áp dụng</button>
+          </form>
+        )}
+        {locked && <p role="alert" className="crt-warn" data-testid="crt-cart-summary-coupon-retry-after">Thử lại sau {wait.left} giây</p>}
+        {couponErr && !locked && <p role="alert" className="crt-warn" data-testid="crt-cart-summary-coupon-error">{couponErr}</p>}
+      </div>
 
-      <h3 className="h3">Vận chuyển</h3>
-      {empty ? <p className="hint">Thêm sản phẩm để chọn vận chuyển.</p> : (
-        <>
-          {methods === null && !methodsErr && <div className="skeleton" aria-busy="true" />}
-          {methodsErr && <p role="alert" className="field-error">Không tải được phương thức vận chuyển. <button type="button" className="btn" onClick={() => void loadMethods()}>Thử lại</button></p>}
-          {methods && methods.length === 0 && <p className="hint">Chưa có phương thức vận chuyển nào đang bật.</p>}
-          {methods && methods.length > 0 && (
-            <div role="radiogroup" aria-label="Phương thức vận chuyển" data-testid="crt-cart-summary-shipping-method">
-              {methods.map((m) => (
-                <label key={m.id} className="radio-line"><input type="radio" name="ship-method" value={m.id} checked={methodId === m.id} disabled={shipBusy} onChange={() => pickMethod(m.id)} /> {m.name} <span className="hint">{formatPrice(m.base_fee)}</span></label>
-              ))}
-            </div>
-          )}
-          <div className="field"><label htmlFor="crt-city">Thành phố</label>
-            <input id="crt-city" value={city} list="crt-cities" maxLength={60} autoComplete="address-level2" disabled={shipBusy} onChange={(e) => typeCity(e.target.value)} onBlur={() => { if (debounce.current) clearTimeout(debounce.current); void sendShipping(methodId, city); }} data-testid="crt-cart-summary-shipping-city" />
-            <datalist id="crt-cities">{cities.map((c) => <option key={c} value={c} />)}</datalist></div>
-          <p className="hint">Phí có thể đổi theo địa chỉ giao hàng thật ở bước thanh toán.</p>
-        </>
-      )}
-      {shError && <p role="alert" className="field-error" data-testid="crt-cart-summary-shipping-error">{shError}</p>}
-      <p className="between"><span>Phí vận chuyển</span>
-        <strong data-testid="crt-cart-summary-shipping-fee">{sh && sh.fee !== null ? (sh.free_shipping ? 'Miễn phí' : formatPrice(sh.fee)) : cart.shipping_fee !== null ? formatPrice(cart.shipping_fee) : 'Chưa chọn'}</strong></p>
-      {sh && sh.fee !== null && sh.free_shipping && <p className="hint" data-testid="crt-cart-summary-shipping-free">Miễn phí vận chuyển</p>}
+      <div className="crt-sec">
+        <h3 className="crt-lbl"><span className="i i-truck" aria-hidden="true" />Vận chuyển</h3>
+        {empty ? <p className="crt-note">Thêm sản phẩm trước</p> : (
+          <>
+            {methods === null && !methodsErr && <div className="skeleton" aria-busy="true" />}
+            {methodsErr && <p role="alert" className="crt-warn">Không tải được vận chuyển. <button type="button" className="btn btn-sm" onClick={() => void loadMethods()}>Thử lại</button></p>}
+            {methods && methods.length === 0 && <p className="crt-note">Chưa có phương thức nào</p>}
+            {methods && methods.length > 0 && (
+              <div role="radiogroup" aria-label="Phương thức vận chuyển" className="crt-opts" data-testid="crt-cart-summary-shipping-method">
+                {methods.map((m) => (
+                  <label key={m.id} className="crt-opt"><input type="radio" name="ship-method" value={m.id} checked={methodId === m.id} disabled={shipBusy} onChange={() => pickMethod(m.id)} /> <span className="grow">{m.name}</span> <span className="muted">{formatPrice(m.base_fee)}</span></label>
+                ))}
+              </div>
+            )}
+            <div className="crt-city"><label htmlFor="crt-city">Thành phố</label>
+              <input id="crt-city" value={city} list="crt-cities" maxLength={60} autoComplete="address-level2" disabled={shipBusy} onChange={(e) => typeCity(e.target.value)} onBlur={() => { if (debounce.current) clearTimeout(debounce.current); void sendShipping(methodId, city); }} data-testid="crt-cart-summary-shipping-city" />
+              <datalist id="crt-cities">{cities.map((c) => <option key={c} value={c} />)}</datalist></div>
+          </>
+        )}
+        {shError && <p role="alert" className="crt-warn" data-testid="crt-cart-summary-shipping-error">{shError}</p>}
+      </div>
 
-      <hr />
-      {cart.discount > 0 && <p className="between"><span>Giảm giá</span><strong data-testid="crt-cart-summary-discount">{minus(cart.discount)}</strong></p>}
-      <p className="between big"><span>Tổng cộng</span><strong data-testid="crt-cart-summary-total">{formatPrice(cart.total)}</strong></p>
-      {cart.total_is_estimate && !empty && <p className="hint" data-testid="crt-cart-summary-total-estimate">Chưa gồm phí vận chuyển</p>}
+      <dl className="crt-rows">
+        <div><dt>Tạm tính</dt><dd data-testid="crt-cart-summary-subtotal">{formatPrice(cart.subtotal)}</dd></div>
+        {cart.discount > 0 && <div className="crt-off"><dt>Giảm giá</dt><dd data-testid="crt-cart-summary-discount">{minus(cart.discount)}</dd></div>}
+        <div><dt>Vận chuyển</dt>
+          <dd data-testid="crt-cart-summary-shipping-fee">{sh && sh.fee !== null ? (sh.free_shipping ? 'Miễn phí' : formatPrice(sh.fee)) : cart.shipping_fee !== null ? formatPrice(cart.shipping_fee) : 'Chưa chọn'}</dd></div>
+        <div className="crt-grand"><dt>Tổng cộng</dt><dd data-testid="crt-cart-summary-total">{formatPrice(cart.total)}</dd></div>
+      </dl>
+      {sh && sh.fee !== null && sh.free_shipping && <p className="crt-free" data-testid="crt-cart-summary-shipping-free"><span className="i i-gift" aria-hidden="true" />Miễn phí vận chuyển</p>}
+      {cart.total_is_estimate && !empty && <p className="crt-note" data-testid="crt-cart-summary-total-estimate">Chưa gồm phí vận chuyển</p>}
 
       {cart.can_checkout
-        ? <a className="btn btn-primary" href="/checkout" data-testid="crt-cart-summary-checkout-link">Tiến hành thanh toán</a>
-        : <><span className="btn btn-primary" role="link" aria-disabled="true" data-testid="crt-cart-summary-checkout-link">Tiến hành thanh toán</span>
-          <p className="hint" data-testid="crt-cart-summary-checkout-disabled-reason">{CHECKOUT_REASON(cart)}</p></>}
+        ? <Link className="btn btn-primary crt-go" href="/checkout" data-testid="crt-cart-summary-checkout-link">Thanh toán<span className="i i-right" aria-hidden="true" /></Link>
+        : <><span className="btn btn-primary crt-go" role="link" aria-disabled="true" data-testid="crt-cart-summary-checkout-link">Thanh toán<span className="i i-right" aria-hidden="true" /></span>
+          <p className="crt-warn" data-testid="crt-cart-summary-checkout-disabled-reason"><span className="i i-info" aria-hidden="true" />{CHECKOUT_REASON(cart)}</p></>}
     </aside>
   );
 }

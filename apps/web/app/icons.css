@@ -1,0 +1,262 @@
+/* Sinh bởi scripts/gen-icons.mjs, đừng sửa tay. */
+:root { --i-tag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 7h.01'/%3E%3C/svg%3E"); --i-cart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='20' r='1'/%3E%3Ccircle cx='18' cy='20' r='1'/%3E%3Cpath d='M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 7H6'/%3E%3C/svg%3E"); --i-receipt: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1zM8 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 12h6M9 16h4'/%3E%3C/svg%3E"); --i-layers: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17l9 5 9-5'/%3E%3C/svg%3E"); --i-truck: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 5h11v11H2zM13 9h5l4 4v3h-9'/%3E%3Ccircle cx='7' cy='19' r='2'/%3E%3Ccircle cx='18' cy='19' r='2'/%3E%3C/svg%3E"); --i-card: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='5' width='20' height='14' rx='2'/%3E%3Cpath d='M2 10h20'/%3E%3C/svg%3E"); --i-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z'/%3E%3C/svg%3E"); --i-undo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 3-6.7M3 4v5h5'/%3E%3C/svg%3E"); --i-dash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='7' height='9'/%3E%3Crect x='14' y='3' width='7' height='5'/%3E%3Crect x='14' y='12' width='7' height='9'/%3E%3Crect x='3' y='16' width='7' height='5'/%3E%3C/svg%3E"); --i-nav: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 11l19-9-9 19-2-8-8-2z'/%3E%3C/svg%3E"); --i-ticket: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2zM13 5v2M13 17v2M13 11v2'/%3E%3C/svg%3E"); --i-message: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E"); --i-login: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3'/%3E%3C/svg%3E"); --i-logout: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/%3E%3C/svg%3E"); --i-userplus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='8' r='4'/%3E%3Cpath d='M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6'/%3E%3C/svg%3E"); --i-user: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 21a8 8 0 0 1 16 0'/%3E%3C/svg%3E"); --i-users: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='8' r='4'/%3E%3Cpath d='M2 21a7 7 0 0 1 14 0M17 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3'/%3E%3C/svg%3E"); --i-pin: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E"); --i-folder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/%3E%3C/svg%3E"); --i-bell: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0'/%3E%3C/svg%3E"); --i-mail: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M2 7l10 6 10-6'/%3E%3C/svg%3E"); --i-shield: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3L4 6v6c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V6zM9 12l2 2 4-4'/%3E%3C/svg%3E"); --i-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E"); --i-plus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E"); --i-minus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E"); --i-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6L6 18M6 6l12 12'/%3E%3C/svg%3E"); --i-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E"); --i-trash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6'/%3E%3C/svg%3E"); --i-pencil: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3l4 4L8 20H4v-4z'/%3E%3C/svg%3E"); --i-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 12H5M12 19l-7-7 7-7'/%3E%3C/svg%3E"); --i-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M12 5l7 7-7 7'/%3E%3C/svg%3E"); --i-refresh: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12a9 9 0 1 1-3-6.7M21 3v5h-5'/%3E%3C/svg%3E"); --i-filter: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4h18l-7 9v6l-4 2v-8z'/%3E%3C/svg%3E"); --i-upload: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12'/%3E%3C/svg%3E"); --i-alert: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01'/%3E%3C/svg%3E"); --i-okc: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M8 12l3 3 5-6'/%3E%3C/svg%3E"); --i-xc: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M15 9l-6 6M9 9l6 6'/%3E%3C/svg%3E"); --i-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4M12 8h.01'/%3E%3C/svg%3E"); --i-inbox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2M5.5 5.1L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.1z'/%3E%3C/svg%3E"); --i-chart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3v18h18M8 17V9M13 17V5M18 17v-6'/%3E%3C/svg%3E"); --i-trend: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 7l-8.5 8.5-5-5L2 17M16 7h6v6'/%3E%3C/svg%3E"); --i-clock: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 6v6l4 2'/%3E%3C/svg%3E"); --i-key: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='15' r='4'/%3E%3Cpath d='M10.8 12.2L21 2M16 7l3 3'/%3E%3C/svg%3E"); --i-box: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v8'/%3E%3C/svg%3E"); --i-calendar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E"); --i-percent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 5L5 19M7 7h.01M17 17h.01'/%3E%3C/svg%3E"); --i-phone: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z'/%3E%3C/svg%3E"); --i-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='9' cy='9' r='2'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E"); --i-ban: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M4.9 4.9l14.2 14.2'/%3E%3C/svg%3E"); --i-archive: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='3' width='20' height='5' rx='1'/%3E%3Cpath d='M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4'/%3E%3C/svg%3E"); --i-eye: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s4-8 10-8 10 8 10 8-4 8-10 8S2 12 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E"); --i-eyeoff: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.9 17.9A10 10 0 0 1 12 20C6 20 2 12 2 12a18 18 0 0 1 5.1-5.9M9.9 4.2A9 9 0 0 1 12 4c6 0 10 8 10 8a18 18 0 0 1-2.2 3.2M1 1l22 22'/%3E%3C/svg%3E"); --i-download: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3'/%3E%3C/svg%3E"); --i-list: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01'/%3E%3C/svg%3E"); --i-sliders: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6'/%3E%3C/svg%3E"); --i-dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='5' cy='12' r='1'/%3E%3Ccircle cx='12' cy='12' r='1'/%3E%3Ccircle cx='19' cy='12' r='1'/%3E%3C/svg%3E"); --i-help: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01'/%3E%3C/svg%3E"); --i-heart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z'/%3E%3C/svg%3E"); --i-send: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z'/%3E%3C/svg%3E"); --i-copy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='13' height='13' rx='2'/%3E%3Cpath d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'/%3E%3C/svg%3E"); --i-link: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7'/%3E%3C/svg%3E"); --i-gift: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='8' width='18' height='4' rx='1'/%3E%3Cpath d='M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5'/%3E%3C/svg%3E"); --i-bag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0'/%3E%3C/svg%3E"); }
+:is(.navlinks > a[href='/products'],
+  .navlinks > a[href='/orders'],
+  .navlinks > a[href='/admin/orders'],
+  .navlinks > a[href='/admin/inventory'],
+  .navlinks > a[href='/admin/shipments'],
+  .navlinks > a[href='/payments'],
+  .navlinks > a[href='/admin/payments'],
+  .navlinks > a[href='/me/reviews'],
+  .navlinks > a[href='/admin/refunds'],
+  .navlinks > a[href='/admin/dashboard'],
+  .navlinks > a[href='/admin/shipping-methods'],
+  .navlinks > a[href='/admin/coupons'],
+  .navlinks > a[href='/admin/reviews'],
+  .navlinks > a[href='/login'],
+  .navlinks > a[href='/register'],
+  .topbar .cart-badge,
+  .ntf-trigger,
+  .popover a[href="/orders"],
+  .popover a[href="/payments"],
+  .popover a[href="/me/reviews"],
+  .popover a[href="/account/profile"],
+  .popover a[href="/account/addresses"],
+  .popover a[href="/admin/customers"],
+  .popover a[href="/admin/products"],
+  .popover a[href="/admin/categories"],
+  .popover a.chip,
+  [data-testid='auth-account-menu-logout'],
+  html[data-page='/products'] :is(main,.editbar) h1,
+  html[data-page='/cart'] :is(main,.editbar) h1,
+  html[data-page^='/checkout'] :is(main,.editbar) h1,
+  html[data-page='/orders'] :is(main,.editbar) h1,
+  html[data-page='/admin/orders'] :is(main,.editbar) h1,
+  html[data-page='/payments'] :is(main,.editbar) h1,
+  html[data-page^='/admin/payments'] :is(main,.editbar) h1,
+  html[data-page^='/me/reviews'] :is(main,.editbar) h1,
+  html[data-page='/admin/reviews'] :is(main,.editbar) h1,
+  html[data-page='/notifications'] :is(main,.editbar) h1,
+  html[data-page='/account/profile'] :is(main,.editbar) h1,
+  html[data-page='/account/addresses'] :is(main,.editbar) h1,
+  html[data-page='/account/password'] :is(main,.editbar) h1,
+  html[data-page='/login'] :is(main,.editbar) h1,
+  html[data-page='/register'] :is(main,.editbar) h1,
+  html[data-page='/forgot-password'] :is(main,.editbar) h1,
+  html[data-page='/reset-password'] :is(main,.editbar) h1,
+  html[data-page='/verify-email'] :is(main,.editbar) h1,
+  html[data-page='/admin/dashboard'] :is(main,.editbar) h1,
+  html[data-page='/admin/products'] :is(main,.editbar) h1,
+  html[data-page='/admin/categories'] :is(main,.editbar) h1,
+  html[data-page^='/admin/inventory'] :is(main,.editbar) h1,
+  html[data-page^='/admin/shipments'] :is(main,.editbar) h1,
+  html[data-page='/admin/shipping-methods'] :is(main,.editbar) h1,
+  html[data-page='/admin/refunds'] :is(main,.editbar) h1,
+  html[data-page^='/admin/coupons'] :is(main,.editbar) h1,
+  html[data-page='/admin/users'] :is(main,.editbar) h1,
+  html[data-page^='/admin/customers'] :is(main,.editbar) h1,
+  html[data-page^='/admin/reports'] :is(main,.editbar) h1,
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-retry'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-reload'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-restart'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-cancel'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-delete'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-remove'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-search'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-apply'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-save'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-confirm'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-edit'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-back'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-continue'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-upload'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-add'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-create'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-new'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-increase'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-decrease'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-pay-button'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-pay-link'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-refund'],
+  :is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-add-to-cart'],
+  [data-testid='auth-login-submit'],
+  [data-testid='auth-register-submit'],
+  .banner-error,
+  .banner-ok,
+  .banner-info,
+  .toast,
+  .toast-error,
+  .stock-in,
+  .stock-out,
+  p[data-testid$='-empty'],
+  .dsh-kpi:nth-child(1) h2,
+  .dsh-kpi:nth-child(2) h2,
+  .dsh-kpi:nth-child(3) h2,
+  .dsh-kpi:nth-child(4) h2,
+  .dsh-widget:nth-child(1) h2,
+  .dsh-widget:nth-child(2) h2,
+  .notfound .big)::before { content: ''; display: inline-block; flex: none; width: 1.1em; height: 1.1em; margin-right: .4em; vertical-align: -.2em; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
+.navlinks > a[href='/products']::before { --ic: var(--i-tag); }
+.navlinks > a[href='/orders']::before { --ic: var(--i-receipt); }
+.navlinks > a[href='/admin/orders']::before { --ic: var(--i-receipt); }
+.navlinks > a[href='/admin/inventory']::before { --ic: var(--i-layers); }
+.navlinks > a[href='/admin/shipments']::before { --ic: var(--i-truck); }
+.navlinks > a[href='/payments']::before { --ic: var(--i-card); }
+.navlinks > a[href='/admin/payments']::before { --ic: var(--i-card); }
+.navlinks > a[href='/me/reviews']::before { --ic: var(--i-star); }
+.navlinks > a[href='/admin/refunds']::before { --ic: var(--i-undo); }
+.navlinks > a[href='/admin/dashboard']::before { --ic: var(--i-dash); }
+.navlinks > a[href='/admin/shipping-methods']::before { --ic: var(--i-nav); }
+.navlinks > a[href='/admin/coupons']::before { --ic: var(--i-ticket); }
+.navlinks > a[href='/admin/reviews']::before { --ic: var(--i-message); }
+.navlinks > a[href='/login']::before { --ic: var(--i-login); }
+.navlinks > a[href='/register']::before { --ic: var(--i-userplus); }
+.topbar .cart-badge::before { --ic: var(--i-cart); }
+.ntf-trigger::before { --ic: var(--i-bell); }
+.popover a[href="/orders"]::before { --ic: var(--i-receipt); }
+.popover a[href="/payments"]::before { --ic: var(--i-card); }
+.popover a[href="/me/reviews"]::before { --ic: var(--i-star); }
+.popover a[href="/account/profile"]::before { --ic: var(--i-user); }
+.popover a[href="/account/addresses"]::before { --ic: var(--i-pin); }
+.popover a[href="/admin/customers"]::before { --ic: var(--i-users); }
+.popover a[href="/admin/products"]::before { --ic: var(--i-tag); }
+.popover a[href="/admin/categories"]::before { --ic: var(--i-folder); }
+.popover a.chip::before { --ic: var(--i-shield); }
+[data-testid='auth-account-menu-logout']::before { --ic: var(--i-logout); }
+html[data-page='/products'] :is(main,.editbar) h1::before { --ic: var(--i-tag); }
+html[data-page='/cart'] :is(main,.editbar) h1::before { --ic: var(--i-cart); }
+html[data-page^='/checkout'] :is(main,.editbar) h1::before { --ic: var(--i-bag); }
+html[data-page='/orders'] :is(main,.editbar) h1::before { --ic: var(--i-receipt); }
+html[data-page='/admin/orders'] :is(main,.editbar) h1::before { --ic: var(--i-receipt); }
+html[data-page='/payments'] :is(main,.editbar) h1::before { --ic: var(--i-card); }
+html[data-page^='/admin/payments'] :is(main,.editbar) h1::before { --ic: var(--i-card); }
+html[data-page^='/me/reviews'] :is(main,.editbar) h1::before { --ic: var(--i-star); }
+html[data-page='/admin/reviews'] :is(main,.editbar) h1::before { --ic: var(--i-message); }
+html[data-page='/notifications'] :is(main,.editbar) h1::before { --ic: var(--i-bell); }
+html[data-page='/account/profile'] :is(main,.editbar) h1::before { --ic: var(--i-user); }
+html[data-page='/account/addresses'] :is(main,.editbar) h1::before { --ic: var(--i-pin); }
+html[data-page='/account/password'] :is(main,.editbar) h1::before { --ic: var(--i-key); }
+html[data-page='/login'] :is(main,.editbar) h1::before { --ic: var(--i-login); }
+html[data-page='/register'] :is(main,.editbar) h1::before { --ic: var(--i-userplus); }
+html[data-page='/forgot-password'] :is(main,.editbar) h1::before { --ic: var(--i-mail); }
+html[data-page='/reset-password'] :is(main,.editbar) h1::before { --ic: var(--i-key); }
+html[data-page='/verify-email'] :is(main,.editbar) h1::before { --ic: var(--i-shield); }
+html[data-page='/admin/dashboard'] :is(main,.editbar) h1::before { --ic: var(--i-dash); }
+html[data-page='/admin/products'] :is(main,.editbar) h1::before { --ic: var(--i-tag); }
+html[data-page='/admin/categories'] :is(main,.editbar) h1::before { --ic: var(--i-folder); }
+html[data-page^='/admin/inventory'] :is(main,.editbar) h1::before { --ic: var(--i-layers); }
+html[data-page^='/admin/shipments'] :is(main,.editbar) h1::before { --ic: var(--i-truck); }
+html[data-page='/admin/shipping-methods'] :is(main,.editbar) h1::before { --ic: var(--i-nav); }
+html[data-page='/admin/refunds'] :is(main,.editbar) h1::before { --ic: var(--i-undo); }
+html[data-page^='/admin/coupons'] :is(main,.editbar) h1::before { --ic: var(--i-ticket); }
+html[data-page='/admin/users'] :is(main,.editbar) h1::before { --ic: var(--i-users); }
+html[data-page^='/admin/customers'] :is(main,.editbar) h1::before { --ic: var(--i-users); }
+html[data-page^='/admin/reports'] :is(main,.editbar) h1::before { --ic: var(--i-chart); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-retry']::before { --ic: var(--i-refresh); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-reload']::before { --ic: var(--i-refresh); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-restart']::before { --ic: var(--i-refresh); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-cancel']::before { --ic: var(--i-x); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-delete']::before { --ic: var(--i-trash); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-remove']::before { --ic: var(--i-trash); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-search']::before { --ic: var(--i-search); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-apply']::before { --ic: var(--i-check); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-save']::before { --ic: var(--i-check); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-confirm']::before { --ic: var(--i-check); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-edit']::before { --ic: var(--i-pencil); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-back']::before { --ic: var(--i-left); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-continue']::before { --ic: var(--i-right); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-upload']::before { --ic: var(--i-upload); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-add']::before { --ic: var(--i-plus); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-create']::before { --ic: var(--i-plus); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-new']::before { --ic: var(--i-plus); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-increase']::before { --ic: var(--i-plus); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-decrease']::before { --ic: var(--i-minus); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-pay-button']::before { --ic: var(--i-card); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-pay-link']::before { --ic: var(--i-card); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-refund']::before { --ic: var(--i-undo); }
+:is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)[data-testid$='-add-to-cart']::before { --ic: var(--i-cart); }
+[data-testid='auth-login-submit']::before { --ic: var(--i-login); }
+[data-testid='auth-register-submit']::before { --ic: var(--i-userplus); }
+.banner-error::before { --ic: var(--i-alert); }
+.banner-ok::before { --ic: var(--i-okc); }
+.banner-info::before { --ic: var(--i-info); }
+.toast::before { --ic: var(--i-okc); }
+.toast-error::before { --ic: var(--i-alert); }
+.stock-in::before { --ic: var(--i-okc); }
+.stock-out::before { --ic: var(--i-xc); }
+p[data-testid$='-empty']::before { --ic: var(--i-inbox); }
+.dsh-kpi:nth-child(1) h2::before { --ic: var(--i-trend); }
+.dsh-kpi:nth-child(2) h2::before { --ic: var(--i-receipt); }
+.dsh-kpi:nth-child(3) h2::before { --ic: var(--i-users); }
+.dsh-kpi:nth-child(4) h2::before { --ic: var(--i-tag); }
+.dsh-widget:nth-child(1) h2::before { --ic: var(--i-clock); }
+.dsh-widget:nth-child(2) h2::before { --ic: var(--i-alert); }
+.notfound .big::before { --ic: var(--i-info); }
+.i { display: inline-block; flex: none; width: 1.1em; height: 1.1em; vertical-align: -.2em; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
+.i-tag { --ic: var(--i-tag); }
+.i-cart { --ic: var(--i-cart); }
+.i-receipt { --ic: var(--i-receipt); }
+.i-layers { --ic: var(--i-layers); }
+.i-truck { --ic: var(--i-truck); }
+.i-card { --ic: var(--i-card); }
+.i-star { --ic: var(--i-star); }
+.i-undo { --ic: var(--i-undo); }
+.i-dash { --ic: var(--i-dash); }
+.i-nav { --ic: var(--i-nav); }
+.i-ticket { --ic: var(--i-ticket); }
+.i-message { --ic: var(--i-message); }
+.i-login { --ic: var(--i-login); }
+.i-logout { --ic: var(--i-logout); }
+.i-userplus { --ic: var(--i-userplus); }
+.i-user { --ic: var(--i-user); }
+.i-users { --ic: var(--i-users); }
+.i-pin { --ic: var(--i-pin); }
+.i-folder { --ic: var(--i-folder); }
+.i-bell { --ic: var(--i-bell); }
+.i-mail { --ic: var(--i-mail); }
+.i-shield { --ic: var(--i-shield); }
+.i-search { --ic: var(--i-search); }
+.i-plus { --ic: var(--i-plus); }
+.i-minus { --ic: var(--i-minus); }
+.i-x { --ic: var(--i-x); }
+.i-check { --ic: var(--i-check); }
+.i-trash { --ic: var(--i-trash); }
+.i-pencil { --ic: var(--i-pencil); }
+.i-left { --ic: var(--i-left); }
+.i-right { --ic: var(--i-right); }
+.i-refresh { --ic: var(--i-refresh); }
+.i-filter { --ic: var(--i-filter); }
+.i-upload { --ic: var(--i-upload); }
+.i-alert { --ic: var(--i-alert); }
+.i-okc { --ic: var(--i-okc); }
+.i-xc { --ic: var(--i-xc); }
+.i-info { --ic: var(--i-info); }
+.i-inbox { --ic: var(--i-inbox); }
+.i-chart { --ic: var(--i-chart); }
+.i-trend { --ic: var(--i-trend); }
+.i-clock { --ic: var(--i-clock); }
+.i-key { --ic: var(--i-key); }
+.i-box { --ic: var(--i-box); }
+.i-calendar { --ic: var(--i-calendar); }
+.i-percent { --ic: var(--i-percent); }
+.i-phone { --ic: var(--i-phone); }
+.i-image { --ic: var(--i-image); }
+.i-ban { --ic: var(--i-ban); }
+.i-archive { --ic: var(--i-archive); }
+.i-eye { --ic: var(--i-eye); }
+.i-eyeoff { --ic: var(--i-eyeoff); }
+.i-download { --ic: var(--i-download); }
+.i-list { --ic: var(--i-list); }
+.i-sliders { --ic: var(--i-sliders); }
+.i-dots { --ic: var(--i-dots); }
+.i-help { --ic: var(--i-help); }
+.i-heart { --ic: var(--i-heart); }
+.i-send { --ic: var(--i-send); }
+.i-copy { --ic: var(--i-copy); }
+.i-link { --ic: var(--i-link); }
+.i-gift { --ic: var(--i-gift); }
+.i-bag { --ic: var(--i-bag); }
+:is(main,.editbar) h1::before { color: var(--brand); width: 1.15em; height: 1.15em; margin-right: .5rem; }
+.dsh-kpi:nth-child(1) h2::before { color: var(--brand); } .dsh-kpi:nth-child(2) h2::before { color: var(--ok); } .dsh-kpi:nth-child(3) h2::before { color: #f79009; } .dsh-kpi:nth-child(4) h2::before { color: var(--violet); }
+.notfound .big::before { display: block; width: 3rem; height: 3rem; margin: 0 auto .5rem; }
+.navlinks > a::before, .navlinks .cart-badge::before, .ntf-trigger::before { margin-right: .35rem; }

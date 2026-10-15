@@ -6,7 +6,7 @@ import { Field } from '../../../components/Form';
 import { api } from '../../../lib/api';
 
 interface Address { id: string; receiver: string; phone: string; line1: string; ward: string; district: string | null; city: string; is_default: boolean }
-const LABEL: Record<string, string> = { receiver: 'Nhập người nhận', phone: 'Nhập số điện thoại', line1: 'Nhập số nhà, tên đường', ward: 'Nhập phường, xã', city: 'Nhập tỉnh, thành phố' };
+const LABEL: Record<string, string> = { receiver: 'Nhập người nhận', phone: 'Nhập số điện thoại', line1: 'Nhập số nhà, đường', ward: 'Nhập phường, xã', city: 'Nhập tỉnh, thành phố' };
 const MSG: Record<string, string> = { too_long: 'Quá dài', invalid_phone: 'Nhập số di động Việt Nam (10 chữ số, đầu 03, 05, 07, 08, 09)', invalid_format: 'Có ký tự không hợp lệ' };
 const EMPTY = { receiver: '', phone: '', line1: '', ward: '', district: '', city: '' };
 
@@ -58,7 +58,7 @@ export function AddressForm({ id }: { id?: string }) {
     setState('error');
   };
 
-  if (!ready) return <main className="center"><section className="card" data-testid="usr-address-form-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /></section></main>;
+  if (!ready) return <main className="page auth-page auth-page-sm"><section className="panel" data-testid="usr-address-form-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /></section></main>;
   const busy = state === 'sending';
   const err = (k: string) => (errors[k] ? (errors[k] === 'required' ? LABEL[k] ?? 'Bắt buộc' : MSG[errors[k]] ?? 'Giá trị không hợp lệ') : undefined);
   const input = (k: keyof typeof EMPTY, label: string, extra: Record<string, string> = {}) => (
@@ -67,26 +67,35 @@ export function AddressForm({ id }: { id?: string }) {
     </Field>
   );
   return (
-    <main className="center"><section className="card" style={{ maxWidth: '36rem' }}>
-      <h1>{id ? 'Sửa địa chỉ' : 'Thêm địa chỉ'}</h1>
-      {notFound && <div role="alert" className="banner banner-error" data-testid="usr-address-form-not-found">Địa chỉ này không còn tồn tại. <Link href="/account/addresses">Về danh sách</Link></div>}
-      {state === 'limit' && <div role="alert" className="banner banner-info" data-testid="usr-address-form-limit-reached">Bạn đã có 10 địa chỉ, xóa bớt để thêm mới. <Link href="/account/addresses">Về danh sách</Link></div>}
+    <main className="page auth-page auth-page-sm">
+      <Link className="back" href="/account/addresses"><span className="i i-left" aria-hidden="true" /> Sổ địa chỉ</Link>
+      <div className="page-head"><h1>{id ? 'Sửa địa chỉ' : 'Thêm địa chỉ'}</h1></div>
+      <section className="panel">
+      {notFound && <div role="alert" className="banner banner-error" data-testid="usr-address-form-not-found">Địa chỉ không còn tồn tại. <Link href="/account/addresses">Về sổ địa chỉ</Link></div>}
+      {state === 'limit' && <div role="alert" className="banner banner-info" data-testid="usr-address-form-limit-reached">Đủ 10 địa chỉ, xóa bớt để thêm. <Link href="/account/addresses">Về sổ địa chỉ</Link></div>}
       {state === 'error' && <div role="alert" className="banner banner-error" data-testid="usr-address-form-error">{errText} <button type="button" className="btn" onClick={() => void submit()} data-testid="usr-address-form-retry">Thử lại</button></div>}
-      <form onSubmit={submit} noValidate data-testid="usr-address-form-form" aria-busy={busy}>
-        {input('receiver', 'Người nhận', { autoComplete: 'name' })}
-        {input('phone', 'Điện thoại', { autoComplete: 'tel', inputMode: 'tel', placeholder: '0901234567' })}
-        {input('line1', 'Số nhà, tên đường', { autoComplete: 'address-line1' })}
-        {input('ward', 'Phường, xã')}
-        {input('district', 'Quận, huyện (không bắt buộc)')}
-        {input('city', 'Tỉnh, thành phố')}
-        <p><label style={{ display: 'inline-flex', gap: '.5rem', alignItems: 'center', fontWeight: 400 }}>
-          <input type="checkbox" style={{ width: 'auto' }} checked={isDefault} disabled={busy || lockDefault || notFound} onChange={(e) => setIsDefault(e.target.checked)} data-testid="usr-address-form-default" /> Đặt làm địa chỉ mặc định
-        </label></p>
-        {lockDefault && <p className="hint" data-testid="usr-address-form-default-locked">{first ? 'Địa chỉ đầu tiên luôn là mặc định' : 'Muốn đổi mặc định, hãy đặt địa chỉ khác làm mặc định'}</p>}
-        <button className="btn btn-primary" disabled={busy || notFound} data-testid="usr-address-form-submit">{busy ? 'Đang lưu...' : 'Lưu địa chỉ'}</button>
-        {busy && <span className="hint" data-testid="usr-address-form-loading"> Đang lưu...</span>}
+      <form className="auth-form" onSubmit={submit} noValidate data-testid="usr-address-form-form" aria-busy={busy}>
+        <div className="auth-cols">
+          {input('receiver', 'Người nhận', { autoComplete: 'name' })}
+          {input('phone', 'Điện thoại', { autoComplete: 'tel', inputMode: 'tel', placeholder: '0901234567' })}
+        </div>
+        {input('line1', 'Số nhà, đường', { autoComplete: 'address-line1' })}
+        <div className="auth-cols auth-cols-3">
+          {input('ward', 'Phường, xã')}
+          {input('district', 'Quận, huyện', { placeholder: 'Không bắt buộc' })}
+          {input('city', 'Tỉnh, thành phố')}
+        </div>
+        <label className="auth-check">
+          <input type="checkbox" checked={isDefault} disabled={busy || lockDefault || notFound} onChange={(e) => setIsDefault(e.target.checked)} data-testid="usr-address-form-default" /> Đặt làm mặc định
+        </label>
+        {lockDefault && <p className="hint" data-testid="usr-address-form-default-locked">{first ? 'Địa chỉ đầu tiên luôn là mặc định' : 'Đổi mặc định bằng cách chọn địa chỉ khác'}</p>}
+        <div className="auth-actions">
+          <Link className="btn" href="/account/addresses" data-testid="usr-address-form-cancel">Hủy</Link>
+          <button className="btn btn-primary tight" disabled={busy || notFound} data-testid="usr-address-form-submit">{busy ? 'Đang lưu...' : 'Lưu'}</button>
+        </div>
+        {busy && <span className="sr-only" role="status" data-testid="usr-address-form-loading">Đang lưu...</span>}
       </form>
-      <p className="row-link"><Link href="/account/addresses" data-testid="usr-address-form-cancel">Hủy</Link></p>
-    </section></main>
+      </section>
+    </main>
   );
 }

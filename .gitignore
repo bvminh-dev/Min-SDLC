@@ -12,3 +12,6 @@ next-env.d.ts
 !.env.example
 .DS_Store
 *.log
+
+# log chạy dev (scripts/dev.sh)
+logs/
