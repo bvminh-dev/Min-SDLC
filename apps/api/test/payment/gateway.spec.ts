@@ -94,7 +94,7 @@ describe('PAY máy khách HTTP của VNPay (gateway.ts) với cổng giả cục
   });
   afterAll(() => new Promise<void>((res) => { server.closeAllConnections(); server.close(() => res()); }));
   beforeEach(() => { requests.length = 0; });
-  const gw = (over: Record<string, string> = {}) => new HttpVnpayGateway(loadConfig({ APP_ENV: 'dev', DATABASE_URL: testDbUrl(), CORS_ALLOWED_ORIGINS: 'http://localhost:3000', ...PAY_ENV, VNPAY_API_URL: url, VNPAY_HASH_SECRET: SECRET, ...over }));
+  const gw = (over: Record<string, string> = {}) => new HttpVnpayGateway(loadConfig({ APP_ENV: 'dev', DATABASE_URL: testDbUrl(), CORS_ALLOWED_ORIGINS: 'http://localhost:3801', ...PAY_ENV, VNPAY_API_URL: url, VNPAY_HASH_SECRET: SECRET, ...over }));
   /** Phản hồi ký đúng theo thứ tự trường của tài liệu VNPay. */
   const signed = (f: Record<string, string>, refund = false): Record<string, string> => {
     const keys = refund
@@ -134,7 +134,7 @@ describe('PAY máy khách HTTP của VNPay (gateway.ts) với cổng giả cục
     requests.length = 0;
     expect(await gw({ VNPAY_HASH_SECRET: '' }).queryTransaction(q)).toEqual({ kind: 'error' });
     expect(requests).toEqual([]); // chưa cấu hình: không gọi mạng
-    expect(await new HttpVnpayGateway(loadConfig({ APP_ENV: 'dev', DATABASE_URL: testDbUrl(), CORS_ALLOWED_ORIGINS: 'http://localhost:3000', ...PAY_ENV, VNPAY_API_URL: 'http://127.0.0.1:1/x', VNPAY_HASH_SECRET: SECRET })).queryTransaction(q)).toEqual({ kind: 'error' }); // cổng đóng
+    expect(await new HttpVnpayGateway(loadConfig({ APP_ENV: 'dev', DATABASE_URL: testDbUrl(), CORS_ALLOWED_ORIGINS: 'http://localhost:3801', ...PAY_ENV, VNPAY_API_URL: 'http://127.0.0.1:1/x', VNPAY_HASH_SECRET: SECRET })).queryTransaction(q)).toEqual({ kind: 'error' }); // cổng đóng
   });
 
   it('PAY-TC-20261006-104540177: hoàn tiền: yêu cầu loại hoàn toàn phần (02) với mã yêu cầu 32 ký tự, số tiền ×100, mã giao dịch cổng và ngày giao dịch, chữ ký đúng thứ tự; 00 là succeeded; 94 và 99 là pending; mã từ chối là declined', async () => {

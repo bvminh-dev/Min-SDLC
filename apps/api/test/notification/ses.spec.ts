@@ -68,14 +68,14 @@ describe('NTF bộ chuyển thư SES', () => {
   });
 
   it(`${SEC} T14, T17: bộ chuyển thư theo cấu hình: thiếu khóa, vùng hay người gửi là "chưa cấu hình" (lỗi vĩnh viễn ses_unconfigured, không gọi mạng); ngoài dev APP_BASE_URL và SES_ENDPOINT phải https`, async () => {
-    const dev = testConfig({ APP_BASE_URL: 'http://localhost:3000' });
+    const dev = testConfig({ APP_BASE_URL: 'http://localhost:3801' });
     expect(createMailTransport(createNtfConfig(dev))).toBeInstanceOf(UnconfiguredTransport);
     await expect(new UnconfiguredTransport().send()).rejects.toMatchObject({ code: 'ses_unconfigured', permanent: true });
     expect(createMailTransport(createNtfConfig(testConfig({ SES_REGION: 'ap-southeast-1', MAIL_FROM: 'no-reply@shop.vn', SES_ACCESS_KEY: 'k', SES_SECRET_KEY: 's' })))).toBeInstanceOf(SesTransport);
     expect(createMailTransport(createNtfConfig(testConfig({ SES_REGION: 'ap-southeast-1', SES_ACCESS_KEY: 'k', SES_SECRET_KEY: 's' })))).toBeInstanceOf(UnconfiguredTransport); // thiếu MAIL_FROM
-    // dev không đặt APP_BASE_URL: dùng http://localhost:3000; có dấu / cuối thì bỏ
-    expect(createNtfConfig(testConfig()).APP_BASE_URL).toBe('http://localhost:3000');
-    expect(createNtfConfig(testConfig({ APP_BASE_URL: 'http://localhost:3000/' })).APP_BASE_URL).toBe('http://localhost:3000');
+    // dev không đặt APP_BASE_URL: dùng http://localhost:3801; có dấu / cuối thì bỏ
+    expect(createNtfConfig(testConfig()).APP_BASE_URL).toBe('http://localhost:3801');
+    expect(createNtfConfig(testConfig({ APP_BASE_URL: 'http://localhost:3801/' })).APP_BASE_URL).toBe('http://localhost:3801');
     // staging, prod
     const tls = `${baseEnv().DATABASE_URL}?sslmode=require`;
     const stg = (over: Record<string, string>) => testConfig({ APP_ENV: 'staging', DATABASE_URL: tls, RETENTION_DATABASE_URL: tls, STORAGE_ENDPOINT: 'https://s3.example.test', STORAGE_ACCESS_KEY: 'k'.repeat(20), STORAGE_SECRET_KEY: 's'.repeat(40), ...over });

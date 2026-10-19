@@ -106,7 +106,7 @@ export function createNtfConfig(c: ConfigService): NtfConfig {
   if (!dev && !v.APP_BASE_URL.startsWith('https://')) problems.push({ name: 'APP_BASE_URL', reason: 'phải là https ở staging và prod (SB-09)' });
   if (!dev && v.SES_ENDPOINT && !v.SES_ENDPOINT.startsWith('https://')) problems.push({ name: 'SES_ENDPOINT', reason: 'phải là https ở staging và prod (SB-09)' });
   if (problems.length) throw new ConfigError(problems);
-  return { ...v, APP_BASE_URL: (v.APP_BASE_URL || 'http://localhost:3000').replace(/\/+$/, '') };
+  return { ...v, APP_BASE_URL: (v.APP_BASE_URL || 'http://localhost:3801').replace(/\/+$/, '') };
 }
 
 /** Bộ chuyển thư theo cấu hình: thiếu khóa, vùng hay người gửi thì `UnconfiguredTransport` (dev); ngoài dev, thiếu biến đã dừng ở bước nạp cấu hình. */

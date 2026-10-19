@@ -124,7 +124,7 @@ describe('SHP bẫy của review độc lập', () => {
   });
 
   it(`SHP-TC-20261008-091406542 ${SEC} T20 (L71): handler tạo vận đơn giữ một kết nối của giao dịch giao event và đọc ORD bằng kết nối thứ hai nên pool một kết nối treo mãi: cấu hình DB_POOL_MAX nhỏ hơn 2 bị từ chối lúc khởi động, 2 trở lên qua`, () => {
-    const env = { APP_ENV: 'dev', DATABASE_URL: 'postgresql://u:pw@localhost:5433/x', CORS_ALLOWED_ORIGINS: 'http://localhost:3000' };
+    const env = { APP_ENV: 'dev', DATABASE_URL: 'postgresql://u:pw@localhost:5433/x', CORS_ALLOWED_ORIGINS: 'http://localhost:3801' };
     const err = (() => { try { loadConfig({ ...env, DB_POOL_MAX: '1' }); } catch (e) { return e as ConfigError; } return null; })();
     expect(err).toBeInstanceOf(ConfigError);
     expect((err as ConfigError).problems.map((p) => p.name)).toEqual(['DB_POOL_MAX']);

@@ -75,7 +75,7 @@ describe('Build web (PRJ-REQ-20261006-095422735 BR7)', () => {
         expect(readFileSync(f, 'utf8')).not.toContain(value);
       }
       expect(check({}).status).toBe(0);
-      expect(check({ NEXT_PUBLIC_API_BASE_URL: 'http://localhost:3001/api/v1' }).status).toBe(0);
+      expect(check({ NEXT_PUBLIC_API_BASE_URL: 'http://localhost:3802/api/v1' }).status).toBe(0);
     },
   );
 
@@ -84,7 +84,7 @@ describe('Build web (PRJ-REQ-20261006-095422735 BR7)', () => {
     const dir = mkTmp('ecom-web-');
     for (const [file, name] of [['.env', 'NEXT_PUBLIC_API_KEY'], ['.env.local', 'NEXT_PUBLIC_DB_PASSWORD'], ['.env.production', 'NEXT_PUBLIC_PAYMENT_SECRET'], ['.env.production.local', 'NEXT_PUBLIC_AUTH_TOKEN']]) {
       const d = mkdtempSync(join(dir, 'w-'));
-      writeFileSync(join(d, file), `# cấu hình\nNEXT_PUBLIC_API_BASE_URL=http://localhost:3001\n${name}=${value}\n`);
+      writeFileSync(join(d, file), `# cấu hình\nNEXT_PUBLIC_API_BASE_URL=http://localhost:3802\n${name}=${value}\n`);
       const r = check({}, ['--dir', d]);
       expect([file, r.status]).toEqual([file, 1]);
       expect(r.stderr).toContain(name);

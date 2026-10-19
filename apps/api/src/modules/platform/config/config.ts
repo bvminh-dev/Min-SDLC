@@ -53,7 +53,7 @@ const LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'] as const;
 
 export const CORE_VARS: ConfigFragment = {
   APP_ENV: cfg.enum(['dev', 'staging', 'prod']),
-  PORT: cfg.int({ default: 3001, min: 1, max: 65535 }),
+  PORT: cfg.int({ default: 3802, min: 1, max: 65535 }),
   DATABASE_URL: {
     zod: z.string().refine((v) => /^postgres(ql)?:\/\//.test(v), bad('phải là URL postgresql://')),
     sensitive: true, // không in giá trị, không có mặc định; chỉ kiểm TLS ở staging và prod (BR4, DB BR7)

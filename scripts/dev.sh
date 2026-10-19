@@ -3,8 +3,8 @@
 # Dùng: ./scripts/dev.sh   (Ctrl+C để tắt cả hai). Log: logs/api.log, logs/web.log (thư mục logs/ nằm trong .gitignore)
 set -u
 
-WEB_PORT="${WEB_PORT:-3000}"
-API_PORT="${API_PORT:-3001}"
+WEB_PORT="${WEB_PORT:-3801}"
+API_PORT="${API_PORT:-3802}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="$ROOT/logs"
 mkdir -p "$LOG_DIR"

@@ -139,7 +139,7 @@ describe('Mất CSDL (PRJ-REQ-20261006-095422563 BR8)', () => {
     const port = await freePort(); // không ai lắng nghe
     const url = `postgresql://ecom:s3cr3t@127.0.0.1:${port}/ecom_none`;
     const t0 = Date.now();
-    const b = bootApp({ APP_ENV: 'dev', DATABASE_URL: url, CORS_ALLOWED_ORIGINS: 'http://localhost:3000', DB_CONNECT_RETRY_SECONDS: '3', PORT: String(await freePort()) });
+    const b = bootApp({ APP_ENV: 'dev', DATABASE_URL: url, CORS_ALLOWED_ORIGINS: 'http://localhost:3801', DB_CONNECT_RETRY_SECONDS: '3', PORT: String(await freePort()) });
     const code = await b.exited;
     const secs = (Date.now() - t0) / 1000;
     expect(code).not.toBe(0);

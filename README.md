@@ -119,7 +119,7 @@ pnpm install --frozen-lockfile           # cũng bật hook quét bí mật trư
 cp .env.example .env                     # giá trị giả, chỉ dùng local
 docker compose up -d db                  # PostgreSQL 16 ở cổng 5433
 pnpm --filter @ecom/api db:migrate:deploy
-pnpm dev                                 # api http://localhost:3001/api/v1/health, web http://localhost:3000
+pnpm dev                                 # api http://localhost:3802/api/v1/health, web http://localhost:3801
 ```
 
 Vai trò CSDL: ứng dụng chạy bằng `ecom_app` (`DATABASE_URL`), chỉ INSERT và SELECT trên `audit_logs`; migration chạy bằng superuser (`MIGRATE_DATABASE_URL`, dùng bởi `db:migrate:*`); job dọn audit dùng `ecom_retention` (`RETENTION_DATABASE_URL`). `docker compose` tạo các vai trò khi dựng CSDL mới. Volume CSDL dựng từ trước thì chạy một lần: `docker compose exec -T db psql -U ecom -d ecom_dev -f - < docker/initdb/01-app-roles.sql`. Prod: đặt mật khẩu riêng ở kho bí mật của host (xem `docs/runbook-prod.md`).

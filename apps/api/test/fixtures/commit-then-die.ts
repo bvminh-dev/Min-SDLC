@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { AppLogger, EventsService, PrismaService, TransactionService, loadConfig, runWithCorrelation } from '../../src/modules/platform';
 
 async function main() {
-  const config = loadConfig({ APP_ENV: 'dev', DATABASE_URL: process.env.DATABASE_URL!, CORS_ALLOWED_ORIGINS: 'http://localhost:3000' });
+  const config = loadConfig({ APP_ENV: 'dev', DATABASE_URL: process.env.DATABASE_URL!, CORS_ALLOWED_ORIGINS: 'http://localhost:3801' });
   const logger = AppLogger.create({ level: 'error', env: 'dev' });
   const prisma = new PrismaService(config);
   const events = new EventsService(new TransactionService(prisma, config, logger), logger);

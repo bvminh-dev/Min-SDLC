@@ -27,7 +27,7 @@ describe('Quét bí mật và lỗ hổng (PRJ-REQ-20261006-095422475 BR6)', () 
     expect(ci.status).toBe(1);
     expect(ci.stderr).toContain('config.txt:2');
     // tệp sạch thì qua
-    writeFileSync(join(dir, 'config.txt'), 'DATABASE_URL=postgresql://ecom:ecom@localhost:5433/ecom_dev\nNEXT_PUBLIC_API_BASE_URL=http://localhost:3001\n');
+    writeFileSync(join(dir, 'config.txt'), 'DATABASE_URL=postgresql://ecom:ecom@localhost:5433/ecom_dev\nNEXT_PUBLIC_API_BASE_URL=http://localhost:3802\n');
     expect(runScript('scripts/scan-secrets.mjs', [], { cwd: dir }).status).toBe(0);
   });
 

@@ -7,7 +7,7 @@ const rand = (n: number) => Array.from({ length: n }, (_, i) => 'q3Z8k2Mx9R7wE5t
 const problems = (fn: () => unknown) => { try { fn(); } catch (e) { if (e instanceof ConfigError) return e; throw e; } throw new Error('không ném ConfigError'); };
 // kho object là cấu hình của platform (STORAGE_*, requiredOutsideDev): staging và prod phải đủ ba biến này
 const STORAGE = { STORAGE_ENDPOINT: 'https://s3.example.test', STORAGE_ACCESS_KEY: 'k'.repeat(20), STORAGE_SECRET_KEY: 's'.repeat(40) };
-const base = { APP_ENV: 'dev', DATABASE_URL: 'postgresql://u:pw@localhost:5433/x', CORS_ALLOWED_ORIGINS: 'http://localhost:3000' };
+const base = { APP_ENV: 'dev', DATABASE_URL: 'postgresql://u:pw@localhost:5433/x', CORS_ALLOWED_ORIGINS: 'http://localhost:3801' };
 
 describe('Cấu hình kiểm schema lúc khởi động (PRJ-REQ-20261006-095422735)', () => {
   it('PRJ-TC-20261006-100124861: cấu hình hợp lệ ở dev mở cổng PORT và log một dòng "config ok" liệt kê tên biến, không giá trị', async () => {
@@ -76,10 +76,10 @@ describe('Cấu hình kiểm schema lúc khởi động (PRJ-REQ-20261006-095422
     expect(b.stderr()).not.toContain('production');
   }, 60_000);
 
-  it('PRJ-TC-20261006-100124974: staging không đặt LOG_LEVEL và PORT dùng mặc định info và 3001, log trạng thái "dùng mặc định"', () => {
+  it('PRJ-TC-20261006-100124974: staging không đặt LOG_LEVEL và PORT dùng mặc định info và 3802, log trạng thái "dùng mặc định"', () => {
     const c = loadConfig({ ...base, ...STORAGE, APP_ENV: 'staging', DATABASE_URL: TLS_URL, RETENTION_DATABASE_URL: TLS_URL });
     expect(c.get('LOG_LEVEL')).toBe('info');
-    expect(c.get('PORT')).toBe(3001);
+    expect(c.get('PORT')).toBe(3802);
     const st = Object.fromEntries(c.statuses.map((s) => [s.name, s.status]));
     expect(st.LOG_LEVEL).toBe('default');
     expect(st.PORT).toBe('default');

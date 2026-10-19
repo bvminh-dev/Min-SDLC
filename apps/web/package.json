@@ -6,8 +6,8 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "dev": "next dev -p ${WEB_PORT:-3000}",
-    "start": "next start -p ${WEB_PORT:-3000}",
+    "dev": "next dev -p ${WEB_PORT:-3801}",
+    "start": "next start -p ${WEB_PORT:-3801}",
     "build": "node scripts/check-public-env.mjs && next build",
     "typecheck": "next typegen && tsc --noEmit"
   },

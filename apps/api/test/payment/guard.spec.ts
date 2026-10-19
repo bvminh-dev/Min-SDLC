@@ -151,7 +151,7 @@ describe('PAY kiểm quyền và ranh giới trên AppModule thật', () => {
     }
     expect(names(problems(() => loadConfig({ ...prod, APP_ENV: 'staging' })))).toEqual(['VNPAY_HASH_SECRET']);
     for (const name of ['VNPAY_TMN_CODE', 'VNPAY_RETURN_URL']) { const { [name]: _gone, ...rest } = { ...prod, VNPAY_HASH_SECRET: strong } as Record<string, string>; expect(names(problems(() => loadConfig(rest)))).toEqual([name]); }
-    expect(() => loadConfig({ APP_ENV: 'dev', DATABASE_URL: 'postgresql://u:pw@localhost:5433/x', CORS_ALLOWED_ORIGINS: 'http://localhost:3000' })).not.toThrow(); // dev chạy được khi chưa cấu hình cổng (PAY đóng, xem test dưới)
+    expect(() => loadConfig({ APP_ENV: 'dev', DATABASE_URL: 'postgresql://u:pw@localhost:5433/x', CORS_ALLOWED_ORIGINS: 'http://localhost:3801' })).not.toThrow(); // dev chạy được khi chưa cấu hình cổng (PAY đóng, xem test dưới)
     expect(PAY_VARS.VNPAY_HASH_SECRET).toMatchObject({ sensitive: true, default: '', secretRules: true, requiredOutsideDev: true });
     expect(PAY_VARS.PAY_MAX_ATTEMPTS.default).toBe('3');
     // tiến trình thật: dừng trước khi nghe cổng, nêu tên biến, không in giá trị của bất kỳ bí mật nào
@@ -165,7 +165,7 @@ describe('PAY kiểm quyền và ranh giới trên AppModule thật', () => {
     expect(await portOpen(port)).toBe(false);
     // đối chứng ở dev: đặt đủ biến thì ứng dụng lên bình thường
     const port2 = await freePort();
-    const ok = bootApp({ APP_ENV: 'dev', DATABASE_URL: testDbUrl(), CORS_ALLOWED_ORIGINS: 'http://localhost:3000', PORT: String(port2), VNPAY_TMN_CODE: TMN, VNPAY_HASH_SECRET: SECRET, VNPAY_RETURN_URL: 'https://shop.example/orders/{order_code}/payment' });
+    const ok = bootApp({ APP_ENV: 'dev', DATABASE_URL: testDbUrl(), CORS_ALLOWED_ORIGINS: 'http://localhost:3801', PORT: String(port2), VNPAY_TMN_CODE: TMN, VNPAY_HASH_SECRET: SECRET, VNPAY_RETURN_URL: 'https://shop.example/orders/{order_code}/payment' });
     try { expect(await waitFor(() => portOpen(port2))).toBe(true); expect(ok.stdout()).not.toContain(SECRET); } finally { ok.kill(); await ok.exited; }
   }, 120_000);
 });
