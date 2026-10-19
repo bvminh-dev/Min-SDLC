@@ -22,5 +22,6 @@ export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 export const LIMITS = {
   create: { tier: 'B', limit: 10, windowSeconds: 60 },
   lookup: { tier: 'D', limit: 30, windowSeconds: 60, group: 'usr:customer-lookup' },
+  suggest: { tier: 'C', limit: 120, windowSeconds: 60 }, // gõ tìm theo từng phím (đã debounce ở web)
   read: { tier: 'C', limit: 120, windowSeconds: 60 },
 } as const satisfies Record<string, RateLimitOptions>;

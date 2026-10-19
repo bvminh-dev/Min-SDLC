@@ -7,6 +7,7 @@ import { useCountdown } from '../../../../components/useCountdown';
 import { api } from '../../../../lib/api';
 import { useAuth } from '../../../../lib/auth';
 import { formatAvg, formatDate, ineligibleText, type PublicReviewList } from '../../../../lib/review';
+import { SkPanel, SkRows } from '../../../../components/Skeleton';
 
 const LIMIT = 20;
 const P = 'rev-product-reviews';
@@ -105,8 +106,8 @@ function ReviewsInner({ id }: { id: string }) {
 
       {view === 'loading' && !data && (
         <div className="rd-layout" data-testid={`${P}-loading`} aria-busy="true">
-          <div className="skeleton" style={{ height: '12rem' }} />
-          <div><div className="skeleton" style={{ height: '5rem' }} /><div className="skeleton" style={{ height: '5rem' }} /><div className="skeleton" style={{ height: '5rem' }} /></div>
+          <SkPanel n={4} />
+          <SkRows n={3} lines={3} />
         </div>
       )}
 
@@ -164,7 +165,7 @@ function ReviewsInner({ id }: { id: string }) {
               </div>
             )}
             {emptyAll && !emptyFiltered && <div className="empty" data-testid={`${P}-empty`}><span className="tile tile-lg gray"><span className="i i-star" aria-hidden="true" /></span><strong>Chưa có đánh giá</strong></div>}
-            {view === 'loading' && <div data-testid={`${P}-loading`} aria-busy="true"><div className="skeleton" style={{ height: '5rem' }} /><div className="skeleton" style={{ height: '5rem' }} /><div className="skeleton" style={{ height: '5rem' }} /></div>}
+            {view === 'loading' && <SkRows n={3} lines={3} testid={`${P}-loading`} />}
             {view === 'ready' && items.length > 0 && (
               <>
                 <ul className="rd-cards" data-testid={`${P}-list`}>
@@ -196,5 +197,5 @@ function ReviewsInner({ id }: { id: string }) {
 
 export default function ProductReviewsPage() {
   const { id } = useParams<{ id: string }>();
-  return <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><ReviewsInner key={id} id={id} /></Suspense>;
+  return <Suspense fallback={<main className="page"><SkRows n={4} lead={false} /></main>}><ReviewsInner key={id} id={id} /></Suspense>;
 }

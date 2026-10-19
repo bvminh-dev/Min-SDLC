@@ -27,13 +27,13 @@ describe('SAL kiểm quyền trên AppModule thật', () => {
   afterAll(() => t.close());
   beforeEach(async () => { await truncateAll(t.prisma); t.clock.advance(61_000); });
 
-  it(`SAL-TC-20261015-093909733 ${SEC} T1 (SB-05, SB-07): đúng năm route của SAL, mọi route khai @Roles sale và admin, @Validate và @Action khớp ma trận; route không khai không tồn tại (mặc định từ chối)`, async () => {
+  it(`SAL-TC-20261015-093909733 ${SEC} T1 (SB-05, SB-07): đúng sáu route của SAL, mọi route khai @Roles sale và admin, @Validate và @Action khớp ma trận; route không khai không tồn tại (mặc định từ chối)`, async () => {
     expect(routeIds(t.app).filter(SAL_SCOPE).sort()).toEqual([
-      'GET /api/v1/sales/customers/lookup', 'GET /api/v1/sales/orders', 'GET /api/v1/sales/orders/:code', 'GET /api/v1/sales/shipping-options', 'POST /api/v1/sales/orders',
+      'GET /api/v1/sales/customers/lookup', 'GET /api/v1/sales/customers/suggest', 'GET /api/v1/sales/orders', 'GET /api/v1/sales/orders/:code', 'GET /api/v1/sales/shipping-options', 'POST /api/v1/sales/orders',
     ].sort());
     expect(auditRoutes(t.app)).toEqual([]);
     expect(auditPermissions(t.app, MATRIX, opts)).toEqual([]);
-    expect(parseMatrix(MATRIX).filter((r) => r.requirement.startsWith('SAL-REQ-')).map((r) => [r.staff, r.customer, r.guest])).toEqual(Array(6).fill(['-', '-', '-'])); // staff, customer, guest không có Y ở hàng nào của SAL
+    expect(parseMatrix(MATRIX).filter((r) => r.requirement.startsWith('SAL-REQ-')).map((r) => [r.staff, r.customer, r.guest])).toEqual(Array(7).fill(['-', '-', '-'])); // staff, customer, guest không có Y ở hàng nào của SAL
     const reflector = t.app.get(Reflector);
     for (const name of Object.getOwnPropertyNames(SalesController.prototype).filter((n) => n !== 'constructor')) {
       expect([name, reflector.get<string[]>('platform:roles', (SalesController.prototype as any)[name])]).toEqual([name, ['sale', 'admin']]);
@@ -50,9 +50,9 @@ describe('SAL kiểm quyền trên AppModule thật', () => {
     const limit = (name: string) => reflector.get<object>('platform:rate-limit', (SalesController.prototype as any)[name]);
     expect(limit('create')).toEqual({ tier: 'B', limit: 10, windowSeconds: 60 });
     expect(limit('lookup')).toEqual({ tier: 'D', limit: 30, windowSeconds: 60, group: 'usr:customer-lookup' });
-    for (const n of ['shipping', 'list', 'detail']) expect([n, limit(n)]).toEqual([n, { tier: 'C', limit: 120, windowSeconds: 60 }]);
+    for (const n of ['shipping', 'list', 'detail', 'suggest']) expect([n, limit(n)]).toEqual([n, { tier: 'C', limit: 120, windowSeconds: 60 }]);
     const names = Object.getOwnPropertyNames(SalesController.prototype).filter((n) => n !== 'constructor');
-    expect(names.sort()).toEqual(['create', 'detail', 'list', 'lookup', 'shipping']); // thêm route phải thêm bậc vào bảng này
+    expect(names.sort()).toEqual(['create', 'detail', 'list', 'lookup', 'shipping', 'suggest']); // thêm route phải thêm bậc vào bảng này
     expect(salesIndex).toEqual({ SalesModule: expect.any(Function) }); // điểm vào công khai chỉ có module, không giao diện nội bộ nào
   });
 

@@ -9,6 +9,7 @@ import { api } from '../../../../../lib/api';
 import { formatDateTime } from '../../../../../lib/format';
 import { useLoginRedirect } from '../../../../../lib/prd';
 import { limitedText, num, REASON_LABEL, shortId, signed, TYPE_LABEL, type Movement } from '../../../../../lib/stock';
+import { SkRows } from '../../../../../components/Skeleton';
 
 interface Result { items: Movement[]; page: number; limit: number; total: number }
 interface Filter { type: string[]; from: string; to: string }
@@ -80,7 +81,7 @@ function History() {
       {view === 'notfound' && (
         <div className="empty panel" data-testid="inv-inventory-history-not-found"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không tìm thấy bản ghi kho</strong><Link className="btn" href="/admin/inventory">Về tồn kho</Link></div>
       )}
-      {view === 'loading' && !data && <div data-testid="inv-inventory-history-loading" aria-busy="true">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
+      {view === 'loading' && !data && <SkRows n={5} lead={false} trail testid="inv-inventory-history-loading" />}
       {emptyAll && (filtering || page > 1
         ? <div className="empty panel" data-testid="inv-inventory-history-empty-filtered"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có kết quả</strong><button type="button" className="btn" onClick={clear}>Xoá lọc</button></div>
         : <div className="empty panel" data-testid="inv-inventory-history-empty"><span className="tile tile-lg gray"><span className="i i-inbox" aria-hidden="true" /></span><strong>Chưa có biến động</strong></div>)}

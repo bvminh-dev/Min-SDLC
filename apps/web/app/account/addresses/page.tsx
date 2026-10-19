@@ -5,6 +5,7 @@ import { Suspense, useCallback, useEffect, useState } from 'react';
 import { RequireRole } from '../../../components/RequireRole';
 import { addressLine } from '../../../components/CustomerCard';
 import { api } from '../../../lib/api';
+import { SkPanel } from '../../../components/Skeleton';
 
 interface Address { id: string; receiver: string; phone: string; line1: string; ward: string; district: string | null; city: string; is_default: boolean }
 const LIMIT = 10;
@@ -48,7 +49,7 @@ function AddressList() {
   };
 
   if (view === 'expired') return <main className="center"><p role="status" data-testid="usr-address-list-session-expired">Phiên đã hết hạn, đang chuyển tới đăng nhập...</p></main>;
-  if (view === 'loading') return <main className="page page-mid"><section className="auth-addr-grid" data-testid="usr-address-list-loading" aria-busy="true"><div className="skeleton auth-sk" /><div className="skeleton auth-sk" /></section></main>;
+  if (view === 'loading') return <main className="page page-mid"><section className="auth-addr-grid" data-testid="usr-address-list-loading" aria-busy="true"><SkPanel n={3} /><SkPanel n={3} /></section></main>;
   if (view === 'error') return <main className="page page-mid"><div role="alert" className="banner banner-error" data-testid="usr-address-list-error">Không tải được sổ địa chỉ. <button className="btn" data-testid="usr-address-list-retry" onClick={() => { setView('loading'); void load(); }}>Thử lại</button></div></main>;
   const full = items.length >= LIMIT;
   return (

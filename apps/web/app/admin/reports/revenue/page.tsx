@@ -6,6 +6,7 @@ import { Chart, ForbiddenView, RangeBar, RateBanner, Skeleton } from '../../../.
 import { useQueryGo } from '../../../../components/ReviewParts';
 import { RequireRole } from '../../../../components/RequireRole';
 import { appliedRange, bucketLabel, count, failed, formatYmd, GRAN_TEXT, money, rangeQuery, useBlock, type RevenueReport } from '../../../../lib/dashboard';
+import { SkRows } from '../../../../components/Skeleton';
 
 const P = 'dsh-analytics-revenue';
 
@@ -86,7 +87,7 @@ function Inner() {
 export default function RevenueReportPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
+      <Suspense fallback={<main className="page"><SkRows n={4} lead={false} /></main>}><Inner /></Suspense>
     </RequireRole>
   );
 }

@@ -64,7 +64,11 @@
 .ip-cust-head { display: flex; align-items: center; gap: .85rem; flex-wrap: wrap; } .ip-cust-head h2 { margin: 0; font-size: 1.0625rem; overflow-wrap: anywhere; }
 .ip-cust-head .grow { flex: 1 1 10rem; min-width: 0; }
 .ip-kv dd:empty::before { content: '—'; color: var(--muted); }
-.ip-kv dt { display: inline-flex; align-items: center; gap: .4rem; }
+.ip-kv { grid-template-columns: 9rem minmax(0, 1fr); gap: .85rem 1rem; align-items: center; padding: 1rem 1.15rem; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); }
+.ip-kv dt { display: inline-flex; align-items: center; gap: .5rem; font-size: .875rem; }
+.ip-kv .ip-lbl { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+.ip-cust-head { padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+@media (max-width: 479px) { .ip-kv { grid-template-columns: minmax(0, 1fr); gap: .15rem; } .ip-kv dd { margin-bottom: .6rem; } }
 .ip-ok { color: var(--ok); } .ip-no { color: var(--warn); }
 .ip-addr { display: grid; gap: .5rem; list-style: none; margin: 0; padding: 0; } .ip-addr li { display: flex; gap: .65rem; align-items: flex-start; padding: .65rem .75rem; border: 1px solid var(--line); border-radius: var(--r-sm); } .ip-addr .tile { width: 2rem; height: 2rem; }
 .ip-addr .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
@@ -84,3 +88,9 @@ h1 .ip-code { font-size: inherit; }
 .panel .sticky-save { background: var(--surface); }
 [data-testid='prm-admin-coupon-list-delete-confirm']::before { --ic: var(--i-trash); }
 [data-testid='auth-admin-user-list-lock-confirm']::before { --ic: var(--i-ban); }
+.ip-rows { margin: 1rem 0; display: grid; gap: .5rem; }
+.ip-row { display: grid; grid-template-columns: 1.3fr 1.7fr 1fr .8fr 7rem; gap: .75rem; align-items: center; margin: 0; padding: .75rem 1rem; text-decoration: none; color: inherit; }
+a.ip-row:hover { border-color: var(--brand); }
+.ip-row > * { min-width: 0; } .ip-wrap { overflow-wrap: anywhere; } .ip-name { display: flex; align-items: center; gap: .6rem; }
+.ip-row-head { padding-block: 0; font-size: .8125rem; font-weight: 600; color: var(--muted, inherit); }
+@media (max-width: 720px) { .ip-row { grid-template-columns: 1fr auto; } .ip-row-head { display: none; } .ip-row > :nth-child(2), .ip-row > :nth-child(3), .ip-row > :nth-child(4) { grid-column: 1 / -1; } }

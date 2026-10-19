@@ -10,6 +10,7 @@ import { FILTERS, STATUS_LABEL, describeDiscount, formatVn, isOverdue, num, type
 import { useLoginRedirect } from '../../../lib/prd';
 import { limitedText } from '../../../lib/stock';
 import { useQueryGo } from '../../../components/useQueryGo';
+import { SkRows } from '../../../components/Skeleton';
 
 interface Result { items: Coupon[]; page: number; limit: number; total: number }
 const LIMIT = 20;
@@ -113,7 +114,7 @@ function CouponList() {
       {view === 'forbidden' && <div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-list-error">Bạn không có quyền xem trang này</div>}
       {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-list-error">{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid="prm-admin-coupon-list-retry">Thử lại</button></div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-list-error">Không tải được coupon. <button className="btn" onClick={() => void load()} data-testid="prm-admin-coupon-list-retry">Thử lại</button></div>}
-      {view === 'loading' && !data && <div data-testid="prm-admin-coupon-list-loading" aria-busy="true">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
+      {view === 'loading' && !data && <SkRows n={6} lead={false} trail testid="prm-admin-coupon-list-loading" />}
       {emptyAll && (filtering || page > 1
         ? <div className="empty panel" data-testid="prm-admin-coupon-list-empty-filtered"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có kết quả</strong><button type="button" className="btn" onClick={clear} data-testid="prm-admin-coupon-list-clear-filter">Xóa lọc</button></div>
         : <div className="empty panel" data-testid="prm-admin-coupon-list-empty"><span className="tile tile-lg gray"><span className="i i-ticket" aria-hidden="true" /></span><strong>Chưa có coupon</strong><Link className="btn btn-primary tight" href="/admin/coupons/new"><span className="i i-plus" aria-hidden="true" /> Tạo mã</Link></div>)}

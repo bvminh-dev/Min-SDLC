@@ -17,6 +17,17 @@ import { useQueryGo } from '../../../components/useQueryGo';
 interface Result { items: ShipmentRow[]; page: number; limit: number; total: number }
 const LIMIT = 20;
 const P = 'shp-shipment-admin-list';
+const DAY = 864e5;
+/** Dòng nhắc dưới badge: đơn chờ bàn giao quá 24 giờ, hoặc giao thất bại cần xử lý. Ngưỡng 24 giờ tính trên giao diện (API không trả). */
+const lateNote = (s: ShipmentRow): { text: string; red?: boolean } | null => {
+  if (s.status === 'failed') return { text: 'Cần xử lý', red: true };
+  const age = Date.now() - Date.parse(s.created_at);
+  return s.status === 'pending' && age >= DAY ? { text: `Chờ ${Math.floor(age / DAY)} ngày` } : null;
+};
+const ageText = (iso: string): string => {
+  const h = (Date.now() - Date.parse(iso)) / 36e5;
+  return h < 1 ? 'vừa tạo' : h < 24 ? `${Math.floor(h)} giờ trước` : `${Math.floor(h / 24)} ngày trước`;
+};
 
 /**
  * Vận đơn (ui/shipment-admin-list): staff, sale và admin xem hàng đợi, lọc theo trạng thái, tìm khớp chính xác theo mã đơn hoặc mã vận đơn, sắp xếp, phân trang 20. Có tên khách, điện thoại, địa chỉ (server trả null khi
@@ -85,18 +96,21 @@ function ShipmentListInner() {
           <button key={o.v || 'all'} type="button" role="tab" aria-selected={status === o.v} onClick={() => go({ status: o.v || null })}>{o.t}</button>
         ))}
       </div>
-      <div className="ps-filters">
-        <select value={by} aria-label="Tìm theo" onChange={(e) => go({ by: e.target.value === 'order_code' ? null : e.target.value })} data-testid={`${P}-search-by`}>
+      <div className="shp-tools">
+        <select className="shp-by" value={by} aria-label="Tìm theo" onChange={(e) => go({ by: e.target.value === 'order_code' ? null : e.target.value })} data-testid={`${P}-search-by`}>
           <option value="order_code">Mã đơn</option>
           <option value="tracking_number">Mã vận đơn</option>
         </select>
-        <input type="search" value={search} maxLength={32} placeholder="Mã đơn (HD261015-00001 hoặc mã cũ) hoặc mã vận đơn" aria-label="Tìm theo mã đơn hoặc mã vận đơn" autoComplete="off"
-          onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && go({ q: search.trim() || null })} data-testid={`${P}-search`} />
-        <select value={sort} aria-label="Sắp xếp" onChange={(e) => go({ sort: e.target.value === 'newest' ? null : e.target.value })} data-testid={`${P}-sort`}>
+        <div className="shp-search">
+          <span className="i i-search" aria-hidden="true" />
+          <input type="search" value={search} maxLength={32} placeholder="Nhập mã đơn hoặc mã vận đơn" aria-label="Tìm theo mã đơn hoặc mã vận đơn" autoComplete="off"
+            onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && go({ q: search.trim() || null })} data-testid={`${P}-search`} />
+        </div>
+        {filtering && !emptyAll && <button type="button" className="btn btn-quiet tight" onClick={clear} data-testid={`${P}-clear-filter`}><span className="i i-x" aria-hidden="true" />Xoá lọc</button>}
+        <select className="shp-sort" value={sort} aria-label="Sắp xếp" onChange={(e) => go({ sort: e.target.value === 'newest' ? null : e.target.value })} data-testid={`${P}-sort`}>
           <option value="newest">Mới nhất</option>
           <option value="oldest">Cũ nhất</option>
         </select>
-        {filtering && !emptyAll && <button type="button" className="btn btn-quiet tight" onClick={clear} data-testid={`${P}-clear-filter`}><span className="i i-x" aria-hidden="true" />Xoá lọc</button>}
       </div>
 
       {view === 'rate' && limit.left > 0 && <Note tone="red" icon="clock" role="alert" testid={`${P}-error`}>{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></Note>}
@@ -108,26 +122,33 @@ function ShipmentListInner() {
       {data && items.length > 0 && (view === 'ready' || view === 'loading') && (
         <>
           <div className={`panel panel-flush${view === 'ready' ? '' : ' dim'}`} data-testid={view === 'loading' ? `${P}-loading` : undefined}>
-            <table className="stack-table ps-table">
-              <thead><tr><th>Đơn</th><th>Mã vận đơn</th><th>Khách</th><th className="ps-wide">Điện thoại</th><th className="ps-wide">Địa chỉ</th><th>Sale</th><th className="ps-wide">Phương thức</th><th>Trạng thái</th><th className="ps-wide">Ngày tạo</th></tr></thead>
+            <table className="shp-table">
+              <thead><tr><th>Trạng thái</th><th>Đơn</th><th>Khách</th><th className="m-hide">Giao đến</th><th className="m-hide shp-gon">Sale</th><th className="m-hide when">Tạo lúc</th></tr></thead>
               <tbody>
-                {items.map((s) => (
-                  <tr key={`${s.order_code}-${s.created_at}`} className={canOpen ? 'row-click' : undefined} data-testid={`${P}-row`} data-code={s.order_code} onClick={canOpen ? () => router.push(detailHref(s.order_code, back)) : undefined}>
-                    <td data-label="Đơn" data-testid={`${P}-order-code`}>
-                      {canOpen
-                        ? <Link className="ps-code" href={detailHref(s.order_code, back)} onClick={(e) => e.stopPropagation()}>{s.order_code}</Link> /* liên kết thật để mở chi tiết bằng bàn phím và đọc màn hình: cả hàng bấm được chỉ bằng chuột */
-                        : <span className="ps-code">{s.order_code}</span>}
+                {items.map((s) => {
+                  const late = lateNote(s);
+                  return (
+                  <tr key={`${s.order_code}-${s.created_at}`} className={canOpen ? 'row-click' : undefined} data-flag={late?.red ? 'red' : late ? 'warn' : undefined} data-testid={`${P}-row`} data-code={s.order_code} onClick={canOpen ? () => router.push(detailHref(s.order_code, back)) : undefined}>
+                    <td className="st" data-label="Trạng thái">
+                      <ShipmentBadge status={s.status} testid={`${P}-status-badge`} />
+                      {late && <div style={{ marginTop: '.35rem' }}><span className={`shp-late${late.red ? ' red' : ''}`}><span className={`i i-${late.red ? 'alert' : 'clock'}`} aria-hidden="true" />{late.text}</span></div>}
                     </td>
-                    <td data-label="Mã vận đơn" className="ps-code" data-testid={`${P}-tracking`}>{s.tracking_number ?? '—'}</td>
-                    <td data-label="Khách" data-testid={`${P}-customer-name`}>{s.customer_name}</td>
-                    <td data-label="Điện thoại" className="ps-wide ps-time" data-testid={`${P}-phone`}>{s.phone ?? '—'}</td>
-                    <td data-label="Địa chỉ" className="ps-wide ps-addr" data-testid={`${P}-address`} title={s.address ?? undefined}>{s.address ?? '—'}</td>
-                    <td data-label="Sale" data-testid={`${P}-created-by-name`}>{s.created_by_name ?? '—'}</td>
-                    <td data-label="Phương thức" className="ps-wide" data-testid={`${P}-method`}><span className="ps-method"><span className="i i-truck" aria-hidden="true" />{s.method_name}</span></td>
-                    <td data-label="Trạng thái"><ShipmentBadge status={s.status} testid={`${P}-status-badge`} /></td>
-                    <td data-label="Ngày tạo" className="ps-wide ps-time" data-testid={`${P}-created-at`}>{formatOrderTime(s.created_at)}</td>
+                    <td className="od" data-label="Đơn">
+                      <span data-testid={`${P}-order-code`}>{canOpen
+                        ? <Link className="ps-code" href={detailHref(s.order_code, back)} onClick={(e) => e.stopPropagation()}>{s.order_code}</Link> /* liên kết thật để mở chi tiết bằng bàn phím và đọc màn hình: cả hàng bấm được chỉ bằng chuột */
+                        : <span className="ps-code">{s.order_code}</span>}</span>
+                      <span className="shp-sub"><span className="shp-gon" data-testid={`${P}-method`}>{s.method_name} · </span>{s.tracking_number ? <span className="mono" data-testid={`${P}-tracking`}>{s.tracking_number}</span> : <><span data-testid={`${P}-tracking`} hidden>—</span>Chưa có mã vận đơn</>}</span>
+                    </td>
+                    <td className="cu" data-label="Khách">
+                      <span className="shp-name" data-testid={`${P}-customer-name`}>{s.customer_name}</span>
+                      <span className="shp-sub shp-gon" data-testid={`${P}-phone`}>{s.phone ?? '—'}</span>
+                    </td>
+                    <td className="m-hide ad" data-label="Giao đến"><div className="shp-addr" data-testid={`${P}-address`} title={s.address ?? undefined}>{s.address ?? <span className="shp-dash">—</span>}</div></td>
+                    <td className="m-hide shp-gon" data-label="Sale" data-testid={`${P}-created-by-name`}>{s.created_by_name ?? '—'}</td>
+                    <td className="m-hide when" data-label="Tạo lúc"><span className="ps-time" data-testid={`${P}-created-at`}>{formatOrderTime(s.created_at)}</span><span className="shp-sub">{ageText(s.created_at)}</span></td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

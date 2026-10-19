@@ -8,6 +8,7 @@ import { api, type ApiResult } from '../../../lib/api';
 import { formatDateTime } from '../../../lib/format';
 import { useLoginRedirect } from '../../../lib/prd';
 import { REASON_MAX, REVIEW_STATUSES, UUID_RE, codePoints, reviewStatusText, type AdminReview, type AdminReviewList } from '../../../lib/review';
+import { SkRows } from '../../../components/Skeleton';
 
 const LIMIT = 20;
 const P = 'rev-admin-moderation';
@@ -149,7 +150,7 @@ function ModerationInner() {
 
       {!dialog && errBox}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{errStatus === 403 ? 'Không có quyền' : 'Không tải được danh sách.'}{errStatus !== 403 && <>{' '}<button type="button" className="btn btn-sm" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></>}</div>}
-      {view === 'loading' && <div data-testid={`${P}-loading`} aria-busy="true">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton" style={{ height: '5rem' }} />)}</div>}
+      {view === 'loading' && <SkRows n={5} lines={3} trail testid={`${P}-loading`} />}
 
       {emptyAll && (filtering || page > 1
         ? <div className="empty" data-testid={`${P}-empty-filter`}><span className="tile tile-lg gray"><span className="i i-filter" aria-hidden="true" /></span><strong>Không khớp bộ lọc</strong><button type="button" className="btn btn-sm" onClick={clear} data-testid={`${P}-filter-clear`}>Bỏ lọc</button></div>
@@ -233,7 +234,7 @@ function ModerationInner() {
 export default function AdminReviewsPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><ModerationInner /></Suspense>
+      <Suspense fallback={<main className="page"><SkRows n={4} lead={false} /></main>}><ModerationInner /></Suspense>
     </RequireRole>
   );
 }

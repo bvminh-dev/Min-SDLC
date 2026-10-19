@@ -9,6 +9,7 @@ import { flattenTree, rateLimitedText, useCategories, useLoginRedirect } from '.
 import { Field } from './Form';
 import { ProductImages, type ProductImage } from './ProductImages';
 import { useCountdown } from './useCountdown';
+import { Bone, SkForm, SkLines } from './Skeleton';
 
 interface Product { id: string; name: string; sku: string; price: number; cost_price?: number | null; description: string | null; status: ProductStatus; version: number; category_id?: string; category?: { id: string; name: string } | null; images?: any[] }
 interface FormState { name: string; sku: string; categoryId: string; price: string; costPrice: string; description: string }
@@ -169,7 +170,7 @@ export function ProductEditor({ id }: { id?: string }) {
   const ic = (n: string) => <span className={`i i-${n}`} aria-hidden="true" />;
   const back = <Link className="back" href="/admin/products">{ic('left')} Sản phẩm</Link>;
   if (view === 'loading') {
-    return <main className="page" data-testid="prd-admin-product-edit-loading" aria-busy="true"><div className="skeleton" /><div className="ct-edit-grid"><div><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div><div className="skeleton skeleton-card" /></div></main>;
+    return <main className="page" data-testid="prd-admin-product-edit-loading" aria-busy="true"><SkLines n={1} /><div className="ct-edit-grid"><SkForm n={5} /><Bone className="sk-img" /></div></main>;
   }
   if (view === 'notfound') return <main className="page"><div className="empty" data-testid="prd-admin-product-edit-not-found"><span className="tile tile-lg gray">{ic('search')}</span><strong>Không tìm thấy sản phẩm</strong><Link className="btn" href="/admin/products">{ic('left')} Sản phẩm</Link></div></main>;
   if (view === 'forbidden') return <main className="page"><div role="alert" className="banner banner-error" data-testid="prd-admin-product-edit-error">Bạn không có quyền xem sản phẩm này.</div></main>;

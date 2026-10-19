@@ -10,6 +10,7 @@ import { formatPrice } from '../../../lib/format';
 import { ORDER_STATUS_LABEL, formatClock, formatOrderTime, paymentText, reasonText, type HistoryItem, type OrderDetail, type OrderStatus } from '../../../lib/order';
 import { useLoginRedirect } from '../../../lib/prd';
 import { limitedText } from '../../../lib/stock';
+import { SkLines, SkPanel, SkRows } from '../../../components/Skeleton';
 
 /** Vị trí trên thanh tiến trình (Đặt, Thanh toán, Giao, Nhận); -1 = đơn đã hủy/hết hạn, không vẽ thanh. */
 const STAGE: Record<OrderStatus, number> = { pending: 0, confirmed: 0, paid: 1, shipped: 2, delivered: 3, returned: 3, cancelled: -1, expired: -1 };
@@ -54,7 +55,7 @@ function OrderDetailView({ code }: { code: string }) {
   useEffect(() => { void load(); }, [load]);
 
   const back = staffSide ? '/admin/orders' : '/orders';
-  if (view === 'loading' && !order) return <main className="page page-mid" data-testid="ord-order-detail-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></main>;
+  if (view === 'loading' && !order) return <main className="page page-mid" data-testid="ord-order-detail-loading" aria-busy="true"><SkPanel n={3} /><SkRows n={3} lead="square" lines={3} trail /><SkPanel n={3} /></main>;
   if (view === 'notfound') {
     return (
       <main className="page page-narrow">
@@ -129,7 +130,7 @@ function OrderDetailView({ code }: { code: string }) {
 
           <section className="panel" data-testid="ord-order-detail-history">
             <div className="panel-head"><h2><span className="i i-clock" aria-hidden="true" />Lịch sử</h2></div>
-            {histView === 'loading' && !history && <div aria-busy="true"><div className="skeleton" /></div>}
+            {histView === 'loading' && !history && <SkLines n={3} />}
             {histView === 'error' && <div role="alert" className="banner banner-error" data-testid="ord-order-detail-history-error">Không tải được lịch sử. <button className="btn" onClick={() => void loadHistory()} data-testid="ord-order-detail-history-retry">Thử lại</button></div>}
             {histView === 'ready' && (
               <ol className="ord-tl">

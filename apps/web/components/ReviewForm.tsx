@@ -9,6 +9,7 @@ import {
 } from '../lib/review';
 import { Spin, VerifiedBadge } from './ReviewParts';
 import { useCountdown } from './useCountdown';
+import { SkForm, SkRows } from './Skeleton';
 
 const P = 'rev-review-form';
 interface FormImage { k: string; id: string | null; url: string }
@@ -215,7 +216,7 @@ export function ReviewForm(props: { mode: 'create'; productId: string } | { mode
   const cancelHref = edit ? '/me/reviews' : `/products/${encodeURIComponent(targetId)}/reviews`;
   const shell = (children: ReactNode, testid?: string) => <main className="page page-narrow"><section className="panel" data-testid={testid} aria-busy={testid ? true : undefined}>{children}</section></main>;
 
-  if (view === 'loading') return shell(<><div className="skeleton" /><div className="skeleton" style={{ height: '4rem' }} /><div className="skeleton" style={{ height: '7rem' }} /></>, `${P}-loading`);
+  if (view === 'loading') return shell(<><SkRows n={1} lead="square" /><SkForm n={3} /></>, `${P}-loading`);
   if (view === 'notfound') {
     return (
       <main className="page page-narrow">

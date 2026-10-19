@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AccessDenied } from './AccessDenied';
 import { useAuth } from '../lib/auth';
+import { SkLines, SkRows } from './Skeleton';
 import { addDays, asOfText, bucketLabel, defaultRange, limitedText, money, type BlockStatus, type Granularity } from '../lib/dashboard';
 
 /** Lỗi theo khoảng ngày của máy chủ (400) bằng lời ngắn: không lặp lại giá trị người dùng nhập. */
@@ -53,7 +54,7 @@ export function RateBanner({ testid, status, retryAfter }: { testid: string; sta
 
 /** Khung chờ đúng hình khối. */
 export function Skeleton({ testid, rows = 2 }: { testid: string; rows?: number }) {
-  return <div aria-busy="true" data-testid={testid}>{Array.from({ length: rows }, (_, i) => <div key={i} className="skeleton" />)}</div>;
+  return rows <= 1 ? <SkLines n={2} testid={testid} /> : <SkRows n={rows} lead={false} trail testid={testid} />;
 }
 
 /** Lỗi của MỘT khối (503, mạng) kèm Thử lại; không bao giờ thay bằng 0. */

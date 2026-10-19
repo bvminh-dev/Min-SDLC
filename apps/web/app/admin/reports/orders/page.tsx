@@ -7,6 +7,7 @@ import { useQueryGo } from '../../../../components/ReviewParts';
 import { RequireRole } from '../../../../components/RequireRole';
 import { appliedRange, bucketLabel, count, failed, formatYmd, GRAN_TEXT, moneyOrDash, percentText, rangeQuery, STATUS_ORDER, useBlock, type OrdersReport } from '../../../../lib/dashboard';
 import { ORDER_STATUS_LABEL } from '../../../../lib/order';
+import { SkRows } from '../../../../components/Skeleton';
 
 const P = 'dsh-analytics-orders';
 
@@ -80,7 +81,7 @@ function Inner() {
 export default function OrdersReportPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
+      <Suspense fallback={<main className="page"><SkRows n={4} lead={false} /></main>}><Inner /></Suspense>
     </RequireRole>
   );
 }

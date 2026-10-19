@@ -5,6 +5,7 @@ import { AccessDenied } from '../../../components/AccessDenied';
 import { RequireRole } from '../../../components/RequireRole';
 import { api } from '../../../lib/api';
 import { ROLE_LABEL, useAuth, type Role } from '../../../lib/auth';
+import { SkRows } from '../../../components/Skeleton';
 
 interface Row { id: string; email: string; full_name: string; role: Role; status: 'active' | 'locked'; email_verified: boolean; created_at: string }
 interface Page { items: Row[]; page: number; limit: number; total: number }
@@ -104,7 +105,7 @@ function UserList() {
       </div>
 
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${T}-error`}>Không tải được danh sách. <button className="btn" onClick={() => void load()} data-testid={`${T}-retry`}>Thử lại</button></div>}
-      {view === 'loading' && <div data-testid={`${T}-loading`} aria-busy="true">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="skeleton" />)}</div>}
+      {view === 'loading' && <SkRows n={6} trail testid={`${T}-loading`} />}
       {view === 'ready' && data && data.items.length === 0 && (filtered
         ? <div className="empty panel" data-testid={`${T}-empty-filtered`}><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có kết quả</strong><button className="btn" onClick={() => { setSearch(''); setQ(''); setRole(''); setStatus(''); setPage(1); }} data-testid={`${T}-clear-filter`}>Xóa lọc</button></div>
         : <div className="empty panel" data-testid={`${T}-empty`}><span className="tile tile-lg gray"><span className="i i-users" aria-hidden="true" /></span><strong>Chưa có người dùng</strong></div>)}

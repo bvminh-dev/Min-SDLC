@@ -4,6 +4,7 @@ Dòng ma trận mới của epic SAL (Bán hàng hộ), đúng khuôn `spec/perm
 |---|---|---|---|---|---|---|---|
 | Tạo đơn hộ cho khách (sale, admin; staff không đặt hộ) | SAL-REQ-20261015-092710847 | - | - | - | Y | Y | - |
 | Tra khách có sẵn theo điện thoại hoặc email (bản che) khi lập đơn hộ | SAL-REQ-20261015-092710942 | - | - | - | Y | Y | - |
+| Gợi ý khách có sẵn khi gõ dở email hoặc điện thoại (bản che) khi lập đơn hộ | SAL-REQ-20261015-092710942 | - | - | - | Y | Y | - |
 | Xem phương thức vận chuyển và phí khi lập đơn hộ | SAL-REQ-20261015-092711037 | - | - | - | Y | Y | - |
 | Đơn hộ bị từ chối: hết hàng, nguồn đã tắt, sản phẩm không còn bán (kết quả của lệnh tạo đơn hộ, không có endpoint riêng) | SAL-REQ-20261015-092711128 | - | - | - | Y | Y | - |
 | Xem danh sách đơn hộ (Đơn của tôi: sale chỉ đơn mình tạo, admin mọi đơn hộ) | SAL-REQ-20261015-092711222 | - | - | - | own | Y | - |

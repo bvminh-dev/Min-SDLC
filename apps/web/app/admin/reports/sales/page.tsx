@@ -6,6 +6,7 @@ import { ForbiddenView, RangeBar, RateBanner, Skeleton } from '../../../../compo
 import { useQueryGo } from '../../../../components/ReviewParts';
 import { RequireRole } from '../../../../components/RequireRole';
 import { appliedRange, count, DELETED_ACCOUNT_LABEL, failed, formatYmd, money, rangeQuery, useBlock, useCsvExport, type SalesReport } from '../../../../lib/dashboard';
+import { SkRows } from '../../../../components/Skeleton';
 
 const P = 'dsh-analytics-sales';
 
@@ -90,7 +91,7 @@ function Inner() {
 export default function SalesReportPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
+      <Suspense fallback={<main className="page"><SkRows n={4} lead={false} /></main>}><Inner /></Suspense>
     </RequireRole>
   );
 }

@@ -6,6 +6,7 @@ import { ForbiddenView, RangeBar, RateBanner, Skeleton } from '../../../../compo
 import { useQueryGo } from '../../../../components/ReviewParts';
 import { RequireRole } from '../../../../components/RequireRole';
 import { appliedRange, count, failed, formatYmd, money, rangeQuery, useBlock, type ProductsReport } from '../../../../lib/dashboard';
+import { SkRows } from '../../../../components/Skeleton';
 
 const P = 'dsh-analytics-products';
 const LIMITS = ['5', '10', '20', '50'];
@@ -79,7 +80,7 @@ function Inner() {
 export default function ProductsReportPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
+      <Suspense fallback={<main className="page"><SkRows n={4} lead={false} /></main>}><Inner /></Suspense>
     </RequireRole>
   );
 }

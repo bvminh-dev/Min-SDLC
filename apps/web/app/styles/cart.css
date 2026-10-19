@@ -1,7 +1,6 @@
 /* cart: giỏ hàng + thanh toán (tiền tố crt-). Phẳng, viền mảnh, không bóng. */
 .crt-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .crt-grid { display: grid; gap: 1rem; align-items: start; } @media (min-width: 900px) { .crt-grid { grid-template-columns: minmax(0, 1fr) 22rem; } }
-.crt-sk { height: 6rem; margin: 0; } .crt-sk-sum { height: 18rem; margin: 0; }
 .crt-count { margin-left: .5rem; background: var(--brand-soft); color: var(--brand-dark); } .crt-count::before { display: none; }
 .crt-warn { display: flex; align-items: center; gap: .35rem; margin: .25rem 0 0; color: var(--danger); font-size: .8125rem; } .crt-warn a { color: inherit; font-weight: 600; }
 .crt-note { display: flex; align-items: center; gap: .35rem; margin: .25rem 0 0; color: var(--muted); font-size: .8125rem; }

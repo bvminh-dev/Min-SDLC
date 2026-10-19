@@ -9,6 +9,7 @@ import { api } from '../../../lib/api';
 import { formatPrice, formatRating } from '../../../lib/format';
 import { fetchStock } from '../../../lib/inventory';
 import { rateLimitedText } from '../../../lib/prd';
+import { Bone, SkPanel } from '../../../components/Skeleton';
 
 interface Detail {
   id: string; name: string; sku: string; price: number; description: string | null;
@@ -42,7 +43,7 @@ export default function ProductDetailPage() {
   if (view === 'loading') {
     return (
       <main className="page" data-testid="prd-product-detail-loading" aria-busy="true">
-        <div className="ct-detail"><div className="skeleton skeleton-card" style={{ height: '24rem' }} /><div><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div></div>
+        <div className="ct-detail"><Bone className="sk-img" /><SkPanel n={5} /></div>
       </main>
     );
   }

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { Bone } from './Skeleton';
 
 interface Cat { id: string; name: string; parent_id: string | null }
 let cache: Cat[] | null = null; // toàn bộ danh mục; layout giữ component qua các trang nên tải một lần
@@ -32,6 +33,7 @@ function Strip() {
   return (
     <nav className="cat-strip" aria-label="Danh mục">
       <Link href="/products" className={onList && !current ? 'on' : undefined} aria-current={onList && !current ? 'page' : undefined} data-testid="header-cat-all"><span className="i i-list" aria-hidden="true" /> Tất cả</Link>
+      {cats.length === 0 && [72, 96, 84, 110, 90].map((w, i) => <Bone key={i} w={w} h={20} round />)}
       {roots.map((c, i) => (
         <Link key={c.id} href={`/products?category=${c.id}`} className={active === c.id ? 'on' : undefined} aria-current={active === c.id ? 'page' : undefined}>
           <span className={`i i-${catIcon(c.name, i)}`} aria-hidden="true" /> {c.name}

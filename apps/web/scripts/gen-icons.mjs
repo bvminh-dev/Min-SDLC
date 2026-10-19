@@ -66,26 +66,29 @@ const ICONS = {
   copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
   link: 'M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7',
   gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/>',
+  down: 'M6 9l6 6 6-6',
+  menu: 'M4 6h16M4 12h16M4 18h16',
+  pie: '<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+  fileplus: '<path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4M3 15h6M6 12v6"/>',
+  megaphone: '<path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+  cash: '<rect x="2" y="6" width="20" height="12" rx="2"/>' + c(12, 12, 2) + '<path d="M6 12h.01M18 12h.01"/>',
+  bank: 'M3 21h18M5 21V10M9 21V10M15 21V10M19 21V10M12 3l9 5H3z',
   bag: 'M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0',
 };
 const svg = (b) => `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>${b.startsWith('<') ? b : `<path d='${b}'/>`}</svg>`.replace(/"/g, "'");
 const url = (b) => `url("data:image/svg+xml,${svg(b).replace(/[<>#%]/g, (ch) => encodeURIComponent(ch))}")`;
 
-const NAV = '.navlinks > a';
 const BTN = ':is(.btn,.btn-link,button):not(.rev-thumb-x):not(.chip-x):not(.avatar):not(.ntf-trigger)';
 const tid = (suffix) => `${BTN}[data-testid$='-${suffix}']`;
 const h1 = (route, prefix) => `html[data-page${prefix ? '^' : ''}='${route}'] :is(main,.editbar) h1`;
 const RULES = [
-  // Thanh đầu trang
-  [`${NAV}[href='/products']`, 'tag'], [`${NAV}[href='/orders']`, 'receipt'], [`${NAV}[href='/admin/orders']`, 'receipt'], [`${NAV}[href='/admin/inventory']`, 'layers'],
-  [`${NAV}[href='/admin/shipments']`, 'truck'], [`${NAV}[href='/payments']`, 'card'], [`${NAV}[href='/admin/payments']`, 'card'], [`${NAV}[href='/me/reviews']`, 'star'],
-  [`${NAV}[href='/admin/refunds']`, 'undo'], [`${NAV}[href='/admin/dashboard']`, 'dash'], [`${NAV}[href='/admin/shipping-methods']`, 'nav'], [`${NAV}[href='/admin/coupons']`, 'ticket'],
-  [`${NAV}[href='/admin/reviews']`, 'message'], [`${NAV}[href='/login']`, 'login'], [`${NAV}[href='/register']`, 'userplus'], ['.topbar .cart-badge', 'cart'], ['.ntf-trigger', 'bell'],
+  // Thanh đầu trang: liên kết quản trị dùng .i trong HeaderLinks.tsx; chỉ còn giỏ và chuông.
+  ['.topbar .cart-badge', 'cart'], ['.ntf-trigger', 'bell'],
   // Menu tài khoản
   ['.popover a[href="/account/profile"]', 'user'], ['.popover a[href="/account/addresses"]', 'pin'], ['.popover a[href="/admin/customers"]', 'users'], ['.popover a[href="/admin/products"]', 'tag'],
   ['.popover a[href="/admin/categories"]', 'folder'], ['.popover a.chip', 'shield'], ["[data-testid='auth-account-menu-logout']", 'logout'],
   // Tiêu đề trang theo route (html[data-page] do PageMark đặt)
-  [h1('/products'), 'tag'], [h1('/cart'), 'cart'], [h1('/checkout', 1), 'bag'], [h1('/orders'), 'receipt'], [h1('/admin/orders'), 'receipt'], [h1('/payments'), 'card'], [h1('/admin/payments', 1), 'card'],
+  [h1('/products'), 'tag'], [h1('/cart'), 'cart'], [h1('/checkout', 1), 'bag'], [h1('/orders'), 'receipt'], [h1('/admin/orders'), 'receipt'], [h1('/sales/orders/new'), 'fileplus'], [h1('/sales/orders'), 'receipt'], [h1('/payments'), 'card'], [h1('/admin/payments', 1), 'card'],
   [h1('/me/reviews', 1), 'star'], [h1('/admin/reviews'), 'message'], [h1('/notifications'), 'bell'], [h1('/account/profile'), 'user'], [h1('/account/addresses'), 'pin'], [h1('/account/password'), 'key'],
   [h1('/login'), 'login'], [h1('/register'), 'userplus'], [h1('/forgot-password'), 'mail'], [h1('/reset-password'), 'key'], [h1('/verify-email'), 'shield'],
   [h1('/admin/dashboard'), 'dash'], [h1('/admin/products'), 'tag'], [h1('/admin/categories'), 'folder'], [h1('/admin/inventory', 1), 'layers'], [h1('/admin/shipments', 1), 'truck'],
@@ -116,7 +119,7 @@ const css = [
   ':is(main,.editbar) h1::before { color: var(--brand); width: 1.15em; height: 1.15em; margin-right: .5rem; }',
   '.dsh-kpi:nth-child(1) h2::before { color: var(--brand); } .dsh-kpi:nth-child(2) h2::before { color: var(--ok); } .dsh-kpi:nth-child(3) h2::before { color: #f79009; } .dsh-kpi:nth-child(4) h2::before { color: var(--violet); }',
   '.notfound .big::before { display: block; width: 3rem; height: 3rem; margin: 0 auto .5rem; }',
-  '.navlinks > a::before, .navlinks .cart-badge::before, .ntf-trigger::before { margin-right: .35rem; }',
+  '.navlinks .cart-badge::before, .ntf-trigger::before { margin-right: .35rem; }',
   '',
 ].join('\n');
 writeFileSync(new URL('../app/icons.css', import.meta.url), css);

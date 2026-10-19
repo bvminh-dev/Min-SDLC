@@ -5,14 +5,14 @@ import { OrderBusinessError } from '../order';
 import { AppLogger, Clock, DomainError, IdempotencyService, type SessionContext, type Tx } from '../platform';
 import { IDEMPOTENCY_KEY_RE, ROUTE, SCOPE, TOTAL_MAX, type PaymentMethod } from './config';
 import { DependencyError, DepsService } from './deps.service';
-import type { OrderBody } from './policy';
+import { MASKED_PHONE, type OrderBody } from './policy';
 
 export interface CreateOut {
   replayed: boolean; order: { code: string; status: 'confirmed'; grand_total: number; payment_method: PaymentMethod; source_code: string }; next: { url: string };
 }
 /** Một dòng đã định giá từ PRD: `cost` (giá vốn) chỉ đi sang `createHo`, không bao giờ vào phản hồi, log hay lỗi (SB-42). */
 interface Line { product_id: string; name: string; price: number; cost: number | null; quantity: number; note: string | null }
-interface Plan { lines: Line[]; userId: string | null; itemsTotal: number; shippingFee: number; grandTotal: number }
+interface Plan { lines: Line[]; userId: string | null; customerPhone: string; receiverPhone: string; itemsTotal: number; shippingFee: number; grandTotal: number }
 
 /** Idempotency-Key của tạo đơn (ADR-017, SB-40): 8 đến 64 ký tự [A-Za-z0-9_-]; thiếu hay sai định dạng là 400 `idempotency-key-required` (không phải `validation-failed`). */
 export function keyOf(req: Request): string {
@@ -62,6 +62,14 @@ export class CreateService {
     if (!sources.some((x) => x.code === body.source_code)) throw new DomainError('order-source-unavailable'); // không có, đã tắt, sai định dạng: một mã, một nội dung (SB-45)
     const claimed = body.customer.user_id ?? null;
     if (claimed !== null && !(await this.deps.isCustomer(claimed))) throw new DomainError('customer-not-found'); // staff, sale, admin, không có, sai định dạng: cùng 422 (SB-06)
+    const unmask = async (p: string, field: string): Promise<string> => {
+      if (!MASKED_PHONE.test(p)) return p;
+      const real = claimed ? await this.deps.unmaskPhone(claimed, p) : null;
+      if (!real) throw new DomainError('validation-failed', { errors: [{ field, code: 'invalid_phone' }] });
+      return real;
+    };
+    const customerPhone = await unmask(body.customer.phone, 'customer.phone');
+    const receiverPhone = await unmask(body.shipping_address.phone, 'shipping_address.phone');
     const found = new Map((await this.deps.products(body.items.map((i) => i.product_id))).map((p) => [p.product_id.toLowerCase(), p]));
     const bad = body.items.filter((i) => !found.get(i.product_id.toLowerCase())?.sellable);
     if (bad.length) throw new DomainError('product-unavailable', { status: 409, extra: { items: bad.map((i) => ({ product_id: i.product_id, reason: 'unavailable' })) } }); // mọi dòng lỗi, không phân biệt draft với không có
@@ -80,7 +88,7 @@ export class CreateService {
     if (body.expected_grand_total !== grandTotal) {
       throw new DomainError('price-changed', { extra: { previous_grand_total: body.expected_grand_total, review: { items_subtotal: itemsTotal, shipping_fee: fee, grand_total: grandTotal, expected_grand_total: grandTotal } } });
     }
-    return { lines, userId: claimed, itemsTotal, shippingFee: fee, grandTotal };
+    return { lines, userId: claimed, customerPhone, receiverPhone, itemsTotal, shippingFee: fee, grandTotal };
   }
 
   /** Bước (b): một giao dịch ghi. `createHo` trước `reserve` theo thứ tự khóa của ADR-012 (Order rồi StockItem theo `id` tăng dần). */
@@ -88,9 +96,9 @@ export class CreateService {
     let order: { order_id: string; code: string };
     try {
       order = await this.deps.createHo({
-        created_by: s.user_id, created_by_role: s.role as 'sale' | 'admin', user_id: plan.userId, customer_snapshot: { full_name: body.customer.full_name, phone: body.customer.phone }, source_code: body.source_code,
+        created_by: s.user_id, created_by_role: s.role as 'sale' | 'admin', user_id: plan.userId, customer_snapshot: { full_name: body.customer.full_name, phone: plan.customerPhone }, source_code: body.source_code,
         items: plan.lines.map((l) => ({ product_id: l.product_id, name_snapshot: l.name, unit_price: l.price, cost_snapshot: l.cost, quantity: l.quantity, note: l.note })),
-        items_total: plan.itemsTotal, discount: 0, shipping_fee: plan.shippingFee, grand_total: plan.grandTotal, shipping_address: body.shipping_address, shipping_method_id: body.shipping_method_id,
+        items_total: plan.itemsTotal, discount: 0, shipping_fee: plan.shippingFee, grand_total: plan.grandTotal, shipping_address: { ...body.shipping_address, phone: plan.receiverPhone }, shipping_method_id: body.shipping_method_id,
         payment_method: body.payment_method, note: body.note,
       }, tx);
     } catch (e) {

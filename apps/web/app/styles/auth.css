@@ -50,7 +50,6 @@
 .auth-addr-text { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
 .auth-addr-actions { display: flex; align-items: center; gap: .4rem; margin-top: auto; padding-top: .25rem; min-height: 2.5rem; } .auth-addr-icons { margin-left: auto; display: inline-flex; gap: .15rem; }
 .auth-danger:hover:not([disabled]) { background: var(--danger-bg); color: var(--danger); }
-.auth-sk { height: 7rem; margin: 0; }
 .auth-addr-who { overflow-wrap: anywhere; }
 /* icons.css sinh icon "eye" bị hỏng SVG (path lẫn thẻ circle): vẽ lại riêng cho nút mật khẩu. */
 .pw-toggle .i-eye { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s4-8 10-8 10 8 10 8-4 8-10 8S2 12 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E"); }

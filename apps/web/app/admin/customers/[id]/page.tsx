@@ -7,6 +7,7 @@ import { CustomerCard, type Customer } from '../../../../components/CustomerCard
 import { RequireRole } from '../../../../components/RequireRole';
 import { api } from '../../../../lib/api';
 import { useAuth } from '../../../../lib/auth';
+import { SkRows } from '../../../../components/Skeleton';
 
 // Mở thẻ khách bằng đường dẫn có `id`: chỉ admin (USR-REQ-20261006-101004117 BR1). Staff nhận 403 từ máy chủ, giao diện chuyển tới màn không có quyền.
 function ById() {
@@ -28,9 +29,9 @@ function ById() {
   if (view === 'forbidden') return <AccessDenied role={user?.role} />;
   return (
     <main className="page page-mid">
-      <Link href="/admin/customers" className="back"><span className="i i-left" aria-hidden="true" /> Tra cứu</Link>
+      <Link href="/admin/customers" className="back"><span className="i i-left" aria-hidden="true" /> Khách hàng</Link>
       <div className="page-head"><h1>Hồ sơ khách</h1></div>
-      {view === 'loading' && <div className="skeleton" style={{ height: '7rem' }} data-testid="usr-customer-lookup-loading" />}
+      {view === 'loading' && <SkRows n={1} lines={3} testid="usr-customer-lookup-loading" />}
       {view === 'notfound' && <div className="empty panel" data-testid="usr-customer-lookup-not-found"><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>Không có khách này</strong></div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid="usr-customer-lookup-error">Không tra cứu được.</div>}
       {view === 'ready' && c && <CustomerCard c={c} role="admin" />}

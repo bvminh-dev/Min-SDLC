@@ -17,6 +17,8 @@
     "db:check": "node scripts/check-migrations.mjs",
     "db:seed": "node --env-file-if-exists=../../.env -r ts-node/register src/seed.ts",
     "db:seed:demo": "node --env-file-if-exists=../../.env -r ts-node/register src/seed-demo.ts",
+    "db:seed:demo:more": "node --env-file-if-exists=../../.env -r ts-node/register src/seed-demo-more.ts",
+    "db:seed:demo:sales": "node --env-file-if-exists=../../.env -r ts-node/register src/seed-demo-sales.ts",
     "auth:create-admin": "node --env-file-if-exists=../../.env -r ts-node/register src/modules/auth/create-admin.ts"
   },
   "dependencies": {

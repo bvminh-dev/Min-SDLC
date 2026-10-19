@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 import { Action, CurrentSession, RateLimit, Roles, Validate, ValidBody, ValidParams, ValidQuery, type SessionContext } from '../platform';
 import { LIMITS } from './config';
 import { CreateService, keyOf } from './create.service';
-import { codeParams, listQuery, lookupQuery, orderBody, shippingQuery, type ListQuery, type LookupQuery, type OrderBody, type ShippingQuery } from './policy';
+import { codeParams, listQuery, lookupQuery, orderBody, shippingQuery, suggestQuery, type ListQuery, type LookupQuery, type OrderBody, type ShippingQuery } from './policy';
 import { ReadService } from './read.service';
 
 /** Mọi phản hồi của SAL có dữ liệu cá nhân của khách (họ tên, điện thoại, địa chỉ) hoặc số tiền riêng: không lưu đệm (SB-08, SAL-SEC T14). */
@@ -29,6 +29,9 @@ export class SalesController {
 
   @Get('customers/lookup') @Action('Tra khách có sẵn theo điện thoại hoặc email (bản che) khi lập đơn hộ') @Roles('sale', 'admin') @RateLimit(LIMITS.lookup) @Validate({ query: lookupQuery })
   lookup(@CurrentSession() s: SessionContext, @ValidQuery() q: LookupQuery, @Res({ passthrough: true }) res: Response) { noStore(res); return this.reads.lookup(s, q); }
+
+  @Get('customers/suggest') @Action('Gợi ý khách có sẵn khi gõ dở email hoặc điện thoại (bản che) khi lập đơn hộ') @Roles('sale', 'admin') @RateLimit(LIMITS.suggest) @Validate({ query: suggestQuery })
+  suggest(@CurrentSession() s: SessionContext, @ValidQuery() q: { q: string }, @Res({ passthrough: true }) res: Response) { noStore(res); return this.reads.suggest(s, q.q); }
 
   @Get('shipping-options') @Action('Xem phương thức vận chuyển và phí khi lập đơn hộ') @Roles('sale', 'admin') @RateLimit(LIMITS.read) @Validate({ query: shippingQuery })
   shipping(@ValidQuery() q: ShippingQuery, @Res({ passthrough: true }) res: Response) { noStore(res); return this.reads.shippingOptions(q); }

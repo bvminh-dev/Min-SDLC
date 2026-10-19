@@ -7,6 +7,7 @@ import { RequireRole } from '../../components/RequireRole';
 import { api } from '../../lib/api';
 import { MAX_QTY, announceCart, blockerLines, lineErrorText, limitedText, type Cart, type CartLine } from '../../lib/cart';
 import { formatPrice } from '../../lib/format';
+import { SkPanel, SkRows } from '../../components/Skeleton';
 
 const CLEARED_MS = 4000;
 
@@ -111,7 +112,7 @@ function CartPage() {
   };
 
   if (view === 'loading') return (
-    <main className="page" aria-busy="true" data-testid="crt-cart-loading"><div className="page-head"><h1>Giỏ hàng</h1></div><div className="crt-grid"><div className="panel"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div><div className="skeleton crt-sk-sum" data-testid="crt-cart-summary-loading" /></div></main>
+    <main className="page" aria-busy="true" data-testid="crt-cart-loading"><div className="page-head"><h1>Giỏ hàng</h1></div><div className="crt-grid"><div className="panel"><SkRows n={3} lead="square" lines={3} trail /></div><SkPanel n={4} testid="crt-cart-summary-loading" /></div></main>
   );
   // Khối tóm tắt khi giỏ không tải được (ui/cart-summary, trạng thái `lỗi`, `hết phiên`): tổng tiền không tính được nên nút thanh toán khóa; số tiền luôn do máy chủ tính, giao diện không đoán.
   const loginHref = `/login?next=${encodeURIComponent('/cart')}&reason=expired`;

@@ -219,4 +219,19 @@ export class AuthApi {
     if (p.data === current) out.push('same_as_current');
     return out;
   }
+  /** Danh sách khách cho admin: khớp MỘT PHẦN (không phân biệt hoa thường) trên email, họ tên hoặc điện thoại; `q` rỗng thì lấy tất cả. `field` giới hạn cột khớp (mặc định cả ba). `%`, `_`, `\\` trong `q` là ký tự thường. Mới nhất trước, phân trang theo `page` (từ 1). */
+  async searchCustomers(q: string, page = 1, limit = 20, field?: 'email' | 'phone'): Promise<{ items: UserView[]; total: number }> {
+    const like = `%${q.replace(/[\\%_]/g, '\\$&')}%`;
+    const take = Math.min(Math.max(1, Math.trunc(limit) || 20), MAX_LIST);
+    const skip = (Math.max(1, Math.trunc(page) || 1) - 1) * take;
+    const match = field === 'email' ? Prisma.sql`email::text ILIKE ${like}` : field === 'phone' ? Prisma.sql`phone ILIKE ${like}` : Prisma.sql`email::text ILIKE ${like} OR full_name ILIKE ${like} OR phone ILIKE ${like}`;
+    const cond = Prisma.sql`role = 'customer' AND (${q} = '' OR ${match})`;
+    const [items, count] = await Promise.all([
+      this.prisma.$queryRaw<ViewRow[]>`
+        SELECT id, email::text AS email, full_name, phone, avatar_url, role, status, (email_verified_at IS NOT NULL) AS email_verified, created_at
+        FROM users WHERE ${cond} ORDER BY created_at DESC, id LIMIT ${take} OFFSET ${skip}`,
+      this.prisma.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM users WHERE ${cond}`,
+    ]);
+    return { items, total: count[0].n };
+  }
 }

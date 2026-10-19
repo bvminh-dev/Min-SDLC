@@ -21,5 +21,6 @@ export const LIMITS = {
   avatarUpload: { tier: 'B', limit: 10, windowSeconds: 3600 },
   avatarDelete: { tier: 'B', limit: 120, windowSeconds: 60 },
   addressWrite: { tier: 'B', limit: 120, windowSeconds: 60, group: 'usr:address-write' }, // thêm, sửa, xóa dùng chung một bộ đếm
+  search: { tier: 'C', limit: 120, windowSeconds: 60 }, // gõ tìm theo từng phím (đã debounce ở web)
   lookup: { tier: 'D', limit: 30, windowSeconds: 60, group: 'usr:customer-lookup' }, // hai endpoint tra cứu chung một bộ đếm
 } as const satisfies Record<string, RateLimitOptions>;

@@ -10,6 +10,7 @@ import { useAuth } from '../../../lib/auth';
 import { formatDateTime, formatPrice, STATUS_LABEL, type ProductStatus } from '../../../lib/format';
 import { flattenTree, rateLimitedText, useCategories, useLoginRedirect } from '../../../lib/prd';
 import { useQueryGo } from '../../../components/useQueryGo';
+import { SkRows } from '../../../components/Skeleton';
 
 interface Row { id: string; name: string; sku: string; price: number; status: ProductStatus; category: { id: string; name: string } | null; image_url?: string | null; updated_at: string }
 interface Result { items: Row[]; page: number; limit: number; total: number }
@@ -98,7 +99,7 @@ function ProductAdminList() {
       {view === 'forbidden' && <div role="alert" className="banner banner-error" data-testid="prd-admin-product-list-error">Bạn không có quyền xem trang này.</div>}
       {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="prd-admin-product-list-error">{rateLimitedText(limit.left)}</div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid="prd-admin-product-list-error">Không tải được danh sách sản phẩm. <button className="btn" onClick={() => void load()} data-testid="prd-admin-product-list-retry">Thử lại</button></div>}
-      {view === 'loading' && !data && <div data-testid="prd-admin-product-list-loading" aria-busy="true">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
+      {view === 'loading' && !data && <SkRows n={6} lead="square" trail testid="prd-admin-product-list-loading" />}
       {emptyAll && (filtering || page > 1
         ? <div className="empty" data-testid="prd-admin-product-list-empty-filtered"><span className="tile tile-lg gray">{ic('search')}</span><strong>Không có kết quả</strong><button type="button" className="btn" onClick={clear} data-testid="prd-admin-product-list-clear-filter">Xóa bộ lọc</button></div>
         : <div className="empty" data-testid="prd-admin-product-list-empty"><span className="tile tile-lg gray">{ic('inbox')}</span><strong>Chưa có sản phẩm</strong>{isAdmin && create}</div>)}

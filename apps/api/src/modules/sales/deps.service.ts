@@ -40,6 +40,7 @@ export class DepsService {
 
   sources(): Promise<SourceView[]> { return this.call('order', 'listSources', () => this.orders.listSources()); }
   isCustomer(id: string): Promise<boolean> { return this.call('user', 'isCustomer', () => this.users.isCustomer(id)); }
+  unmaskPhone(id: string, masked: string): Promise<string | null> { return this.call('user', 'unmaskPhone', () => this.users.unmaskPhone(id, masked)); }
   products(ids: string[]): Promise<SaleProduct[]> { return this.call('catalog', 'getForSale', () => this.catalog.getForSale(ids)); }
   methods(): Promise<ActiveMethod[]> { return this.call('shipping', 'listActiveMethods', () => this.shipping.listActiveMethods()); }
   /** `quote` ném `DomainError('method-unavailable')` khi phương thức không có, đã tắt hay sai định dạng: đi qua nguyên vẹn để bên gọi đổi sang 409 `shipping-method-unavailable`. */
@@ -49,5 +50,6 @@ export class DepsService {
   listOrders(o: Parameters<OrderApi['listForSale']>[0]) { return this.call('order', 'listForSale', () => this.orders.listForSale(o)); }
   getOrder(code: string, o: { created_by: string | null }) { return this.call('order', 'getForSale', () => this.orders.getForSale(code, o)); }
   /** Tra khách KHÔNG qua `call`: USR ghi audit trước khi trả, lỗi ghi audit phải ra 500 chứ không phải 503 (SAL-REQ-20261015-092710942 BR5); không giữ giao dịch nào của SAL. */
+  suggest(actor: { actor_id: string; actor_role: 'sale' | 'admin' }, q: string): Promise<{ items: SaleCustomer[] }> { return this.users.suggestForSale(actor, q); }
   lookup(actor: { actor_id: string; actor_role: 'sale' | 'admin' }, key: { phone?: string; email?: string }): Promise<{ items: SaleCustomer[] }> { return this.users.lookupForSale(actor, key); }
 }

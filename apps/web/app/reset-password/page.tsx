@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Field, PasswordInput, minutesText } from '../../components/Form';
 import { api } from '../../lib/api';
+import { SkForm } from '../../components/Skeleton';
 
 const MSG: Record<string, string> = {
   required: 'Nhập mật khẩu mới', too_short: 'Mật khẩu cần từ 10 ký tự', too_long: 'Mật khẩu dài tối đa 128 ký tự',
@@ -46,7 +47,7 @@ export default function ResetPasswordPage() {
     setState('error'); // token vẫn giữ trong bộ nhớ trang
   };
 
-  if (!ready) return <main className="center"><section className="card auth-card" aria-busy="true"><div className="skeleton" /><div className="skeleton" /></section></main>;
+  if (!ready) return <main className="center"><section className="card auth-card" aria-busy="true"><SkForm n={2} /></section></main>;
   if (state === 'invalid') {
     return (
       <main className="center"><section className="card auth-card" data-testid="auth-reset-password-invalid-link">

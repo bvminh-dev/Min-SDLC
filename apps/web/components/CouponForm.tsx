@@ -8,6 +8,7 @@ import { api, type ApiResult } from '../lib/api';
 import { STATUS_LABEL, fromLocalInput, isOverdue, num, parseInt0, toLocalInput, type Coupon } from '../lib/coupon';
 import { useLoginRedirect } from '../lib/prd';
 import { limitedText } from '../lib/stock';
+import { SkForm } from './Skeleton';
 
 const MAX = 1_000_000_000, MAX_LIMIT = 1_000_000;
 const MSG = {
@@ -110,7 +111,7 @@ export function CouponForm({ id }: { id?: string }) {
     <Field label={label} error={errors[k]} errorTestId={`${testid}-error`} field={k} hint={hint}>{input}</Field>
   );
 
-  if (view === 'loading') return <main className="page page-narrow"><div data-testid="prm-admin-coupon-edit-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div></main>;
+  if (view === 'loading') return <main className="page page-narrow"><div data-testid="prm-admin-coupon-edit-loading" aria-busy="true"><SkForm n={5} /></div></main>;
   if (view === 'notfound') return <main className="page page-narrow"><div className="empty panel" data-testid="prm-admin-coupon-edit-not-found"><span className="tile tile-lg gray"><span className="i i-ticket" aria-hidden="true" /></span><h1>Coupon không còn tồn tại</h1><Link className="btn" href="/admin/coupons">Về coupon</Link></div></main>;
   if (view === 'forbidden') return <main className="page page-narrow"><div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-edit-error">Bạn không có quyền</div></main>;
   if (view === 'rate' && limit.left > 0) return <main className="page page-narrow"><div role="alert" className="banner banner-error" data-testid="prm-admin-coupon-edit-error">{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid="prm-admin-coupon-edit-retry">Thử lại</button></div></main>;

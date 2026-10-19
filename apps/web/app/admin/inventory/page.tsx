@@ -8,6 +8,7 @@ import { api } from '../../../lib/api';
 import { useLoginRedirect } from '../../../lib/prd';
 import { limitedText, num, type StockItem } from '../../../lib/stock';
 import { useQueryGo } from '../../../components/useQueryGo';
+import { SkRows } from '../../../components/Skeleton';
 
 interface Result { items: StockItem[]; page: number; limit: number; total: number }
 const LIMIT = 20;
@@ -101,7 +102,7 @@ function InventoryList() {
 
       {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="inv-inventory-list-error">{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid="inv-inventory-list-retry">Thử lại</button></div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid="inv-inventory-list-error">Không tải được tồn kho. <button className="btn" onClick={() => void load()} data-testid="inv-inventory-list-retry">Thử lại</button></div>}
-      {view === 'loading' && !data && <div data-testid="inv-inventory-list-loading" aria-busy="true">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
+      {view === 'loading' && !data && <SkRows n={6} lead="square" trail testid="inv-inventory-list-loading" />}
       {emptyAll && (low
         ? <div className="empty panel" data-testid="inv-inventory-list-empty-low-stock"><span className="tile tile-lg green"><span className="i i-okc" aria-hidden="true" /></span><strong>Không có hàng sắp hết</strong></div>
         : filtering || page > 1

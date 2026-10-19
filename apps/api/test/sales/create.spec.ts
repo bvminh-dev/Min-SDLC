@@ -52,6 +52,16 @@ describe('SAL tạo đơn hộ trên AppModule thật', () => {
     expect(mine.body.items.map((x: { code: string }) => x.code)).toContain(r.body.order.code);
   });
 
+  it('tạo đơn hộ với SĐT bản che từ tra khách: có user_id khớp thì lưu số thật, không khớp hoặc không có user_id thì 400 invalid_phone', async () => {
+    await q(t, `UPDATE users SET phone = '0901234567' WHERE id = '${w.u1.id}'`);
+    const masked = { user_id: w.u1.id, full_name: 'Nguyễn An', phone: '090****567' };
+    const ok = await postOrder(t, w.s1, stdBody(w, { customer: masked, shipping_address: { ...ADDRESS, phone: '090****567' } }));
+    expect(ok.status).toBe(201);
+    expect(await orderRow(t, ok.body.order.code)).toMatchObject({ customer_snapshot: { phone: '0901234567' }, shipping_address: { phone: '0901234567' } });
+    const bad = [await postOrder(t, w.s1, stdBody(w, { customer: { ...masked, phone: '090****999' } })), await postOrder(t, w.s1, stdBody(w, { customer: { full_name: 'Nguyễn An', phone: '090****567' } }))];
+    for (const r of bad) { expect(r.status).toBe(400); expect(errorsOf(r)).toEqual([{ field: 'customer.phone', code: 'invalid_phone' }]); }
+  });
+
   it('SAL-TC-20261015-093909700: admin tạo đơn hộ như sale: created_by là admin, báo cáo theo sale của ORD tính cho admin', async () => {
     const r = await postOrder(t, w.ad, stdBody(w));
     expect(r.status).toBe(201);

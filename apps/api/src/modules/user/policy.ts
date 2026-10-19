@@ -65,6 +65,7 @@ export const addressPatchBody = closedObject({
 });
 export const noParams = z.object({}).strict();
 export const idParams = z.object({ id: z.string() }).strict();
+export const searchQuery = z.object({ q: z.string().max(100).refine((v) => !v.includes('\0'), 'invalid_format').default('').transform((s) => s.trim()), page: z.coerce.number().int().min(1).max(100000).default(1) }).strict();
 export const lookupQuery = z.object({
   email: z.string({ required_error: 'required', invalid_type_error: 'invalid_format' }).transform((s) => s.trim().toLowerCase())
     .pipe(z.string().superRefine((v, ctx) => {

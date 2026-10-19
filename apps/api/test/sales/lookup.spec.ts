@@ -48,6 +48,20 @@ describe('SAL tra khách (bản che)', () => {
     expect((await audits())[0].after).toMatchObject({ by: 'email', found: 1 });
   });
 
+  it('gợi ý khi gõ dở: chữ thì lọc theo email (không theo tên), toàn số (+84 → 0) thì theo điện thoại, dưới 3 ký tự rỗng, bản che', async () => {
+    const c1 = await customer('an.nguyen@shop.vn', 'Trần Bình', '0851234567');
+    await customer('binh@other.vn', 'Nguyễn Minh', null);
+    const hit = { items: [{ id: c1.id, full_name: 'Trần Bình', email: 'an***@shop.vn', phone: '085****567', status: 'active' }] };
+    const sug = (v: string) => salesGet(t, w.s1, '/customers/suggest', { q: v });
+    expect((await sug('ngu')).body).toEqual(hit); // khớp email
+    expect((await sug('minh')).body).toEqual({ items: [] }); // tên có "Minh" nhưng email không
+    expect((await sug('085')).body).toEqual(hit);
+    expect((await sug('+8485')).body).toEqual(hit);
+    expect((await sug('an')).body).toEqual({ items: [] });
+    expect((await audits()).map((x) => x.after.by)).toEqual(['email', 'email', 'phone', 'phone']);
+    expect((await salesGet(t, undefined, '/customers/suggest', { q: 'ngu' })).status).toBe(401);
+  });
+
   it(`SAL-TC-20261015-093910421 ${SEC} T7: số của staff, email của admin và số chưa ai dùng cho cùng kết quả rỗng, mỗi lần một audit số kết quả 0`, async () => {
     await q(t, `UPDATE users SET phone = '0955555555' WHERE id = '${w.st.id}'`);
     const out = [await lookup(w.s1, { phone: '0955555555' }), await lookup(w.s1, { email: 'ad1@shop.vn' }), await lookup(w.s1, { phone: '0999999999' })];

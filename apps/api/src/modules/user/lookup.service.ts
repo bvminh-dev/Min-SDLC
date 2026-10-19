@@ -48,6 +48,29 @@ export class LookupService {
     return { items: found.slice(0, MAX_SALE_ITEMS).map((u) => ({ id: u.id, full_name: u.full_name, email: maskEmail(u.email), phone: maskPhone(u.phone), status: u.status })) };
   }
 
+  /**
+   * Gợi ý khách cho sale/admin khi gõ dở: khớp MỘT PHẦN: toàn chữ số (có thể có + ở đầu, +84/84 đổi thành 0) thì theo điện thoại, còn lại theo email (tối thiểu 3 ký tự), tối đa 5 bản che. Vẫn ghi MỘT audit (khóa băm) TRƯỚC khi trả, lỗi audit thì ném lỗi.
+   * ponytail: chỉ khách role `customer` (searchCustomers); dưới 3 ký tự trả rỗng, không chạm CSDL.
+   */
+  async suggestForSale(actor: { actor_id: string; actor_role: 'sale' | 'admin' }, q: string): Promise<{ items: SaleCustomer[] }> {
+    const raw = q.trim().toLowerCase();
+    const phone = /^\+?\d+$/.test(raw.replace(/[\s.-]/g, '')); // chỉ chữ số (một dấu + ở đầu) thì lọc theo điện thoại, còn lại theo email
+    const input = phone ? normalizePhone(raw) : raw;
+    if (input.length < 3) return { items: [] };
+    const { items } = await this.auth.searchCustomers(input, 1, MAX_SALE_ITEMS, phone ? 'phone' : 'email');
+    await this.transactions.run((tx) => this.audit.record(tx, {
+      actor_id: actor.actor_id, actor_role: actor.actor_role, action: 'usr.customer_lookup', target_type: 'customer',
+      target_id: sha256(input), after: { by: phone ? 'phone' : 'email', found: items.length, mask: 'masked' },
+    }));
+    return { items: items.map((u) => ({ id: u.id, full_name: u.full_name, email: maskEmail(u.email), phone: maskPhone(u.phone), status: u.status })) };
+  }
+
+  /** Số thật của khách `id` khi `masked` đúng là bản che của nó (để tạo đơn hộ gửi lại bản che từ tra khách); mọi trường hợp khác `null`. */
+  async unmaskPhone(id: string, masked: string): Promise<string | null> {
+    const c = typeof id === 'string' && UUID.test(id) ? await this.auth.findCustomerById(id) : null;
+    return c?.phone && maskPhone(c.phone) === masked ? c.phone : null;
+  }
+
   /** `true` chỉ khi `id` là uuid của người dùng role `customer` (mọi trạng thái); mọi trường hợp khác `false`, không ném lỗi. */
   async isCustomer(id: string): Promise<boolean> {
     return typeof id === 'string' && UUID.test(id) && (await this.auth.findCustomerById(id)) !== null;
@@ -68,5 +91,12 @@ export class LookupService {
     const base = { id: found.id, full_name: found.full_name, email_verified: found.email_verified, status: found.status, created_at: found.created_at };
     if (!full) return { ...base, email: maskEmail(found.email), phone: maskPhone(found.phone) };
     return { ...base, email: found.email, phone: found.phone || null, avatar_url: found.avatar_url || null, addresses: await this.addresses.list(found.id) };
+  }
+
+  /** Danh sách khách cho admin (đầy đủ, không địa chỉ), lọc theo một phần email, tên hoặc điện thoại, 20 khách mỗi trang. ponytail: không audit từng lần gõ, thêm khi baseline đòi. */
+  async search(q: string, page: number): Promise<{ items: CustomerBase[]; total: number; page: number; limit: number }> {
+    const limit = 20;
+    const { items, total } = await this.auth.searchCustomers(q, page, limit);
+    return { items: items.map((u) => ({ id: u.id, full_name: u.full_name, email: u.email, phone: u.phone || null, email_verified: u.email_verified, status: u.status, created_at: u.created_at })), total, page, limit };
   }
 }

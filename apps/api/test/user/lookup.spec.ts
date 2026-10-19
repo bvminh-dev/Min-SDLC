@@ -178,4 +178,23 @@ describe('USR nhân viên và admin tra cứu hồ sơ khách (USR-REQ-20261006-
     expect((await auditRows(t, 'usr.customer_lookup'))[0].after).toMatchObject({ mask: 'full' });
     expect((await q(t, `SELECT 1 FROM audit_logs WHERE actor_id = '${s1.id}'`))).toHaveLength(0);
   });
+
+  it('admin lọc danh sách khách theo một phần email; staff nhận 403; q quá dài hoặc có NUL nhận 400', async () => {
+    const ad = await admin();
+    const s1 = await staff();
+    await anCustomer();
+    await seedUser(t, { email: 'binh@shop.vn', name: 'Trần Bình' });
+    const search = (cookie: string | undefined, qs: string) => call(t, 'get', `/admin/customers/search${qs}`, { cookie });
+    const ok = await search(ad.cookie, '?q=nguyen');
+    expect(ok.status).toBe(200);
+    expect(ok.body.items.map((x: any) => x.email)).toEqual(['an.nguyen@shop.vn']);
+    expect(Object.keys(ok.body.items[0]).sort()).toEqual(MASKED_KEYS);
+    expect((await search(ad.cookie, '')).body.items).toHaveLength(2);
+    expect(ok.body).toMatchObject({ total: 1, page: 1, limit: 20 });
+    expect((await search(ad.cookie, '?page=2')).body).toMatchObject({ items: [], total: 2, page: 2 });
+    expect((await search(ad.cookie, '?page=0')).status).toBe(400);
+    expect((await search(s1.cookie, '?q=nguyen')).status).toBe(403);
+    expect((await search(ad.cookie, `?q=${'x'.repeat(101)}`)).status).toBe(400);
+    expect((await search(ad.cookie, '?q=a%00b')).status).toBe(400);
+  });
 });

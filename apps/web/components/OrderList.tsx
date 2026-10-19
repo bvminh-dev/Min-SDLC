@@ -11,6 +11,7 @@ import { limitedText } from '../lib/stock';
 import { Pager } from './Pager';
 import { useCountdown } from './useCountdown';
 import { useQueryGo } from './useQueryGo';
+import { SkRows } from './Skeleton';
 
 interface Result { items: OrderRow[]; page: number; limit: number; total: number }
 const LIMIT = 20;
@@ -135,7 +136,7 @@ function OrderListInner({ admin }: { admin: boolean }) {
 
       {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid={T.error}>{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid={T.retry}>Thử lại</button></div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid={T.error}>{admin ? 'Không tải được danh sách đơn.' : 'Không tải được đơn.'} <button className="btn" onClick={() => void load()} data-testid={T.retry}>Thử lại</button></div>}
-      {view === 'loading' && !data && <div data-testid={T.loading} aria-busy="true">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
+      {view === 'loading' && !data && <SkRows n={5} lead="square" lines={3} trail testid={T.loading} />}
       {emptyAll && (filtering || page > 1
         ? <div className="empty" data-testid={T.emptyFiltered}><span className="tile tile-lg gray"><span className="i i-search" aria-hidden="true" /></span><strong>{admin ? 'Không có đơn nào khớp.' : 'Không có đơn khớp'}</strong><button type="button" className="btn" onClick={clear} data-testid={T.clear}>Xoá lọc</button></div>
         : <div className="empty" data-testid={T.empty}><span className="tile tile-lg gray"><span className="i i-receipt" aria-hidden="true" /></span><strong>Chưa có đơn</strong>{!admin && <Link className="btn btn-primary tight" href="/products">Mua sắm</Link>}</div>)}
@@ -168,5 +169,5 @@ function OrderListInner({ admin }: { admin: boolean }) {
 }
 
 export function OrderList({ admin }: { admin: boolean }) {
-  return <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><OrderListInner admin={admin} /></Suspense>;
+  return <Suspense fallback={<main className="page"><SkRows n={4} lead={false} /></main>}><OrderListInner admin={admin} /></Suspense>;
 }

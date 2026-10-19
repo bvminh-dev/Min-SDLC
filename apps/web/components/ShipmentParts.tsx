@@ -6,6 +6,7 @@ import { useLoginRedirect } from '../lib/prd';
 import { shipmentStatusText } from '../lib/shipping';
 import { limitedText } from '../lib/stock';
 import { useCountdown } from './useCountdown';
+import { SkPanel, SkRows } from './Skeleton';
 
 export interface Err { text: string; field?: boolean; reload?: boolean }
 
@@ -55,7 +56,7 @@ export function Note({ tone, icon, role, testid, className, children }: { tone?:
 }
 
 /** Khung chờ tải. */
-export const Skel = ({ n = 3, testid }: { n?: number; testid?: string }) => <div className="ps-skel" data-testid={testid} aria-busy="true">{Array.from({ length: n }, (_, i) => <div key={i} className="skeleton" />)}</div>;
+export const Skel = ({ n = 3, testid }: { n?: number; testid?: string }) => n > 3 ? <SkRows n={n} lead={false} lines={3} trail testid={testid} /> : <div className="sk-rows" data-testid={testid} aria-busy="true">{Array.from({ length: n }, (_, i) => <SkPanel key={i} n={3} />)}</div>;
 
 /** Trang "không có quyền" của SHP (customer mở màn của staff, admin hoặc API trả 403). */
 export function Forbidden({ testid }: { testid: string }) {

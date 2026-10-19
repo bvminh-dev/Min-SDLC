@@ -12,6 +12,7 @@ import { formatPrice, formatRating, parseMoney } from '../../lib/format';
 import { fetchStock } from '../../lib/inventory';
 import { rateLimitedText, useCategories } from '../../lib/prd';
 import { useQueryGo } from '../../components/useQueryGo';
+import { SkGrid, SkLines } from '../../components/Skeleton';
 
 interface Card { id: string; name: string; price: number; image_url: string | null; category: { id: string; name: string } | null; rating_avg: number | null; rating_count: number }
 interface Result { items: Card[]; page: number; limit: number; total: number }
@@ -98,7 +99,7 @@ function ProductList() {
       <div className="ct-shop">
         <aside className={`ct-side${drawer ? ' open' : ''}`} aria-label="Danh mục">
           <div className="ct-side-head"><h2>{ic('folder')} Danh mục</h2><button type="button" className="btn btn-ghost btn-icon ct-m" aria-label="Đóng" onClick={() => setDrawer(false)}>{ic('x')}</button></div>
-          {cats.state === 'loading' && <div className="skeleton" />}
+          {cats.state === 'loading' && <SkLines n={5} />}
           {cats.state === 'error' && <div role="alert" className="banner banner-error" data-testid="prd-product-list-category-error">Không tải được danh mục. <button className="btn" onClick={() => void cats.reload()}>Thử lại</button></div>}
           {cats.state === 'ready' && cats.items.length === 0 && <p className="hint" data-testid="prd-product-list-category-empty">Chưa có danh mục.</p>}
           {cats.state === 'ready' && cats.items.length > 0 && <CategoryTree items={cats.items} selected={category} hrefFor={hrefFor} onPick={() => setDrawer(false)} />}
@@ -134,7 +135,7 @@ function ProductList() {
           {view === 'rate' && locked && <div role="alert" className="banner banner-error" data-testid="prd-product-list-rate-limited">Bạn thao tác quá nhanh, thử lại sau ít giây. <span className="hint">({rateLimitedText(limit.left)})</span></div>}
           {view === 'error' && <div role="alert" className="banner banner-error" data-testid="prd-product-list-error">Không tải được danh sách sản phẩm. <button className="btn" onClick={() => { setView('loading'); void load(); }} data-testid="prd-product-list-retry">Thử lại</button></div>}
           {view === 'loading' && !data && (
-            <div className="ct-grid" data-testid="prd-product-list-loading" aria-busy="true">{Array.from({ length: 8 }, (_, i) => <div key={i} className="skeleton skeleton-card" />)}</div>
+            <SkGrid n={8} testid="prd-product-list-loading" />
           )}
           {emptyAll && (filtering || page > 1
             ? <div className="empty" data-testid="prd-product-list-empty-filtered"><span className="tile tile-lg gray">{ic('search')}</span><strong>Không có kết quả</strong><button type="button" className="btn" onClick={clear} data-testid="prd-product-list-clear-filter">Xóa bộ lọc</button></div>

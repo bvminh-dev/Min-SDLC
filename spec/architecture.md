@@ -275,8 +275,8 @@ Chiều gọi phải khớp cột Phụ thuộc ở trên. Tên phương thức 
 | SAL | INV | `InventoryApi.reserve(order_id, items, expires_at, tx)` như CHK, chốt ngay khi đơn hộ vào `confirmed` | có |
 | SAL | SHP | `ShippingApi.listActiveMethods`, `ShippingApi.quote` (như CHK) | không |
 | SAL | ORD | `OrderApi.createHo(input, tx)` (tạo đơn hộ và xác nhận `confirmed` trong giao dịch của SAL, ghi audit `order.created_ho`), `OrderApi.listForSale`, `OrderApi.getForSale(code, { created_by })`, `OrderApi.listSources()` (nguồn đang bật; lỗi `source_unavailable`) | `createHo` có, còn lại không |
-| SAL | USR | `UserApi.lookupForSale`, `UserApi.isCustomer` (tra khách theo điện thoại hoặc email, bản che theo SB-08(e)) | không |
-| USR | AUTH | `AuthApi.findCustomersByPhone` (cần chỉ mục `users.phone`) | không |
+| SAL | USR | `UserApi.lookupForSale`, `UserApi.suggestForSale` (gợi ý khách khi gõ dở, khớp một phần, ≥3 ký tự, tối đa 5), `UserApi.isCustomer` (tra khách theo điện thoại hoặc email, bản che theo SB-08(e)) | không |
+| USR | AUTH | `AuthApi.findCustomersByPhone` (cần chỉ mục `users.phone`), `AuthApi.searchCustomers(q, page, limit)` (khớp một phần email, tên, điện thoại; cho danh sách khách của admin và gợi ý của sale) | không |
 | ORD | AUTH | `AuthApi.getDisplayNames(user_ids)` (tên sale cho danh sách đơn, `getShipmentDisplay` và báo cáo) | không |
 | SHP | ORD | `OrderApi.getShipmentDisplay(order_ids)` (một lần cho cả trang danh sách vận đơn: tên khách, điện thoại, địa chỉ, tên sale theo SB-08(d)); `OrderApi.findForShipment` trả thêm `created_by` | không |
 | DSH | ORD | `OrderApi.getSourcesReport(range)`, `OrderApi.getSalesReport(range)` (loại đơn `cancelled`, `expired`, `returned`; ADR-020, ADR-026) | không |

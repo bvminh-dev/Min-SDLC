@@ -52,9 +52,10 @@ const note = (max: number) => z.union([z.string(), z.null()], { errorMap: () => 
   const c = len(v) > max ? 'too_long' : CONTROL_NOTE.test(v) || SURROGATE.test(v) ? 'invalid_format' : null;
   if (c) ctx.addIssue({ code: 'custom', message: c });
 }));
+export const MASKED_PHONE = /^\d{3}\*{4}\d{3}$/;
 const phone = z.string(str).transform(normalizePhone).pipe(z.string().superRefine((v, ctx) => {
   if (!v) ctx.addIssue({ code: 'custom', message: 'required' });
-  else if (!PHONE_RE.test(v)) ctx.addIssue({ code: 'custom', message: 'invalid_phone' });
+  else if (!PHONE_RE.test(v) && !MASKED_PHONE.test(v)) ctx.addIssue({ code: 'custom', message: 'invalid_phone' }); // bản che chỉ qua được khi có `user_id` khớp: CreateService đổi về số thật
 }));
 /** Mã định danh nhận chuỗi bất kỳ tới 100 ký tự và KHÔNG kiểm uuid ở đây: id sai định dạng cùng nội dung với id không có (409 `product-unavailable`, `shipping-method-unavailable`, 422 `customer-not-found`, SB-06). */
 const looseId = z.string(str).superRefine((v, ctx) => { if (v.length === 0) ctx.addIssue({ code: 'custom', message: 'required' }); else if (v.length > 100) ctx.addIssue({ code: 'custom', message: 'too_long' }); });
@@ -99,6 +100,8 @@ export const lookupQuery = z.object({ phone: z.string(str).optional(), email: z.
   return { email: e } as { phone?: string; email?: string };
 });
 export type LookupQuery = z.infer<typeof lookupQuery>;
+/** Gợi ý khách khi gõ dở: `q` 0..100 ký tự, không NUL (dưới 3 ký tự service trả rỗng). */
+export const suggestQuery = z.object({ q: z.string(str).max(100).refine((v) => !v.includes('\0'), 'invalid_format') }).strict();
 
 /** Báo phí: `city` 1..100 sau khi cắt, `items_subtotal` nguyên 1..10.000.000.000, cả hai bắt buộc, tham số lạ (`method_id`) là 400. Số lớn quá trần bị từ chối ở đây, không gọi SHP. */
 export const shippingQuery = z.object({

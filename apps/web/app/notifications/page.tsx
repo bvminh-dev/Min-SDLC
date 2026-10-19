@@ -8,6 +8,7 @@ import { useAuth } from '../../lib/auth';
 import { STATUS_TABS, TYPE_LABEL, badgeText, isType, markAllRead, markRead, safeLink, typesFor, type Notif, type NotifList, type NotifType } from '../../lib/notification';
 import { useLoginRedirect } from '../../lib/prd';
 import { useQueryGo } from '../../components/useQueryGo';
+import { SkRows } from '../../components/Skeleton';
 
 const P = 'ntf-notification-list';
 const LIMIT = 20;
@@ -108,7 +109,7 @@ function ListInner() {
       </div>
 
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{errText} <button type="button" className="btn btn-sm" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
-      {view === 'loading' && !data && <div aria-busy="true" data-testid={`${P}-loading`}>{[0, 1, 2, 3, 4].map((i) => <div className="skeleton" style={{ height: '4rem' }} key={i} />)}</div>}
+      {view === 'loading' && !data && <SkRows n={6} testid={`${P}-loading`} />}
       {data && view !== 'error' && (data.items.length === 0 ? (
         filtering || page > 1
           ? <div className="empty" data-testid={`${P}-empty-filtered`}><span className="tile tile-lg gray"><span className="i i-filter" aria-hidden="true" /></span><strong>Không có thông báo</strong><button type="button" className="btn btn-sm" onClick={() => go({ status: null, type: null, page: null })}>Bỏ lọc</button></div>
@@ -147,5 +148,5 @@ function ListInner() {
 }
 
 export default function NotificationsPage() {
-  return <RequireRole roles={['customer', 'staff', 'sale', 'admin']}><Suspense fallback={<main className="page" aria-busy="true"><div className="skeleton" /></main>}><ListInner /></Suspense></RequireRole>;
+  return <RequireRole roles={['customer', 'staff', 'sale', 'admin']}><Suspense fallback={<main className="page"><SkRows n={4} /></main>}><ListInner /></Suspense></RequireRole>;
 }

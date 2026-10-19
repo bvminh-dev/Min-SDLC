@@ -7,6 +7,7 @@ import { CHECKOUT_REASON, announceCart, couponErrorText, couponWarning, limitedT
 import { formatPrice } from '../lib/format';
 import { Spinner } from './PaymentParts';
 import { useCountdown } from './useCountdown';
+import { SkRows } from './Skeleton';
 
 const CITY_DEBOUNCE_MS = 500;
 
@@ -119,7 +120,7 @@ export function CartSummary({ cart, onCart }: { cart: Cart; onCart: (c: Cart) =>
         <h3 className="crt-lbl"><span className="i i-truck" aria-hidden="true" />Vận chuyển</h3>
         {empty ? <p className="crt-note">Thêm sản phẩm trước</p> : (
           <>
-            {methods === null && !methodsErr && <div className="skeleton" aria-busy="true" />}
+            {methods === null && !methodsErr && <SkRows n={2} lead={false} />}
             {methodsErr && <p role="alert" className="crt-warn">Không tải được vận chuyển. <button type="button" className="btn btn-sm" onClick={() => void loadMethods()}>Thử lại</button></p>}
             {methods && methods.length === 0 && <p className="crt-note">Chưa có phương thức nào</p>}
             {methods && methods.length > 0 && (

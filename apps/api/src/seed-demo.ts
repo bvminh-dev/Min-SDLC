@@ -7,15 +7,15 @@ import { hashPassword } from './modules/auth/crypto';
 
 export const DEMO_PASSWORD = 'Demo-Pass-2026!';
 const ALPHA = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-const code = () => Array.from({ length: 12 }, () => ALPHA[randomInt(ALPHA.length)]).join('');
-const hex = (n: number) => randomBytes(n / 2).toString('hex');
-const ago = (days: number, hours = 0) => new Date(Date.now() - days * 864e5 - hours * 36e5);
-const after = (d: Date, mins: number) => new Date(d.getTime() + mins * 6e4);
-const slug = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-const fold = (s: string) => slug(s).replace(/-/g, ' ');
+export const code = () => Array.from({ length: 12 }, () => ALPHA[randomInt(ALPHA.length)]).join('');
+export const hex = (n: number) => randomBytes(n / 2).toString('hex');
+export const ago = (days: number, hours = 0) => new Date(Date.now() - days * 864e5 - hours * 36e5);
+export const after = (d: Date, mins: number) => new Date(d.getTime() + mins * 6e4);
+export const slug = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+export const fold = (s: string) => slug(s).replace(/-/g, ' ');
 
-type OS = 'pending' | 'confirmed' | 'paid' | 'shipped' | 'delivered' | 'cancelled' | 'expired' | 'returned';
-interface OrderSpec { c: number; d: number; items: [number, number][]; m: 'cod' | 'vnpay'; ship: number; s: OS; paidThenCancel?: boolean; payFailed?: boolean; shipFailed?: boolean; coupon?: string }
+export type OS = 'pending' | 'confirmed' | 'paid' | 'shipped' | 'delivered' | 'cancelled' | 'expired' | 'returned';
+export interface OrderSpec { c: number; d: number; items: [number, number][]; m: 'cod' | 'vnpay'; ship: number; s: OS; paidThenCancel?: boolean; payFailed?: boolean; shipFailed?: boolean; coupon?: string }
 
 // [tên, sku, danh mục, giá, trạng thái, tồn đầu, ngưỡng thấp, mô tả]
 const P: [string, string, string, number, 'active' | 'draft' | 'archived', number, number, string][] = [
@@ -83,10 +83,108 @@ const ORDERS: OrderSpec[] = [
   { c: 5, d: 0, items: [[23, 3]], m: 'cod', ship: 0, s: 'pending' },
   { c: 6, d: 0, items: [[0, 1]], m: 'cod', ship: 0, s: 'pending' },
 ];
-const REVIEW_TEXT: [number, string][] = [
+export const REVIEW_TEXT: [number, string][] = [
   [5, 'Hàng đúng mô tả, đóng gói cẩn thận, giao nhanh. Rất hài lòng!'], [5, 'Chất lượng tốt hơn mong đợi so với giá tiền.'], [4, 'Dùng ổn, chỉ hơi tiếc là màu thực tế nhạt hơn ảnh.'],
   [4, 'Giao hàng nhanh, sản phẩm dùng tốt, sẽ ủng hộ tiếp.'], [3, 'Tạm được, đúng giá. Hộp hơi móp khi nhận.'], [5, 'Mua lần thứ hai rồi, vẫn rất ưng.'], [2, 'Không giống kỳ vọng lắm, mong shop cải thiện.'],
 ];
+
+export type PRow = (typeof P)[number];
+export type CRow = (typeof CUSTOMERS)[number];
+export interface Delivered { orderId: string; itemId: string; product: number; user: number; at: Date }
+export interface Ctx { admin: { id: string }; cust: string[]; P: PRow[]; CUSTOMERS: CRow[]; pid: string[]; sid: string[]; ship: string[]; couponBy: Record<string, { id: string }>; onHand: number[]; reserved: number[]; mv: Prisma.StockMovementCreateManyInput[]; noti: ReturnType<typeof notifier>; delivered: Delivered[] }
+
+export const notifier = (notis: Prisma.NotificationCreateManyInput[]) => (user: string, type: Prisma.NotificationCreateManyInput['type'], title: string, body: string, link: string, at: Date, key: string, read = true) =>
+  notis.push({ userId: user, type, title, body, link, status: read ? 'read' : 'unread', readAt: read ? after(at, 30) : null, eventId: randomUUID(), dedupeKey: key, createdAt: at, updatedAt: at, data: {} });
+
+// Một đơn: đơn + thanh toán + vận đơn + lịch sử + giữ/trừ tồn + coupon + thông báo; cập nhật onHand/reserved/mv/delivered của ctx tại chỗ, trả id đơn.
+export async function writeOrder(db: Prisma.TransactionClient, o: OrderSpec, x: Ctx): Promise<string> {
+  const { admin, cust, P, CUSTOMERS, pid, sid, ship, couponBy, onHand, reserved, mv, noti, delivered } = x;
+  const id = randomUUID(); const oc = code(); const at = ago(o.d, 2);
+  const items = o.items.map(([p, q], pos) => ({ id: randomUUID(), p, q, pos: pos + 1 }));
+  const itemsTotal = items.reduce((s, it) => s + P[it.p][3] * it.q, 0);
+  const sm = [{ b: 30000, f: 500000 }, { b: 55000, f: 2000000 }][o.ship]; const city = CUSTOMERS[o.c][5];
+  const sur = o.ship === 1 && ['Hà Nội', 'Hồ Chí Minh'].includes(city) ? 15000 : 0;
+  const fee = itemsTotal >= sm.f ? 0 : sm.b + sur;
+  let discount = 0;
+  if (o.coupon === 'WELCOME10') discount = Math.min(Math.round(itemsTotal * 0.1), 50000);
+  if (o.coupon === 'FREESHIP') discount = 30000;
+  const grand = itemsTotal - discount + fee;
+  const vn = o.m === 'vnpay';
+  const paidStates: OS[] = ['paid', 'shipped', 'delivered', 'returned'];
+  const paidOnline = vn && (paidStates.includes(o.s) || o.paidThenCancel);
+  const codDone = !vn && (o.s === 'delivered');
+  const payStatus = o.s === 'expired' ? 'expired' : o.s === 'cancelled' ? (o.paidThenCancel ? 'refunded' : o.payFailed ? 'failed' : 'cancelled') : o.s === 'returned' ? 'refunded' : paidOnline || codDone ? 'succeeded' : 'pending';
+  const paidAt = paidOnline ? after(at, 12) : codDone ? ago(o.d - 4) : null;
+  const confirmedAt = !vn && o.s !== 'pending' && o.s !== 'cancelled' && o.s !== 'expired' ? after(at, 90) : null;
+  const hist: { from: OS | null; to: OS; role: 'customer' | 'admin' | 'system'; actor?: string; reason?: string; at: Date }[] = [{ from: null, to: 'pending', role: 'customer', actor: cust[o.c], at }];
+  let cur: OS = 'pending'; let step = 1;
+  const go = (to: OS, role: 'customer' | 'admin' | 'system', reason?: string) => { hist.push({ from: cur, to, role, actor: role === 'admin' ? admin.id : undefined, reason, at: after(at, 60 * 6 * step++) }); cur = to; };
+  if (vn && paidOnline) go('paid', 'system');
+  if (!vn && ['confirmed', 'shipped', 'delivered', 'returned'].includes(o.s)) go('confirmed', 'admin');
+  if (o.s === 'shipped' || o.s === 'delivered' || o.s === 'returned') go('shipped', 'admin');
+  if (o.s === 'delivered' || o.s === 'returned') go('delivered', 'system');
+  if (o.s === 'returned') go('returned', 'admin');
+  if (o.s === 'cancelled') go('cancelled', o.payFailed ? 'system' : o.paidThenCancel ? 'admin' : 'customer', o.payFailed ? 'Thanh toán thất bại' : o.paidThenCancel ? 'Khách đổi ý, hoàn tiền' : 'Khách yêu cầu hủy');
+  if (o.s === 'expired') go('expired', 'system');
+  const tracking = ['shipped', 'delivered', 'returned'].includes(o.s) ? `VN${randomInt(1e9, 9e9)}` : null;
+  const deliveredAt = o.s === 'delivered' || o.s === 'returned' ? hist.find((h) => h.to === 'delivered')!.at : null;
+  const cancelledBy = o.payFailed ? 'system' : o.paidThenCancel ? 'admin' : 'customer';
+  await db.order.create({ data: {
+    id, userId: cust[o.c], code: oc, status: o.s, paymentStatus: payStatus, itemsTotal: BigInt(itemsTotal), discount: BigInt(discount), shippingFee: BigInt(fee), grandTotal: BigInt(grand),
+    shippingAddress: { receiver: CUSTOMERS[o.c][0], phone: CUSTOMERS[o.c][2], line1: CUSTOMERS[o.c][3], ward: CUSTOMERS[o.c][4], district: null, city }, shippingMethodId: ship[o.ship], paymentMethod: o.m,
+    paymentExpiresAt: vn ? (o.s === 'pending' ? ago(0, -23) : after(at, 15)) : null, trackingNumber: tracking,
+    ...(o.s === 'cancelled' ? { cancelReason: o.payFailed ? 'payment_failed' : o.paidThenCancel ? 'admin' : 'customer_request', cancelledByRole: cancelledBy } : {}),
+    handoffLockedAt: ['shipped', 'delivered', 'returned'].includes(o.s) ? hist.find((h) => h.to === 'shipped')!.at : null,
+    confirmedAt, paidAt, deliveredAt: o.s === 'delivered' ? deliveredAt : null, createdAt: at, updatedAt: hist[hist.length - 1].at,
+    items: { create: items.map((it) => ({ id: it.id, productId: pid[it.p], nameSnapshot: P[it.p][0], unitPrice: BigInt(P[it.p][3]), quantity: it.q, position: it.pos })) },
+    history: { create: hist.map((h) => ({ fromStatus: h.from, toStatus: h.to, actorId: h.actor ?? null, actorRole: h.role, reason: h.reason ?? null, createdAt: h.at })) },
+  } });
+  // Thanh toán
+  const payId = randomUUID();
+  await db.payment.create({ data: { id: payId, orderId: id, orderCode: oc, userId: cust[o.c], amount: BigInt(grand), method: o.m, status: payStatus, attemptNo: vn && payStatus !== 'pending' ? 1 : 0, providerRef: paidOnline || (payStatus === 'refunded' && vn) ? `VNP${randomInt(1e9, 9e9)}` : null, expiresAt: vn ? (o.s === 'pending' ? ago(0, -23) : after(at, 15)) : null, paidAt, version: 1, createdAt: at, updatedAt: paidAt ?? at } });
+  if (vn && payStatus !== 'pending' && payStatus !== 'cancelled') {
+    const attId = randomUUID(); const ok = paidOnline;
+    await db.paymentAttempt.create({ data: { id: attId, paymentId: payId, attemptNo: 1, txnRef: `${hex(16)}01`, status: ok ? 'succeeded' : payStatus === 'expired' ? 'superseded' : 'failed', reason: o.payFailed ? 'declined' : null, gatewayCode: ok ? '00' : o.payFailed ? '51' : null, providerTxnNo: ok ? `${randomInt(1e8, 9e8)}` : null, createDate: at, expiresAt: after(at, 15), resolvedAt: after(at, 12), createdAt: at, updatedAt: after(at, 12) } });
+    if (payStatus === 'refunded') await db.refund.create({ data: { paymentId: payId, attemptId: attId, amount: BigInt(grand), reason: 'admin_manual', note: o.s === 'returned' ? 'Hoàn tiền do khách trả hàng' : 'Hoàn tiền do khách hủy đơn', requestedBy: admin.id, status: 'succeeded', gatewayCode: '00', gatewayRequestId: hex(32), requestedAt: hist[hist.length - 1].at, resolvedAt: after(hist[hist.length - 1].at, 3), createdAt: hist[hist.length - 1].at } });
+  }
+  // Vận đơn
+  const needShip = ['confirmed', 'paid', 'shipped', 'delivered', 'returned'].includes(o.s);
+  if (needShip) {
+    const shipped = hist.find((h) => h.to === 'shipped')?.at ?? null;
+    const failed = o.shipFailed; const st = o.s === 'delivered' ? 'delivered' : o.s === 'returned' ? 'returned' : o.s === 'shipped' ? (failed ? 'failed' : 'shipped') : 'pending';
+    const shId = randomUUID();
+    await db.shipment.create({ data: { id: shId, orderId: id, shippingMethodId: ship[o.ship], status: st, trackingNumber: st === 'pending' ? null : tracking, orderCode: oc, codAmount: vn ? 0n : BigInt(grand), shippedAt: shipped, deliveredAt: st === 'delivered' || st === 'returned' ? deliveredAt : null, version: 1, createdAt: at, updatedAt: shipped ?? at,
+      history: { create: [{ event: 'status_changed', status: 'pending', createdAt: at }, ...(shipped ? [{ event: 'status_changed' as const, status: 'shipped' as const, trackingNumber: tracking, createdAt: shipped }] : []),
+        ...(st === 'delivered' || st === 'returned' ? [{ event: 'status_changed' as const, status: 'delivered' as const, trackingNumber: tracking, createdAt: deliveredAt! }] : []),
+        ...(st === 'returned' ? [{ event: 'status_changed' as const, status: 'returned' as const, trackingNumber: tracking, createdAt: after(deliveredAt!, 600) }] : []),
+        ...(st === 'failed' ? [{ event: 'status_changed' as const, status: 'failed' as const, trackingNumber: tracking, reasonCode: 'customer_unreachable' as const, note: 'Gọi 3 lần không liên lạc được', createdAt: after(shipped!, 300) }] : [])] } } });
+  }
+  // Tồn kho: đã giao đi thì trừ, đang giữ thì reserve, hủy/hết hạn thì nhả
+  for (const it of items) {
+    const kept = ['pending', 'confirmed', 'paid'].includes(o.s);
+    const out = ['shipped', 'delivered', 'returned'].includes(o.s);
+    await db.stockReservation.create({ data: { stockItemId: sid[it.p], orderId: id, quantity: it.q, status: kept ? 'held' : out ? 'committed' : o.s === 'expired' ? 'expired' : 'released', expiresAt: o.s === 'expired' ? after(at, 15) : kept && vn ? ago(0, -23) : null, createdAt: at, updatedAt: at } });
+    if (kept) reserved[it.p] += it.q;
+    if (out) {
+      onHand[it.p] -= it.q;
+      mv.push({ stockItemId: sid[it.p], type: 'sale', quantity: -it.q, onHandAfter: onHand[it.p], refType: 'order', refId: id, createdAt: hist.find((h) => h.to === 'shipped')!.at });
+      if (o.s === 'returned') { onHand[it.p] += it.q; mv.push({ stockItemId: sid[it.p], type: 'return', quantity: it.q, onHandAfter: onHand[it.p], refType: 'order', refId: id, createdAt: after(deliveredAt!, 600) }); }
+    }
+  }
+  // Coupon
+  if (o.coupon && !['cancelled', 'expired'].includes(o.s)) {
+    const c = couponBy[o.coupon]; const cons = ['delivered', 'shipped', 'paid', 'confirmed', 'returned'].includes(o.s);
+    await db.couponRedemption.create({ data: { couponId: c.id, orderId: id, userId: cust[o.c], amount: BigInt(discount), status: cons ? 'consumed' : 'reserved', reservedAt: at, consumedAt: cons ? after(at, 5) : null, createdAt: at } });
+  }
+  // Thông báo cho khách
+  noti(cust[o.c], 'order_created', 'Đã đặt đơn', `Đơn ${oc} đã được tạo, tổng ${grand.toLocaleString('vi-VN')} đ.`, `/orders/${oc}`, at, `order:${id}:created`);
+  for (const h of hist.slice(1)) {
+    const map: Partial<Record<OS, [Prisma.NotificationCreateManyInput['type'], string, string]>> = { confirmed: ['order_confirmed', 'Đơn đã xác nhận', 'đang được chuẩn bị'], paid: ['payment_succeeded', 'Thanh toán thành công', 'đã được thanh toán'], shipped: ['order_shipped', 'Đơn đang giao', 'đã giao cho đơn vị vận chuyển'], delivered: ['order_delivered', 'Đã giao hàng', 'đã giao thành công'], cancelled: ['order_cancelled', 'Đơn đã hủy', 'đã bị hủy'], expired: ['order_expired', 'Đơn hết hạn', 'đã hết hạn thanh toán'], returned: ['order_returned', 'Đơn đã trả', 'đã được hoàn trả'] };
+    const m = map[h.to]; if (m) noti(cust[o.c], m[0], m[1], `Đơn ${oc} ${m[2]}.`, `/orders/${oc}`, h.at, `order:${id}:${h.to}`, o.d > 3);
+  }
+  if (o.s === 'delivered') items.forEach((it) => delivered.push({ orderId: id, itemId: it.id, product: it.p, user: o.c, at: deliveredAt! }));
+  return id;
+}
 
 async function main() {
   // eslint-disable-next-line no-restricted-syntax -- điểm vào CLI của seed demo, không phải mã ứng dụng
@@ -148,98 +246,12 @@ async function main() {
   const reserved = P.map(() => 0);
   const mv: Prisma.StockMovementCreateManyInput[] = P.map((p, i) => ({ stockItemId: sid[i], type: 'in', quantity: p[5], onHandAfter: p[5], reason: 'purchase', note: 'Nhập kho ban đầu', actorId: admin.id, actorName: 'Quản trị viên', createdAt: ago(44) }));
   const notis: Prisma.NotificationCreateManyInput[] = [];
-  const noti = (user: string, type: Prisma.NotificationCreateManyInput['type'], title: string, body: string, link: string, at: Date, key: string, read = true) =>
-    notis.push({ userId: user, type, title, body, link, status: read ? 'read' : 'unread', readAt: read ? after(at, 30) : null, eventId: randomUUID(), dedupeKey: key, createdAt: at, updatedAt: at, data: {} });
-  const delivered: { orderId: string; itemId: string; product: number; user: number; at: Date }[] = [];
-  const sold = new Map<number, number>();
+  const noti = notifier(notis);
+  const delivered: Delivered[] = [];
 
-  for (const o of ORDERS.sort((a, b) => b.d - a.d)) {
-    const id = randomUUID(); const oc = code(); const at = ago(o.d, 2);
-    const items = o.items.map(([p, q], pos) => ({ id: randomUUID(), p, q, pos: pos + 1 }));
-    const itemsTotal = items.reduce((s, it) => s + P[it.p][3] * it.q, 0);
-    const sm = [{ b: 30000, f: 500000 }, { b: 55000, f: 2000000 }][o.ship]; const city = CUSTOMERS[o.c][5];
-    const sur = o.ship === 1 && ['Hà Nội', 'Hồ Chí Minh'].includes(city) ? 15000 : 0;
-    const fee = itemsTotal >= sm.f ? 0 : sm.b + sur;
-    let discount = 0;
-    if (o.coupon === 'WELCOME10') discount = Math.min(Math.round(itemsTotal * 0.1), 50000);
-    if (o.coupon === 'FREESHIP') discount = 30000;
-    const grand = itemsTotal - discount + fee;
-    const vn = o.m === 'vnpay';
-    const paidStates: OS[] = ['paid', 'shipped', 'delivered', 'returned'];
-    const paidOnline = vn && (paidStates.includes(o.s) || o.paidThenCancel);
-    const codDone = !vn && (o.s === 'delivered');
-    const payStatus = o.s === 'expired' ? 'expired' : o.s === 'cancelled' ? (o.paidThenCancel ? 'refunded' : o.payFailed ? 'failed' : 'cancelled') : o.s === 'returned' ? 'refunded' : paidOnline || codDone ? 'succeeded' : 'pending';
-    const paidAt = paidOnline ? after(at, 12) : codDone ? ago(o.d - 4) : null;
-    const confirmedAt = !vn && o.s !== 'pending' && o.s !== 'cancelled' && o.s !== 'expired' ? after(at, 90) : null;
-    const hist: { from: OS | null; to: OS; role: 'customer' | 'admin' | 'system'; actor?: string; reason?: string; at: Date }[] = [{ from: null, to: 'pending', role: 'customer', actor: cust[o.c], at }];
-    let cur: OS = 'pending'; let step = 1;
-    const go = (to: OS, role: 'customer' | 'admin' | 'system', reason?: string) => { hist.push({ from: cur, to, role, actor: role === 'admin' ? admin.id : undefined, reason, at: after(at, 60 * 6 * step++) }); cur = to; };
-    if (vn && paidOnline) go('paid', 'system');
-    if (!vn && ['confirmed', 'shipped', 'delivered', 'returned'].includes(o.s)) go('confirmed', 'admin');
-    if (o.s === 'shipped' || o.s === 'delivered' || o.s === 'returned') go('shipped', 'admin');
-    if (o.s === 'delivered' || o.s === 'returned') go('delivered', 'system');
-    if (o.s === 'returned') go('returned', 'admin');
-    if (o.s === 'cancelled') go('cancelled', o.payFailed ? 'system' : o.paidThenCancel ? 'admin' : 'customer', o.payFailed ? 'Thanh toán thất bại' : o.paidThenCancel ? 'Khách đổi ý, hoàn tiền' : 'Khách yêu cầu hủy');
-    if (o.s === 'expired') go('expired', 'system');
-    const tracking = ['shipped', 'delivered', 'returned'].includes(o.s) ? `VN${randomInt(1e9, 9e9)}` : null;
-    const deliveredAt = o.s === 'delivered' || o.s === 'returned' ? hist.find((h) => h.to === 'delivered')!.at : null;
-    const cancelledBy = o.payFailed ? 'system' : o.paidThenCancel ? 'admin' : 'customer';
-    await db.order.create({ data: {
-      id, userId: cust[o.c], code: oc, status: o.s, paymentStatus: payStatus, itemsTotal: BigInt(itemsTotal), discount: BigInt(discount), shippingFee: BigInt(fee), grandTotal: BigInt(grand),
-      shippingAddress: { receiver: CUSTOMERS[o.c][0], phone: CUSTOMERS[o.c][2], line1: CUSTOMERS[o.c][3], ward: CUSTOMERS[o.c][4], district: null, city }, shippingMethodId: ship[o.ship], paymentMethod: o.m,
-      paymentExpiresAt: vn ? (o.s === 'pending' ? ago(0, -23) : after(at, 15)) : null, trackingNumber: tracking,
-      ...(o.s === 'cancelled' ? { cancelReason: o.payFailed ? 'payment_failed' : o.paidThenCancel ? 'admin' : 'customer_request', cancelledByRole: cancelledBy } : {}),
-      handoffLockedAt: ['shipped', 'delivered', 'returned'].includes(o.s) ? hist.find((h) => h.to === 'shipped')!.at : null,
-      confirmedAt, paidAt, deliveredAt: o.s === 'delivered' ? deliveredAt : null, createdAt: at, updatedAt: hist[hist.length - 1].at,
-      items: { create: items.map((it) => ({ id: it.id, productId: pid[it.p], nameSnapshot: P[it.p][0], unitPrice: BigInt(P[it.p][3]), quantity: it.q, position: it.pos })) },
-      history: { create: hist.map((h) => ({ fromStatus: h.from, toStatus: h.to, actorId: h.actor ?? null, actorRole: h.role, reason: h.reason ?? null, createdAt: h.at })) },
-    } });
-    // Thanh toán
-    const payId = randomUUID();
-    await db.payment.create({ data: { id: payId, orderId: id, orderCode: oc, userId: cust[o.c], amount: BigInt(grand), method: o.m, status: payStatus, attemptNo: vn && payStatus !== 'pending' ? 1 : 0, providerRef: paidOnline || (payStatus === 'refunded' && vn) ? `VNP${randomInt(1e9, 9e9)}` : null, expiresAt: vn ? (o.s === 'pending' ? ago(0, -23) : after(at, 15)) : null, paidAt, version: 1, createdAt: at, updatedAt: paidAt ?? at } });
-    if (vn && payStatus !== 'pending' && payStatus !== 'cancelled') {
-      const attId = randomUUID(); const ok = paidOnline;
-      await db.paymentAttempt.create({ data: { id: attId, paymentId: payId, attemptNo: 1, txnRef: `${hex(16)}01`, status: ok ? 'succeeded' : payStatus === 'expired' ? 'superseded' : 'failed', reason: o.payFailed ? 'declined' : null, gatewayCode: ok ? '00' : o.payFailed ? '51' : null, providerTxnNo: ok ? `${randomInt(1e8, 9e8)}` : null, createDate: at, expiresAt: after(at, 15), resolvedAt: after(at, 12), createdAt: at, updatedAt: after(at, 12) } });
-      if (payStatus === 'refunded') await db.refund.create({ data: { paymentId: payId, attemptId: attId, amount: BigInt(grand), reason: 'admin_manual', note: o.s === 'returned' ? 'Hoàn tiền do khách trả hàng' : 'Hoàn tiền do khách hủy đơn', requestedBy: admin.id, status: 'succeeded', gatewayCode: '00', gatewayRequestId: hex(32), requestedAt: hist[hist.length - 1].at, resolvedAt: after(hist[hist.length - 1].at, 3), createdAt: hist[hist.length - 1].at } });
-    }
-    // Vận đơn
-    const needShip = ['confirmed', 'paid', 'shipped', 'delivered', 'returned'].includes(o.s);
-    if (needShip) {
-      const shipped = hist.find((h) => h.to === 'shipped')?.at ?? null;
-      const failed = o.shipFailed; const st = o.s === 'delivered' ? 'delivered' : o.s === 'returned' ? 'returned' : o.s === 'shipped' ? (failed ? 'failed' : 'shipped') : 'pending';
-      const shId = randomUUID();
-      await db.shipment.create({ data: { id: shId, orderId: id, shippingMethodId: ship[o.ship], status: st, trackingNumber: st === 'pending' ? null : tracking, orderCode: oc, codAmount: vn ? 0n : BigInt(grand), shippedAt: shipped, deliveredAt: st === 'delivered' || st === 'returned' ? deliveredAt : null, version: 1, createdAt: at, updatedAt: shipped ?? at,
-        history: { create: [{ event: 'status_changed', status: 'pending', createdAt: at }, ...(shipped ? [{ event: 'status_changed' as const, status: 'shipped' as const, trackingNumber: tracking, createdAt: shipped }] : []),
-          ...(st === 'delivered' || st === 'returned' ? [{ event: 'status_changed' as const, status: 'delivered' as const, trackingNumber: tracking, createdAt: deliveredAt! }] : []),
-          ...(st === 'returned' ? [{ event: 'status_changed' as const, status: 'returned' as const, trackingNumber: tracking, createdAt: after(deliveredAt!, 600) }] : []),
-          ...(st === 'failed' ? [{ event: 'status_changed' as const, status: 'failed' as const, trackingNumber: tracking, reasonCode: 'customer_unreachable' as const, note: 'Gọi 3 lần không liên lạc được', createdAt: after(shipped!, 300) }] : [])] } } });
-    }
-    // Tồn kho: đã giao đi thì trừ, đang giữ thì reserve, hủy/hết hạn thì nhả
-    for (const it of items) {
-      const kept = ['pending', 'confirmed', 'paid'].includes(o.s);
-      const out = ['shipped', 'delivered', 'returned'].includes(o.s);
-      await db.stockReservation.create({ data: { stockItemId: sid[it.p], orderId: id, quantity: it.q, status: kept ? 'held' : out ? 'committed' : o.s === 'expired' ? 'expired' : 'released', expiresAt: o.s === 'expired' ? after(at, 15) : kept && vn ? ago(0, -23) : null, createdAt: at, updatedAt: at } });
-      if (kept) reserved[it.p] += it.q;
-      if (out) {
-        onHand[it.p] -= it.q; sold.set(it.p, (sold.get(it.p) ?? 0) + it.q);
-        mv.push({ stockItemId: sid[it.p], type: 'sale', quantity: -it.q, onHandAfter: onHand[it.p], refType: 'order', refId: id, createdAt: hist.find((h) => h.to === 'shipped')!.at });
-        if (o.s === 'returned') { onHand[it.p] += it.q; mv.push({ stockItemId: sid[it.p], type: 'return', quantity: it.q, onHandAfter: onHand[it.p], refType: 'order', refId: id, createdAt: after(deliveredAt!, 600) }); }
-      }
-    }
-    // Coupon
-    if (o.coupon && !['cancelled', 'expired'].includes(o.s)) {
-      const c = couponBy[o.coupon]; const cons = ['delivered', 'shipped', 'paid', 'confirmed', 'returned'].includes(o.s);
-      await db.couponRedemption.create({ data: { couponId: c.id, orderId: id, userId: cust[o.c], amount: BigInt(discount), status: cons ? 'consumed' : 'reserved', reservedAt: at, consumedAt: cons ? after(at, 5) : null, createdAt: at } });
-    }
-    // Thông báo cho khách
-    noti(cust[o.c], 'order_created', 'Đã đặt đơn', `Đơn ${oc} đã được tạo, tổng ${grand.toLocaleString('vi-VN')} đ.`, `/orders/${oc}`, at, `order:${id}:created`);
-    for (const h of hist.slice(1)) {
-      const map: Partial<Record<OS, [Prisma.NotificationCreateManyInput['type'], string, string]>> = { confirmed: ['order_confirmed', 'Đơn đã xác nhận', 'đang được chuẩn bị'], paid: ['payment_succeeded', 'Thanh toán thành công', 'đã được thanh toán'], shipped: ['order_shipped', 'Đơn đang giao', 'đã giao cho đơn vị vận chuyển'], delivered: ['order_delivered', 'Đã giao hàng', 'đã giao thành công'], cancelled: ['order_cancelled', 'Đơn đã hủy', 'đã bị hủy'], expired: ['order_expired', 'Đơn hết hạn', 'đã hết hạn thanh toán'], returned: ['order_returned', 'Đơn đã trả', 'đã được hoàn trả'] };
-      const m = map[h.to]; if (m) noti(cust[o.c], m[0], m[1], `Đơn ${oc} ${m[2]}.`, `/orders/${oc}`, h.at, `order:${id}:${h.to}`, o.d > 3);
-    }
-    if (o.s === 'delivered') items.forEach((it) => delivered.push({ orderId: id, itemId: it.id, product: it.p, user: o.c, at: deliveredAt! }));
-  }
+  for (const o of ORDERS.sort((a, b) => b.d - a.d)) await writeOrder(db, o, { admin, cust, P, CUSTOMERS, pid, sid, ship, couponBy, onHand, reserved, mv, noti, delivered });
 
+  await db.notification.createMany({ data: notis });
   // Cập nhật tồn kho cuối, nhập thêm hàng cho vài mã
   for (const i of [2, 10, 16]) { onHand[i] += 0; }
   for (const [i] of P.entries()) await db.stockItem.update({ where: { id: sid[i] }, data: { onHand: onHand[i], reserved: reserved[i], lowStockNotified: onHand[i] - reserved[i] <= P[i][6] } });
@@ -271,4 +283,4 @@ async function main() {
   }, { timeout: 300000, maxWait: 10000 });
   await client.$disconnect();
 }
-void main().catch((e) => { process.stderr.write(`${e instanceof Error ? e.stack : e}\n`); process.exit(1); });
+if (require.main === module) void main().catch((e) => { process.stderr.write(`${e instanceof Error ? e.stack : e}\n`); process.exit(1); });

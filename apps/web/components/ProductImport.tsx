@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../lib/config';
 import { formatPrice } from '../lib/format';
 import { rateLimitedText, useLoginRedirect } from '../lib/prd';
 import { useCountdown } from './useCountdown';
+import { SkLines } from './Skeleton';
 
 // Import sản phẩm từ Excel hoặc CSV (admin-product-import, ADR-025): một trang, ba vùng; Xem trước (dry_run=true, không ghi) rồi Xác nhận (dry_run=false) trên đúng tệp đã xem.
 interface RowError { field: string; code: string; message: string }
@@ -139,7 +140,7 @@ export function ProductImport() {
         {fileError && <div role="alert" className="banner banner-error" data-testid="prd-admin-product-import-file-error">{fileError}</div>}
       </section>
 
-      {phase === 'checking' && <div data-testid="prd-admin-product-import-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /></div>}
+      {phase === 'checking' && <div data-testid="prd-admin-product-import-loading" aria-busy="true"><SkLines n={3} /></div>}
 
       {report && s && (
         <section className="panel" aria-label={done ? 'Kết quả import' : 'Xem trước'} data-testid={done ? 'prd-admin-product-import-result' : undefined}>

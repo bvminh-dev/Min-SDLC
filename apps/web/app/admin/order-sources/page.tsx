@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { RequireRole } from '../../../components/RequireRole';
 import { api } from '../../../lib/api';
 import { limitedText } from '../../../lib/stock';
+import { SkRows } from '../../../components/Skeleton';
 
 interface Source { id: string; code: string; name: string; is_active: boolean; is_system: boolean; position: number }
 const P = 'ord-order-source-admin';
@@ -77,25 +78,24 @@ function SourceAdmin() {
   };
 
   return (
-    <main className="page">
-      <div className="page-head"><h1>Nguồn đơn</h1><div className="actions"><button type="button" className="btn btn-primary tight" onClick={() => open({ code: '', name: '', position: '' })} disabled={view !== 'ready'} data-testid={`${P}-add`}><span className="i i-plus" aria-hidden="true" />Thêm nguồn</button></div></div>
-      <p className="muted">Nguồn đơn: nơi đơn hàng đến, dùng để chọn khi tạo đơn hộ và để tính lương marketing.</p>
+    <main className="page page-mid">
+      <div className="page-head"><h1>Nguồn đơn</h1><div className="actions"><button type="button" className="btn btn-primary tight" onClick={() => open({ code: '', name: '', position: '' })} disabled={view !== 'ready'} data-testid={`${P}-add`}>Thêm nguồn</button></div></div>
+      <p className="muted os-sub">Nơi đơn hàng đến, dùng để chọn khi tạo đơn hộ và để tính lương marketing.{rows && <span className="os-count"> {rows.length}/50 nguồn</span>}</p>
       {saved && <div role="status" className="banner banner-ok" data-testid={`${P}-saved`}>Đã lưu nguồn đơn</div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được danh sách nguồn đơn. <button type="button" className="btn" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
-      {view === 'loading' && !rows && <div aria-busy="true" data-testid={`${P}-loading`}>{Array.from({ length: 4 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
+      {view === 'loading' && !rows && <SkRows n={4} lead={false} trail testid={`${P}-loading`} />}
       {rows && view !== 'error' && (
         <div className="panel panel-flush table-wrap" data-testid={`${P}-table`}>
-          <table className="stack-table">
-            <thead><tr><th>Tên</th><th>Mã</th><th className="num">Thứ tự</th><th>Trạng thái</th><th>Loại</th><th>Hành động</th></tr></thead>
+          <table className="stack-table os-table">
+            <thead><tr><th>Tên</th><th>Mã</th><th className="num">Thứ tự</th><th>Trạng thái</th><th className="os-act">Hành động</th></tr></thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} data-testid={`${P}-row`} data-code={r.code}>
-                  <td data-label="Tên" className="strong" data-testid={`${P}-name`}>{r.name}</td>
-                  <td data-label="Mã" className="mono" data-testid={`${P}-code`}>{r.code}</td>
+                <tr key={r.id} className={r.is_active ? undefined : 'os-off'} data-testid={`${P}-row`} data-code={r.code}>
+                  <td data-label="Tên" className="strong"><span data-testid={`${P}-name`}>{r.name}</span>{r.is_system && <span className="badge os-sys" data-testid={`${P}-system-badge`}>Hệ thống</span>}</td>
+                  <td data-label="Mã"><code className="os-code" data-testid={`${P}-code`}>{r.code}</code></td>
                   <td data-label="Thứ tự" className="num" data-testid={`${P}-position`}>{r.position}</td>
                   <td data-label="Trạng thái"><span className="badge" data-status={r.is_active ? 'confirmed' : 'cancelled'} data-testid={`${P}-status-badge`}>{r.is_active ? 'Đang bật' : 'Đã tắt'}</span></td>
-                  <td data-label="Loại">{r.is_system && <span className="badge" data-testid={`${P}-system-badge`}>Hệ thống</span>}</td>
-                  <td data-label="Hành động">
+                  <td data-label="Hành động" className="os-act">
                     <div className="actions">
                       <button type="button" className="btn btn-sm" disabled={busy} onClick={() => open({ edit: r, code: r.code, name: r.name, position: String(r.position) })} data-testid={`${P}-edit`}>Sửa</button>
                       {!r.is_system && (r.is_active
@@ -112,21 +112,24 @@ function SourceAdmin() {
 
       {draft && (
         <div className="backdrop">
-          <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="ord-src-title" onKeyDown={(e) => e.key === 'Escape' && closeDialog()} data-testid={`${P}-dialog`}>
+          <div className="dialog os-dlg" role="dialog" aria-modal="true" aria-labelledby="ord-src-title" onKeyDown={(e) => e.key === 'Escape' && closeDialog()} data-testid={`${P}-dialog`}>
             <div className="dlg-head"><h2 id="ord-src-title">{draft.edit ? 'Sửa nguồn' : 'Thêm nguồn'}</h2></div>
             <div className="field">
-              <label htmlFor="ord-src-code">Mã (chữ thường, số, _; 2 đến 32 ký tự; không đổi được sau khi tạo)</label>
-              <input id="ord-src-code" value={draft.code} disabled={busy || !!draft.edit} readOnly={!!draft.edit} autoComplete="off" onChange={(e) => setDraft({ ...draft, code: e.target.value })} data-testid={`${P}-field-code`} />
+              <label htmlFor="ord-src-code">Mã</label>
+              <input id="ord-src-code" value={draft.code} disabled={busy || !!draft.edit} readOnly={!!draft.edit} autoComplete="off" onChange={(e) => setDraft({ ...draft, code: e.target.value })} data-testid={`${P}-field-code`} placeholder="vd: zalo_oa" />
+              <p className="hint">Chữ thường, số, _; 2 đến 32 ký tự. Không đổi được sau khi tạo.</p>
               {(fieldErr.code ?? errs.code) && <p className="field-error" role="alert" data-testid={`${P}-field-error`} data-field="code">{fieldErr.code ?? errs.code}</p>}
             </div>
             <div className="field">
-              <label htmlFor="ord-src-name">Tên hiển thị (1 đến 60 ký tự)</label>
-              <input id="ord-src-name" value={draft.name} disabled={busy} autoComplete="off" onChange={(e) => setDraft({ ...draft, name: e.target.value })} data-testid={`${P}-field-name`} />
+              <label htmlFor="ord-src-name">Tên hiển thị</label>
+              <input id="ord-src-name" value={draft.name} disabled={busy} autoComplete="off" onChange={(e) => setDraft({ ...draft, name: e.target.value })} data-testid={`${P}-field-name`} placeholder="vd: Zalo OA" />
+              <p className="hint">1 đến 60 ký tự.</p>
               {(fieldErr.name ?? errs.name) && <p className="field-error" role="alert" data-testid={`${P}-field-error`} data-field="name">{fieldErr.name ?? errs.name}</p>}
             </div>
             <div className="field">
-              <label htmlFor="ord-src-pos">Thứ tự hiển thị (0 đến 999)</label>
+              <label htmlFor="ord-src-pos">Thứ tự hiển thị</label>
               <input id="ord-src-pos" inputMode="numeric" value={draft.position} disabled={busy} autoComplete="off" placeholder="0" onChange={(e) => setDraft({ ...draft, position: e.target.value.trim() })} data-testid={`${P}-field-position`} />
+              <p className="hint">Từ 0 đến 999; số nhỏ hiện trước.</p>
               {(fieldErr.position ?? errs.position) && <p className="field-error" role="alert" data-testid={`${P}-field-error`} data-field="position">{fieldErr.position ?? errs.position}</p>}
             </div>
             {dialogErr && <div role="alert" className="field-error" data-testid={`${P}-dialog-error`}>{dialogErr}</div>}

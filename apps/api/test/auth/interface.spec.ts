@@ -288,5 +288,23 @@ describe('Giao diện đồng bộ của AUTH cho USR, NTF, REV (AUTH-API, Giao 
       expect(await t.api.countCustomers()).toBe(3); // u1, u2 và u3 bị khóa; không đếm staff, admin
       expect(await outboxTypes(t)).toEqual([]); // ghi hồ sơ không phát event của AUTH
     });
+
+    it('searchCustomers khớp một phần email, tên, điện thoại; chỉ role customer; %, _ là ký tự thường', async () => {
+      const a = await seedUser(t, { email: 'an.nguyen@shop.vn', name: 'Nguyễn An' });
+      await t.api.updateProfile(a.id, { phone: '0901234567' });
+      await seedUser(t, { email: 'binh_tran@shop.vn', name: 'Trần Bình' });
+      await seedUser(t, { email: 'an.staff@shop.vn', role: 'staff' });
+      const emails = async (s: string) => (await t.api.searchCustomers(s)).items.map((u) => u.email).sort();
+      expect(await emails('NGUYEN')).toEqual(['an.nguyen@shop.vn']);
+      expect(await emails('bình')).toEqual(['binh_tran@shop.vn']);
+      expect(await emails('0901')).toEqual(['an.nguyen@shop.vn']);
+      expect(await emails('an.')).toEqual(['an.nguyen@shop.vn']); // không lấy staff
+      expect(await emails('')).toHaveLength(2);
+      expect(await emails('%')).toEqual([]);
+      expect(await emails('_')).toEqual(['binh_tran@shop.vn']);
+      const p2 = await t.api.searchCustomers('', 2, 1); // trang 2, mỗi trang 1 khách
+      expect(p2.total).toBe(2);
+      expect(p2.items).toHaveLength(1);
+    });
   });
 });

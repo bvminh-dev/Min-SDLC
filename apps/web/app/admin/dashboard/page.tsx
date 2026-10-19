@@ -10,6 +10,7 @@ import {
   type CustomersBlock, type LowStockBlock, type OrdersBlock, type ProductsBlock, type RecentBlock, type RevenueBlock,
 } from '../../../lib/dashboard';
 import { formatOrderTime, ORDER_STATUS_LABEL, paymentText } from '../../../lib/order';
+import { SkRows } from '../../../components/Skeleton';
 
 const P = 'dsh-admin-dashboard';
 
@@ -158,7 +159,7 @@ function Inner() {
 export default function AdminDashboardPage() {
   return (
     <RequireRole roles={['admin']}>
-      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><Inner /></Suspense>
+      <Suspense fallback={<main className="page"><SkRows n={4} lead={false} /></main>}><Inner /></Suspense>
     </RequireRole>
   );
 }

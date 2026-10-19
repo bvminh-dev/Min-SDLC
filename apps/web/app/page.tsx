@@ -5,6 +5,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { catIcon } from '../components/CategoryStrip';
 import { formatPrice } from '../lib/format';
+import { SkGrid } from '../components/Skeleton';
 
 interface Card { id: string; name: string; price: number; image_url: string | null }
 interface Cat { id: string; name: string; parent_id: string | null; product_count: number }
@@ -97,7 +98,7 @@ export default function Home() {
           <h2><span className="i i-star" aria-hidden="true" /> Mới về</h2>
           <Link href="/products" className="hm-more">Tất cả <span className="i i-right" aria-hidden="true" /></Link>
         </div>
-        {items === null && <div className="ct-grid" aria-busy="true">{Array.from({ length: 4 }, (_, i) => <div key={i} className="skeleton skeleton-card" />)}</div>}
+        {items === null && <SkGrid n={4} />}
         {items !== null && items.length === 0 && <div className="empty"><span className="tile tile-lg gray"><span className="i i-inbox" aria-hidden="true" /></span><strong>Chưa có sản phẩm</strong></div>}
         {items !== null && items.length > 0 && (
           <ul className="ct-grid">

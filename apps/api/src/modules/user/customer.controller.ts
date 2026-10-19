@@ -2,7 +2,7 @@ import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import { Action, CurrentSession, RateLimit, Roles, Validate, ValidParams, ValidQuery, type SessionContext } from '../platform';
 import { LIMITS, NoStoreInterceptor } from './http';
 import { LookupService } from './lookup.service';
-import { idParams, lookupQuery } from './policy';
+import { idParams, lookupQuery, searchQuery } from './policy';
 
 const BY_EMAIL = 'Tra cứu hồ sơ khách theo email (staff: bản che; admin: đầy đủ kèm địa chỉ)';
 const BY_ID = 'Tra cứu hồ sơ khách theo id (chỉ admin: đầy đủ kèm địa chỉ)'; // hàng ma trận riêng (BR1): staff 403, không audit
@@ -15,6 +15,9 @@ export class CustomerController {
 
   @Get() @Action(BY_EMAIL) @Roles('staff', 'admin') @RateLimit(LIMITS.lookup) @Validate({ query: lookupQuery })
   byEmail(@CurrentSession() s: SessionContext, @ValidQuery() q: { email: string }) { return this.lookup.byEmail(s, q.email); }
+
+  @Get('search') @Action('Danh sách khách, lọc theo một phần email, tên hoặc điện thoại (chỉ admin)') @Roles('admin') @RateLimit(LIMITS.search) @Validate({ query: searchQuery })
+  search(@ValidQuery() q: { q: string; page: number }) { return this.lookup.search(q.q, q.page); }
 
   // Staff nhận 403 từ guard trước khi có bất kỳ truy vấn User nào và không có audit.
   @Get(':id') @Action(BY_ID) @Roles('admin') @RateLimit(LIMITS.lookup) @Validate({ params: idParams })

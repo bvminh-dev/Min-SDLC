@@ -8,6 +8,7 @@ import { RequireRole } from '../../../components/RequireRole';
 import { useCountdown } from '../../../components/useCountdown';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
+import { SkForm, SkRows } from '../../../components/Skeleton';
 
 interface Profile { id: string; email: string; email_verified: boolean; full_name: string; phone: string | null; avatar_url: string | null; role: string }
 const FIELD_MSG: Record<string, Record<string, string>> = {
@@ -86,7 +87,7 @@ function ProfileView() {
   };
 
   if (view === 'expired') return <main className="center"><p role="status" data-testid="usr-profile-session-expired">Phiên đã hết hạn, đang chuyển tới đăng nhập...</p></main>;
-  if (view === 'loading') return <main className="page auth-page"><section className="panel" data-testid="usr-profile-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></section></main>;
+  if (view === 'loading') return <main className="page auth-page"><section className="panel" data-testid="usr-profile-loading" aria-busy="true"><SkRows n={1} lines={2} /><SkForm n={4} /></section></main>;
   if (view === 'error' || !p) return <main className="page auth-page"><div role="alert" className="banner banner-error" data-testid="usr-profile-error">Không tải được hồ sơ. <button className="btn" data-testid="usr-profile-retry" onClick={() => void load()}>Thử lại</button></div></main>;
   const busy = saving;
   const locked = uploading || limit.left > 0;

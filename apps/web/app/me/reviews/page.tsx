@@ -9,6 +9,7 @@ import { useCountdown } from '../../../components/useCountdown';
 import { api } from '../../../lib/api';
 import { rateLimitedText, useLoginRedirect } from '../../../lib/prd';
 import { REVIEW_STATUSES, formatDate, isHttpUrl, reviewStatusText, type MyReview, type MyReviewList } from '../../../lib/review';
+import { SkRows } from '../../../components/Skeleton';
 
 const LIMIT = 20;
 const P = 'rev-my-reviews';
@@ -95,7 +96,7 @@ function MyReviewsInner() {
       {view === 'forbidden' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không có quyền</div>}
       {view === 'rate' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{limit.left > 0 ? rateLimitedText(limit.left) : 'Thử lại sau ít phút.'}{' '}<button type="button" className="btn btn-sm" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>Không tải được đánh giá.{' '}<button type="button" className="btn btn-sm" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>}
-      {view === 'loading' && <div data-testid={`${P}-loading`} aria-busy="true"><div className="skeleton" style={{ height: '6rem' }} /><div className="skeleton" style={{ height: '6rem' }} /><div className="skeleton" style={{ height: '6rem' }} /></div>}
+      {view === 'loading' && <SkRows n={3} lead="square" lines={3} testid={`${P}-loading`} />}
 
       {emptyAll && (status
         ? <div className="empty" data-testid={`${P}-empty-filter`}><span className="tile tile-lg gray"><span className="i i-filter" aria-hidden="true" /></span><strong>Không có đánh giá</strong><button type="button" className="btn btn-sm" onClick={() => go({ status: null })} data-testid={`${P}-filter-clear`}>Xem tất cả</button></div>
@@ -163,7 +164,7 @@ function MyReviewsInner() {
 export default function MyReviewsPage() {
   return (
     <RequireRole roles={['customer']}>
-      <Suspense fallback={<main className="page"><div aria-busy="true"><div className="skeleton" /></div></main>}><MyReviewsInner /></Suspense>
+      <Suspense fallback={<main className="page"><SkRows n={4} lead={false} /></main>}><MyReviewsInner /></Suspense>
     </RequireRole>
   );
 }

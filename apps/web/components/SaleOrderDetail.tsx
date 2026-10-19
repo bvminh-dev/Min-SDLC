@@ -6,6 +6,7 @@ import { formatPrice } from '../lib/format';
 import { ORDER_STATUS_LABEL, formatOrderTime, paymentText } from '../lib/order';
 import { cancelText, type SaleOrderDetail as Detail } from '../lib/sales';
 import { useCountdown } from './useCountdown';
+import { SkPanel, SkRows } from './Skeleton';
 
 const P = 'sal-sale-order-detail';
 type View = 'loading' | 'ready' | 'notfound' | 'error' | 'rate' | 'login';
@@ -36,7 +37,7 @@ export function SaleOrderDetail({ code }: { code: string }) {
   useEffect(() => { void load(); }, [load]);
   useEffect(() => { if (limit.left > 0) wasLimited.current = true; else if (wasLimited.current) { wasLimited.current = false; void load(); } }, [limit.left, load]);
 
-  if (view === 'loading' && !o) return <main className="page page-mid" data-testid={`${P}-loading`} aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></main>;
+  if (view === 'loading' && !o) return <main className="page page-mid" data-testid={`${P}-loading`} aria-busy="true"><SkPanel n={3} /><SkRows n={3} lead="square" lines={3} trail /><SkPanel n={3} /></main>;
   if (view === 'notfound') {
     return (
       <main className="page page-narrow">
@@ -54,6 +55,11 @@ export function SaleOrderDetail({ code }: { code: string }) {
 
   const a = o.shipping_address;
   const address = [a.line1, a.ward, a.district, a.city].filter((x) => x && x.trim()).join(', ');
+  // "Chuyển khoản · Chưa thu tiền" tách hai dòng; đơn đã hủy chưa thu thì nói rõ không thu, không để "Đã hủy" đứng một mình
+  const [payMethod, payState] = paymentText(o.payment_method, o.payment_status).split(' · ');
+  const cancelled = o.status === 'cancelled';
+  const payTone = cancelled && o.payment_status !== 'succeeded' ? 'gray' : o.payment_status === 'succeeded' ? 'green' : o.payment_status === 'pending' || o.payment_status === 'processing' ? 'amber' : o.payment_status === 'failed' ? 'red' : 'gray';
+  const payIcon = o.payment_method === 'bank_transfer' ? 'bank' : 'cash';
   return (
     <main className="page page-mid" data-testid={`${P}-container`}>
       <Link className="back" href="/sales/orders" data-testid={`${P}-back`}><span className="i i-left" aria-hidden="true" />Đơn của tôi</Link>
@@ -64,34 +70,54 @@ export function SaleOrderDetail({ code }: { code: string }) {
           <span className="muted small" data-testid={`${P}-created-at`}>Tạo {formatOrderTime(o.created_at)}</span>
         </div>
       </div>
+      {cancelled && o.cancel_reason && <div className="banner banner-error" data-testid={`${P}-cancel-reason`}><b>Đơn đã hủy.</b> Lý do hủy: {cancelText(o.cancel_reason)}</div>}
       <div className="stack">
-        <section className="panel stack-sm">
-          <p>Nguồn: <b data-testid={`${P}-source`}>{o.source.name}</b></p>
-          {o.created_by && <p>Người tạo: <b data-testid={`${P}-created-by`}>{o.created_by.name ?? 'Không rõ'}</b></p>}
-          <p data-testid={`${P}-payment`}>{paymentText(o.payment_method, o.payment_status)}</p>
-          {o.status === 'cancelled' && o.cancel_reason && <p className="field-error" data-testid={`${P}-cancel-reason`}>Lý do hủy: {cancelText(o.cancel_reason)}</p>}
+        <section className="panel sal-d-check">
+          <div>
+            <div className="sal-d-cap"><span className="i i-user" aria-hidden="true" />Khách</div>
+            <div className="sal-d-who"><span data-testid={`${P}-customer`}><b>{o.customer.name}</b> <span className="muted">· {o.customer.phone}</span></span>{o.customer.has_account && <span className="badge sal-d-acct" data-testid={`${P}-has-account`}>Đã gắn tài khoản khách</span>}</div>
+          </div>
+          <div>
+            <div className="sal-d-cap"><span className="i i-pin" aria-hidden="true" />Giao tới</div>
+            <div className="ord-addr" data-testid={`${P}-address`}><span><b>{a.receiver}</b> <span className="muted">· {a.phone}</span></span><span className="muted">{address}</span></div>
+          </div>
+          <div>
+            <div className="sal-d-cap"><span className="i i-message" aria-hidden="true" />Ghi chú đơn</div>
+            {o.note ? <div className="ord-note" data-testid={`${P}-note`}>{o.note}</div> : <div className="muted" data-testid={`${P}-note-empty`}>Không có ghi chú</div>}
+          </div>
         </section>
-        <section className="panel stack-sm">
-          <p>Khách: <b data-testid={`${P}-customer`}>{o.customer.name} · {o.customer.phone}</b>{o.customer.has_account && <> <span className="badge" data-testid={`${P}-has-account`}>Đã gắn tài khoản khách</span></>}</p>
-          <div className="ord-addr" data-testid={`${P}-address`}><span>Giao tới: {a.receiver} · {a.phone}</span><span>{address}</span></div>
-          {o.note ? <p className="ord-note" data-testid={`${P}-note`}>Ghi chú đơn: {o.note}</p> : <p className="muted" data-testid={`${P}-note-empty`}>Không có ghi chú</p>}
-        </section>
-        <section className="panel">
-          <div className="panel-head"><h2>Sản phẩm</h2></div>
-          <ul className="list">
-            {o.items.map((i) => (
-              <li key={i.product_id} data-testid={`${P}-item`}>
-                <div className="grow"><div className="strong">{i.name}</div><div className="muted small">{formatPrice(i.unit_price)} × {i.quantity}</div>{i.note && <div className="small ord-note" data-testid={`${P}-item-note`}>Ghi chú: {i.note}</div>}</div>
-                <span className="money">{formatPrice(i.line_total)}</span>
-              </li>
-            ))}
-          </ul>
-          <dl className="kv ord-totals">
-            <dt>Tạm tính</dt><dd className="right" data-testid={`${P}-items-total`}>{formatPrice(o.items_total)}</dd>
-            <dt>Phí vận chuyển</dt><dd className="right" data-testid={`${P}-shipping-fee`}>{formatPrice(o.shipping_fee)}</dd>
-            <dt className="strong">Tổng cộng</dt><dd className="right money ord-grand" data-testid={`${P}-grand-total`}>{formatPrice(o.grand_total)}</dd>
-          </dl>
-        </section>
+        <div className="split">
+          <section className="panel">
+            <div className="panel-head"><h2><span className="i i-bag" aria-hidden="true" />Sản phẩm <span className="muted small">· {o.items.length} dòng</span></h2></div>
+            <ul className="list">
+              {o.items.map((i) => (
+                <li key={i.product_id} data-testid={`${P}-item`}>
+                  <span className="tile gray"><span className="i i-box" aria-hidden="true" /></span>
+                  <div className="grow"><div className="strong">{i.name}</div><div className="muted small">{formatPrice(i.unit_price)} × {i.quantity}</div>{i.note && <div className="small ord-note sal-d-inote" data-testid={`${P}-item-note`}>Ghi chú: {i.note}</div>}</div>
+                  <span className="money">{formatPrice(i.line_total)}</span>
+                </li>
+              ))}
+            </ul>
+            <dl className="kv ord-totals">
+              <dt>Tạm tính</dt><dd className="right" data-testid={`${P}-items-total`}>{formatPrice(o.items_total)}</dd>
+              <dt>Phí vận chuyển</dt><dd className="right" data-testid={`${P}-shipping-fee`}>{formatPrice(o.shipping_fee)}</dd>
+              <dt className="strong">Tổng cộng</dt><dd className="right money ord-grand" data-testid={`${P}-grand-total`}>{formatPrice(o.grand_total)}</dd>
+            </dl>
+          </section>
+          <div className="stack">
+            <div className="ord-tile" data-testid={`${P}-payment`}>
+              <span className={`tile ${payTone}`}><span className={`i i-${payIcon}`} aria-hidden="true" /></span>
+              <span className="ord-tile-text"><b>{payMethod}</b><span className="muted small">{cancelled && o.payment_status !== 'succeeded' ? 'Đơn đã hủy, không thu tiền' : payState}</span></span>
+            </div>
+            <section className="panel">
+              <div className="panel-head"><h2><span className="i i-receipt" aria-hidden="true" />Thông tin đơn</h2></div>
+              <dl className="kv sal-d-kv">
+                <dt><span className="i i-message" aria-hidden="true" />Nguồn</dt><dd data-testid={`${P}-source`}>{o.source.name}</dd>
+                {o.created_by && <><dt><span className="i i-userplus" aria-hidden="true" />Người tạo</dt><dd data-testid={`${P}-created-by`}>{o.created_by.name ?? 'Không rõ'}</dd></>}
+              </dl>
+            </section>
+          </div>
+        </div>
       </div>
     </main>
   );

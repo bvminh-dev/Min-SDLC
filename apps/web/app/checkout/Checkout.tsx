@@ -13,6 +13,7 @@ import {
 import { formatPrice } from '../../lib/format';
 import { formatRemaining, newIdemKey } from '../../lib/payment';
 import { Blocked, LOGIN_HREF, type Block } from './Blocked';
+import { SkPanel, SkRows } from '../../components/Skeleton';
 
 const WARN_SECONDS = 300; // dưới 5 phút bộ đếm phiên đổi màu cảnh báo
 const RETRY_NETWORK_MS = 1000; // lỗi mạng khi đặt hàng: tự gửi lại một lần, GIỮ NGUYÊN Idempotency-Key
@@ -39,7 +40,7 @@ function Radio({ testid, name, checked, disabled, onChange, children }: { testid
 function CheckoutSkeleton({ testid }: { testid: string }) {
   return (
     <main className="page" aria-busy="true" data-testid={testid}><div className="page-head"><h1>Thanh toán</h1></div>
-      <div className="crt-grid"><div className="stack"><div className="skeleton crt-sk" /><div className="skeleton crt-sk" /><div className="skeleton crt-sk" /></div><div className="skeleton crt-sk-sum" /></div></main>
+      <div className="crt-grid"><div className="stack"><SkPanel n={3} /><SkPanel n={3} /><SkPanel n={2} /></div><SkPanel n={5} /></div></main>
   );
 }
 
@@ -360,7 +361,7 @@ export function Checkout() {
             <section className="panel" data-testid="chk-checkout-address-section">
               <div className="crt-step"><span className={`crt-num${addrOk ? ' done' : ''}`}>{addrOk ? <span className="i i-check" aria-hidden="true" /> : '1'}</span><h2>Địa chỉ</h2>
                 <Link href="/account/addresses/new" className="btn btn-sm crt-step-act" data-testid="chk-checkout-address-add">Địa chỉ mới</Link></div>
-              {addresses === null && <div className="skeleton" aria-busy="true" />}
+              {addresses === null && <SkRows n={2} lead={false} />}
               {addresses !== null && addresses.length === 0 && <p className="crt-note" data-testid="chk-checkout-address-empty">Chưa có địa chỉ</p>}
               {addresses !== null && addresses.length > 0 && (
                 <div role="radiogroup" aria-label="Địa chỉ giao hàng" className="crt-opts">
@@ -383,7 +384,7 @@ export function Checkout() {
 
             <section className={`panel${opts?.k === 'needs-address' ? ' dim' : ''}`} data-testid="chk-checkout-shipping-section">
               <div className="crt-step"><span className={`crt-num${shipId ? ' done' : ''}`}>{shipId ? <span className="i i-check" aria-hidden="true" /> : '2'}</span><h2>Vận chuyển</h2></div>
-              {opts === null && <div className="skeleton" aria-busy="true" />}
+              {opts === null && <SkRows n={2} lead={false} />}
               {opts?.k === 'needs-address' && <p className="crt-note" data-testid="chk-checkout-shipping-needs-address">Chọn địa chỉ để xem phí</p>}
               {opts?.k === 'empty' && <p role="alert" className="field-error" data-testid="chk-checkout-shipping-empty">Chưa có phương thức vận chuyển nào đang bật</p>}
               {opts?.k === 'error' && <p role="alert" className="field-error" data-testid="chk-checkout-shipping-error">Không tính được phí <button type="button" className="btn btn-sm" onClick={() => void refresh()}>Thử lại</button></p>}

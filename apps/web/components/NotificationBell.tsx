@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { formatOrderTime } from '../lib/order';
 import { PANEL_LIMIT, badgeText, markAllRead, markRead, safeLink, useUnreadCount, type Notif, type NotifList } from '../lib/notification';
+import { SkRows } from './Skeleton';
 
 const P = 'ntf-notification-bell';
 const ICON: Record<string, [string, string]> = { // loại -> [icon, màu ô]
@@ -76,7 +77,7 @@ export function NotificationBell() {
             <strong>Thông báo</strong>
             <button type="button" className="btn btn-ghost btn-sm" aria-label="Đọc hết" title="Đọc hết" disabled={busy || view !== 'ready' || !unreadHere} onClick={() => void all()} data-testid={`${P}-mark-all-read`}><span className="i i-check" aria-hidden="true" /> Đọc hết</button>
           </div>
-          {view === 'loading' && <div aria-busy="true" data-testid={`${P}-loading`}><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div>}
+          {view === 'loading' && <SkRows n={3} testid={`${P}-loading`} />}
           {view === 'error' && (
             <div role="alert" className="banner banner-error" data-testid={`${P}-error`}>{errText} <button type="button" className="btn tight" onClick={() => void load()} data-testid={`${P}-retry`}>Thử lại</button></div>
           )}

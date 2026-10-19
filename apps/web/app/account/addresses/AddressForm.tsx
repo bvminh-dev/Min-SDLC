@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Field } from '../../../components/Form';
 import { api } from '../../../lib/api';
+import { SkForm } from '../../../components/Skeleton';
 
 interface Address { id: string; receiver: string; phone: string; line1: string; ward: string; district: string | null; city: string; is_default: boolean }
 const LABEL: Record<string, string> = { receiver: 'Nhập người nhận', phone: 'Nhập số điện thoại', line1: 'Nhập số nhà, đường', ward: 'Nhập phường, xã', city: 'Nhập tỉnh, thành phố' };
@@ -58,7 +59,7 @@ export function AddressForm({ id }: { id?: string }) {
     setState('error');
   };
 
-  if (!ready) return <main className="page auth-page auth-page-sm"><section className="panel" data-testid="usr-address-form-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /></section></main>;
+  if (!ready) return <main className="page auth-page auth-page-sm"><section className="panel" data-testid="usr-address-form-loading" aria-busy="true"><SkForm n={5} /></section></main>;
   const busy = state === 'sending';
   const err = (k: string) => (errors[k] ? (errors[k] === 'required' ? LABEL[k] ?? 'Bắt buộc' : MSG[errors[k]] ?? 'Giá trị không hợp lệ') : undefined);
   const input = (k: keyof typeof EMPTY, label: string, extra: Record<string, string> = {}) => (

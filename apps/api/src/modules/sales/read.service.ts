@@ -20,6 +20,12 @@ export class ReadService {
     return { items: r.items.map((c) => ({ id: c.id, full_name: c.full_name, email: c.email, phone: c.phone, status: c.status })) };
   }
 
+  /** Gợi ý khách khi gõ dở (khớp một phần, bản che, tối đa 5): cùng serializer với `lookup`. */
+  async suggest(s: SessionContext, q: string) {
+    const r = await this.deps.suggest({ actor_id: s.user_id, actor_role: roleOf(s) }, q);
+    return { items: r.items.map((c) => ({ id: c.id, full_name: c.full_name, email: c.email, phone: c.phone, status: c.status })) };
+  }
+
   /** SAL-REQ-20261015-092711037: phí từng phương thức đang bật theo cùng công thức của SHP, rẻ nhất trước; chỉ để hiển thị (khi tạo đơn server tính lại). */
   async shippingOptions(q: ShippingQuery) {
     const methods = await this.deps.methods();

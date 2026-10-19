@@ -5,6 +5,7 @@ import { RequireRole } from '../../../components/RequireRole';
 import { useCountdown } from '../../../components/useCountdown';
 import { api, type ApiResult } from '../../../lib/api';
 import { flattenTree, rateLimitedText, useCategories, useLoginRedirect, type FlatCategory } from '../../../lib/prd';
+import { SkRows } from '../../../components/Skeleton';
 
 interface FormDlg { id?: string; name: string; parentId: string; busy: boolean; nameError?: string; parentError?: string; formError?: string }
 interface DelDlg { row: FlatCategory; busy: boolean; error?: string; blocked?: boolean }
@@ -99,7 +100,7 @@ function Categories() {
       {cats.state === 'error' && !forbidden && (
         <div role="alert" className="banner banner-error" data-testid="prd-admin-category-error">Không tải được danh mục. <button className="btn" onClick={() => void cats.reload()} data-testid="prd-admin-category-retry">Thử lại</button></div>
       )}
-      {cats.state === 'loading' && !forbidden && <div data-testid="prd-admin-category-loading" aria-busy="true">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" />)}</div>}
+      {cats.state === 'loading' && !forbidden && <SkRows n={6} lead={false} lines={1} trail testid="prd-admin-category-loading" />}
       {empty && !forbidden && <div className="empty" data-testid="prd-admin-category-empty"><span className="tile tile-lg gray">{ic('folder')}</span><strong>Chưa có danh mục</strong>{createRoot}</div>}
       {cats.state === 'ready' && !empty && !forbidden && (
         <div className="panel panel-flush">

@@ -7,6 +7,7 @@ import { useCountdown } from '../../../../components/useCountdown';
 import { api, type ApiResult } from '../../../../lib/api';
 import { useLoginRedirect } from '../../../../lib/prd';
 import { limitedText, newKey, num, parseInt0, signed, type StockItem } from '../../../../lib/stock';
+import { SkPanel } from '../../../../components/Skeleton';
 
 type Kind = 'in' | 'out' | 'adjust' | 'threshold';
 const IN_REASONS: [string, string][] = [['purchase', 'Nhập từ NCC'], ['transfer_in', 'Chuyển kho đến'], ['other', 'Khác']];
@@ -123,7 +124,7 @@ function InventoryDetail() {
     <main className="page page-mid">
       <Link href="/admin/inventory" className="back" data-testid="inv-inventory-detail-back"><span className="i i-left" aria-hidden="true" /> Tồn kho</Link>
 
-      {view === 'loading' && !item && <div data-testid="inv-inventory-detail-loading" aria-busy="true"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div>}
+      {view === 'loading' && !item && <SkPanel n={4} testid="inv-inventory-detail-loading" />}
       {view === 'rate' && limit.left > 0 && <div role="alert" className="banner banner-error" data-testid="inv-inventory-detail-error">{limitedText(limit.left)} <button className="btn" onClick={() => void load()} data-testid="inv-inventory-detail-retry">Thử lại</button></div>}
       {view === 'error' && <div role="alert" className="banner banner-error" data-testid="inv-inventory-detail-error">Không tải được tồn kho. <button className="btn" onClick={() => void load()} data-testid="inv-inventory-detail-retry">Thử lại</button></div>}
       {view === 'notfound' && (
