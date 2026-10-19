@@ -18,12 +18,13 @@ Quản lý người dùng                                     [ Tìm theo email 
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │ an@shop.vn       An         (Khách)     (Hoạt động)  Đã xác minh  06/10/2026  ⋯  │
 │ ha@shop.vn       Hà         (Nhân viên) (Hoạt động)  Đã xác minh  05/10/2026  ⋯  │
+│ mai@shop.vn      Mai        (Bán hàng)  (Hoạt động)  Đã xác minh  12/10/2026  ⋯  │
 │ bo@shop.vn       Bo         (Khách)     (Đã khóa)    Chưa         03/10/2026  ⋯  │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │ 1 tới 20 trong 45 người                                            ‹ 1 2 3 ›    │
 └─────────────────────────────────────────────────────────────────────────────────┘
 Menu ⋯: Đổi role... | Khóa tài khoản... | Mở khóa
-Hộp thoại Đổi role: chọn role mới (Khách, Nhân viên, Quản trị) + [Hủy] [Lưu]
+Hộp thoại Đổi role: chọn role mới (Khách, Nhân viên, Bán hàng, Quản trị) + [Hủy] [Lưu]; ô lọc Role cũng có Bán hàng
 Hộp thoại Khóa: lý do (tùy chọn, tối đa 200 ký tự) + [Hủy] [Khóa]
 ```
 Dưới `sm`: bảng thành danh sách thẻ hai tầng (email trên, role và trạng thái dưới), menu `⋯` giữ nguyên.
@@ -37,7 +38,7 @@ Dưới `sm`: bảng thành danh sách thẻ hai tầng (email trên, role và t
 | rỗng do lọc | "Không có người dùng khớp." kèm nút Xóa lọc; cũng là trang quá cuối | AUTH-REQ-20261006-095515956 |
 | lỗi | Banner "Không tải được danh sách." kèm nút Thử lại; lỗi lọc không hợp lệ (400, ví dụ ô tìm dưới 3 ký tự) hiện nhắc dưới ô tìm | AUTH-REQ-20261006-095515956 |
 | hết phiên | 401: chuyển về đăng nhập | AUTH-REQ-20261006-095515956 |
-| không có quyền | Staff hay customer vào màn này: chuyển tới màn `access-denied` (không dựng giao diện quản lý) | AUTH-REQ-20261006-095515956 |
+| không có quyền | Staff, sale hay customer vào màn này: chuyển tới màn `access-denied` (không dựng giao diện quản lý) | AUTH-REQ-20261006-095515956 |
 | đang đổi role | Hộp thoại khóa nút Lưu, "Đang lưu..." | AUTH-REQ-20261006-095515956 |
 | đổi role xong | Đóng hộp thoại, dòng cập nhật role mới, toast "Đã đổi role" | AUTH-REQ-20261006-095515956 |
 | đổi role bị từ chối | Lỗi trong hộp thoại: "Bạn không thể đổi role của chính mình" (403), "Role không thay đổi" (409 role_unchanged), "Phải còn ít nhất một quản trị đang hoạt động" (409 last_admin) | AUTH-REQ-20261006-095515956 |
@@ -51,7 +52,7 @@ Dưới `sm`: bảng thành danh sách thẻ hai tầng (email trên, role và t
 | testid | Phần tử | Role | Hành động | Requirement |
 |---|---|---|---|---|
 | auth-admin-user-list-search | Ô tìm theo email (tiền tố, từ 3 ký tự) | admin | Nhập để tìm | AUTH-REQ-20261006-095515956 |
-| auth-admin-user-list-role-filter | Lọc role | admin | Chọn role hoặc Tất cả | AUTH-REQ-20261006-095515956 |
+| auth-admin-user-list-role-filter | Lọc role (Khách, Nhân viên, Bán hàng, Quản trị) | admin | Chọn role hoặc Tất cả | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-status-filter | Lọc trạng thái | admin | Chọn trạng thái hoặc Tất cả | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-clear-filter | Nút Xóa lọc | admin | Về Tất cả | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-row | Dòng người dùng | admin | - | AUTH-REQ-20261006-095515956 |
@@ -67,7 +68,7 @@ Dưới `sm`: bảng thành danh sách thẻ hai tầng (email trên, role và t
 | auth-admin-user-list-retry | Nút Thử lại | admin | Tải lại danh sách | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-row-menu | Nút menu ⋯ của dòng | admin | Mở menu hành động | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-change-role | Mục Đổi role | admin | Mở hộp thoại đổi role | AUTH-REQ-20261006-095515956 |
-| auth-admin-user-list-role-select | Chọn role mới trong hộp thoại | admin | Chọn role | AUTH-REQ-20261006-095515956 |
+| auth-admin-user-list-role-select | Chọn role mới trong hộp thoại (bốn lựa chọn: Khách, Nhân viên, Bán hàng, Quản trị) | admin | Chọn role | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-role-save | Nút Lưu đổi role | admin | Xác nhận đổi role | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-role-cancel | Nút Hủy đổi role | admin | Đóng hộp thoại | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-role-error | Lỗi đổi role trong hộp thoại | admin | - | AUTH-REQ-20261006-095515956 |

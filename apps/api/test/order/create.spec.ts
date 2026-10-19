@@ -4,7 +4,7 @@ import { OrderBusinessError } from '../../src/modules/order';
 import { countOpenSql } from '../../src/modules/order/internal.service';
 import { q, seedUser } from '../support/auth';
 import { truncateAll } from '../support/db';
-import { ALPHABET, baseInput, call, countRows, createOrdApp, createPending, historyOf, insertRaw, orderOf, outboxOf, people, pgCode, seedOrder, type OrdApp } from '../support/ord';
+import { baseInput, call, countRows, createOrdApp, createPending, historyOf, insertRaw, orderOf, outboxOf, people, pgCode, seedOrder, type OrdApp } from '../support/ord';
 
 // Giao diện tạo đơn cho CHK (ORD-REQ-20261006-120227589): createPending, confirmCod, countOpenOrders, getSummary.
 describe('ORD giao diện tạo đơn cho CHK', () => {
@@ -38,7 +38,7 @@ describe('ORD giao diện tạo đơn cho CHK', () => {
     const { a } = await people(t);
     const expires = new Date(Date.now() + 900_000), input = baseInput(a.id, { payment_expires_at: expires });
     const { order_id, code } = await createPending(t, input);
-    expect(code).toMatch(new RegExp(`^[${ALPHABET}]{12}$`));
+    expect(code).toMatch(/^HD[0-9]{6}-[0-9]{5}$/); // mã mới theo bộ đếm ngày (ADR-024); mã cũ 12 ký tự chỉ còn ở đơn tạo trước đó
     const o = await orderOf(t, order_id);
     expect(o).toMatchObject({ status: 'pending', payment_status: 'pending', payment_method: 'vnpay', grand_total: '380000' });
     expect(o.payment_expires_at).toEqual(expires);
@@ -127,7 +127,7 @@ describe('ORD giao diện tạo đơn cho CHK', () => {
     await q(t, `UPDATE orders SET status = 'shipped', tracking_number = 'VN1' WHERE id = '${cod1.id}'`);
     expect(await t.ord.countOpenOrders(a.id)).toEqual({ online_pending: 2, cod_open: 2 }); // cod_open giảm đúng 1 khi đơn COD sang shipped
     const plan = await t.prisma.$transaction(async (tx) => { await tx.$executeRaw`SET LOCAL enable_seqscan = off`; return tx.$queryRaw<Record<string, string>[]>(Prisma.sql`EXPLAIN ${countOpenSql(a.id)}`); });
-    expect(JSON.stringify(plan)).toContain('orders_open_idx'); // không quét cả bảng
+    expect(JSON.stringify(plan)).toContain('orders_open_self_idx'); // không quét cả bảng (chỉ mục một phần mới của đợt bán hộ, chỉ đơn khách tự đặt)
   });
 });
 

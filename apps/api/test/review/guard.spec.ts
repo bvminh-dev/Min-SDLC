@@ -58,7 +58,7 @@ describe('REV kiểm quyền và ranh giới trên AppModule thật', () => {
     expect(widened).not.toBe(MATRIX);
     expect(auditPermissions(t.app, widened, opts).join('\n')).toContain('POST /api/v1/admin/reviews/:id/approve: code cho [admin] nhưng ma trận (Duyệt đánh giá chờ duyệt) cho [admin, staff]');
     // admin không sửa nội dung: cho admin sửa trong ma trận thì code lệch
-    const adminEdit = MATRIX.replace(/^(\| Sửa đánh giá của mình \|[^|]*\|[^|]*\|[^|]*\|[^|]*\|)[^|]*\|/m, '$1 Y |');
+    const adminEdit = MATRIX.replace(/^(\| Sửa đánh giá của mình \|[^|]*\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|)[^|]*\|/m, '$1 Y |');
     expect(adminEdit).not.toBe(MATRIX);
     expect(auditPermissions(t.app, adminEdit, opts).join('\n')).toContain('PATCH /api/v1/reviews/:id: code cho [customer] nhưng ma trận (Sửa đánh giá của mình) cho [admin, customer]');
     const closed = MATRIX.replace(/^(\| Xem đánh giá công khai của sản phẩm \|[^|]*\|)[^|]*\|/m, '$1 - |');

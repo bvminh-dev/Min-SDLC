@@ -9,7 +9,7 @@ import { redactDeep } from '../logging/redact';
 
 export interface AuditEntry {
   actor_id?: string | null;
-  actor_role: 'guest' | 'customer' | 'staff' | 'admin' | 'system';
+  actor_role: 'guest' | 'customer' | 'staff' | 'sale' | 'admin' | 'system';
   action: string;
   target_type: string;
   target_id: string;

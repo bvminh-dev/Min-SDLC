@@ -39,6 +39,7 @@ export class ConsumerService {
   private async prepare(env: EventEnvelope): Promise<Prepared | typeof SKIP> {
     const planned = planEvent(env, this.clock.now());
     if (!planned.ok) {
+      if (planned.skip) return SKIP; // đơn hộ không có user_id: không ai để báo, không log lỗi
       // chỉ mã uuid hợp lệ và mã event; không payload, không giá trị sai (SB-18)
       this.log.error('event không hợp lệ, bỏ qua', { code: 'event-invalid', event_type: env.type, event_id: env.event_id, ...planned.refs });
       return SKIP;

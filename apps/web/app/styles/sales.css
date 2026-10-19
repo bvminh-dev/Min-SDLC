@@ -1,0 +1,6 @@
+/* sales: màn tạo đơn hộ, Đơn của tôi, chi tiết đơn hộ (epic SAL). Dùng lại lưới `crt-grid` và bảng `ord-table`. */
+.sal-form { border: 0; padding: 0; margin: 0; min-width: 0; }
+.sal-form:disabled { opacity: .6; }
+.sal-line-bad { outline: 2px solid var(--danger); outline-offset: -2px; border-radius: var(--radius); }
+.sal-summary { position: sticky; top: 1rem; }
+@media (max-width: 899px) { .sal-summary { position: static; } }

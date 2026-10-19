@@ -14,5 +14,6 @@ const defs: [string, number, string][] = [
   ['product-image-limit', 409, 'Product already has the maximum number of images'],
   ['product-last-image', 409, 'An active product must keep at least one image'],
   ['product-not-publishable', 422, 'Product is missing required data'],
+  ['import-file-invalid', 400, 'Import file rejected'], // PRD-API mục import: kèm `reason` (và `missing` khi header_invalid)
 ];
 for (const [code, status, title] of defs) registerProblem({ code, status, title });

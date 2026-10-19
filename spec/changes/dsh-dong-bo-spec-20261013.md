@@ -51,6 +51,9 @@ Hàng ghi "Đã sửa và duyệt lại" là việc đã làm trong đợt này;
 | AUTH-DB-20261006-100006037 | không đổi | - | Mục giao diện nội bộ không nhắc `countCustomers`; không bị tác động | - |
 | ORD-REQ-20261006-120227681 | cần xem lại | LOW | BR6 liệt kê hàm cho DSH nhưng không nêu `getProductSalesTotals` (không đổi nghiệp vụ ORD) | Người duyệt thêm hàm vào BR6 khi có ủy quyền (file ngoài danh sách) |
 | ORD-TC-20261006-120228155 | không đổi | - | TC `getTopProducts` giữ nguyên; ca `getProductSalesTotals` nay ở TC mới ORD-TC-20261013-232524288 | - |
+| DSH-TC-20261015-093256308 | không đổi | - | Tài liệu mới hoặc sửa của đợt bán hàng hộ 2026-10-15 (spec/changes/ban-ho-sale-nguon-don-20261015.md) nhắc cùng cụm từ hay liên kết tới ID này; hành vi đã duyệt ở báo cáo này không đổi | - |
+| DSH-TC-20261015-093300733 | không đổi | - | Tài liệu mới hoặc sửa của đợt bán hàng hộ 2026-10-15 (spec/changes/ban-ho-sale-nguon-don-20261015.md) nhắc cùng cụm từ hay liên kết tới ID này; hành vi đã duyệt ở báo cáo này không đổi | - |
+| DSH-TC-20261015-093334858 | không đổi | - | Tài liệu mới hoặc sửa của đợt bán hàng hộ 2026-10-15 (spec/changes/ban-ho-sale-nguon-don-20261015.md) nhắc cùng cụm từ hay liên kết tới ID này; hành vi đã duyệt ở báo cáo này không đổi | - |
 
 ## Chưa chắc / rủi ro
 - Hạn 5 giây không hủy được truy vấn nguồn: lời gọi quá hạn chạy tới `DB_STATEMENT_TIMEOUT_MS` của platform (15 giây) và chiếm một trong 6 chỗ của nguồn; báo cáo 366 ngày còn chạy nốt các đoạn sau khi đã trả 503. Chấp nhận ở v1; sửa gốc cần `AbortSignal` hay `statement_timeout` theo lời gọi ở giao diện đọc của ORD, PAY, PRD, INV, USR (backlog, đổi mã nhiều module).

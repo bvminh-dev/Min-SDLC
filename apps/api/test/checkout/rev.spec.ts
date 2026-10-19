@@ -70,7 +70,7 @@ describe('REV-CHK thăm dò tay giữ lại', () => {
     ];
     for (const [m, p, b] of cases) { const r = await raw(m, p, b); out.push([`${m} ${p.replace(id, '<id>')} ${b}`, r.status, r.body?.type]); }
     expect(out.filter((x) => x[1] >= 500)).toEqual([]);
-    expect(out.map((x) => x[1])).toEqual([400, 400, 400, 400, 404, 400, 400, 400, 400, 400, 400, 400, 404, 400, 404]); // id lạ sau giải mã: 404 chung (SB-06); khóa thừa, nửa cặp thay thế lẻ, NUL: 400
+    expect(out.map((x) => x[1])).toEqual([400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400]); // khóa thừa, nửa cặp thay thế lẻ, NUL (kể cả ở id đường dẫn, từ nền SB-11): 400; id lạ thuần (không NUL) vẫn 404 chung (SB-06)
     expect(await tally(t)).toEqual(before);
   });
 

@@ -1,6 +1,6 @@
 import { Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { Action, CurrentSession, Public, RateLimit, Roles, Validate, ValidBody, ValidParams, ValidQuery, type SessionContext } from '../platform';
+import { Action, CurrentSession, Public, RateLimit, RawStrings, Roles, Validate, ValidBody, ValidParams, ValidQuery, type SessionContext } from '../platform';
 import { CodService } from './cod.service';
 import { LIMITS, ipOf } from './http';
 import { keyOf } from './idem';
@@ -90,6 +90,6 @@ export class AdminPaymentController {
 export class IpnController {
   constructor(private readonly webhook: WebhookService) {}
 
-  @Get('ipn') @Action('Nhận webhook IPN của VNPay (cổng gọi, xác thực bằng chữ ký)') @Public() @RateLimit(LIMITS.ipn) @Validate({ query: ipnQuery })
+  @Get('ipn') @Action('Nhận webhook IPN của VNPay (cổng gọi, xác thực bằng chữ ký)') @Public() @RawStrings() @RateLimit(LIMITS.ipn) @Validate({ query: ipnQuery })
   ipn(@ValidQuery() q: unknown, @Req() req: Request): Promise<IpnReply> { return this.webhook.handle(q, ipOf(req)); }
 }

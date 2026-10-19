@@ -24,7 +24,7 @@ describe(`Bảng đột biến SHP được kiểm lại bằng \`check-mutation
   it(`${ID}: bảng thật hợp lệ và phủ mọi SB kiểm bằng test của SHP-SEC`, () => {
     const r = run(process.execPath, ['scripts/check-mutations.mjs', TABLE, '--sec', SEC], { cwd: API_DIR });
     expect([r.status, r.stderr]).toEqual([0, '']);
-    for (const sb of ['SB-05', 'SB-06', 'SB-07', 'SB-08', 'SB-11', 'SB-12', 'SB-13', 'SB-14', 'SB-18', 'SB-19', 'SB-20', 'SB-23', 'SB-24', 'SB-27', 'SB-30', 'SB-32']) expect(r.stdout).toContain(sb);
+    for (const sb of ['SB-05', 'SB-06', 'SB-07', 'SB-08', 'SB-11', 'SB-12', 'SB-13', 'SB-14', 'SB-18', 'SB-19', 'SB-20', 'SB-23', 'SB-24', 'SB-27', 'SB-30', 'SB-32', 'SB-35', 'SB-44', 'SB-45']) expect(r.stdout).toContain(sb);
     const t = real();
     expect(t.mutations.length).toBeGreaterThanOrEqual(150);
     for (const m of t.mutations) { expect(m.tc).toMatch(/^SHP-(TC|E2E|SEC|DB)-\d{8}-\d{9}$/); expect(m.test).toMatch(/-t "/); } // lệnh chạy đúng một TC hoặc một test, không chạy rộng
@@ -36,7 +36,7 @@ describe(`Bảng đột biến SHP được kiểm lại bằng \`check-mutation
     expect(t.mutations.some((m) => m.file === 'src/modules/shipping/fee.ts')).toBe(true); // công thức phí
     expect(t.mutations.some((m) => m.file === 'src/modules/shipping/lifecycle.service.ts')).toBe(true); // consumer event
     const sec = readFileSync(SEC, 'utf8');
-    expect((sec.match(/^\| T\d+ /gm) ?? []).length).toBe(25); // dương tính: SHP-SEC thật có 25 mối đe dọa
+    expect((sec.match(/^\| T\d+ /gm) ?? []).length).toBe(28); // dương tính: SHP-SEC thật có 28 mối đe dọa (T26 đến T28 của đợt bán hàng hộ)
   });
 
   it(`${ID}: đỏ khi một SB kiểm bằng test không còn đột biến nào`, () => {

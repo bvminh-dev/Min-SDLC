@@ -499,4 +499,14 @@ describe('Thứ tự kiểm của nền và CSRF khi không có cookie (PRJ-REQ-
     const ok = await http().post('/api/v1/fx/echo').set('Content-Type', 'application/json').send(JSON.stringify({ name: 'Áo 😀' }));
     expect(ok.status).toBe(201);
   });
+
+  it('PRJ-SB11 (nền): chuỗi chứa NUL ở body, query hay params bị 400 validation-failed ở biên cho mọi route có @Validate (PostgreSQL 22021 không còn thành 500); chuỗi thường vẫn nhận', async () => {
+    const body = await http().post('/api/v1/fx/echo').set('Content-Type', 'application/json').send(JSON.stringify({ name: 'a\u0000b' }));
+    expect([body.status, body.body.type, body.body.errors]).toEqual([400, 'urn:ecom:error:validation-failed', [{ field: 'name', code: 'invalid_format' }]]);
+    const nested = await http().post('/api/v1/fx/echo').set('Content-Type', 'application/json').send(JSON.stringify({ name: 'x', extra: [{ k: '\u0000' }] }));
+    expect([nested.status, nested.body.type]).toEqual([400, 'urn:ecom:error:validation-failed']);
+    const query = await http().get('/api/v1/fx/items?page=1%00').set('x-test-user', CUST);
+    expect([query.status, query.body.type]).toEqual([400, 'urn:ecom:error:validation-failed']);
+    expect((await http().get('/api/v1/fx/items?page=1').set('x-test-user', CUST)).status).toBe(200);
+  });
 });

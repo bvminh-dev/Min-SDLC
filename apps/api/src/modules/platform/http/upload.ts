@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 
 /** Đệm cho phần tiêu đề multipart quanh tệp (ranh giới, tên phần, kiểu): thân request vượt tệp tối đa cộng chừng này thì dừng đọc (USR-TC ...618, PRD-TC ...691: <= tối đa + 64 KB). */
 export const MULTIPART_SLACK = 64 * 1024;
-export interface UploadRead { file: Buffer; bytesRead: number }
+export interface UploadRead { file: Buffer; bytesRead: number; /** Tên tệp client khai: chỉ để ghi vết và đoán loại (import PRD), KHÔNG dùng làm đường dẫn hay khóa lưu. */ filename: string }
 export type UploadReason = 'too_large' | 'bad_form';
 export class UploadError extends Error {
   constructor(readonly reason: UploadReason) { super(reason); }
@@ -34,10 +34,11 @@ export function readSingleFile(req: Request, res: Response, maxBytes: number, on
 
     // busboy báo `limit` khi ĐẠT giới hạn (kể cả bằng đúng), nên đặt maxBytes + 1: tệp đúng maxBytes qua, maxBytes + 1 byte thì bị cắt
     const chunks: Buffer[] = [];
-    let files = 0, bad = false, truncated = false;
+    let files = 0, bad = false, truncated = false, filename = '';
     bb.on('field', () => { bad = true; });
-    bb.on('file', (name, stream) => {
+    bb.on('file', (name, stream, info) => {
       if (++files > 1 || name !== 'file') { bad = true; stream.resume(); return; }
+      filename = info.filename ?? '';
       stream.on('data', (c: Buffer) => chunks.push(c));
       stream.on('limit', () => { truncated = true; fail('too_large', true); });
     });
@@ -48,7 +49,7 @@ export function readSingleFile(req: Request, res: Response, maxBytes: number, on
       if (bad || files !== 1) return fail('bad_form');
       done = true;
       onBytes(seen);
-      resolve({ file: Buffer.concat(chunks), bytesRead: seen });
+      resolve({ file: Buffer.concat(chunks), bytesRead: seen, filename });
     });
     req.on('data', (c: Buffer) => { seen += c.length; if (seen > maxBytes + MULTIPART_SLACK) fail('too_large', true); });
     req.on('error', () => fail('bad_form'));

@@ -151,6 +151,7 @@ describe('PRD danh mục: cây, tạo, sửa, chuyển nhánh, xóa (PRD-REQ-202
     const home = await seedCategory(t, 'Nhà');
     const outcomes = new Set<string>();
     for (let i = 0; i < 20; i++) {
+      t.clock.advance(61_000); // cửa sổ bậc D của nhóm ghi quản trị (30 mỗi phút mỗi người) trôi sang phút mới, mỗi vòng hai yêu cầu ghi
       const y = await seedCategory(t, `Y${i}`);
       const p = await seedProduct(t, { category: home, status: 'draft', sku: `RC-${String(i).padStart(3, '0')}` });
       const version = (await q<{ version: number }>(t, `SELECT version FROM products WHERE id = '${p}'`))[0].version;

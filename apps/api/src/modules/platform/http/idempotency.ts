@@ -9,6 +9,7 @@ import { DomainError } from '../errors/registry';
 import type { SessionContext } from './session';
 
 const KEY_RE = /^[A-Za-z0-9_-]{8,64}$/;
+export const isIdempotencyKey = (k: unknown): k is string => typeof k === 'string' && KEY_RE.test(k); // cho endpoint chỉ cần khóa ở một chế độ (import PRD: dry_run=false)
 const TTL_MS = 24 * 3600 * 1000;
 
 export interface IdempotentResult<T> { replayed: boolean; status: number; body: T }

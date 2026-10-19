@@ -54,8 +54,8 @@ export function AccountMenu() {
           {user.role === 'customer' && <Link className="btn btn-quiet" href="/me/reviews" onClick={() => setOpen(false)}>Đánh giá</Link>}
           <Link className="btn btn-quiet" href="/account/profile" onClick={() => setOpen(false)}>Hồ sơ</Link>
           {user.role === 'customer' && <Link className="btn btn-quiet" href="/account/addresses" onClick={() => setOpen(false)}>Sổ địa chỉ</Link>}
-          {user.role !== 'customer' && <Link className="btn btn-quiet" href="/admin/customers" onClick={() => setOpen(false)}>Khách hàng</Link>}
-          {user.role !== 'customer' && <Link className="btn btn-quiet" href="/admin/products" onClick={() => setOpen(false)}>Sản phẩm</Link>}
+          {(user.role === 'staff' || user.role === 'admin') && <Link className="btn btn-quiet" href="/admin/customers" onClick={() => setOpen(false)}>Khách hàng</Link>}
+          {(user.role === 'staff' || user.role === 'admin') && <Link className="btn btn-quiet" href="/admin/products" onClick={() => setOpen(false)}>Sản phẩm</Link>}
           {user.role === 'admin' && <Link className="btn btn-quiet" href="/admin/categories" onClick={() => setOpen(false)}>Danh mục</Link>}
           {failed && (
             <div role="alert" className="banner banner-error" data-testid="auth-account-menu-error">

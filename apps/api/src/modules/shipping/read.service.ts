@@ -8,15 +8,19 @@ import type { ListQuery } from './policy';
 const iso = (d: Date | null): string | null => (d ? d.toISOString() : null);
 /** Staff chỉ thấy khối người nhận khi vận đơn còn đang xử lý (ngoại lệ (b) của SB-08); admin luôn thấy. */
 const STAFF_RECIPIENT: readonly ShipmentStatus[] = ['pending', 'shipped', 'failed'];
+/** Điện thoại, địa chỉ ở danh sách chỉ khi vận đơn còn trong hàng đợi xử lý (SB-08 (d)); đã giao, hoàn, hủy thì null, như nhau cho staff, sale, admin. */
+const DISPLAY_PHONE: readonly ShipmentStatus[] = STAFF_RECIPIENT;
 
 /** Câu chọn trang danh sách (index (status, created_at, id) hoặc (created_at, id), SHP-DB mục Bảng): test EXPLAIN đúng câu này. `dir` chỉ nhận ASC hoặc DESC (hằng của mã, không từ đầu vào). */
 export const listRowsSql = (cond: Prisma.Sql, dir: 'ASC' | 'DESC', take: number, skip: number): Prisma.Sql => {
   const d = dir === 'ASC' ? Prisma.sql`ASC` : Prisma.sql`DESC`;
   return Prisma.sql`
-    SELECT s.order_code, s.status::text AS status, s.tracking_number, m.name AS method_name, s.created_at, s.updated_at
+    SELECT s.order_id, s.order_code, s.status::text AS status, s.tracking_number, m.name AS method_name, s.created_at, s.updated_at
     FROM shipments s JOIN shipping_methods m ON m.id = s.shipping_method_id ${cond} ORDER BY s.created_at ${d}, s.id ${d} LIMIT ${take} OFFSET ${skip}`;
 };
 export const listCountSql = (cond: Prisma.Sql): Prisma.Sql => Prisma.sql`SELECT count(*)::int AS n FROM shipments s ${cond}`;
+
+interface ListRow { order_id: string; order_code: string | null; status: string; tracking_number: string | null; method_name: string; created_at: Date; updated_at: Date }
 
 interface Current {
   id: string; order_id: string; status: ShipmentStatus; tracking_number: string | null; cod_amount: bigint; shipped_at: Date | null; delivered_at: Date | null; version: number; method_name: string;
@@ -91,24 +95,48 @@ export class ReadService {
     };
   }
 
-  /** Danh sách cho staff, admin: không dữ liệu cá nhân, không tìm theo email, điện thoại (SB-08). `order_code` của bộ lọc đổi thành `order_id` qua ORD; mã đơn của từng dòng đọc từ cột `shipments.order_code` (bản chụp bất biến lúc tạo, không còn gọi ORD từng dòng). */
-  async list(q: ListQuery) {
+    /**
+   * Danh sách cho staff, sale, admin (SHP-REQ ...927 BR1, BR11 đến BR13; SB-08 (d)). Thứ tự: truy vấn trang (sale: `created_by` = người trong phiên áp ở truy vấn lẫn đếm tổng, không lọc sau khi lấy trang) ->
+   * trang rỗng thì trả ngay (không gọi ORD, không audit) -> MỘT lời gọi `getShipmentDisplay` cho cả trang (lỗi hay thiếu đơn thì ném: 500, không trả trang thiếu khối khách) -> ẩn `phone`, `address` theo trạng thái
+   * vận đơn TRƯỚC khi serialize -> audit `shipment.view_list` ghi trước khi trả (lỗi thì 500, đóng kín). `order_code` của bộ lọc và của từng dòng so khớp, đọc từ cột `shipments.order_code`: không gọi ORD theo mã.
+   */
+  async list(s: SessionContext, q: ListQuery) {
     const where: Prisma.Sql[] = [];
+    if (s.role === 'sale') where.push(Prisma.sql`s.created_by = ${s.user_id}::uuid`);
     if (q.status) where.push(Prisma.sql`s.status = ${q.status}::shipment_status`);
     if (q.tracking_number) where.push(Prisma.sql`s.tracking_number = ${q.tracking_number}`);
     if (q.order_code !== undefined) {
-      const o = await this.orders.findByCode(q.order_code);
-      if (!o) return toPage([], 0, q); // mã không có hay sai định dạng: không dòng nào khớp
-      where.push(Prisma.sql`s.order_id = ${o.order_id}::uuid`);
+      if (/[^ -~]/.test(q.order_code)) return toPage([], 0, q); // ngoài ASCII in được thì không khớp khuôn mã nào (đổi chữ hoa Unicode làm `ſ` thành `S`)
+      where.push(Prisma.sql`s.order_code = ${q.order_code.toUpperCase()}`);
     }
     const cond = where.length ? Prisma.sql`WHERE ${Prisma.join(where, ' AND ')}` : Prisma.empty;
     const { skip, take } = paginate(q);
     const [rows, [{ n }]] = await Promise.all([
-      this.prisma.$queryRaw<{ order_code: string | null; status: string; tracking_number: string | null; method_name: string; created_at: Date; updated_at: Date }[]>(listRowsSql(cond, q.sort === 'oldest' ? 'ASC' : 'DESC', take, skip)),
+      this.prisma.$queryRaw<ListRow[]>(listRowsSql(cond, q.sort === 'oldest' ? 'ASC' : 'DESC', take, skip)),
       this.prisma.$queryRaw<{ n: number }[]>(listCountSql(cond)),
     ]);
-    return toPage(rows.map((r) => ({
-      order_code: r.order_code ?? '', status: r.status, tracking_number: r.tracking_number, method_name: r.method_name, created_at: r.created_at.toISOString(), updated_at: r.updated_at.toISOString(),
-    })), n, q);
+    if (rows.length === 0) return toPage([], n, q);
+
+    // một vận đơn còn hiệu lực mỗi đơn nhưng đơn có thể còn nhiều vận đơn `cancelled`: bỏ trùng, `getShipmentDisplay` chỉ nhận id không trùng
+    const display = await this.orders.getShipmentDisplay([...new Set(rows.map((r) => r.order_id))]);
+    const byOrder = new Map(display.map((d) => [d.order_id, d]));
+    const items = [];
+    for (const r of rows) {
+      const d = byOrder.get(r.order_id);
+      if (!d) throw new Error('getShipmentDisplay thiếu đơn của vận đơn'); // không bịa khối khách (500)
+      if (s.role === 'sale' && d.created_by !== s.user_id) continue; // cột bản chụp lệch khi admin đổi người tạo (SB-45): sale không thấy dòng này
+      const open = DISPLAY_PHONE.includes(r.status as ShipmentStatus);
+      items.push({
+        order_code: r.order_code ?? '', status: r.status, tracking_number: r.tracking_number, method_name: r.method_name, created_at: r.created_at.toISOString(), updated_at: r.updated_at.toISOString(),
+        customer_name: d.customer_name, phone: open ? d.phone : null, address: open ? d.address : null, created_by_name: d.created_by_name,
+      });
+    }
+    if (items.length === 0) return toPage([], n, q);
+    // audit TRƯỚC khi trả, một dòng cho cả trang; không ghi nội dung khối khách (SB-08 (d), SB-18); lỗi thì ném (500), `items` không rời khỏi hàm (SB-19)
+    await this.transactions.run((tx) => this.audit.record(tx, {
+      actor_id: s.user_id, actor_role: s.role, action: 'shipment.view_list', target_type: 'shipment', target_id: 'list', before: null,
+      after: { rows: items.length, status: q.status, order_code: q.order_code, tracking_number: q.tracking_number, sort: q.sort, page: q.page, limit: q.limit },
+    }));
+    return toPage(items, n, q);
   }
 }

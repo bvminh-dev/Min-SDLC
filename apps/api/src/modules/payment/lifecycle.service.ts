@@ -7,6 +7,8 @@ import type { PaymentRow } from './db';
 import { winningAttempt, RefundService } from './refund.service';
 import type { RefundReason } from './config';
 
+const ORDER_CODE_RE = /^(HD[0-9]{6}-[0-9]{5}|[0-9A-HJKMNP-TV-Z]{12})$/; // mã mới HDyymmdd-NNNNN hoặc mã cũ 12 ký tự (ADR-024); khớp CHECK `payments_order_code_format`
+const METHODS_IN = ['vnpay', 'cod', 'cash', 'bank_transfer'] as const; // payment_method của OrderCreated
 const CONSUMER = 'payment'; // tên module làm `consumer` của ProcessedEvent (như `order`, `shipping`)
 const COMMIT_FAILED_REASONS = ['reservation_expired', 'reservation_released', 'reservation_missing'] as const;
 const dateOf = (v: unknown): Date | null => { if (typeof v !== 'string') return null; const d = new Date(v); return Number.isNaN(d.getTime()) || d.getUTCFullYear() < 1970 || d.getUTCFullYear() > 9999 ? null : d; };
@@ -44,9 +46,13 @@ export class LifecycleService {
   /** OrderCreated: một Payment `pending` cho mỗi đơn; `amount` và hạn sao nguyên từ event, PAY không tự tính (BR1, BR6). Đơn 0 đồng không có Payment (R-03); đơn đã `cancelled` hay `expired` thì không tạo (BR9). */
   private async created(tx: Tx, e: EventEnvelope): Promise<void> {
     const pl = e.payload ?? {};
-    const orderId = uuidOf(pl.order_id), userId = uuidOf(pl.user_id), code = typeof pl.order_code === 'string' ? pl.order_code : null; // không đổi chữ hoa: mã đơn của ORD đã chuẩn hóa (đổi hoa trước khi kiểm khuôn làm `ſ` thành `S` lọt khuôn, L90)
+    const orderId = uuidOf(pl.order_id), code = typeof pl.order_code === 'string' ? pl.order_code : null; // không đổi chữ hoa: mã đơn của ORD đã chuẩn hóa (đổi hoa trước khi kiểm khuôn làm `ſ` thành `S` lọt khuôn, L90)
     const method = pl.payment_method, total = pl.grand_total;
-    if (!orderId || !userId || !code || !/^[0-9A-HJKMNP-TV-Z]{12}$/.test(code) || (method !== 'vnpay' && method !== 'cod') || typeof total !== 'number' || !Number.isSafeInteger(total) || total < 0) return this.skip(e, 'payload OrderCreated không hợp lệ');
+    const ho = pl.user_id == null || pl.user_id === ''; // đơn hộ của khách không tài khoản (ADR-026): không có `user_id`
+    const userId = ho ? null : uuidOf(pl.user_id);
+    if (!orderId || (!ho && !userId) || !code || !ORDER_CODE_RE.test(code) || (ho && method === 'vnpay') || !(METHODS_IN as readonly unknown[]).includes(method) || typeof total !== 'number' || !Number.isSafeInteger(total) || total < 0) return this.skip(e, 'payload OrderCreated không hợp lệ');
+    // ADR-026: `cash`, `bank_transfer` của đơn hộ coi như COD nhưng PAY không tạo Payment (tiền thu ghi nhận ngoài PAY, SAL-SEC T16); đơn hộ không `user_id` cũng không có Payment (cột `user_id` NOT NULL, không đường cổng thanh toán)
+    if (method === 'cash' || method === 'bank_transfer' || !userId) { this.log.info('không tạo thanh toán: đơn hộ', { code: 'payment-skipped-ho', order_code: code, method }); return; }
     if (total === 0) { this.log.info('không tạo thanh toán: đơn 0 đồng', { code: 'payment-skipped-zero-total', order_code: code }); return; }
     const expires = method === 'vnpay' ? dateOf(pl.payment_expires_at) : null;
     if (method === 'vnpay' && !expires) return this.skip(e, 'đơn online thiếu payment_expires_at');

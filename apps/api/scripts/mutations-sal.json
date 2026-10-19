@@ -1,0 +1,574 @@
+{
+ "test": "node scripts/run-jest.mjs test/sales",
+ "timeoutMs": 900000,
+ "mutations": [
+  {
+   "id": "SB-05, T1: staff được tạo đơn hộ (sai ma trận)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "SAL-TC-20261015-093909733",
+   "file": "src/modules/sales/sales.controller.ts",
+   "find": "@Action('Tạo đơn hộ cho khách (sale, admin; staff không đặt hộ)') @Roles('sale', 'admin')",
+   "replace": "@Action('Tạo đơn hộ cho khách (sale, admin; staff không đặt hộ)') @Roles('staff', 'sale', 'admin')",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909733\""
+  },
+  {
+   "id": "SB-05, T1: customer được xem danh sách đơn hộ",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SAL-TC-20261015-093911611",
+   "file": "src/modules/sales/sales.controller.ts",
+   "find": "@Action('Xem danh sách đơn hộ (Đơn của tôi: sale chỉ đơn mình tạo, admin mọi đơn hộ)') @Roles('sale', 'admin')",
+   "replace": "@Action('Xem danh sách đơn hộ (Đơn của tôi: sale chỉ đơn mình tạo, admin mọi đơn hộ)') @Roles('customer', 'sale', 'admin')",
+   "test": "node scripts/run-jest.mjs test/sales/orders.spec.ts -t \"SAL-TC-20261015-093911611\""
+  },
+  {
+   "id": "SB-05, T1: staff tra khách",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SAL-TC-20261015-093910454",
+   "file": "src/modules/sales/sales.controller.ts",
+   "find": "@Roles('sale', 'admin') @RateLimit(LIMITS.lookup)",
+   "replace": "@Roles('staff', 'sale', 'admin') @RateLimit(LIMITS.lookup)",
+   "test": "node scripts/run-jest.mjs test/sales/lookup.spec.ts -t \"SAL-TC-20261015-093910454\""
+  },
+  {
+   "id": "SB-05, T1: staff xem báo phí",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SAL-TC-20261015-093910868",
+   "file": "src/modules/sales/sales.controller.ts",
+   "find": "@Roles('sale', 'admin') @RateLimit(LIMITS.read) @Validate({ query: shippingQuery })",
+   "replace": "@Roles('staff', 'sale', 'admin') @RateLimit(LIMITS.read) @Validate({ query: shippingQuery })",
+   "test": "node scripts/run-jest.mjs test/sales/shipping.spec.ts -t \"SAL-TC-20261015-093910868\""
+  },
+  {
+   "id": "SB-05, T1: customer xem chi tiết đơn hộ",
+   "sb": [
+    "SB-05"
+   ],
+   "tc": "SAL-TC-20261015-093911946",
+   "file": "src/modules/sales/sales.controller.ts",
+   "find": "@Roles('sale', 'admin') @RateLimit(LIMITS.read) @Validate({ params: codeParams })",
+   "replace": "@Roles('customer', 'sale', 'admin') @RateLimit(LIMITS.read) @Validate({ params: codeParams })",
+   "test": "node scripts/run-jest.mjs test/sales/orders.spec.ts -t \"SAL-TC-20261015-093911946\""
+  },
+  {
+   "id": "SB-45, T2: thân nhận trường lạ created_by (bỏ kiểm khóa lạ)",
+   "sb": [
+    "SB-45",
+    "SB-11"
+   ],
+   "tc": "SAL-TC-20261015-093909766",
+   "file": "src/modules/sales/policy.ts",
+   "find": "ctx.addIssue({ code: 'custom', path: [k], message: 'unknown_field' });",
+   "replace": "void k;",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909766\""
+  },
+  {
+   "id": "SB-45, T2: created_by lấy từ thân thay vì phiên (người tạo là admin nhưng ghi sale)",
+   "sb": [
+    "SB-45"
+   ],
+   "tc": "SAL-TC-20261015-093909666",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "created_by: s.user_id, created_by_role: s.role as 'sale' | 'admin'",
+   "replace": "created_by: body.customer.user_id ?? s.user_id, created_by_role: s.role as 'sale' | 'admin'",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909666\""
+  },
+  {
+   "id": "SB-45, T2: bỏ kiểm nguồn đơn trước khi đọc sản phẩm (thứ tự kiểm BR5)",
+   "sb": [
+    "SB-45"
+   ],
+   "tc": "SAL-TC-20261015-093911140",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "if (!sources.some((x) => x.code === body.source_code)) throw new DomainError('order-source-unavailable');",
+   "replace": "void sources;",
+   "test": "node scripts/run-jest.mjs test/sales/reject.spec.ts -t \"SAL-TC-20261015-093911140\""
+  },
+  {
+   "id": "SB-06, T7: không kiểm khách có sẵn là customer",
+   "sb": [
+    "SB-06",
+    "SB-08"
+   ],
+   "tc": "SAL-TC-20261015-093909866",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "if (claimed !== null && !(await this.deps.isCustomer(claimed))) throw new DomainError('customer-not-found');",
+   "replace": "void claimed;",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909866\""
+  },
+  {
+   "id": "SB-23, T4: bỏ so sánh expected_grand_total",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SAL-TC-20261015-093909900",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "if (body.expected_grand_total !== grandTotal) {",
+   "replace": "if (false as boolean) {",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909900\""
+  },
+  {
+   "id": "SB-23, T4: giá dòng hàng lệch giá PRD (unit_price + 1)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SAL-TC-20261015-093909632",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "unit_price: l.price, cost_snapshot: l.cost",
+   "replace": "unit_price: l.price + 1, cost_snapshot: l.cost",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909632\""
+  },
+  {
+   "id": "SB-23, T4: phí vận chuyển lấy 0 thay vì từ SHP",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SAL-TC-20261015-093909900",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "fee = (await this.deps.quote({ method_id: body.shipping_method_id, city: body.shipping_address.city, subtotal: itemsTotal })).fee;",
+   "replace": "fee = (await this.deps.quote({ method_id: body.shipping_method_id, city: body.shipping_address.city, subtotal: itemsTotal })).fee * 0;",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909900\""
+  },
+  {
+   "id": "SB-23, T16: SAL ghi nhận payment_method cash thành đã thu (tạo Payment) - gài: lưu nhãn khác",
+   "sb": [
+    "SB-23",
+    "SB-24"
+   ],
+   "tc": "SAL-TC-20261015-093909666",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "payment_method: body.payment_method, note: body.note,",
+   "replace": "payment_method: 'cod', note: body.note,",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909666\""
+  },
+  {
+   "id": "SB-42, T5: giá vốn lọt vào phản hồi tạo đơn",
+   "sb": [
+    "SB-42",
+    "SB-18"
+   ],
+   "tc": "SAL-TC-20261015-093909632",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "body: { replayed: false, order: { code: order.code, status: 'confirmed',",
+   "replace": "body: { replayed: false, cost: plan.lines[0].cost, order: { code: order.code, status: 'confirmed',",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909632\""
+  },
+  {
+   "id": "SB-42, T5: giá vốn lọt vào log tạo đơn thành công",
+   "sb": [
+    "SB-42",
+    "SB-18"
+   ],
+   "tc": "SAL-TC-20261015-093909632",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "this.log.info('tạo đơn hộ thành công', { user_id: s.user_id, order_code: order.code, source: body.source_code });",
+   "replace": "this.log.info('tạo đơn hộ thành công', { user_id: s.user_id, order_code: order.code, cost: plan.lines[0].cost });",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909632\""
+  },
+  {
+   "id": "SB-18, T14: họ tên khách vào log tạo đơn",
+   "sb": [
+    "SB-18",
+    "SB-08"
+   ],
+   "tc": "SAL-TC-20261015-093910227",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "this.log.info('tạo đơn hộ thành công', { user_id: s.user_id, order_code: order.code, source: body.source_code });",
+   "replace": "this.log.info('tạo đơn hộ thành công', { user_id: s.user_id, order_code: order.code, customer: body.customer.full_name });",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093910227\""
+  },
+  {
+   "id": "SB-08, T14: phản hồi không còn no-store",
+   "sb": [
+    "SB-08",
+    "SB-18"
+   ],
+   "tc": "SAL-TC-20261015-093910227",
+   "file": "src/modules/sales/sales.controller.ts",
+   "find": "res.setHeader('Cache-Control', 'no-store');",
+   "replace": "void res;",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093910227\""
+  },
+  {
+   "id": "SB-40, T9: băm yêu cầu bỏ thân (cùng khóa khác nội dung vẫn phát lại)",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "SAL-TC-20261015-093909966",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "requestHash: hashOf(body)",
+   "replace": "requestHash: hashOf({})",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909966\""
+  },
+  {
+   "id": "SB-40, T9: khóa idempotency nhận 1 ký tự",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "SAL-TC-20261015-093909933",
+   "file": "src/modules/sales/config.ts",
+   "find": "/^[A-Za-z0-9_-]{8,64}$/",
+   "replace": "/^[A-Za-z0-9_-]{1,64}$/",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909933\""
+  },
+  {
+   "id": "SB-40, T9: phát lại trả 201 thay vì 200",
+   "sb": [
+    "SB-40"
+   ],
+   "tc": "SAL-TC-20261015-093909966",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "return out.replayed ? { status: 200,",
+   "replace": "return out.replayed ? { status: 201,",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909966\""
+  },
+  {
+   "id": "SB-24, T10: hết hàng không hoàn tác đơn (bỏ nhánh held.ok)",
+   "sb": [
+    "SB-24",
+    "SB-25",
+    "SB-27"
+   ],
+   "tc": "SAL-TC-20261015-093911042",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "if (!held.ok) {",
+   "replace": "if (false as boolean) {",
+   "test": "node scripts/run-jest.mjs test/sales/reject.spec.ts -t \"SAL-TC-20261015-093911042\""
+  },
+  {
+   "id": "SB-25, T10: giữ hàng nhận thiếu hàng như đủ (reserve trả ok sai) - gài: bỏ giữ hàng",
+   "sb": [
+    "SB-25"
+   ],
+   "tc": "SAL-TC-20261015-093911343",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "const held = await this.deps.reserve(order.order_id, plan.lines.map((l) => ({ product_id: l.product_id, quantity: l.quantity })), tx);",
+   "replace": "const held = { ok: true } as { ok: true; reservations: never[] } | { ok: false; shortages: never[] };",
+   "test": "node scripts/run-jest.mjs test/sales/reject.spec.ts -t \"SAL-TC-20261015-093911343\""
+  },
+  {
+   "id": "SB-31, T10: lời gọi module khác quá hạn không đổi sang 503",
+   "sb": [
+    "SB-31",
+    "SB-24"
+   ],
+   "tc": "SAL-TC-20261015-093911240",
+   "file": "src/modules/sales/deps.service.ts",
+   "find": "return await Promise.race([fn(), timeout]);",
+   "replace": "return await fn();",
+   "test": "node scripts/run-jest.mjs test/sales/reject.spec.ts -t \"SAL-TC-20261015-093911240\""
+  },
+  {
+   "id": "SB-31, T10: lỗi module khác thành 500 thay vì 503",
+   "sb": [
+    "SB-31"
+   ],
+   "tc": "SAL-TC-20261015-093911240",
+   "file": "src/modules/sales/deps.service.ts",
+   "find": "throw new DependencyError(dep, e);",
+   "replace": "throw e;",
+   "test": "node scripts/run-jest.mjs test/sales/reject.spec.ts -t \"SAL-TC-20261015-093911240\""
+  },
+  {
+   "id": "SB-14, T11: tạo đơn cho 11 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SAL-TC-20261015-093909998",
+   "file": "src/modules/sales/config.ts",
+   "find": "create: { tier: 'B', limit: 10, windowSeconds: 60 },",
+   "replace": "create: { tier: 'B', limit: 11, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093909998\""
+  },
+  {
+   "id": "SB-14, T6: tra khách 31 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SAL-TC-20261015-093910521",
+   "file": "src/modules/sales/config.ts",
+   "find": "lookup: { tier: 'D', limit: 30, windowSeconds: 60, group: 'usr:customer-lookup' },",
+   "replace": "lookup: { tier: 'D', limit: 31, windowSeconds: 60, group: 'usr:customer-lookup' },",
+   "test": "node scripts/run-jest.mjs test/sales/lookup.spec.ts -t \"SAL-TC-20261015-093910521\""
+  },
+  {
+   "id": "SB-14, T3: báo phí, danh sách, chi tiết 121 lần mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SAL-TC-20261015-093911681",
+   "file": "src/modules/sales/config.ts",
+   "find": "read: { tier: 'C', limit: 120, windowSeconds: 60 },",
+   "replace": "read: { tier: 'C', limit: 121, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/sales/orders.spec.ts -t \"SAL-TC-20261015-093911681\""
+  },
+  {
+   "id": "SB-14, T6: tra khách không chung bộ đếm usr:customer-lookup",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SAL-TC-20261015-093909998",
+   "file": "src/modules/sales/config.ts",
+   "find": "group: 'usr:customer-lookup' }",
+   "replace": "group: 'sal:lookup' }",
+   "test": "node scripts/run-jest.mjs test/sales/guard.spec.ts -t \"SAL-TC-20261015-093909998\""
+  },
+  {
+   "id": "SB-06, T3: danh sách của sale lấy mọi đơn hộ (không lọc theo phiên)",
+   "sb": [
+    "SB-06",
+    "SB-44"
+   ],
+   "tc": "SAL-TC-20261015-093911477",
+   "file": "src/modules/sales/read.service.ts",
+   "find": "created_by: admin ? (q.created_by ?? null) : s.user_id,",
+   "replace": "created_by: q.created_by ?? null,",
+   "test": "node scripts/run-jest.mjs test/sales/orders.spec.ts -t \"SAL-TC-20261015-093911477\""
+  },
+  {
+   "id": "SB-06, T3: chi tiết của sale xem đơn của sale khác",
+   "sb": [
+    "SB-06",
+    "SB-44"
+   ],
+   "tc": "SAL-TC-20261015-093911880",
+   "file": "src/modules/sales/read.service.ts",
+   "find": "{ created_by: admin ? null : s.user_id }",
+   "replace": "{ created_by: null }",
+   "test": "node scripts/run-jest.mjs test/sales/orders.spec.ts -t \"SAL-TC-20261015-093911880\""
+  },
+  {
+   "id": "SB-06, T3: sale gửi created_by không bị 400",
+   "sb": [
+    "SB-06"
+   ],
+   "tc": "SAL-TC-20261015-093911648",
+   "file": "src/modules/sales/read.service.ts",
+   "find": "if (q.created_by !== undefined && !admin) throw",
+   "replace": "if (false as boolean) throw",
+   "test": "node scripts/run-jest.mjs test/sales/orders.spec.ts -t \"SAL-TC-20261015-093911648\""
+  },
+  {
+   "id": "SB-44, T3: 404 của đơn không có trả 200 rỗng",
+   "sb": [
+    "SB-44"
+   ],
+   "tc": "SAL-TC-20261015-093911880",
+   "file": "src/modules/sales/read.service.ts",
+   "find": "if (!o) throw new DomainError('not-found');",
+   "replace": "if (!o) return {} as never;",
+   "test": "node scripts/run-jest.mjs test/sales/orders.spec.ts -t \"SAL-TC-20261015-093911880\""
+  },
+  {
+   "id": "SB-08, T3: danh sách của sale lộ created_by",
+   "sb": [
+    "SB-08",
+    "SB-06"
+   ],
+   "tc": "SAL-TC-20261015-093911477",
+   "file": "src/modules/sales/read.service.ts",
+   "find": "...(admin ? { created_by: { id: o.created_by.id, name: o.created_by.name } } : {}),",
+   "replace": "created_by: { id: o.created_by.id, name: o.created_by.name },",
+   "test": "node scripts/run-jest.mjs test/sales/orders.spec.ts -t \"SAL-TC-20261015-093911477\""
+  },
+  {
+   "id": "SB-42, T5: chi tiết admin lộ giá vốn qua ORD (thêm cost_snapshot)",
+   "sb": [
+    "SB-42"
+   ],
+   "tc": "SAL-TC-20261015-093911848",
+   "file": "src/modules/sales/read.service.ts",
+   "find": "items: o.items.map((i) => ({ product_id: i.product_id, name: i.name, quantity: i.quantity, unit_price: i.unit_price, line_total: i.line_total, note: i.note })),",
+   "replace": "items: o.items.map((i) => ({ product_id: i.product_id, name: i.name, quantity: i.quantity, unit_price: i.unit_price, line_total: i.line_total, note: i.note, cost_snapshot: (i as any).cost_snapshot ?? 0 })),",
+   "test": "node scripts/run-jest.mjs test/sales/orders.spec.ts -t \"SAL-TC-20261015-093911848\""
+  },
+  {
+   "id": "SB-08, T6: tra khách thiếu chuẩn hóa +84",
+   "sb": [
+    "SB-08",
+    "SB-06"
+   ],
+   "tc": "SAL-TC-20261015-093910324",
+   "file": "src/modules/sales/policy.ts",
+   "find": "s.startsWith('+84') ? `0${s.slice(3)}`",
+   "replace": "s.startsWith('+84') ? `${s.slice(3)}`",
+   "test": "node scripts/run-jest.mjs test/sales/lookup.spec.ts -t \"SAL-TC-20261015-093910324\""
+  },
+  {
+   "id": "SB-08, T6: tra khách lộ thêm email_verified",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SAL-TC-20261015-093910631",
+   "file": "src/modules/sales/read.service.ts",
+   "find": "return { items: r.items.map((c) => ({ id: c.id, full_name: c.full_name, email: c.email, phone: c.phone, status: c.status })) };",
+   "replace": "return { items: r.items.map((c) => ({ id: c.id, full_name: c.full_name, email: c.email, phone: c.phone, status: c.status, email_verified: true })) };",
+   "test": "node scripts/run-jest.mjs test/sales/lookup.spec.ts -t \"SAL-TC-20261015-093910631\""
+  },
+  {
+   "id": "SB-19, T6: lỗi ghi audit tra khách bị nuốt (trả 503 thay vì 500)",
+   "sb": [
+    "SB-19",
+    "SB-08"
+   ],
+   "tc": "SAL-TC-20261015-093910553",
+   "file": "src/modules/sales/deps.service.ts",
+   "find": "lookup(actor: { actor_id: string; actor_role: 'sale' | 'admin' }, key: { phone?: string; email?: string }): Promise<{ items: SaleCustomer[] }> { return this.users.lookupForSale(actor, key); }",
+   "replace": "lookup(actor: { actor_id: string; actor_role: 'sale' | 'admin' }, key: { phone?: string; email?: string }): Promise<{ items: SaleCustomer[] }> { return this.users.lookupForSale(actor, key).catch(() => ({ items: [] })); }",
+   "test": "node scripts/run-jest.mjs test/sales/lookup.spec.ts -t \"SAL-TC-20261015-093910553\""
+  },
+  {
+   "id": "SB-12, T8: ghi chú nhận ký tự điều khiển NUL",
+   "sb": [
+    "SB-12",
+    "SB-45"
+   ],
+   "tc": "SAL-TC-20261015-093910128",
+   "file": "src/modules/sales/policy.ts",
+   "find": "const CONTROL_NOTE = /[\\u0000-\\u0009\\u000B-\\u001F\\u007F]/;",
+   "replace": "const CONTROL_NOTE = /[\\u0001-\\u0009\\u000B-\\u001F\\u007F]/;",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093910128\""
+  },
+  {
+   "id": "SB-11, T4: bỏ trần 50 dòng ở schema và bước chặn sớm",
+   "sb": [
+    "SB-11",
+    "SB-23"
+   ],
+   "tc": "SAL-TC-20261015-093910128",
+   "file": "src/modules/sales/policy.ts",
+   "find": "if (Array.isArray(o.items) && o.items.length > ITEMS_MAX) add('items', 'too_long');",
+   "replace": "void add;",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093910128\""
+  },
+  {
+   "id": "SB-11, T4: trần số lượng 100000 thành 100001",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SAL-TC-20261015-093910128",
+   "file": "src/modules/sales/config.ts",
+   "find": "export const QTY_MAX = 100_000;",
+   "replace": "export const QTY_MAX = 100_001;",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093910128\""
+  },
+  {
+   "id": "SB-12, T8: ghi chú đơn trần 1001 ký tự",
+   "sb": [
+    "SB-12"
+   ],
+   "tc": "SAL-TC-20261015-093910128",
+   "file": "src/modules/sales/config.ts",
+   "find": "export const NOTE_MAX = 1000;",
+   "replace": "export const NOTE_MAX = 1001;",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093910128\""
+  },
+  {
+   "id": "SB-23, T4: thứ tự trả về dùng giá trị client (báo phí sắp ngược)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SAL-TC-20261015-093910737",
+   "file": "src/modules/sales/read.service.ts",
+   "find": ".sort((a, b) => a.fee - b.fee || a.name.localeCompare(b.name, 'vi'))",
+   "replace": ".sort((a, b) => b.fee - a.fee || a.name.localeCompare(b.name, 'vi'))",
+   "test": "node scripts/run-jest.mjs test/sales/shipping.spec.ts -t \"SAL-TC-20261015-093910737\""
+  },
+  {
+   "id": "SB-11, T4: trần tạm tính báo phí 10 tỷ thành 100 tỷ",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "SAL-TC-20261015-093910803",
+   "file": "src/modules/sales/policy.ts",
+   "find": ".max(10_000_000_000, 'out_of_range')",
+   "replace": ".max(100_000_000_000, 'out_of_range')",
+   "test": "node scripts/run-jest.mjs test/sales/shipping.spec.ts -t \"SAL-TC-20261015-093910803\""
+  },
+  {
+   "id": "SB-23, T4: sản phẩm ngừng bán vẫn bán được (bỏ kiểm sellable)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SAL-TC-20261015-093911106",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "const bad = body.items.filter((i) => !found.get(i.product_id.toLowerCase())?.sellable);",
+   "replace": "const bad = body.items.filter((i) => !found.get(i.product_id.toLowerCase()));",
+   "test": "node scripts/run-jest.mjs test/sales/reject.spec.ts -t \"SAL-TC-20261015-093911106\""
+  },
+  {
+   "id": "SB-23, T4: sản phẩm không tồn tại bị bỏ qua thay vì 409 (chỉ báo dòng đầu)",
+   "sb": [
+    "SB-23"
+   ],
+   "tc": "SAL-TC-20261015-093911106",
+   "file": "src/modules/sales/create.service.ts",
+   "find": "if (bad.length) throw",
+   "replace": "if (bad.length > 1) throw",
+   "test": "node scripts/run-jest.mjs test/sales/reject.spec.ts -t \"SAL-TC-20261015-093911106\""
+  },
+  {
+   "id": "SB-35, T15: lint không còn coi sales là module không sở hữu bảng",
+   "sb": [
+    "SB-35"
+   ],
+   "tc": "SAL-TC-20261015-093910259",
+   "file": "../../scripts/check-boundaries.mjs",
+   "find": "const NO_TABLE_MODULES = new Set(['sales']);",
+   "replace": "const NO_TABLE_MODULES = new Set([]);",
+   "test": "node scripts/run-jest.mjs test/sales/guard.spec.ts -t \"SAL-TC-20261015-093910259\""
+  },
+  {
+   "id": "SB-35, T15: thư mục module rỗng thoát 0 thay vì 2",
+   "sb": [
+    "SB-35"
+   ],
+   "tc": "SAL-TC-20261015-093910292",
+   "file": "../../scripts/check-boundaries.mjs",
+   "find": "unreadable.push(`${relative(process.cwd(), dir)}: không đọc được (thư mục module không có tệp mã nào)`);",
+   "replace": "void dir;",
+   "test": "node scripts/run-jest.mjs test/sales/guard.spec.ts -t \"SAL-TC-20261015-093910292\""
+  },
+  {
+   "id": "SB-35, T15: tệp lỗi cú pháp được cho qua",
+   "sb": [
+    "SB-35"
+   ],
+   "tc": "SAL-TC-20261015-093910292",
+   "file": "../../scripts/check-boundaries.mjs",
+   "find": "if (bad) unreadable.push(",
+   "replace": "if (false) unreadable.push(",
+   "test": "node scripts/run-jest.mjs test/sales/guard.spec.ts -t \"SAL-TC-20261015-093910292\""
+  },
+  {
+   "id": "SB-35, T15: import PrismaService trong sales không bị bắt",
+   "sb": [
+    "SB-35"
+   ],
+   "tc": "SAL-TC-20261015-093910259",
+   "file": "../../scripts/check-boundaries.mjs",
+   "find": "if (hit) out.push(",
+   "replace": "if (false) out.push(",
+   "test": "node scripts/run-jest.mjs test/sales/guard.spec.ts -t \"SAL-TC-20261015-093910259\""
+  },
+  {
+   "id": "SB-13, T13: CSRF cho phép Origin lạ",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "SAL-TC-20261015-093910031",
+   "file": "src/modules/platform/http/csrf.guard.ts",
+   "find": "if (!origin || !this.allowed.has(origin)) throw new DomainError('csrf_failed');",
+   "replace": "if (!origin) throw new DomainError('csrf_failed');",
+   "test": "node scripts/run-jest.mjs test/sales/create.spec.ts -t \"SAL-TC-20261015-093910031\""
+  }
+ ]
+}

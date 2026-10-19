@@ -1231,8 +1231,8 @@
    ],
    "tc": "PAY-TC-20261006-104538604",
    "file": "src/modules/payment/lifecycle.service.ts",
-   "find": "const orderId = uuidOf(pl.order_id), userId = uuidOf(pl.user_id), code = typeof pl.order_code === 'string' ? pl.order_code : null;",
-   "replace": "const orderId = uuidOf(pl.order_id), userId = uuidOf(pl.user_id), code = typeof pl.order_code === 'string' ? pl.order_code : null; this.log.info('OrderCreated', { order_code: pl.order_code });",
+   "find": "const orderId = uuidOf(pl.order_id), code = typeof pl.order_code === 'string' ? pl.order_code : null;",
+   "replace": "const orderId = uuidOf(pl.order_id), code = typeof pl.order_code === 'string' ? pl.order_code : null; this.log.info('OrderCreated', { order_code: pl.order_code });",
    "test": "node scripts/run-jest.mjs test/payment/review.spec.ts -t \"PAY-TC-20261006-104538604\""
   },
   {
@@ -1703,8 +1703,8 @@
    ],
    "tc": "PAY-TC-20261006-104538738",
    "file": "src/modules/payment/payment.controller.ts",
-   "find": "@Action('Nhận webhook IPN của VNPay (cổng gọi, xác thực bằng chữ ký)') @Public() @RateLimit(LIMITS.ipn)",
-   "replace": "@Action('Nhận webhook IPN của VNPay (cổng gọi, xác thực bằng chữ ký)') @RateLimit(LIMITS.ipn)",
+   "find": "@Action('Nhận webhook IPN của VNPay (cổng gọi, xác thực bằng chữ ký)') @Public() @RawStrings() @RateLimit(LIMITS.ipn)",
+   "replace": "@Action('Nhận webhook IPN của VNPay (cổng gọi, xác thực bằng chữ ký)') @RawStrings() @RateLimit(LIMITS.ipn)",
    "test": "node scripts/run-jest.mjs test/payment/guard.spec.ts -t \"PAY-TC-20261006-104538738\""
   },
   {
@@ -1758,8 +1758,8 @@
    ],
    "tc": "PAY-TC-20261006-104539294",
    "file": "src/modules/payment/payment.controller.ts",
-   "find": "@Public() @RateLimit(LIMITS.ipn) @Validate({ query: ipnQuery })",
-   "replace": "@Public() @Validate({ query: ipnQuery })",
+   "find": "@Public() @RawStrings() @RateLimit(LIMITS.ipn) @Validate({ query: ipnQuery })",
+   "replace": "@Public() @RawStrings() @Validate({ query: ipnQuery })",
    "test": "node scripts/run-jest.mjs test/payment/ipn.spec.ts -t \"PAY-TC-20261006-104539294\""
   },
   {

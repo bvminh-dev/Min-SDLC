@@ -65,5 +65,5 @@ function ChangePassword() {
 }
 
 export default function ChangePasswordPage() {
-  return <RequireRole roles={['customer', 'staff', 'admin']}><ChangePassword /></RequireRole>;
+  return <RequireRole roles={['customer', 'staff', 'sale', 'admin']}><ChangePassword /></RequireRole>;
 }

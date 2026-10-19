@@ -10,7 +10,8 @@ import { REPO_ROOT, truncateAll } from '../support/db';
 
 const MATRIX_PATH = resolve(REPO_ROOT, 'spec/permissions-matrix.md');
 const AUTH_SCOPE = (id: string) => /\s\/api\/v1\/(auth|admin\/users)(\/|$)/.test(id);
-const EXEMPT = ['Kiểm quyền endpoint theo role (mặc định từ chối)'];
+// hàng không có endpoint riêng: chính guard; hàng của đổi role (endpoint "Đổi role người dùng" đã phủ, hàng này chỉ nêu bốn role)
+const EXEMPT = ['Kiểm quyền endpoint theo role (mặc định từ chối)', 'Kiểm quyền endpoint có role `sale` (mặc định từ chối, kiểm lệch ma trận có cột sale)', 'Gán role `sale` và đổi qua lại giữa bốn role (customer, staff, sale, admin)'];
 
 describe('Kiểm quyền theo role (AUTH-REQ-20261006-095515918)', () => {
   let t: AuthApp;
@@ -79,7 +80,7 @@ describe('Kiểm quyền theo role (AUTH-REQ-20261006-095515918)', () => {
       // ma trận rỗng, hàng bị mất hoặc đổi tên: lỗi (không im lặng cho qua)
       expect(auditPermissions(real, '', { scope: AUTH_SCOPE })).toEqual(['ma trận quyền rỗng hoặc không đọc được (không tìm thấy hàng nào có mã requirement)']);
       expect(auditPermissions(real, matrixMd.replace('| Khóa tài khoản người dùng |', '| Khóa người dùng |'), { scope: AUTH_SCOPE, epic: 'AUTH', exempt: EXEMPT }).join('\n')).toContain('không có trong permissions-matrix.md');
-      expect(parseMatrix(matrixMd).filter((r) => r.requirement.startsWith('AUTH-REQ-'))).toHaveLength(13);
+      expect(parseMatrix(matrixMd).filter((r) => r.requirement.startsWith('AUTH-REQ-'))).toHaveLength(17); // 13 hàng cũ cộng 4 hàng role sale (đợt bán hộ)
       // phạm vi rỗng (không route nào khớp) mà epic có hàng: báo hàng không có endpoint
       expect(auditPermissions(real, matrixMd, { scope: () => false, epic: 'AUTH', exempt: EXEMPT }).length).toBeGreaterThan(10);
     } finally { await real.close(); }
@@ -112,7 +113,7 @@ describe('Kiểm quyền theo role (AUTH-REQ-20261006-095515918)', () => {
       expect([who, JSON.stringify(r.body)]).toEqual([who, JSON.stringify({ RspCode: '97', Message: 'Invalid signature' })]); // chữ ký sai: từ chối theo định dạng cổng, handler không chạy
       expect(r.body.reached).toBeUndefined();
     }
-    expect(await q<{ r: string[] }>(t, "SELECT enum_range(NULL::user_role)::text AS r")).toEqual([{ r: '{customer,staff,admin}' }]);
+    expect(await q<{ r: string[] }>(t, "SELECT enum_range(NULL::user_role)::text AS r")).toEqual([{ r: '{customer,staff,admin,sale}' }]); // bốn role hợp lệ; `sale` thêm sau bằng ADD VALUE (đợt bán hộ)
     expect((await get(t, '/auth/session', callers.admin)).body.user.role).toBe('admin');
   });
 });

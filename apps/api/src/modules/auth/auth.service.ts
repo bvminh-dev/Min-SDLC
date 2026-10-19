@@ -8,11 +8,11 @@ import {
 } from './config';
 import { hashPassword, hashToken, needsRehash, newToken, verifyPassword, type ArgonParams } from './crypto';
 import { INVALID_CREDENTIALS_DETAIL, INVALID_TOKEN_DETAIL } from './errors';
-import { normalizeEmail, sameAsEmail } from './policy';
+import { isAsciiEmail, normalizeEmail, sameAsEmail } from './policy';
 import { createSession, emitSessionRevoked, revokeAllSessions } from './session.store';
 
 interface LoginRow {
-  id: string; email: string; full_name: string; role: 'customer' | 'staff' | 'admin'; status: 'active' | 'locked'; password_hash: string;
+  id: string; email: string; full_name: string; role: 'customer' | 'staff' | 'sale' | 'admin'; status: 'active' | 'locked'; password_hash: string;
   email_verified_at: Date | null; locked_until: Date | null; locked_reason: 'too_many_attempts' | 'admin' | null;
 }
 export interface LoginResult {
@@ -127,9 +127,9 @@ export class AuthService {
   // --- Đăng nhập (LOGIN)
   async login(input: { email: string; password: string }, ctx: { ip: string; cookieToken: string | null }): Promise<LoginResult> {
     const email = normalizeEmail(input.email);
-    const rows = await this.prisma.$queryRaw<LoginRow[]>`
+    const rows = !isAsciiEmail(input.email) ? [] : await this.prisma.$queryRaw<LoginRow[]>`
       SELECT id, email::text AS email, full_name, role, status, password_hash, email_verified_at, locked_until, locked_reason
-      FROM users WHERE email = ${email}::citext`;
+      FROM users WHERE email = ${email}::citext`; // email ngoài ASCII: coi như không có tài khoản (cùng 401, không để citext gấp Kelvin thành `k`)
     const user = rows[0];
     const ok = await verifyPassword(input.password, user?.password_hash ?? (await this.dummyHash()));
     if (!user || !ok) {
@@ -231,7 +231,7 @@ export class AuthService {
   async resetPassword(input: { token: string; new_password: string }, ctx: { ip: string }): Promise<void> {
     const now = this.clock.now();
     const tokenHash = hashToken(input.token);
-    const [t] = await this.prisma.$queryRaw<{ user_id: string; email: string; role: 'customer' | 'staff' | 'admin'; status: string; locked_reason: string | null }[]>`
+    const [t] = await this.prisma.$queryRaw<{ user_id: string; email: string; role: 'customer' | 'staff' | 'sale' | 'admin'; status: string; locked_reason: string | null }[]>`
       SELECT t.user_id, u.email::text AS email, u.role, u.status, u.locked_reason FROM password_reset_tokens t JOIN users u ON u.id = t.user_id
       WHERE t.token_hash = ${tokenHash} AND t.status = 'issued' AND t.expires_at > ${now}::timestamptz`;
     if (!t || (t.status === 'locked' && t.locked_reason === 'admin')) throw invalidToken();

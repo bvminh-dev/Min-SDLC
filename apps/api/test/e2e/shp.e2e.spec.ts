@@ -110,7 +110,8 @@ describe('E2E SHP (trình duyệt thật, API thật)', () => {
     await id(page, `${P.list}-search`).fill('7K3M9Q2XH4TB');
     await count(id(page, `${P.list}-row`), 1);
     await hasText(id(page, `${P.list}-tracking`), '—');
-    expect(await bodyText(page)).not.toMatch(/@x\.vn|@shop\.vn|0901234567|Nguyễn Văn An/); // danh sách không có dữ liệu cá nhân
+    expect(await bodyText(page)).not.toMatch(/@x\.vn|@shop\.vn/); // danh sách không có email; vận đơn chờ bàn giao có tên, điện thoại, địa chỉ (SB-08 (d), SHP-E2E-20261006-102134172 phủ phần ẩn ở vận đơn đã xong)
+    await hasText(id(page, `${P.list}-customer-name`), 'Nguyễn Văn An'); await hasText(id(page, `${P.list}-phone`), '0901234567'); await hasText(id(page, `${P.list}-address`), /^12 Lê Lợi/);
     await id(page, `${P.list}-row`).click();
 
     await hasText(id(page, `${P.det}-order-code`), '7K3M9Q2XH4TB');
@@ -212,7 +213,8 @@ describe('E2E SHP (trình duyệt thật, API thật)', () => {
     await tab(page, 'Đã giao').click();
     await count(id(page, `${P.list}-row`), 1);
     await hasText(id(page, `${P.list}-order-code`), '2N6R4T8W0KMA');
-    expect(await bodyText(page)).not.toMatch(/@x\.vn|@shop\.vn|0901234567|Nguyễn Văn An/);
+    expect(await bodyText(page)).not.toMatch(/@x\.vn|@shop\.vn|0901234567/); // vận đơn đã giao: điện thoại, địa chỉ ẩn ở danh sách kể cả với admin
+    await hasText(id(page, `${P.list}-customer-name`), 'Nguyễn Văn An'); await hasText(id(page, `${P.list}-phone`), '—'); await hasText(id(page, `${P.list}-address`), '—');
     await id(page, `${P.list}-row`).click();
     await hasText(id(page, `${P.det}-status-badge`), 'Đã giao');
     const rec = await textOf(id(page, `${P.det}-recipient`));
@@ -435,7 +437,7 @@ describe('E2E SHP (trình duyệt thật, API thật)', () => {
     await hasText(id(page, `${P.det}-status-badge`), 'Đang giao');
     await hasText(id(page, `${P.det}-tracking`), 'GHN12345678');
     await see(id(page, `${P.det}-deliver`));
-    await hasText(id(page, `${P.det}-history-error`), /Không tải được lịch sử/);
+    await hasText(id(page, `${P.det}-history-error`), /Không tải được/);
     await count(id(page, `${P.det}-history-item`), 0);
     await count(id(page, `${P.det}-error`), 0); // lỗi chỉ ở khối lịch sử, không phải cả màn
     await off();

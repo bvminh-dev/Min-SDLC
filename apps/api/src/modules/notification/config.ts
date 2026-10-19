@@ -64,7 +64,7 @@ export const SECRET_TYPES = ['email_verification', 'password_reset'] as const;
 export const MAX_RECIPIENTS = 200;
 
 // Nội dung (NTF-REQ-20261006-103208460 BR5, NTF-REQ-20261006-103209168 BR1, NTF-REQ-20261006-103208551 BR7)
-export const ORDER_CODE_RE = /^[A-Z0-9]{12}$/;
+export const ORDER_CODE_RE = /^(?:[A-Z0-9]{12}|HD\d{6}-\d{5})$/; // mã cũ 12 ký tự hoặc mã mới HDyymmdd-NNNNN (ADR-024)
 export const TRACKING_RE = /^[A-Z0-9-]{8,30}$/;
 export const TOKEN_RE = /^[A-Za-z0-9_-]{43,128}$/;
 export const PRODUCT_NAME_MAX = 80;

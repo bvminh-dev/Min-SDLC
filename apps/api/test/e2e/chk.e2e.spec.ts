@@ -66,7 +66,7 @@ async function fullCod(page: Page): Promise<void> {
   await chooseCod(page);
   await lockedIs(id(page, `${K}-place-order`), false);
 }
-const orderCodeOf = async (page: Page): Promise<string> => { const c = await textOf(id(page, `${K}-complete-order-code`)); expect(c).toMatch(/^[A-Z0-9]{12}$/); return c; };
+const orderCodeOf = async (page: Page): Promise<string> => { const c = await textOf(id(page, `${K}-complete-order-code`)); expect(c).toMatch(/^HD[0-9]{6}-[0-9]{5}$/); return c; }; // mã đơn do ORD cấp theo khuôn HDyymmdd-NNNNN (ORD-REQ-20261015-092748640, ADR-024); CHK chỉ chuyển tiếp
 
 describe('E2E CHK (trình duyệt thật, API thật)', () => {
   e2e('CHK-E2E-20261006-110743989: Customer đặt đơn COD đầy đủ từ giỏ, có mã giảm giá', async (page) => {

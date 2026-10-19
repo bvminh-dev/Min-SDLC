@@ -61,23 +61,27 @@ export function auditRoutes(app: INestApplication, prefix = '/api/v1'): string[]
 }
 
 type Cell = 'Y' | 'own' | '-';
-export interface MatrixRow { action: string; requirement: string; guest: Cell; customer: Cell; staff: Cell; admin: Cell; system: Cell }
+export interface MatrixRow { action: string; requirement: string; guest: Cell; customer: Cell; staff: Cell; sale: Cell; admin: Cell; system: Cell }
 
-/** Đọc bảng `Hành động | Requirement | guest | customer | staff | admin | system` của permissions-matrix.md. Không có hàng nào thì rỗng (bên gọi phải coi là lỗi). */
+/**
+ * Đọc bảng `Hành động | Requirement | guest | customer | staff | sale | admin | system` của permissions-matrix.md (bảng cũ không có cột `sale` vẫn đọc được, `sale` là `-`).
+ * Không có hàng nào thì rỗng (bên gọi phải coi là lỗi).
+ */
 export function parseMatrix(md: string): MatrixRow[] {
   const rows: MatrixRow[] = [];
   for (const line of md.split(/\r?\n/)) {
     const c = line.startsWith('|') ? line.split('|').slice(1, -1).map((x) => x.trim()) : [];
     if (c.length < 7 || !/^[A-Z]{2,4}-REQ-/.test(c[1])) continue;
-    const [action, requirement, guest, customer, staff, admin, system] = c;
-    rows.push({ action, requirement, guest, customer, staff, admin, system } as MatrixRow);
+    const [action, requirement, guest, customer, staff, ...rest] = c;
+    const [sale, admin, system] = rest.length >= 3 ? rest : ['-', ...rest];
+    rows.push({ action, requirement, guest, customer, staff, sale, admin, system } as MatrixRow);
   }
   return rows;
 }
 
 /**
  * Kiểm lệch ma trận (AUTH-REQ-20261006-095515918 BR5, chạy ở CI trên AppModule thật): với route thuộc `scope`, @Action phải trỏ tới một hàng của ma trận
- * và role khai trong code phải khớp hàng đó (guest Y thì @Public; ngược lại @Roles đúng tập customer, staff, admin có Y hoặc own). Hàng của epic (`epic`)
+ * và role khai trong code phải khớp hàng đó (guest Y thì @Public; ngược lại @Roles đúng tập customer, staff, sale, admin có Y hoặc own; hàng `Sale <việc>` gộp vào hàng `<Việc>`). Hàng của epic (`epic`)
  * không có route nào cũng là lỗi, trừ hàng trong `exempt` (hàng không có endpoint, ví dụ chính guard). Ma trận rỗng hoặc không đọc được là lỗi (đóng khi hỏng).
  */
 export function auditPermissions(app: INestApplication, matrixMd: string, opts: { scope: (routeId: string) => boolean; epic?: string; exempt?: string[]; prefix?: string }): string[] {
@@ -85,6 +89,13 @@ export function auditPermissions(app: INestApplication, matrixMd: string, opts: 
   const matrix = parseMatrix(matrixMd);
   if (!matrix.length) return ['ma trận quyền rỗng hoặc không đọc được (không tìm thấy hàng nào có mã requirement)'];
   const byAction = new Map(matrix.map((r) => [r.action, r]));
+  // Hàng `Sale <việc>` (quyền của role sale cho cùng endpoint, đợt bán hộ) gộp vào hàng `<Việc>`: một endpoint chỉ có một @Action.
+  const saleExtra = new Map<string, string>(); // tên hàng `Sale ...` -> tên hàng gốc
+  for (const r of matrix) {
+    const m = /^Sale (.)(.*)$/su.exec(r.action);
+    const base = m ? byAction.get(m[1].toUpperCase() + m[2]) : undefined;
+    if (base && r.requirement === base.requirement) { if (r.sale !== '-' && base.sale === '-') base.sale = r.sale; saleExtra.set(r.action, base.action); }
+  }
   const out: string[] = [];
   const used = new Set<string>();
   for (const { id, handler, cls } of listRoutes(app, opts.prefix ?? '/api/v1')) {
@@ -102,12 +113,12 @@ export function auditPermissions(app: INestApplication, matrixMd: string, opts: 
       continue;
     }
     if (isPublic) { out.push(`${id}: code khai @Public nhưng ma trận không cho guest (${label})`); continue; }
-    const rowRoles = (['admin', 'customer', 'staff'] as const).filter((r) => row[r] !== '-');
+    const rowRoles = (['admin', 'customer', 'sale', 'staff'] as const).filter((r) => row[r] !== '-');
     if (rowRoles.join() !== roles.join()) out.push(`${id}: code cho [${roles.join(', ')}] nhưng ma trận (${label}) cho [${rowRoles.join(', ')}]`);
   }
   if (opts.epic) {
     for (const r of matrix) {
-      if (r.requirement.startsWith(`${opts.epic}-REQ-`) && !used.has(r.action) && !(opts.exempt ?? []).includes(r.action)) out.push(`hàng ma trận "${r.action}" của ${opts.epic} không có endpoint nào khai @Action`);
+      if (r.requirement.startsWith(`${opts.epic}-REQ-`) && !used.has(r.action) && !used.has(saleExtra.get(r.action) ?? '') && !(opts.exempt ?? []).includes(r.action)) out.push(`hàng ma trận "${r.action}" của ${opts.epic} không có endpoint nào khai @Action`);
     }
   }
   return out;

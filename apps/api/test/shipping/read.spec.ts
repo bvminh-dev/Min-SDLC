@@ -38,8 +38,9 @@ describe('SHP xem vận đơn và danh sách', () => {
     for (let i = 0; i < 45; i++) await seedShipment(t, { status: i < 12 ? 'pending' : 'delivered', user: owner.id, method: m, createdAt: new Date(t.clock.now().getTime() - (i + 1) * 60_000) });
     const list = await call(t, 'get', '/shipping/shipments?status=pending', { cookie: s1.cookie });
     expect([list.status, list.body.total, list.body.page, list.body.limit, list.body.items.length]).toEqual([200, 12, 1, 20, 12]);
-    for (const i of list.body.items) expect(Object.keys(i).sort()).toEqual(['created_at', 'method_name', 'order_code', 'status', 'tracking_number', 'updated_at']);
-    expect(JSON.stringify(list.body)).not.toMatch(/recipient|phone|email|0901234567|Lê Lợi|Nguyễn Văn A/);
+    for (const i of list.body.items) expect(Object.keys(i).sort()).toEqual(['address', 'created_at', 'created_by_name', 'customer_name', 'method_name', 'order_code', 'phone', 'status', 'tracking_number', 'updated_at']);
+    expect(list.body.items.every((i: { phone: string | null; address: string | null }) => i.phone === '0901234567' && i.address === '12 Lê Lợi, Bến Nghé, Quận 1, TP.HCM')).toBe(true); // cả 12 đều pending nên có điện thoại, địa chỉ
+    expect(JSON.stringify(list.body)).not.toMatch(/recipient|email|user_id|"created_by"/);
     const oldest = await call(t, 'get', '/shipping/shipments?sort=oldest&limit=100', { cookie: s1.cookie });
     const times = oldest.body.items.map((i: { created_at: string }) => Date.parse(i.created_at));
     expect(times).toEqual([...times].sort((a, b) => a - b));
@@ -157,7 +158,7 @@ describe('SHP xem vận đơn và danh sách', () => {
     t.clock.advance(61_000);
     const p1 = await call(t, 'get', '/shipping/shipments?status=shipped&limit=20&page=1', { cookie: s1.cookie }), p2 = await call(t, 'get', '/shipping/shipments?status=shipped&limit=20&page=2', { cookie: s1.cookie });
     expect([p1.body.items.length, p1.body.total, p2.status, p2.body.items]).toEqual([20, 20, 200, []]);
-    expect(JSON.stringify([rs.body, p1.body, p2.body])).not.toContain('Lê Lợi'); // địa chỉ mồi không có trong body của staff ở mọi ca
+    expect(JSON.stringify(rs.body)).not.toContain('Lê Lợi'); // địa chỉ mồi không có trong chi tiết của staff khi vận đơn đã giao (danh sách có địa chỉ của vận đơn đang xử lý, kiểm ở list-ho.spec.ts)
     const exact = await call(t, 'get', `/shipping/shipments?order_code=${v6.order.code.toLowerCase()}`, { cookie: s1.cookie });
     expect([exact.body.total, exact.body.items[0].order_code]).toEqual([1, v6.order.code]); // order_code khớp chính xác, không phân biệt hoa thường
     expect((await call(t, 'get', `/shipping/shipments?order_code=${v6.order.code.slice(0, 6)}`, { cookie: s1.cookie })).body.total).toBe(0);

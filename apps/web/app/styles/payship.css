@@ -12,6 +12,8 @@ a.ps-code { color: var(--brand-dark); text-decoration: none; } a.ps-code:hover {
 /* Bảng gọn */
 .ps-table td, .ps-table th { vertical-align: middle; padding-left: .6rem; padding-right: .6rem; } .ps-table .ps-code, .ps-table .money { white-space: nowrap; } .ps-table button.ps-code { padding: 0; }
 .ps-table th { font-size: .8125rem; font-weight: 500; color: var(--muted); }
+.ps-table .ps-addr { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 895px) { .ps-table .ps-wide { display: none; } } /* dưới @4xl ẩn Điện thoại, Địa chỉ, Phương thức, Ngày tạo (ui/shipment-admin-list) */
 .ps-table .ps-act { text-align: right; width: 1%; white-space: nowrap; }
 .ps-table tr.row-click { cursor: pointer; }
 .ps-fail { color: var(--danger); font-size: .8125rem; }

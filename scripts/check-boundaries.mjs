@@ -3,6 +3,11 @@
 //  1. import chéo module phải nằm trong cột Phụ thuộc của spec/architecture.md và đi qua điểm vào công khai (index.ts);
 //     `platform` là cắt ngang: mọi module import được điểm vào của nó nhưng không import file nội bộ.
 //  2. module không đọc bảng của module khác: model Prisma hoặc tên bảng trong $queryRaw thuộc prisma/schema/<module>.prisma.
+//  4. lời gọi `this.<trường>.<hàm>(` tới trường kiểu `XxxApi` (hay AddressService) của module khác phải có `Lớp.hàm` trong bảng "Giao diện module" của architecture.md
+//     ở hàng của đúng cặp gọi -> được gọi (module được gọi là nơi khai báo lớp); hàm không có trong bảng là vi phạm, bảng thiếu thì sửa bảng (hay nới script, ghi vào báo cáo).
+//  3. module không sở hữu bảng (NO_TABLE_MODULES, hiện `sales`, SAL-DB) không import PrismaService hay @prisma/client (SAL-SEC T15);
+//     kể cả `await import('@prisma/client')` và `$queryRaw`, `$executeRaw`, `$queryRawUnsafe`, `$executeRawUnsafe` (SQL thô không có PrismaService thì cũng không có chỗ gọi hợp lệ);
+//     đầu vào kiểm hỏng thì đỏ (thoát 2, "không đọc được"): thư mục module rỗng (không có tệp .ts), tệp không đọc được hay có lỗi cú pháp.
 // Dùng: check-boundaries.mjs [--modules <dir>] [--architecture <file>] [--schemas <dir>]
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
@@ -36,6 +41,19 @@ const deps = {};
 for (const [m, list] of Object.entries(rawDeps)) deps[m] = new Set(list.map((e) => epicToModule[e]).filter(Boolean));
 const known = new Set(Object.values(epicToModule));
 
+// --- bảng Giao diện module: allowed[gọi][được gọi] = tập `Lớp.hàm` (được gọi suy từ nơi khai báo lớp, nên hàng nhiều đích như CRT -> PRD, INV, PRM, SHP vẫn đúng cặp)
+const IFACE_RE = /\b(\w+(?:Api|AddressService))\.(\w+)/g;
+const ifaceRows = [];
+{
+  let on = false;
+  for (const l of archText.split(/\r?\n/)) {
+    if (/^##\s+Giao diện module/.test(l)) { on = true; continue; }
+    if (on && /^##\s/.test(l)) break;
+    const c = on && l.startsWith('|') ? l.split('|').slice(1, -1).map((x) => x.trim()) : null;
+    if (c && epicToModule[c[0]] && c.length >= 3) ifaceRows.push({ from: epicToModule[c[0]], methods: [...c[2].matchAll(IFACE_RE)].map((m) => `${m[1]}.${m[2]}`) });
+  }
+}
+
 // --- bảng thuộc module nào
 const ownerOfAccessor = {}, ownerOfTable = {};
 for (const f of walk(schemaDir).filter((p) => p.endsWith('.prisma'))) {
@@ -48,6 +66,7 @@ for (const f of walk(schemaDir).filter((p) => p.endsWith('.prisma'))) {
   }
 }
 
+const NO_TABLE_MODULES = new Set(['sales']);
 const out = [];
 // Công cụ hỏng thì đỏ, không im lặng cho qua (thư mục sai chỗ làm quét rỗng mà vẫn in "sạch"): thiếu thư mục hay không quét được tệp nào là lỗi môi trường (thoát 2).
 const scanned = walk(modulesDir).filter((p) => /\.(ts|tsx|js|mjs)$/.test(p));
@@ -55,6 +74,34 @@ if (!existsSync(modulesDir) || !existsSync(schemaDir) || scanned.length === 0 ||
   process.stderr.write(`check-boundaries: không quét được (modules=${modulesDir} có ${scanned.length} tệp, schemas=${schemaDir} có ${Object.keys(ownerOfTable).length} bảng)\n`);
   process.exit(2);
 }
+// Module không sở hữu bảng mà không có tệp mã nào, hay tệp không đọc được, không được im lặng cho qua (một thư mục rỗng nghĩa là quét không thấy gì để kiểm).
+const unreadable = [];
+for (const m of NO_TABLE_MODULES) {
+  const dir = join(modulesDir, m);
+  if (existsSync(dir) && !scanned.some((p) => p.startsWith(dir + sep))) unreadable.push(`${relative(process.cwd(), dir)}: không đọc được (thư mục module không có tệp mã nào)`);
+}
+const ts = await import('typescript').then((x) => x.default ?? x).catch(() => null);
+for (const file of scanned) {
+  const A = relative(modulesDir, file).split(sep)[0];
+  if (!NO_TABLE_MODULES.has(A) || !file.endsWith('.ts')) continue;
+  try {
+    const src = readFileSync(file, 'utf8');
+    const bad = ts?.transpileModule(src, { reportDiagnostics: true, fileName: file }).diagnostics?.length;
+    if (bad) unreadable.push(`${relative(process.cwd(), file)}: không đọc được (lỗi cú pháp, bộ phân tích không đọc được tệp)`);
+  } catch { unreadable.push(`${relative(process.cwd(), file)}: không đọc được (lỗi đọc tệp)`); }
+}
+if (unreadable.length) {
+  process.stderr.write(`check-boundaries: không đọc được mã nguồn của module cần kiểm:\n${unreadable.join('\n')}\n`);
+  process.exit(2);
+}
+// Lớp `XxxApi` (hay AddressService) khai ở module nào, để biết lời gọi `this.<trường>.<hàm>(` đi tới module nào; rồi bảng Giao diện module thành allowed[gọi][được gọi].
+const classOwner = {};
+for (const f of scanned) for (const m of readFileSync(f, 'utf8').matchAll(/\bexport\s+class\s+(\w+(?:Api|AddressService))\b/g)) classOwner[m[1]] = relative(modulesDir, f).split(sep)[0];
+const allowed = {};
+for (const r of ifaceRows) for (const cm of r.methods) { const B = classOwner[cm.split('.')[0]]; if (B) ((allowed[r.from] ??= {})[B] ??= new Set()).add(cm); }
+// Lời gọi hợp lệ trong mã mà bảng Giao diện module chưa ghi tên hàm (báo lead bổ sung bảng rồi xóa dòng ở đây): CHK -> ORD `findForPayment` (CHK-API dùng cho `paymentInfo`; bảng chỉ ghi hàng PAY -> ORD).
+const TABLE_GAPS = new Set(['checkout->OrderApi.findForPayment']);
+const FIELD_RE = /\b(?:private|protected|public)\s+(?:readonly\s+)?(\w+)\s*:\s*(\w+(?:Api|AddressService))\b/g;
 const IMPORT_RE = /(?:\bfrom\s+|\bimport\s*\(\s*|\brequire\s*\(\s*|\bimport\s+)(['"])(\.{1,2}\/[^'"]*|\.{1,2})\1/g;
 const OPS = 'findMany|findFirst|findUnique|findFirstOrThrow|findUniqueOrThrow|create|createMany|update|updateMany|upsert|delete|deleteMany|count|aggregate|groupBy';
 
@@ -66,6 +113,20 @@ for (const file of scanned) {
   const shown = relative(process.cwd(), file);
   if (!known.has(A)) { out.push(`${shown}:1: [${A}] module không có trong bảng Ánh xạ epic -> module của architecture.md`); continue; }
 
+  if (NO_TABLE_MODULES.has(A)) {
+    for (const m of text.matchAll(/\bimport\s+(?:type\s+)?(?:[^'";]*?\bPrismaService\b[^'";]*?|[^'";]*?)\s*from\s*(['"])([^'"]+)\1|\brequire\s*\(\s*(['"])(@prisma\/client)\3\s*\)/g)) {
+      const hit = /\bPrismaService\b/.test(m[0]) || m[2] === '@prisma/client' || m[4] === '@prisma/client';
+      if (hit) out.push(`${shown}:${lineOf(text, m.index)}: [${A}] module không sở hữu bảng không được import PrismaService hay @prisma/client; phải gọi giao diện ở architecture.md (SB-35)`);
+    }
+    for (const m of text.matchAll(/\bimport\s*\(\s*(['"])@prisma\/client\1\s*\)/g)) out.push(`${shown}:${lineOf(text, m.index)}: [${A}] module không sở hữu bảng không được import động @prisma/client; phải gọi giao diện ở architecture.md (SB-35)`);
+    for (const m of text.matchAll(/\$(?:query|execute)Raw(?:Unsafe)?\b/g)) out.push(`${shown}:${lineOf(text, m.index)}: [${A}] module không sở hữu bảng không được chạy SQL thô (${m[0]}); phải gọi giao diện ở architecture.md (SB-35)`);
+  }
+  // Lời gọi hàm của giao diện module khác phải có tên trong bảng Giao diện module cho đúng cặp gọi -> được gọi (chiều và import đã kiểm ở dưới).
+  const fieldType = Object.fromEntries([...text.matchAll(FIELD_RE)].map((m) => [m[1], m[2]]));
+  for (const m of text.matchAll(/\.(\w+)\.(\w+)\s*[(<]/g)) {
+    const cls = fieldType[m[1]], B = cls && classOwner[cls];
+    if (B && B !== A && !allowed[A]?.[B]?.has(`${cls}.${m[2]}`) && !TABLE_GAPS.has(`${A}->${cls}.${m[2]}`)) out.push(`${shown}:${lineOf(text, m.index)}: [${A} -> ${B}] ${cls}.${m[2]} không có trong bảng Giao diện module của architecture.md cho cặp ${A} -> ${B}; thêm vào bảng (sdlc-impact) hay bỏ lời gọi`);
+  }
   for (const m of text.matchAll(IMPORT_RE)) {
     const target = relative(modulesDir, resolve(dirname(file), m[2])).split(sep);
     if (target[0] === '..' || target[0] === A) continue;

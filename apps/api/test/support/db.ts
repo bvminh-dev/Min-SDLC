@@ -8,7 +8,8 @@ export const API_DIR = resolve(__dirname, '../..');
 export const REPO_ROOT = resolve(API_DIR, '../..');
 /** PostgreSQL thật của docker compose (cổng 5433), không dùng SQLite hay giả lập (BR10). */
 export const DB_BASE = process.env.TEST_DB_BASE ?? 'postgresql://ecom:ecom@localhost:5433';
-export const TEST_DB = 'ecom_test';
+/** Mỗi lần chạy song song đặt ECOM_TEST_DB riêng (mặc định ecom_test): global-setup xóa và dựng lại CSDL này. */
+export const TEST_DB = process.env.ECOM_TEST_DB ?? 'ecom_test';
 export const testDbUrl = (db = TEST_DB) => `${DB_BASE}/${db}`;
 /** URL của vai trò CSDL hạn chế (docker/initdb/01-app-roles.sql): ecom_app là tài khoản của ứng dụng, ecom_retention của job dọn audit. */
 export const roleDbUrl = (role: 'ecom_app' | 'ecom_retention', db = TEST_DB) => {
@@ -47,7 +48,7 @@ export function newPrisma(url = testDbUrl()): PrismaClient {
   return new PrismaClient({ datasourceUrl: url, log: [] });
 }
 
-const TABLES = ['review_images', 'reviews', 'email_deliveries', 'notifications', 'checkout_sessions', 'cart_items', 'carts', 'refunds', 'payment_attempts', 'payment_webhook_logs', 'payments', 'shipment_status_history', 'shipments', 'shipping_methods', 'order_status_history', 'order_items', 'orders', 'coupon_redemptions', 'coupons', 'stock_movements', 'stock_reservations', 'stock_items', 'product_review_ratings', 'product_images', 'products', 'categories', 'addresses', 'outbox_events', 'processed_events', 'idempotency_keys', 'rate_limit_counters', 'sessions', 'password_reset_tokens', 'email_verification_tokens', 'users'];
+const TABLES = ['review_images', 'reviews', 'email_deliveries', 'notifications', 'checkout_sessions', 'cart_items', 'carts', 'refunds', 'payment_attempts', 'payment_webhook_logs', 'payments', 'shipment_status_history', 'shipments', 'shipping_methods', 'order_status_history', 'order_items', 'orders', 'order_code_counters', 'coupon_redemptions', 'coupons', 'stock_movements', 'stock_reservations', 'stock_items', 'product_review_ratings', 'product_images', 'products', 'categories', 'addresses', 'outbox_events', 'processed_events', 'idempotency_keys', 'rate_limit_counters', 'sessions', 'password_reset_tokens', 'email_verification_tokens', 'users'];
 /** Mỗi test bắt đầu từ CSDL sạch (BR11). */
 export async function truncateAll(p: PrismaClient): Promise<void> {
   await p.$executeRaw(Prisma.raw(`TRUNCATE ${TABLES.join(', ')}`));

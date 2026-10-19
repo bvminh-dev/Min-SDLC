@@ -57,6 +57,7 @@ model Shipment {
   status           ShipmentStatus @default(pending)
   trackingNumber   String?        @map("tracking_number")
   orderCode        String?        @map("order_code") // bản chụp bất biến của mã đơn lúc tạo (migration 20261008000100; NOT NULL ở bước thu hẹp sau)
+  createdBy        String?        @map("created_by") @db.Uuid // bản chụp id người tạo đơn hộ lúc tạo vận đơn (migration 20261015000100); để lọc danh sách của sale, chỉ mục một phần nằm trong migration SQL
   codAmount        BigInt         @default(0) @map("cod_amount")
   shippedAt        DateTime?      @map("shipped_at") @db.Timestamptz(6)
   deliveredAt      DateTime?      @map("delivered_at") @db.Timestamptz(6)

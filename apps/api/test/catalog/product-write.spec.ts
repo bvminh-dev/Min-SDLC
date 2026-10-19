@@ -131,4 +131,20 @@ describe('PRD tạo và sửa sản phẩm (PRD-REQ-20261006-095502550, ...571)'
     const d = await seedProduct(t, { category: cat, status: 'draft', description: 'cũ' });
     expect((await patch(d, { version: 1, description: '' })).body.description).toBeNull();
   });
+  // PRD-API đầu tài liệu (đợt 2026-10-15): nhóm ghi quản trị là bậc D. Chưa có TC riêng ở tests/ (xem report.md, Lệch spec): test này mang tên mô tả, không ID TC.
+  it('PRD-API nhóm ghi quản trị bậc D: 30 yêu cầu ghi mỗi phút mỗi người chung một bộ đếm cho danh mục và sản phẩm, yêu cầu thứ 31 là 429 kèm Retry-After; đọc quản trị và admin khác không bị ảnh hưởng', async () => {
+    const statuses: number[] = [];
+    for (let i = 0; i < 30; i++) statuses.push(i % 2 === 0 ? (await call(t, 'post', '/admin/categories', { cookie: admin.cookie, body: { name: `Nhóm ${i}` } })).status : (await create(valid({ sku: `rl-${i}` }))).status);
+    expect(statuses.every((s) => s === 201)).toBe(true);
+    const over = await create(valid({ sku: 'rl-over' }));
+    expect([over.status, over.body.type]).toEqual([429, 'urn:ecom:error:rate-limited']);
+    expect(Number(over.headers['retry-after'])).toBeGreaterThan(0);
+    expect((await call(t, 'post', '/admin/categories', { cookie: admin.cookie, body: { name: 'Quá' } })).status).toBe(429); // cùng bộ đếm với sản phẩm
+    expect((await call(t, 'get', '/admin/products', { cookie: admin.cookie })).status).toBe(200); // đọc quản trị đếm riêng
+    expect(await count(t, 'products', "sku = 'RL-OVER'")).toBe(0);
+    const other = await who(t, 'admin', 'admin2@shop.vn');
+    expect((await create(valid({ sku: 'rl-other' }), other.cookie)).status).toBe(201); // bộ đếm theo từng người
+    t.clock.advance(61_000); // cửa sổ mới: ghi lại được
+    expect((await create(valid({ sku: 'rl-again' }))).status).toBe(201);
+  });
 });

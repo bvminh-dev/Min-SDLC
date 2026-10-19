@@ -31,7 +31,7 @@ export async function createPrdApp(o: { env?: Record<string, string>; level?: st
 export const call = callJson;
 export interface Who extends SeedUser { cookie: string }
 /** Người dùng có phiên (cookie dựng thẳng trong CSDL). */
-export async function who(t: AuthApp, role: 'customer' | 'staff' | 'admin', email = `${role}@shop.vn`): Promise<Who> {
+export async function who(t: AuthApp, role: 'customer' | 'staff' | 'sale' | 'admin', email = `${role}@shop.vn`): Promise<Who> {
   const u = await seedUser(t, { email, role });
   return { ...u, cookie: (await seedSession(t, u.id)).cookie };
 }
@@ -55,7 +55,7 @@ export async function seedCategory(t: AuthApp, name: string, parent?: string | n
   return rows[0].id;
 }
 
-export interface SeedProduct { name?: string; sku?: string; category: string; price?: number; status?: 'draft' | 'active' | 'archived'; description?: string | null; images?: number; ratingCount?: number; ratingSum?: number; publishedAt?: Date | null; version?: number; updatedAt?: Date }
+export interface SeedProduct { name?: string; sku?: string; category: string; price?: number; costPrice?: number | null; status?: 'draft' | 'active' | 'archived'; description?: string | null; images?: number; ratingCount?: number; ratingSum?: number; publishedAt?: Date | null; version?: number; updatedAt?: Date }
 /** Sản phẩm dựng thẳng trong CSDL; `images` ảnh có thật trong kho giả (khóa `products/<uuid>.webp`). Trả id. */
 export async function seedProduct(t: PrdApp, o: SeedProduct): Promise<string> {
   const i = ++n;
@@ -64,8 +64,8 @@ export async function seedProduct(t: PrdApp, o: SeedProduct): Promise<string> {
   const published = o.publishedAt === undefined ? (status === 'draft' ? null : new Date(t.clock.now().getTime() - i * 1000)) : o.publishedAt;
   const now = t.clock.now();
   const rows = await t.prisma.$queryRaw<{ id: string }[]>`
-    INSERT INTO products (category_id, name, sku, description, price, status, version, published_at, rating_count, rating_sum, search_text, created_at, updated_at)
-    VALUES (${o.category}::uuid, ${name}, ${sku}, ${o.description ?? null}, ${o.price ?? 100000}, ${status}::product_status, ${o.version ?? 1}, ${published}::timestamptz, ${o.ratingCount ?? 0}, ${o.ratingSum ?? 0},
+    INSERT INTO products (category_id, name, sku, description, price, cost_price, status, version, published_at, rating_count, rating_sum, search_text, created_at, updated_at)
+    VALUES (${o.category}::uuid, ${name}, ${sku}, ${o.description ?? null}, ${o.price ?? 100000}, ${o.costPrice ?? null}, ${status}::product_status, ${o.version ?? 1}, ${published}::timestamptz, ${o.ratingCount ?? 0}, ${o.ratingSum ?? 0},
             ${searchTextOf(name, sku)}, ${now}::timestamptz, ${(o.updatedAt ?? now)}::timestamptz) RETURNING id`;
   const id = rows[0].id;
   for (let k = 1; k <= (o.images ?? 0); k++) await seedImage(t, id, k);
@@ -80,7 +80,7 @@ export async function seedImage(t: PrdApp, productId: string, position: number, 
 }
 export const auditOf = (t: AuthApp, action: string) =>
   q<{ actor_id: string; actor_role: string; target_id: string; before: any; after: any }>(t, `SELECT actor_id, actor_role, target_id, before, after FROM audit_logs WHERE action = '${action}' ORDER BY created_at, id`);
-export const productRow = async (t: AuthApp, id: string) => (await q<any>(t, `SELECT status, version, price::int AS price, sku, name, category_id, published_at, rating_count, rating_sum FROM products WHERE id = '${id}'`))[0];
+export const productRow = async (t: AuthApp, id: string) => (await q<any>(t, `SELECT status, version, price::int AS price, cost_price::int AS cost_price, sku, name, category_id, published_at, rating_count, rating_sum FROM products WHERE id = '${id}'`))[0];
 export const outbox = (t: AuthApp, type?: string) => q<{ type: string; aggregate_id: string; payload: any; id: string }>(t, `SELECT id, type, aggregate_id, payload FROM outbox_events ${type ? `WHERE type = '${type}'` : ''} ORDER BY occurred_at, id`);
 export const count = async (t: AuthApp, table: string, where = 'TRUE'): Promise<number> => (await q<{ n: number }>(t, `SELECT count(*)::int AS n FROM ${table} WHERE ${where}`))[0].n;
 export { http, q };

@@ -61,13 +61,13 @@ describe('DSH cấu hình, ma trận quyền và sổ mã lỗi trên AppModule 
     expect(auditPermissions(t.app, MATRIX, opts)).toEqual([]);
     expect(auditRoutes(t.app)).toEqual([]);
     const rows = parseMatrix(MATRIX).filter((r) => r.requirement.startsWith('DSH-REQ-'));
-    expect(rows).toHaveLength(10);
+    expect(rows).toHaveLength(12); // mười hàng cũ cộng hai hàng báo cáo theo nguồn và theo sale (spec/epics/DSH/permission-rows.md)
     for (const r of rows) expect([r.action, r.guest, r.customer, r.staff, r.admin]).toEqual([r.action, '-', '-', '-', 'Y']);
     // dương tính: nới role (staff) hoặc đổi nhãn thì cổng đỏ
-    const widened = MATRIX.replace(/(\| Xem tổng doanh thu và hoàn tiền thất bại cần xử lý \| DSH-REQ-20261006-105125714 \| - \| - \| )-( \| Y \|)/, '$1Y$2');
+    const widened = MATRIX.replace(/(\| Xem tổng doanh thu và hoàn tiền thất bại cần xử lý \| DSH-REQ-20261006-105125714 \| - \| - \| )-( \| - \| Y \|)/, '$1Y$2');
     expect(widened).not.toBe(MATRIX);
     expect(auditPermissions(t.app, widened, opts).join('\n')).toContain('code cho [admin] nhưng ma trận (Xem tổng doanh thu và hoàn tiền thất bại cần xử lý) cho [admin, staff]');
-    expect(ALL_PATHS).toHaveLength(9);
+    expect(ALL_PATHS).toHaveLength(11);
   });
 
   it('DSH-API mục Biến môi trường (ADR-007): ba biến có mặc định 60, 5000, 30; giá trị sai (không phải số, ngoài khoảng) làm khởi động thất bại và nêu tên biến, không in giá trị', () => {

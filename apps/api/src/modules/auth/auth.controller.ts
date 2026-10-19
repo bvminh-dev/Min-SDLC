@@ -14,6 +14,7 @@ import { readCookie, type AuthRequest } from './session.resolver';
 const REGISTER_MESSAGE = 'Chúng tôi đã nhận đăng ký. Hãy kiểm tra email để xác minh rồi đăng nhập.';
 const FORGOT_MESSAGE = 'Nếu email này có tài khoản, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.';
 const HOUR = 3600;
+const ADMIN_RL = { tier: 'D', limit: 30, windowSeconds: 60, group: 'auth:admin-users' } as const; // SB-14 bậc D: 30 mỗi phút mỗi quản trị, chung bốn endpoint
 const noBody = {} as const;
 
 @Controller('auth')
@@ -43,13 +44,13 @@ export class AuthController {
     return { user: r.user };
   }
 
-  @Post('logout') @Action('Đăng xuất (phiên hiện tại)') @HttpCode(204) @Roles('customer', 'staff', 'admin') @Validate(noBody)
+  @Post('logout') @Action('Đăng xuất (phiên hiện tại)') @HttpCode(204) @Roles('customer', 'staff', 'sale', 'admin') @Validate(noBody)
   async logout(@Req() req: AuthRequest, @Res({ passthrough: true }) res: Response) {
     await this.auth.logout(req.authSession!.session_id);
     res.cookie(SESSION_COOKIE, '', { ...COOKIE_OPTS, maxAge: 0 }); // xóa cookie: Max-Age=0
   }
 
-  @Get('session') @Action('Xem thông tin và hạn của phiên hiện tại') @Roles('customer', 'staff', 'admin') @Validate(noBody)
+  @Get('session') @Action('Xem thông tin và hạn của phiên hiện tại') @Roles('customer', 'staff', 'sale', 'admin') @Validate(noBody)
   session(@Req() req: AuthRequest) {
     const s = req.authSession!;
     return { user: s.user, idle_expires_at: s.idle_expires_at.toISOString(), absolute_expires_at: s.absolute_expires_at.toISOString() };
@@ -72,15 +73,15 @@ export class AuthController {
 export class AdminUsersController {
   constructor(private readonly admin: AdminUsersService) {}
 
-  @Get() @Action('Xem danh sách người dùng (lọc, tìm theo email)') @Roles('admin') @Validate({ query: adminListQuery })
+  @Get() @Action('Xem danh sách người dùng (lọc, tìm theo email)') @Roles('admin') @RateLimit(ADMIN_RL) @Validate({ query: adminListQuery })
   list(@ValidQuery() q: ListQuery) { return this.admin.list(q); }
 
-  @Patch(':id/role') @Action('Đổi role người dùng') @HttpCode(200) @Roles('admin') @Validate({ params: idParams, body: roleBody })
-  role(@CurrentSession() s: SessionContext, @ValidParams() p: { id: string }, @ValidBody() b: { role: 'customer' | 'staff' | 'admin' }) { return this.admin.changeRole(s, p.id, b.role); }
+  @Patch(':id/role') @Action('Đổi role người dùng') @HttpCode(200) @Roles('admin') @RateLimit(ADMIN_RL) @Validate({ params: idParams, body: roleBody })
+  role(@CurrentSession() s: SessionContext, @ValidParams() p: { id: string }, @ValidBody() b: { role: 'customer' | 'staff' | 'sale' | 'admin' }) { return this.admin.changeRole(s, p.id, b.role); }
 
-  @Post(':id/lock') @Action('Khóa tài khoản người dùng') @HttpCode(200) @Roles('admin') @Validate({ params: idParams, body: lockBody })
+  @Post(':id/lock') @Action('Khóa tài khoản người dùng') @HttpCode(200) @Roles('admin') @RateLimit(ADMIN_RL) @Validate({ params: idParams, body: lockBody })
   lock(@CurrentSession() s: SessionContext, @ValidParams() p: { id: string }, @ValidBody() b: { reason?: string }) { return this.admin.lock(s, p.id, b.reason); }
 
-  @Post(':id/unlock') @Action('Mở khóa tài khoản người dùng') @HttpCode(200) @Roles('admin') @Validate({ params: idParams, body: z.object({}).strict() })
+  @Post(':id/unlock') @Action('Mở khóa tài khoản người dùng') @HttpCode(200) @Roles('admin') @RateLimit(ADMIN_RL) @Validate({ params: idParams, body: z.object({}).strict() })
   unlock(@CurrentSession() s: SessionContext, @ValidParams() p: { id: string }) { return this.admin.unlock(s, p.id); }
 }

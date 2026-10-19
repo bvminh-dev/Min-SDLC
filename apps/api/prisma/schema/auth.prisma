@@ -4,6 +4,7 @@
 enum UserRole {
   customer
   staff
+  sale
   admin
 
   @@map("user_role")
@@ -70,6 +71,7 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   addresses               Address[] // quan hệ ngược cho Address của module user (khóa ngoại USR -> users, USR-DB)
   orders                  Order[] // quan hệ ngược cho Order của module order (khóa ngoại ORD -> users, ORD-DB)
+  createdOrders           Order[] @relation("OrderCreatedBy") // orders.created_by: người sale hoặc admin tạo đơn hộ (ORD-DB)
   orderStatusHistory      OrderStatusHistory[] // actor_id của order_status_history (ORD-DB)
   notifications           Notification[] // quan hệ ngược cho Notification của module notification (khóa ngoại NTF -> users, NTF-DB)
   emailDeliveries         EmailDelivery[] // quan hệ ngược cho EmailDelivery của module notification (NTF-DB)
@@ -79,6 +81,7 @@ model User {
 
   @@index([role, status])
   @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@index([phone]) // AuthApi.findCustomersByPhone (đợt bán hộ)
   @@map("users")
 }
 

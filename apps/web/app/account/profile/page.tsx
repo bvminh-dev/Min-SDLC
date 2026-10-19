@@ -14,7 +14,7 @@ const FIELD_MSG: Record<string, Record<string, string>> = {
   full_name: { required: 'Nhập họ tên', too_long: 'Họ tên tối đa 100 ký tự', invalid_format: 'Họ tên có ký tự không hợp lệ' },
   phone: { invalid_phone: 'Nhập số di động Việt Nam (10 chữ số, đầu 03, 05, 07, 08, 09)', invalid_format: 'Số điện thoại không hợp lệ' },
 };
-const ROLE: Record<string, string> = { customer: 'Khách hàng', staff: 'Nhân viên', admin: 'Quản trị' };
+const ROLE: Record<string, string> = { customer: 'Khách hàng', staff: 'Nhân viên', sale: 'Bán hàng', admin: 'Quản trị' };
 const AVATAR_MSG: Record<string, string> = {
   unsupported_type: 'Chỉ nhận JPG, PNG hoặc WebP', too_large: 'Ảnh quá 2 MB', corrupt: 'Ảnh bị hỏng hoặc quá lớn về kích thước', dimensions_exceeded: 'Ảnh bị hỏng hoặc quá lớn về kích thước', bad_form: 'Không đọc được tệp ảnh',
 };
@@ -142,5 +142,5 @@ function ProfileView() {
 }
 
 export default function ProfilePage() {
-  return <RequireRole roles={['customer', 'staff', 'admin']}><ProfileView /></RequireRole>;
+  return <RequireRole roles={['customer', 'staff', 'sale', 'admin']}><ProfileView /></RequireRole>;
 }

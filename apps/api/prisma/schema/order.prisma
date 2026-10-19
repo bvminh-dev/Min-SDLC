@@ -30,6 +30,8 @@ enum OrderPaymentStatus {
 enum OrderPaymentMethod {
   vnpay
   cod
+  cash
+  bank_transfer
 
   @@map("order_payment_method")
 }
@@ -47,13 +49,14 @@ enum OrderActorRole {
   customer
   admin
   system
+  sale
 
   @@map("order_actor_role")
 }
 
 model Order {
   id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId           String             @map("user_id") @db.Uuid
+  userId           String?            @map("user_id") @db.Uuid
   code             String             @unique
   status           OrderStatus        @default(pending)
   paymentStatus    OrderPaymentStatus @default(pending) @map("payment_status")
@@ -74,8 +77,14 @@ model Order {
   deliveredAt      DateTime?          @map("delivered_at") @db.Timestamptz(6)
   createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  sourceId         String             @default(dbgenerated("'00000000-0000-4000-8000-000000000001'::uuid")) @map("source_id") @db.Uuid // nguồn đơn; mặc định `website` (id cố định)
+  createdBy        String?            @map("created_by") @db.Uuid // người sale hoặc admin tạo hộ; rỗng với đơn khách tự đặt
+  customerSnapshot Json?              @map("customer_snapshot") // đơn hộ: { full_name, phone }
+  note             String? // ghi chú đơn (đơn hộ), văn bản thuần
 
-  user             User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user             User?                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  creator          User?                @relation("OrderCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+  source           OrderSource          @relation(fields: [sourceId], references: [id], onDelete: Restrict)
   items            OrderItem[]
   history          OrderStatusHistory[]
   shipments        Shipment[] // khóa ngoại của SHP (shipments.order_id): chỉ để ràng buộc toàn vẹn, ORD không truy vấn
@@ -86,6 +95,7 @@ model Order {
   @@index([userId, status, createdAt(sort: Desc), id(sort: Desc)])
   @@index([status, createdAt(sort: Desc), id(sort: Desc)])
   @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@index([sourceId, createdAt(sort: Desc), id(sort: Desc)])
   @@map("orders")
 }
 
@@ -97,6 +107,8 @@ model OrderItem {
   unitPrice    BigInt @map("unit_price")
   quantity     Int
   position     Int // thứ tự dòng khi đặt (ORD-DB không có cột này: id là uuid ngẫu nhiên nên không khôi phục được thứ tự dòng)
+  note         String? // ghi chú dòng hàng (đơn hộ), văn bản thuần
+  costSnapshot BigInt? @map("cost_snapshot") // giá vốn lúc bán, chỉ admin đọc (SB-42)
 
   order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   reviews Review[] // khóa ngoại của REV (reviews.order_item_id, ON DELETE RESTRICT): chỉ để ràng buộc toàn vẹn, ORD không truy vấn
@@ -123,4 +135,29 @@ model OrderStatusHistory {
 
   @@index([orderId, seq])
   @@map("order_status_history")
+}
+
+/// Danh mục nguồn đơn do admin quản lý (ORD-REQ-20261015-092748678); `website` là nguồn hệ thống của đơn khách tự đặt. Trigger chặn đổi `code`, `is_system` và xóa nằm trong migration SQL.
+model OrderSource {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  isSystem  Boolean  @default(false) @map("is_system")
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  orders Order[]
+
+  @@index([isActive, position, name])
+  @@map("order_sources")
+}
+
+/// Bộ đếm mã đơn theo ngày giờ Asia/Ho_Chi_Minh (ADR-024): `last` là số thứ tự đã cấp cuối cùng trong ngày.
+model OrderCodeCounter {
+  day  DateTime @id @db.Date
+  last Int
+
+  @@map("order_code_counters")
 }

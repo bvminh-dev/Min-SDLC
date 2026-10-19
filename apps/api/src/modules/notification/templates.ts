@@ -117,7 +117,10 @@ export interface Plan {
   /** Mã cảnh báo (không chứa giá trị) để ghi log mức warn khi xử lý (ví dụ trường tùy chọn sai dạng). */
   notes: string[];
 }
-export type Planned = { ok: true; plan: Plan } | { ok: false; refs: Record<string, string | null> };
+export type Planned = { ok: true; plan: Plan } | { ok: false; refs: Record<string, string | null>; skip?: true }; // `skip`: đơn hộ không có user_id, bỏ qua êm không phải lỗi (events.md mục Đơn hộ)
+
+/** Event đơn, thanh toán, vận đơn gửi cho chủ đơn: `user_id` rỗng (null, như ORD phát) là đơn hộ của khách không tài khoản; khóa vắng hẳn vẫn là event hỏng (NTF-TC-20261006-104224870). */
+const OWNER_ORDER_EVENTS = new Set(['OrderCreated', 'OrderConfirmed', 'PaymentSucceeded', 'PaymentFailed', 'OrderCancelled', 'OrderExpired', 'RefundSucceeded', 'OrderShipped', 'ShipmentFailed', 'OrderDelivered', 'OrderReturned']);
 
 const ref = (v: unknown): string | null => (isUuid(v) ? v.toLowerCase() : null);
 
@@ -144,6 +147,7 @@ export function planEvent(env: EventEnvelope, now: Date): Planned {
   const c: Ctx = { now, notes: [] };
   const eid = env.event_id;
   const refs = (extra: Json = {}): Planned => ({ ok: false, refs: { order_id: ref(p.order_id), payment_id: ref(p.payment_id), refund_id: ref(p.refund_id), product_id: ref(p.product_id), ...Object.fromEntries(Object.entries(extra).map(([k, v]) => [k, ref(v)])) } });
+  if (OWNER_ORDER_EVENTS.has(env.type) && (p.user_id === null || p.user_id === '')) return { ok: false, refs: {}, skip: true };
   const owner = (): string | null => ref(p.user_id);
   const orderId = (): string | null => ref(p.order_id);
   const done = (plan: Omit<Plan, 'notes'>): Planned => ({ ok: true, plan: { ...plan, notes: c.notes } });

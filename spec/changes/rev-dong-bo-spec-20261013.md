@@ -34,6 +34,7 @@ Hàng ghi "Đã sửa và duyệt lại" là việc đã làm trong đợt này 
 | REV-REQ-20261006-103134939 | cần xem lại | LOW | Mục Dữ liệu và sự kiện còn chữ `ORD.getDeliveredItems` (tên lớp là `OrderApi`) và chưa nêu `hasUndeliveredItems` (tài liệu ngoài danh sách được ủy quyền sửa) | Đổi tên lớp và thêm `OrderApi.hasUndeliveredItems` ở dòng "Entity đọc/ghi" |
 | ORD-REQ-20261006-120227681 | cần xem lại | LOW | BR5 nêu `getDeliveredItems` cho REV nhưng chưa nêu `hasUndeliveredItems` (tài liệu ngoài danh sách được ủy quyền sửa) | Bổ sung `hasUndeliveredItems` vào BR5 và kịch bản; `getProductSalesTotals` của DSH cùng việc (nền đồng bộ đã ghi) |
 | REV-E2E-20261006-104528550 | không đổi | - | E2E hai lần đổi bộ lọc liền nhau trên ba trang REV: hook chuyển sang `useQueryGo` dùng chung, hành vi và testid không đổi | - |
+| ORD-TC-20261015-094427316 | không đổi | - | Tài liệu mới hoặc sửa của đợt bán hàng hộ 2026-10-15 (spec/changes/ban-ho-sale-nguon-don-20261015.md) nhắc cùng cụm từ hay liên kết tới ID này; hành vi đã duyệt ở báo cáo này không đổi | - |
 
 ## Chưa chắc / rủi ro
 - `getProductSalesTotals` (DSH) có trong `OrderApi` và bảng Giao diện module của `architecture.md` nhưng chưa có ở bảng ORD-API (tài liệu này): lượt DSH hay ORD cần thêm; không làm ở đợt REV vì không thuộc quyết định REV.

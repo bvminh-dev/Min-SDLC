@@ -110,8 +110,8 @@
    ],
    "tc": "SHP-TC-20261006-102133553",
    "file": "src/modules/shipping/shipping.controller.ts",
-   "find": "@Roles('staff', 'admin') @RateLimit(LIMITS.list)",
-   "replace": "@Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.list)",
+   "find": "@Roles('staff', 'sale', 'admin') @RateLimit(LIMITS.list)",
+   "replace": "@Roles('customer', 'staff', 'sale', 'admin') @RateLimit(LIMITS.list)",
    "test": "node scripts/run-jest.mjs test/shipping/ship.spec.ts -t \"SHP-TC-20261006-102133553\""
   },
   {
@@ -348,8 +348,8 @@
    ],
    "tc": "SHP-TC-20261006-102133988",
    "file": "src/modules/shipping/read.service.ts",
-   "find": "    return toPage(rows.map((r) => ({\n      order_code: r.order_code ?? '',",
-   "replace": "    return toPage(rows.map((r) => ({\n      recipient: r.order_code, order_code: r.order_code ?? '',",
+   "find": "items.push({\n        order_code: r.order_code ?? '',",
+   "replace": "items.push({\n        recipient: r.order_code, order_code: r.order_code ?? '',",
    "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102133988\""
   },
   {
@@ -1563,8 +1563,8 @@
    ],
    "tc": "SHP-TC-20261006-102133407",
    "file": "src/modules/shipping/lifecycle.service.ts",
-   "find": "VALUES (${o.order_id}::uuid, ${o.code}, ${o.shipping_method_id}::uuid, ${cod},",
-   "replace": "VALUES (${o.order_id}::uuid, ${o.code}, (SELECT id FROM shipping_methods ORDER BY id LIMIT 1), ${cod},",
+   "find": "${o.created_by}::uuid, ${o.shipping_method_id}::uuid, ${cod},",
+   "replace": "${o.created_by}::uuid, (SELECT id FROM shipping_methods ORDER BY id LIMIT 1), ${cod},",
    "test": "node scripts/run-jest.mjs test/shipping/create.spec.ts -t \"SHP-TC-20261006-102133407\""
   },
   {
@@ -1917,7 +1917,7 @@
    ],
    "tc": "SHP-TC-20261006-102134063",
    "file": "src/modules/shipping/read.service.ts",
-   "find": "where.push(Prisma.sql`s.order_id = ${o.order_id}::uuid`);",
+   "find": "where.push(Prisma.sql`s.order_code = ${q.order_code.toUpperCase()}`);",
    "replace": "",
    "test": "node scripts/run-jest.mjs test/shipping/read.spec.ts -t \"SHP-TC-20261006-102134063\""
   },
@@ -2394,8 +2394,8 @@
    ],
    "tc": "SHP-E2E-20261006-102134145",
    "file": "../web/app/admin/shipping-methods/page.tsx",
-   "find": "<td data-label=\"Tên\" data-testid={`${P}-name`}>{m.name}</td>",
-   "replace": "<td data-label=\"Tên\" data-testid={`${P}-name`} dangerouslySetInnerHTML={{ __html: m.name }} />",
+   "find": "<span className=\"ps-mname\" data-testid={`${P}-name`}>{m.name}</span>",
+   "replace": "<span className=\"ps-mname\" data-testid={`${P}-name`} dangerouslySetInnerHTML={{ __html: m.name }} />",
    "test": "node scripts/run-jest.mjs test/e2e/shp.e2e.spec.ts -t \"SHP-WEB-01\""
   },
   {
@@ -2417,8 +2417,8 @@
    ],
    "tc": "SHP-TC-20261008-091406341",
    "file": "src/modules/shipping/read.service.ts",
-   "find": "    return toPage(rows.map((r) => ({\n      order_code: r.order_code ?? '', status: r.status,",
-   "replace": "    await Promise.all(rows.map((r) => this.orders.getSummary(r.order_code ?? '')));\n    return toPage(rows.map((r) => ({\n      order_code: r.order_code ?? '', status: r.status,",
+   "find": "    const byOrder = new Map(display.map((d) => [d.order_id, d]));",
+   "replace": "    await Promise.all(rows.map((r) => this.orders.getSummary(r.order_id)));\n    const byOrder = new Map(display.map((d) => [d.order_id, d]));",
    "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406341\""
   },
   {
@@ -2429,8 +2429,8 @@
    ],
    "tc": "SHP-TC-20261008-091406341",
    "file": "src/modules/shipping/lifecycle.service.ts",
-   "find": "INSERT INTO shipments (order_id, order_code, shipping_method_id, cod_amount, created_at, updated_at)\n      VALUES (${o.order_id}::uuid, ${o.code}, ",
-   "replace": "INSERT INTO shipments (order_id, shipping_method_id, cod_amount, created_at, updated_at)\n      VALUES (${o.order_id}::uuid, ",
+   "find": "INSERT INTO shipments (order_id, order_code, created_by, shipping_method_id, cod_amount, created_at, updated_at)\n      VALUES (${o.order_id}::uuid, ${o.code}, ",
+   "replace": "INSERT INTO shipments (order_id, created_by, shipping_method_id, cod_amount, created_at, updated_at)\n      VALUES (${o.order_id}::uuid, ",
    "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406341\""
   },
   {
@@ -2440,7 +2440,7 @@
    ],
    "tc": "SHP-TC-20261008-091406341",
    "file": "src/modules/shipping/read.service.ts",
-   "find": "      where.push(Prisma.sql`s.order_id = ${o.order_id}::uuid`);",
+   "find": "      where.push(Prisma.sql`s.order_code = ${q.order_code.toUpperCase()}`);",
    "replace": "      where.push(Prisma.sql`TRUE`);",
    "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406341\""
   },
@@ -2598,6 +2598,221 @@
    "find": "ORDER BY seq DESC LIMIT ${HISTORY_MAX}) newest ORDER BY seq ASC`;",
    "replace": "ORDER BY seq ASC LIMIT ${HISTORY_MAX}) newest ORDER BY seq ASC`;",
    "test": "node scripts/run-jest.mjs test/shipping/rev.spec.ts -t \"SHP-SEC-20261006-101603066 T17 \\(L80\\)\""
+  },
+  {
+   "id": "SB-08, T9: danh sách không ẩn điện thoại và địa chỉ của vận đơn đã xong (bỏ bước ẩn của SHP)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261015-092815845",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "phone: open ? d.phone : null, address: open ? d.address : null,",
+   "replace": "phone: d.phone, address: d.address,",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092815845\""
+  },
+  {
+   "id": "SB-08, T9: danh sách thêm trạng thái delivered vào nhóm còn thấy điện thoại, địa chỉ",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261015-092815845",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "const DISPLAY_PHONE: readonly ShipmentStatus[] = STAFF_RECIPIENT;",
+   "replace": "const DISPLAY_PHONE: readonly ShipmentStatus[] = [...STAFF_RECIPIENT, 'delivered'];",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092815845\""
+  },
+  {
+   "id": "SB-08, T9: danh sách ẩn điện thoại, địa chỉ cả khi vận đơn failed (nhóm còn thấy thiếu failed)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261015-092815810",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "const DISPLAY_PHONE: readonly ShipmentStatus[] = STAFF_RECIPIENT;",
+   "replace": "const DISPLAY_PHONE: readonly ShipmentStatus[] = ['pending', 'shipped'];",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092815810\""
+  },
+  {
+   "id": "SB-08, SB-44, T26: sale thấy vận đơn của mọi người (bỏ điều kiện created_by ở truy vấn)",
+   "sb": [
+    "SB-08",
+    "SB-44"
+   ],
+   "tc": "SHP-TC-20261015-092815880",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "if (s.role === 'sale') where.push(Prisma.sql`s.created_by = ${s.user_id}::uuid`);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092815880\""
+  },
+  {
+   "id": "SB-45, T26: sale không đối chiếu lại created_by với ORD (cột bản chụp lệch vẫn lộ dữ liệu khách)",
+   "sb": [
+    "SB-45"
+   ],
+   "tc": "SHP-TC-20261015-092816196",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "if (s.role === 'sale' && d.created_by !== s.user_id) continue;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092816196\""
+  },
+  {
+   "id": "SB-05, T3: sale không còn gọi được danh sách vận đơn",
+   "sb": [
+    "SB-05",
+    "SB-44"
+   ],
+   "tc": "SHP-TC-20261015-092815880",
+   "file": "src/modules/shipping/shipping.controller.ts",
+   "find": "@Roles('staff', 'sale', 'admin') @RateLimit(LIMITS.list)",
+   "replace": "@Roles('staff', 'admin') @RateLimit(LIMITS.list)",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092815880\""
+  },
+  {
+   "id": "SB-19, T12: trang danh sách không còn ghi audit shipment.view_list (đổi tên hành động)",
+   "sb": [
+    "SB-19",
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261015-092816014",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "action: 'shipment.view_list'",
+   "replace": "action: 'shipment.list'",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092816014\""
+  },
+  {
+   "id": "SB-19, T12, T27: audit mỗi vận đơn của trang thay vì một dòng cho cả trang",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "SHP-TC-20261015-092816014",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "    // audit TRƯỚC khi trả, một dòng cho cả trang;",
+   "replace": "    for (let i = 1; i < items.length; i++) await this.transactions.run((tx) => this.audit.record(tx, { actor_id: s.user_id, actor_role: s.role, action: 'shipment.view_list', target_type: 'shipment', target_id: 'list' }));\n    // audit TRƯỚC khi trả, một dòng cho cả trang;",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092816014\""
+  },
+  {
+   "id": "SB-08, SB-18, T9: audit của trang ghi tên khách đầu trang",
+   "sb": [
+    "SB-08",
+    "SB-18"
+   ],
+   "tc": "SHP-TC-20261015-092815810",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "after: { rows: items.length, status: q.status,",
+   "replace": "after: { rows: items.length, first: items[0].customer_name, status: q.status,",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092815810\""
+  },
+  {
+   "id": "SB-19, T9: lỗi audit của trang bị nuốt (vẫn trả danh sách có điện thoại, địa chỉ)",
+   "sb": [
+    "SB-19",
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261015-092816048",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "limit: q.limit },\n    }));\n    return toPage(items, n, q);",
+   "replace": "limit: q.limit },\n    }).catch(() => undefined));\n    return toPage(items, n, q);",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092816048\""
+  },
+  {
+   "id": "SB-08, T28: trang rỗng vẫn gọi ORD với danh sách rỗng (bỏ đường thoát sớm)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261015-092816014",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "if (rows.length === 0) return toPage([], n, q);",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092816014\""
+  },
+  {
+   "id": "SB-14, T28: danh sách gọi getShipmentDisplay từng dòng (N+1 khối khách)",
+   "sb": [
+    "SB-14",
+    "SB-35"
+   ],
+   "tc": "SHP-TC-20261015-092816118",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "    const display = await this.orders.getShipmentDisplay([...new Set(rows.map((r) => r.order_id))]);",
+   "replace": "    await Promise.all(rows.map((r) => this.orders.getShipmentDisplay([r.order_id])));\n    const display = await this.orders.getShipmentDisplay([...new Set(rows.map((r) => r.order_id))]);",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092816118\""
+  },
+  {
+   "id": "SB-08, T28: ORD trả thiếu đơn thì bỏ dòng thay vì 500 (trang thiếu khối khách)",
+   "sb": [
+    "SB-08"
+   ],
+   "tc": "SHP-TC-20261015-092816083",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "if (!d) throw new Error('getShipmentDisplay thiếu đơn của vận đơn');",
+   "replace": "if (!d) continue;",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092816083\""
+  },
+  {
+   "id": "SB-14, T28: không bỏ trùng order_id của trang (đơn có vận đơn cancelled cũ làm RangeError, 500)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261015-092816157",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "[...new Set(rows.map((r) => r.order_id))]",
+   "replace": "rows.map((r) => r.order_id)",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092816157\""
+  },
+  {
+   "id": "SB-44, T26: tìm mã đơn không chuẩn hóa chữ hoa (mã chữ thường không khớp)",
+   "sb": [
+    "SB-44"
+   ],
+   "tc": "SHP-TC-20261015-092815948",
+   "file": "src/modules/shipping/read.service.ts",
+   "find": "s.order_code = ${q.order_code.toUpperCase()}",
+   "replace": "s.order_code = ${q.order_code}",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092815948\""
+  },
+  {
+   "id": "SB-14, T27: bậc D của danh sách nới từ 30 lên 300 mỗi phút",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "SHP-TC-20261015-092816233",
+   "file": "src/modules/shipping/http.ts",
+   "find": "list: { tier: 'D', limit: 30, windowSeconds: 60 },",
+   "replace": "list: { tier: 'D', limit: 300, windowSeconds: 60 },",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092816233\""
+  },
+  {
+   "id": "SB-45, T26: tạo vận đơn không chép created_by của đơn (sale không thấy gì, staff vẫn thấy)",
+   "sb": [
+    "SB-45"
+   ],
+   "tc": "SHP-TC-20261015-092815880",
+   "file": "src/modules/shipping/lifecycle.service.ts",
+   "find": "${o.code}, ${o.created_by}::uuid, ",
+   "replace": "${o.code}, NULL::uuid, ",
+   "test": "node scripts/run-jest.mjs test/shipping/list-ho.spec.ts -t \"SHP-TC-20261015-092815880\""
+  },
+  {
+   "id": "ADR-024, T26: CHECK order_code của migration HD nhận 4 chữ số thay vì 5",
+   "sb": [
+    "SB-44"
+   ],
+   "tc": "SHP-TC-20261008-091406444",
+   "file": "prisma/migrations/20261015000100_shipping_order_code_hd/migration.sql",
+   "find": "HD[0-9]{6}-[0-9]{5}",
+   "replace": "HD[0-9]{6}-[0-9]{4}",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406444\""
+  },
+  {
+   "id": "T26: chỉ mục của danh sách sale mất điều kiện một phần created_by IS NOT NULL",
+   "sb": [
+    "SB-45"
+   ],
+   "tc": "SHP-TC-20261008-091406444",
+   "file": "prisma/migrations/20261015000100_shipping_order_code_hd/migration.sql",
+   "find": "WHERE \"created_by\" IS NOT NULL;",
+   "replace": ";",
+   "test": "node scripts/run-jest.mjs test/shipping/ordercode.spec.ts -t \"SHP-TC-20261008-091406444\""
   }
  ]
 }

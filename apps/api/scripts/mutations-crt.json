@@ -1182,8 +1182,8 @@
    ],
    "tc": "CRT-TC-20261006-104453118",
    "file": "../web/app/cart/page.tsx",
-   "find": "<Link href={`/products/${line.product_id}`} className=\"strong\" data-testid=\"crt-cart-line-name\">{line.name}</Link>",
-   "replace": "<span className=\"strong\" data-testid=\"crt-cart-line-name\" dangerouslySetInnerHTML={{ __html: line.name }} />",
+   "find": "<Link href={`/products/${line.product_id}`} className=\"crt-name\" data-testid=\"crt-cart-line-name\">{line.name}</Link>",
+   "replace": "<span className=\"crt-name\" data-testid=\"crt-cart-line-name\" dangerouslySetInnerHTML={{ __html: line.name }} />",
    "test": "node scripts/run-jest.mjs test/e2e/crt.e2e.spec.ts -t \"CRT-TC-20261006-104453118\""
   },
   {
@@ -1193,8 +1193,8 @@
    ],
    "tc": "CRT-E2E-20261006-104523405",
    "file": "../web/components/CartSummary.tsx",
-   "find": "<strong data-testid=\"crt-cart-summary-subtotal\">{formatPrice(cart.subtotal)}</strong>",
-   "replace": "<strong data-testid=\"crt-cart-summary-subtotal\">{formatPrice(cart.items.reduce((s, l) => s + l.unit_price * l.quantity, 0) + 1)}</strong>",
+   "find": "<dd data-testid=\"crt-cart-summary-subtotal\">{formatPrice(cart.subtotal)}</dd>",
+   "replace": "<dd data-testid=\"crt-cart-summary-subtotal\">{formatPrice(cart.items.reduce((s, l) => s + l.unit_price * l.quantity, 0) + 1)}</dd>",
    "test": "node scripts/run-jest.mjs test/e2e/crt.e2e.spec.ts -t \"CRT-E2E-20261006-104523405\""
   },
   {

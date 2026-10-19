@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Kiểm đột biến cho AUTH (sdlc-implement: khung/ epic có TC `lỗi` kiểm SEC thay "test fail đúng lý do"): gài một lỗi có chủ ý vào mã, chạy
 // ĐÚNG test của nó, kỳ vọng ĐỎ; luôn khôi phục tệp. Dòng nào "lọt" (test xanh) thì sửa test. In bảng cho report.md.
-// Dùng: node scripts/mutations-auth.mjs [--only <SB-xx>]   (cần `docker compose up -d db`; chạy từ apps/api)
+// Dùng: node scripts/mutations-auth.mjs [--only <SB-xx>] [--match <chuỗi ID>]   (cần `docker compose up -d db`; chạy từ apps/api)
 import { readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -50,6 +50,12 @@ export const MUTATIONS = [
   { sb: 'SB-05', what: 'updateProfile ghi cả role (mass assignment)', edits: [{ file: `${A}/auth.api.ts`, from: "avatar_url = CASE WHEN ${hasAvatar}::boolean THEN ${patch.avatar_url ?? null}::text ELSE avatar_url END,", to: "avatar_url = CASE WHEN ${hasAvatar}::boolean THEN ${patch.avatar_url ?? null}::text ELSE avatar_url END, role = ${(patch as any).role ?? 'customer'}::user_role," }], test: J('test/auth/interface.spec.ts'), id: 'AUTH-TC-20261006-180338166' },
   { sb: 'SB-05', what: 'findCustomerById không lọc role customer', edits: [{ file: `${A}/auth.api.ts`, from: "id = ${id}::uuid AND role = 'customer'", to: "id = ${id}::uuid" }], test: J('test/auth/interface.spec.ts'), id: 'AUTH-TC-20261006-180338166' },
   { sb: 'SB-26', what: 'listActiveUserIdsByRole gồm cả người dùng bị khóa', edits: [{ file: `${A}/auth.api.ts`, from: "WHERE status = 'active' AND role::text", to: "WHERE role::text" }], test: J('test/auth/interface.spec.ts'), id: 'AUTH-TC-20261006-180337643' },
+  { sb: 'SB-05', what: 'sale vào được danh sách người dùng của admin (sai ma trận)', edits: [{ file: `${A}/auth.controller.ts`, from: "@Get() @Action('Xem danh sách người dùng (lọc, tìm theo email)') @Roles('admin')", to: "@Get() @Action('Xem danh sách người dùng (lọc, tìm theo email)') @Roles('sale', 'admin')" }], test: J('test/auth/sale.spec.ts'), id: 'AUTH-TC-20261015-092750085' },
+  { sb: 'SB-05', what: 'role lạ trong CSDL được cấp admin (guard mở khi không chắc)', edits: [{ file: `${A}/session.resolver.ts`, from: 'return { user_id: s.user_id, role: s.role, email_verified, display_name: s.full_name };', to: "return { user_id: s.user_id, role: (['customer', 'staff', 'sale', 'admin'].includes(s.role) ? s.role : 'admin') as SessionContext['role'], email_verified, display_name: s.full_name };" }], test: J('test/auth/sale.spec.ts'), id: 'AUTH-TC-20261015-092750167' },
+  { sb: 'SB-05', what: 'kiểm lệch ma trận bỏ cột sale', edits: [{ file: 'src/modules/platform/http/route-audit.ts', from: "(['admin', 'customer', 'sale', 'staff'] as const)", to: "(['admin', 'customer', 'staff'] as const)" }], test: J('test/auth/sale.spec.ts'), id: 'AUTH-TC-20261015-092750167' },
+  { sb: 'SB-29', what: 'đổi role nhận giá trị ngoài bốn role (superuser, system)', edits: [{ file: `${A}/policy.ts`, from: "role: z.enum(['customer', 'staff', 'sale', 'admin'], { errorMap: (i, c)", to: "role: z.string({ errorMap: (i, c)" }], test: J('test/auth/sale.spec.ts'), id: 'AUTH-TC-20261015-092750085' },
+  { sb: 'SB-04', what: 'sale không đăng xuất được (bỏ sale khỏi @Roles của logout)', edits: [{ file: `${A}/auth.controller.ts`, from: "@HttpCode(204) @Roles('customer', 'staff', 'sale', 'admin')", to: "@HttpCode(204) @Roles('customer', 'staff', 'admin')" }], test: J('test/auth/sale.spec.ts'), id: 'AUTH-TC-20261015-095530439' },
+  { sb: 'SB-04', what: 'phiên của sale không có trên GET /auth/session (bỏ sale khỏi @Roles)', edits: [{ file: `${A}/auth.controller.ts`, from: "@Get('session') @Action('Xem thông tin và hạn của phiên hiện tại') @Roles('customer', 'staff', 'sale', 'admin')", to: "@Get('session') @Action('Xem thông tin và hạn của phiên hiện tại') @Roles('customer', 'staff', 'admin')" }], test: J('test/auth/sale.spec.ts'), id: 'AUTH-TC-20261015-095530480' },
 ];
 
 const run = (m) => {
@@ -61,7 +67,8 @@ const run = (m) => {
 
 const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
 const rows = [];
-for (const m of MUTATIONS.filter((x) => !only || x.sb === only)) {
+const match = process.argv.includes('--match') ? process.argv[process.argv.indexOf('--match') + 1] : null; // chỉ đột biến có ID test chứa chuỗi này (ví dụ 20261015: đợt bán hộ)
+for (const m of MUTATIONS.filter((x) => (!only || x.sb === only) && (!match || x.id.includes(match)))) {
   const saved = new Map();
   try {
     for (const e of m.edits) {

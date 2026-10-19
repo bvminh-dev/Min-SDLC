@@ -50,7 +50,10 @@ describe('SHP kiểm quyền và ranh giới trên AppModule thật', () => {
   it(`SHP-TC-20261006-102133082 SHP-TC-20261006-102133553 ${SEC} T3, T4 (SB-05, SB-07): mọi route của SHP khai quyền, schema và @Action khớp ma trận (customer own); AppModule vẫn sạch; báo khi ma trận hay code sai và đóng khi công cụ hỏng`, async () => {
     expect(auditRoutes(t.app)).toEqual([]);
     expect(auditPermissions(t.app, MATRIX, opts)).toEqual([]);
-    expect(parseMatrix(MATRIX).filter((r) => r.requirement.startsWith('SHP-REQ-')).map((r) => r.action).sort()).toEqual([
+    // hàng `Sale <việc>` gộp vào hàng gốc (một endpoint một @Action, route-audit.ts): danh sách vận đơn có thêm quyền `own` cho sale (SHP-REQ-20261006-101103927 BR11, SB-08 (d))
+    const shpRows = parseMatrix(MATRIX).filter((r) => r.requirement.startsWith('SHP-REQ-'));
+    expect(shpRows.filter((r) => r.sale !== '-').map((r) => [r.action, r.sale, r.staff, r.admin])).toEqual([['Sale xem danh sách vận đơn (lọc theo trạng thái, mã đơn, mã vận đơn)', 'own', '-', '-']]);
+    expect(shpRows.filter((r) => !r.action.startsWith('Sale ')).map((r) => r.action).sort()).toEqual([
       'Báo phí vận chuyển theo phương thức, thành phố và tạm tính', 'Bàn giao vận đơn và nhập mã vận đơn', 'Bật hoặc tắt phương thức vận chuyển', ...INTERNAL,
       'Sửa mã vận đơn đã nhập', 'Tạo và sửa phương thức vận chuyển', 'Xác nhận giao xong, báo giao thất bại, xác nhận hàng hoàn về kho', 'Xem các phương thức vận chuyển đang áp dụng',
       'Xem danh sách mọi phương thức vận chuyển (kể cả đã tắt)', 'Xem danh sách vận đơn (lọc theo trạng thái, mã đơn, mã vận đơn)', 'Xem lịch sử trạng thái vận đơn', 'Xem trạng thái và chi tiết vận đơn của một đơn',
@@ -65,7 +68,7 @@ describe('SHP kiểm quyền và ranh giới trên AppModule thật', () => {
     expect(auditPermissions(t.app, narrowed, opts).join('\n')).toContain('GET /api/v1/shipping/orders/:code/shipment/history: code cho [admin, customer, staff] nhưng ma trận (Xem lịch sử trạng thái vận đơn) cho [admin, staff]');
     expect(auditPermissions(t.app, MATRIX.replace('| Sửa mã vận đơn đã nhập |', '| Sửa mã |'), opts).join('\n')).toContain('không có trong permissions-matrix.md');
     expect(auditPermissions(t.app, '', opts)).toEqual(['ma trận quyền rỗng hoặc không đọc được (không tìm thấy hàng nào có mã requirement)']);
-    expect(auditPermissions(t.app, MATRIX, { scope: () => false, epic: 'SHP', exempt: INTERNAL }).filter((l) => l.includes('không có endpoint nào khai @Action'))).toHaveLength(11);
+    expect(auditPermissions(t.app, MATRIX, { scope: () => false, epic: 'SHP', exempt: INTERNAL }).filter((l) => l.includes('không có endpoint nào khai @Action'))).toHaveLength(12); // 11 hàng gốc + hàng `Sale xem danh sách vận đơn` (không route nào trong phạm vi nên chưa gộp)
     expect(auditPermissions(t.app, MATRIX, { ...opts, exempt: [] }).join('\n')).toContain('không có endpoint nào khai @Action');
   });
 

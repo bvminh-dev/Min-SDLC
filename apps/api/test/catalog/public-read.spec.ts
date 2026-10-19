@@ -125,8 +125,8 @@ describe('PRD khu vực công khai: chi tiết, duyệt, tìm kiếm (PRD-REQ-20
 
   it('PRD-TC-20261006-100356116: tìm kiếm: q rỗng, toàn khoảng trắng hoặc quá 100 ký tự bị 400; ký tự đặc biệt là chữ thường (không SQL, không lộ); không thấy draft và archived; log không ghi nguyên văn q', async () => {
     await seedProduct(t, { category: cat, name: 'Áo thun' }); await seedProduct(t, { category: cat, name: 'Áo bí mật', status: 'draft' }); await seedProduct(t, { category: cat, name: 'Áo cũ', status: 'archived' });
-    for (const qs of ['q=', 'q=%20%20', `q=${'x'.repeat(101)}`, '', 'q=a&q=b', 'q=a&sort=bad']) expect([qs, (await get(`/products/search?${qs}`)).status]).toEqual([qs, 400]);
-    for (const qs of ['q=%25', "q=' OR 1=1 --", 'q=_', 'q=%5C', 'q=a%00b', 'q=%25%25%25']) {
+    for (const qs of ['q=', 'q=%20%20', `q=${'x'.repeat(101)}`, '', 'q=a&q=b', 'q=a&sort=bad', 'q=a%00b']) expect([qs, (await get(`/products/search?${qs}`)).status]).toEqual([qs, 400]);
+    for (const qs of ['q=%25', "q=' OR 1=1 --", 'q=_', 'q=%5C', 'q=%25%25%25']) {
       const r = await get(`/products/search?${qs}`);
       expect([qs, r.status, r.body.items]).toEqual([qs, 200, []]); // chữ thường, không có nghĩa đặc biệt
     }

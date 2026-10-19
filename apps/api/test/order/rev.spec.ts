@@ -42,7 +42,7 @@ describe('ORD ca của reviewer', () => {
       expect([name, err?.name, err?.code]).toEqual([name, 'OrderBusinessError', 'invalid_input']);
     }
     expect([await countRows(t, 'orders'), await countRows(t, 'order_items'), await countRows(t, 'order_status_history'), await countRows(t, 'outbox_events')]).toEqual([0, 0, 0, 0]);
-    expect((await createPending(t, baseInput(a.id, { shipping_address: { receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi\nTầng 3', ward: 'Bến Nghé', district: 'Quận 1', city: 'TP.HCM' } }))).code).toMatch(/^[0-9A-Z]{12}$/); // xuống dòng vẫn hợp lệ
+    expect((await createPending(t, baseInput(a.id, { shipping_address: { receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi\nTầng 3', ward: 'Bến Nghé', district: 'Quận 1', city: 'TP.HCM' } }))).code).toMatch(/^HD[0-9]{6}-[0-9]{5}$/); // xuống dòng vẫn hợp lệ; mã mới HDyymmdd-NNNNN (ORD-TC-20261015-092748827)
   });
 
   it('REV-ORD-03 (hồi quy của reviewer): getOrderSeries với khoảng khổng lồ theo giờ bị từ chối ngay bằng RangeError (không chạy tới hạn thời gian của câu lệnh), khoảng vừa đủ 1000 mốc vẫn chạy; khoảng ngoài miền ngày của countByStatus và getTopProducts là RangeError', async () => {

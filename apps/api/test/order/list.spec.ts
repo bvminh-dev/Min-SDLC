@@ -6,6 +6,7 @@ import { call, createOrdApp, deliver, people, seedOrder, sqlOf, type OrdApp, typ
 
 // Danh sách đơn của customer (ORD-REQ-20261006-092320716) và danh sách quản trị của staff, admin (ORD-REQ-20261006-092320743).
 const KEYS = ['code', 'created_at', 'grand_total', 'item_count', 'payment_method', 'payment_status', 'status'];
+const STAFF_KEYS = [...KEYS, 'created_by', 'created_by_name', 'source'].sort(); // danh sách quản trị thêm nguồn, tên và id người tạo (id để ô lọc Người tạo của web; ORD-API chỉ nêu tên, xem report)
 const T0 = Date.parse('2026-10-06T08:00:00Z'); // fixed-clock: mốc của TC, dữ liệu dựng tường minh theo mốc này, không trộn với now() của CSDL
 const min = (i: number) => new Date(T0 + i * 60_000);
 
@@ -165,7 +166,7 @@ describe('ORD danh sách đơn', () => {
     expect([row.status, row.payment_status]).toEqual(['paid', 'succeeded']);
   });
 
-  it('ORD-TC-20261006-111224604: staff thấy 20 đơn mới nhất của mọi customer, trang 3 có 5 đơn, dòng chỉ có bảy khóa và không có dữ liệu cá nhân', async () => {
+  it('ORD-TC-20261006-111224604: staff thấy 20 đơn mới nhất của mọi customer, trang 3 có 5 đơn, dòng có bảy khóa của customer cộng source và created_by_name, không có dữ liệu cá nhân', async () => {
     const { staff } = await people(t);
     const us = [await seedUser(t, { email: 'c1@x.vn', name: 'Khách Một' }), await seedUser(t, { email: 'c2@x.vn', name: 'Khách Hai' }), await seedUser(t, { email: 'c3@x.vn', name: 'Khách Ba' })];
     for (let i = 0; i < 45; i++) await seedOrder(t, { user: us[i % 3].id, createdAt: min(i) });
@@ -173,7 +174,7 @@ describe('ORD danh sách đơn', () => {
     expect([p1.status, p1.body.total, p1.body.items.length, p1.body.items[0].created_at.slice(11, 16), p1.body.items[19].created_at.slice(11, 16)]).toEqual([200, 45, 20, '08:44', '08:25']);
     expect([p3.body.items.length, p3.body.items[0].created_at.slice(11, 16), p3.body.items[4].created_at.slice(11, 16)]).toEqual([5, '08:04', '08:00']);
     const rows = [...p1.body.items, ...p3.body.items];
-    for (const i of rows) expect(Object.keys(i).sort()).toEqual(KEYS);
+    for (const i of rows) expect(Object.keys(i).sort()).toEqual(STAFF_KEYS);
     const personal = JSON.stringify(rows.map(({ code: _c, ...r }: any) => r));
     expect(personal).not.toMatch(/@|0[0-9]{9}|shipping_address|receiver|phone|email|user_id|full_name|Khách/);
   });

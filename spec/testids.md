@@ -37,9 +37,9 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | auth-admin-user-list-role | admin-user-list | AUTH | Nhãn role | admin | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-role-cancel | admin-user-list | AUTH | Nút Hủy đổi role | admin | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-role-error | admin-user-list | AUTH | Lỗi đổi role trong hộp thoại | admin | AUTH-REQ-20261006-095515956 |
-| auth-admin-user-list-role-filter | admin-user-list | AUTH | Lọc role | admin | AUTH-REQ-20261006-095515956 |
+| auth-admin-user-list-role-filter | admin-user-list | AUTH | Lọc role (Khách, Nhân viên, Bán hàng, Quản trị) | admin | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-role-save | admin-user-list | AUTH | Nút Lưu đổi role | admin | AUTH-REQ-20261006-095515956 |
-| auth-admin-user-list-role-select | admin-user-list | AUTH | Chọn role mới trong hộp thoại | admin | AUTH-REQ-20261006-095515956 |
+| auth-admin-user-list-role-select | admin-user-list | AUTH | Chọn role mới trong hộp thoại (bốn lựa chọn: Khách, Nhân viên, Bán hàng, Quản trị) | admin | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-row | admin-user-list | AUTH | Dòng người dùng | admin | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-row-menu | admin-user-list | AUTH | Nút menu ⋯ của dòng | admin | AUTH-REQ-20261006-095515956 |
 | auth-admin-user-list-search | admin-user-list | AUTH | Ô tìm theo email (tiền tố, từ 3 ký tự) | admin | AUTH-REQ-20261006-095515956 |
@@ -289,6 +289,8 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | dsh-admin-dashboard-kpi-revenue-loading | admin-dashboard | DSH | Khung chờ ô doanh thu | admin | DSH-REQ-20261006-105126549 |
 | dsh-admin-dashboard-kpi-revenue-report-link | admin-dashboard | DSH | Liên kết Xem báo cáo doanh thu | admin | DSH-REQ-20261006-105125714 |
 | dsh-admin-dashboard-kpi-revenue-retry | admin-dashboard | DSH | Nút Thử lại ô doanh thu | admin | DSH-REQ-20261006-105126549 |
+| dsh-admin-dashboard-link-sales | admin-dashboard | DSH | Nút Báo cáo theo sale | admin | DSH-REQ-20261015-092608849 |
+| dsh-admin-dashboard-link-sources | admin-dashboard | DSH | Nút Báo cáo theo nguồn đơn | admin | DSH-REQ-20261015-092608812 |
 | dsh-admin-dashboard-low-stock-count | admin-dashboard | DSH | Tổng số sản phẩm tồn thấp ở tiêu đề khối | admin | DSH-REQ-20261006-105126089 |
 | dsh-admin-dashboard-low-stock-empty | admin-dashboard | DSH | Vùng "Không có sản phẩm tồn thấp" | admin | DSH-REQ-20261006-105126089 |
 | dsh-admin-dashboard-low-stock-error | admin-dashboard | DSH | Lỗi khối tồn thấp | admin | DSH-REQ-20261006-105126549 |
@@ -376,6 +378,52 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | dsh-analytics-revenue-total-gross | analytics-revenue | DSH | Số Thu | admin | DSH-REQ-20261006-105126271 |
 | dsh-analytics-revenue-total-net | analytics-revenue | DSH | Số Doanh thu thuần | admin | DSH-REQ-20261006-105126271 |
 | dsh-analytics-revenue-total-refunded | analytics-revenue | DSH | Số Hoàn tiền | admin | DSH-REQ-20261006-105126271 |
+| dsh-analytics-sales-as-of | analytics-sales | DSH | Dòng "Cập nhật lúc HH:mm" | admin | DSH-REQ-20261006-105126549 |
+| dsh-analytics-sales-empty | analytics-sales | DSH | Vùng "Không có đơn được tính từ ... tới ..." | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-error | analytics-sales | DSH | Banner lỗi (503) | admin | DSH-REQ-20261006-105126549 |
+| dsh-analytics-sales-excluded-note | analytics-sales | DSH | Dòng chú thích "Không tính đơn đã hủy, hết hạn, hoàn về (cơ sở tính lương)" kèm số đơn bị loại | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-export-csv | analytics-sales | DSH | Nút Xuất CSV (tải tệp theo khoảng đang xem) | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-export-error | analytics-sales | DSH | Dòng lỗi xuất CSV (403, 429, 503 hoặc 400 khi tải tệp; không tải được tệp) | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-export-loading | analytics-sales | DSH | Trạng thái đang tạo tệp trên nút Xuất CSV (nút khóa) | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-loading | analytics-sales | DSH | Khung chờ | admin | DSH-REQ-20261006-105126549 |
+| dsh-analytics-sales-range-apply | analytics-sales | DSH | Nút Áp dụng | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-range-error | analytics-sales | DSH | Dòng lỗi khoảng ngày (400) | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-range-from | analytics-sales | DSH | Ô ngày Từ | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-range-reset | analytics-sales | DSH | Nút 30 ngày qua | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-range-to | analytics-sales | DSH | Ô ngày Đến (không cho chọn sau hôm nay) | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-rate-limit | analytics-sales | DSH | Dải "Thao tác quá nhanh" (429) | admin | DSH-REQ-20261006-105126549 |
+| dsh-analytics-sales-retry | analytics-sales | DSH | Nút Thử lại | admin | DSH-REQ-20261006-105126549 |
+| dsh-analytics-sales-revenue-note | analytics-sales | DSH | Dòng ghi chú "Doanh thu là giá trị đơn (gồm phí vận chuyển, đã trừ giảm giá), không phải tiền đã thu" | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-row | analytics-sales | DSH | Một dòng sale (Tên, Số đơn, Doanh thu) | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-row-deleted | analytics-sales | DSH | Nhãn "(tài khoản đã xóa)" trên dòng của người không còn tra được tên | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-table | analytics-sales | DSH | Bảng theo người tạo đơn | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-total-excluded | analytics-sales | DSH | Số Đơn bị loại | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-total-orders | analytics-sales | DSH | Số Đơn được tính | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-total-revenue | analytics-sales | DSH | Số Doanh thu (giá trị đơn) | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sales-website-row | analytics-sales | DSH | Dòng cố định "Khách tự đặt (website)" ở cuối bảng, luôn có | admin | DSH-REQ-20261015-092608849 |
+| dsh-analytics-sources-as-of | analytics-sources | DSH | Dòng "Cập nhật lúc HH:mm" | admin | DSH-REQ-20261006-105126549 |
+| dsh-analytics-sources-empty | analytics-sources | DSH | Vùng "Không có đơn được tính từ ... tới ..." | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-error | analytics-sources | DSH | Banner lỗi (503) | admin | DSH-REQ-20261006-105126549 |
+| dsh-analytics-sources-excluded-note | analytics-sources | DSH | Dòng chú thích "Không tính đơn đã hủy, hết hạn, hoàn về (cơ sở tính lương)" kèm số đơn bị loại | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-export-csv | analytics-sources | DSH | Nút Xuất CSV (tải tệp theo khoảng đang xem) | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-export-error | analytics-sources | DSH | Dòng lỗi xuất CSV (403, 429, 503 hoặc 400 khi tải tệp; không tải được tệp) | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-export-loading | analytics-sources | DSH | Trạng thái đang tạo tệp trên nút Xuất CSV (nút khóa) | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-loading | analytics-sources | DSH | Khung chờ | admin | DSH-REQ-20261006-105126549 |
+| dsh-analytics-sources-range-apply | analytics-sources | DSH | Nút Áp dụng | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-range-error | analytics-sources | DSH | Dòng lỗi khoảng ngày (400) | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-range-from | analytics-sources | DSH | Ô ngày Từ | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-range-reset | analytics-sources | DSH | Nút 30 ngày qua | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-range-to | analytics-sources | DSH | Ô ngày Đến (không cho chọn sau hôm nay) | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-rate-limit | analytics-sources | DSH | Dải "Thao tác quá nhanh" (429) | admin | DSH-REQ-20261006-105126549 |
+| dsh-analytics-sources-retry | analytics-sources | DSH | Nút Thử lại | admin | DSH-REQ-20261006-105126549 |
+| dsh-analytics-sources-revenue-note | analytics-sources | DSH | Dòng ghi chú "Doanh thu là giá trị đơn (gồm phí vận chuyển, đã trừ giảm giá), không phải tiền đã thu" | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-row | analytics-sources | DSH | Một dòng nguồn (Nguồn, Số đơn, Doanh thu, tỷ trọng) | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-row-inactive | analytics-sources | DSH | Nhãn "đã tắt" trên dòng của nguồn đã tắt nhưng có đơn | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-share | analytics-sources | DSH | Thanh tỷ trọng doanh thu của nguồn (kèm số và phần trăm bằng chữ) | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-table | analytics-sources | DSH | Bảng theo nguồn đơn | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-total-excluded | analytics-sources | DSH | Số Đơn bị loại | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-total-orders | analytics-sources | DSH | Số Đơn được tính | admin | DSH-REQ-20261015-092608812 |
+| dsh-analytics-sources-total-revenue | analytics-sources | DSH | Số Doanh thu (giá trị đơn) | admin | DSH-REQ-20261015-092608812 |
 | inv-inventory-detail-adjust | inventory-detail | INV | Nút Điều chỉnh theo kiểm kê | staff, admin | INV-REQ-20261006-101122512 |
 | inv-inventory-detail-adjust-cancel | inventory-detail | INV | Nút Hủy hộp thoại điều chỉnh | staff, admin | INV-REQ-20261006-101122512 |
 | inv-inventory-detail-adjust-delta | inventory-detail | INV | Dòng Chênh lệch tính sẵn | staff, admin | INV-REQ-20261006-101122512 |
@@ -494,26 +542,26 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | ntf-notification-list-type-filter | notification-list | NTF | Ô chọn loại thông báo | customer, staff, admin | NTF-REQ-20261006-103209345 |
 | ntf-notification-list-unread-count | notification-list | NTF | Số chưa đọc ở đầu trang (hiện "99+" khi lớn hơn 99) | customer, staff, admin | NTF-REQ-20261006-103209256 |
 | ntf-notification-list-unread-dot | notification-list | NTF | Chấm chưa đọc trên dòng | customer, staff, admin | NTF-REQ-20261006-103209256 |
-| ord-order-admin-list-clear-filter | order-admin-list | ORD | Nút Xoá lọc (chỉ khi đang lọc hoặc tìm) | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-code | order-admin-list | ORD | Mã đơn (font-mono) | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-created-at | order-admin-list | ORD | Ngày tạo | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-empty | order-admin-list | ORD | Vùng rỗng, chưa có đơn | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-empty-filtered | order-admin-list | ORD | Vùng rỗng do tìm hoặc lọc | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-error | order-admin-list | ORD | Banner lỗi | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-item-count | order-admin-list | ORD | Số mặt hàng | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-loading | order-admin-list | ORD | Khung chờ | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-pagination | order-admin-list | ORD | Phân trang ‹ 1 2 3 › (ẩn khi một trang) | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-payment | order-admin-list | ORD | Phương thức và trạng thái thanh toán | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-retry | order-admin-list | ORD | Nút Thử lại | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-row | order-admin-list | ORD | Hàng đơn | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-search | order-admin-list | ORD | Ô tìm theo mã đơn (placeholder nói rõ mã đơn, không nhắc email) | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-status-badge | order-admin-list | ORD | Badge trạng thái đơn | staff, admin | ORD-REQ-20261006-092320790 |
-| ord-order-admin-list-status-filter | order-admin-list | ORD | Hàng tab lọc trạng thái | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-summary | order-admin-list | ORD | Dòng "1 tới 20 trong 45 đơn" | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-admin-list-total | order-admin-list | ORD | Tổng tiền, căn phải | staff, admin | ORD-REQ-20261006-092320743 |
-| ord-order-detail-address | order-detail | ORD | Khối người nhận, điện thoại, địa chỉ giao | customer, admin | ORD-REQ-20261006-092320768 |
+| ord-order-admin-list-clear-filter | order-admin-list | ORD | Nút Xoá lọc (chỉ khi đang lọc hoặc tìm) | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-code | order-admin-list | ORD | Mã đơn (font-mono) | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-created-at | order-admin-list | ORD | Ngày tạo | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-empty | order-admin-list | ORD | Vùng rỗng, chưa có đơn | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-empty-filtered | order-admin-list | ORD | Vùng rỗng do tìm hoặc lọc | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-error | order-admin-list | ORD | Banner lỗi | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-item-count | order-admin-list | ORD | Số mặt hàng | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-loading | order-admin-list | ORD | Khung chờ | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-pagination | order-admin-list | ORD | Phân trang ‹ 1 2 3 › (ẩn khi một trang) | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-payment | order-admin-list | ORD | Phương thức và trạng thái thanh toán | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-retry | order-admin-list | ORD | Nút Thử lại | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-row | order-admin-list | ORD | Hàng đơn | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-search | order-admin-list | ORD | Ô tìm theo mã đơn (placeholder nói rõ mã đơn, không nhắc email) | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-status-badge | order-admin-list | ORD | Badge trạng thái đơn | staff, sale, admin | ORD-REQ-20261006-092320790 |
+| ord-order-admin-list-status-filter | order-admin-list | ORD | Hàng tab lọc trạng thái | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-summary | order-admin-list | ORD | Dòng "1 tới 20 trong 45 đơn" | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-admin-list-total | order-admin-list | ORD | Tổng tiền, căn phải | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-detail-address | order-detail | ORD | Khối người nhận, điện thoại, địa chỉ giao | customer, sale, admin | ORD-REQ-20261006-092320768 |
 | ord-order-detail-address-hidden | order-detail | ORD | Dòng "ẩn theo chính sách dữ liệu" thay khối địa chỉ | staff | ORD-REQ-20261006-092320768 |
-| ord-order-detail-back-link | order-detail | ORD | Liên kết Quay lại danh sách | customer, staff, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-back-link | order-detail | ORD | Liên kết Quay lại danh sách | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
 | ord-order-detail-cancel-button | order-detail | ORD | Nút Hủy đơn (ẩn khi không hủy được) | customer, admin | ORD-REQ-20261006-092320834 |
 | ord-order-detail-cancel-confirm | order-detail | ORD | Nút Xác nhận hủy | customer, admin | ORD-REQ-20261006-092320834 |
 | ord-order-detail-cancel-dialog | order-detail | ORD | Hộp thoại xác nhận hủy | customer, admin | ORD-REQ-20261006-092320834 |
@@ -523,25 +571,36 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | ord-order-detail-cancel-refund-notice | order-detail | ORD | Dòng thông báo hoàn tiền tự động toàn phần (chỉ đơn paid) | customer, admin | ORD-REQ-20261006-092320834 |
 | ord-order-detail-cancel-reload | order-detail | ORD | Nút Tải lại đơn trong lỗi 409 | customer, admin | ORD-REQ-20261006-092320834 |
 | ord-order-detail-cancel-success | order-detail | ORD | Thông báo "Đã hủy đơn" | customer, admin | ORD-REQ-20261006-092320834 |
-| ord-order-detail-code | order-detail | ORD | Mã đơn trong đầu trang (font-mono) | customer, staff, admin | ORD-REQ-20261006-092320768 |
-| ord-order-detail-created-at | order-detail | ORD | Thời điểm tạo đơn | customer, staff, admin | ORD-REQ-20261006-092320768 |
-| ord-order-detail-error | order-detail | ORD | Banner lỗi toàn trang | customer, staff, admin | ORD-REQ-20261006-092320768 |
-| ord-order-detail-history | order-detail | ORD | Khối lịch sử trạng thái (timeline) | customer, staff, admin | ORD-REQ-20261006-092320812 |
-| ord-order-detail-history-error | order-detail | ORD | Banner lỗi riêng của khối lịch sử | customer, staff, admin | ORD-REQ-20261006-092320812 |
-| ord-order-detail-history-item | order-detail | ORD | Một dòng lịch sử: thời điểm và trạng thái (gồm dòng giao thất bại) | customer, staff, admin | ORD-REQ-20261006-092320812 |
-| ord-order-detail-history-reason | order-detail | ORD | Lý do trong dòng lịch sử (lý do hủy hoặc lý do giao thất bại, chỉ khi có) | customer, staff, admin | ORD-REQ-20261006-092320812 |
-| ord-order-detail-history-retry | order-detail | ORD | Nút Thử lại của lịch sử | customer, staff, admin | ORD-REQ-20261006-092320812 |
-| ord-order-detail-items | order-detail | ORD | Bảng sản phẩm (tên, đơn giá, số lượng, thành tiền theo snapshot) | customer, staff, admin | ORD-REQ-20261006-092320768 |
-| ord-order-detail-loading | order-detail | ORD | Khung chờ | customer, staff, admin | ORD-REQ-20261006-092320768 |
-| ord-order-detail-notfound | order-detail | ORD | Khối "Không tìm thấy đơn hàng" (404) | customer, staff, admin | ORD-REQ-20261006-092320768 |
-| ord-order-detail-notfound-back | order-detail | ORD | Nút đặc Về danh sách đơn hàng | customer, staff, admin | ORD-REQ-20261006-092320768 |
-| ord-order-detail-payment | order-detail | ORD | Khối thanh toán (phương thức, trạng thái thanh toán) | customer, staff, admin | ORD-REQ-20261006-092320768 |
-| ord-order-detail-payment-expires | order-detail | ORD | Dòng Hạn thanh toán (đơn online ở Chờ xử lý) | customer, staff, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-code | order-detail | ORD | Mã đơn trong đầu trang (font-mono) | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-created-at | order-detail | ORD | Thời điểm tạo đơn | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-error | order-detail | ORD | Banner lỗi toàn trang | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-history | order-detail | ORD | Khối lịch sử trạng thái (timeline) | customer, staff, sale, admin | ORD-REQ-20261006-092320812 |
+| ord-order-detail-history-error | order-detail | ORD | Banner lỗi riêng của khối lịch sử | customer, staff, sale, admin | ORD-REQ-20261006-092320812 |
+| ord-order-detail-history-item | order-detail | ORD | Một dòng lịch sử: thời điểm và trạng thái (gồm dòng giao thất bại) | customer, staff, sale, admin | ORD-REQ-20261006-092320812 |
+| ord-order-detail-history-reason | order-detail | ORD | Lý do trong dòng lịch sử (lý do hủy hoặc lý do giao thất bại, chỉ khi có) | customer, staff, sale, admin | ORD-REQ-20261006-092320812 |
+| ord-order-detail-history-retry | order-detail | ORD | Nút Thử lại của lịch sử | customer, staff, sale, admin | ORD-REQ-20261006-092320812 |
+| ord-order-detail-items | order-detail | ORD | Bảng sản phẩm (tên, đơn giá, số lượng, thành tiền theo snapshot) | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-loading | order-detail | ORD | Khung chờ | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-notfound | order-detail | ORD | Khối "Không tìm thấy đơn hàng" (404) | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-notfound-back | order-detail | ORD | Nút đặc Về danh sách đơn hàng | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-payment | order-detail | ORD | Khối thanh toán (phương thức, trạng thái thanh toán) | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-payment-expires | order-detail | ORD | Dòng Hạn thanh toán (đơn online ở Chờ xử lý) | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
 | ord-order-detail-payment-link | order-detail | ORD | Liên kết Xem thanh toán | customer | ORD-REQ-20261006-092320768 |
-| ord-order-detail-retry | order-detail | ORD | Nút Thử lại toàn trang | customer, staff, admin | ORD-REQ-20261006-092320768 |
-| ord-order-detail-status-badge | order-detail | ORD | Badge trạng thái đơn | customer, staff, admin | ORD-REQ-20261006-092320790 |
-| ord-order-detail-totals | order-detail | ORD | Tạm tính, giảm giá, phí giao hàng, tổng cộng | customer, staff, admin | ORD-REQ-20261006-092320768 |
-| ord-order-detail-tracking | order-detail | ORD | Mã vận đơn (khi đã giao cho vận chuyển) | customer, staff, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-retry | order-detail | ORD | Nút Thử lại toàn trang | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-block | order-detail-source | ORD | Khối Thông tin bán hàng | staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-cost | order-detail-source | ORD | Giá vốn lúc bán của một dòng hàng (cột phụ) | admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-creator | order-detail-source | ORD | Tên người tạo đơn (hoặc —) | staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-customer | order-detail-source | ORD | Họ tên và điện thoại khách của đơn hộ | sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-customer-hidden | order-detail-source | ORD | Dòng "ẩn theo chính sách dữ liệu" thay khối khách | staff | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-error | order-detail-source | ORD | Banner lỗi của khối | staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-item-note | order-detail-source | ORD | Ghi chú của một dòng hàng (dưới tên mặt hàng, chỉ khi có) | staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-loading | order-detail-source | ORD | Khung chờ của khối | staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-name | order-detail-source | ORD | Tên nguồn đơn | staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-note | order-detail-source | ORD | Ghi chú đơn (văn bản thuần, đã escape) | staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-source-retry | order-detail-source | ORD | Nút Thử lại của khối | staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-status-badge | order-detail | ORD | Badge trạng thái đơn | customer, staff, sale, admin | ORD-REQ-20261006-092320790 |
+| ord-order-detail-totals | order-detail | ORD | Tạm tính, giảm giá, phí giao hàng, tổng cộng | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
+| ord-order-detail-tracking | order-detail | ORD | Mã vận đơn (khi đã giao cho vận chuyển) | customer, staff, sale, admin | ORD-REQ-20261006-092320768 |
 | ord-order-detail-tracking-link | order-detail | ORD | Liên kết Theo dõi vận chuyển (khi có mã vận đơn) | customer | ORD-REQ-20261006-092320768 |
 | ord-order-list-clear-filter | order-list | ORD | Nút Xoá lọc (chỉ khi đang lọc) | customer | ORD-REQ-20261006-092320716 |
 | ord-order-list-code | order-list | ORD | Mã đơn trên dòng (font-mono) | customer | ORD-REQ-20261006-092320716 |
@@ -554,10 +613,49 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | ord-order-list-pagination | order-list | ORD | Phân trang ‹ 1 2 › (ẩn khi một trang) | customer | ORD-REQ-20261006-092320716 |
 | ord-order-list-retry | order-list | ORD | Nút Thử lại | customer | ORD-REQ-20261006-092320716 |
 | ord-order-list-row | order-list | ORD | Dòng đơn | customer | ORD-REQ-20261006-092320716 |
+| ord-order-list-source-cell | order-list-source | ORD | Ô nguồn của một dòng (tên nguồn) | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-clear | order-list-source | ORD | Nút Xoá lọc (chỉ khi đang lọc) | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-code | order-list-source | ORD | Mã đơn của một dòng (font-mono, hai dạng mã) | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-creator-cell | order-list-source | ORD | Ô người tạo của một dòng (tên nhân viên hoặc —) | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-empty | order-list-source | ORD | Vùng rỗng do lọc | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-error | order-list-source | ORD | Banner lỗi | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-filter-creator | order-list-source | ORD | Ô chọn Người tạo (nhân viên đã tạo đơn hộ, lấy từ các đơn đã tải hoặc danh sách người tạo) | staff, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-filter-error | order-list-source | ORD | Lỗi tải danh mục nguồn ở ô Nguồn | staff, sale, admin | ORD-REQ-20261015-092748678 |
+| ord-order-list-source-filter-source | order-list-source | ORD | Ô chọn Nguồn (nguồn đang bật rồi nguồn đã tắt kèm chú thích, lấy từ `GET /order-sources?include_inactive=true`) | staff, admin | ORD-REQ-20261015-092748678 |
+| ord-order-list-source-filter-source-sale | order-list-source | ORD | Ô chọn Nguồn của sale (chỉ nguồn đang bật, lấy từ `GET /order-sources`) | sale | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-loading | order-list-source | ORD | Khung chờ | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-retry | order-list-source | ORD | Nút Thử lại | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-row | order-list-source | ORD | Hàng đơn của bảng (cùng bảng với `order-admin-list`) | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-scope-note | order-list-source | ORD | Dòng "Đang xem: đơn do bạn tạo" | sale | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-search | order-list-source | ORD | Ô tìm theo mã đơn (cả hai dạng mã; sale chỉ khớp trong đơn của mình) | staff, sale, admin | ORD-REQ-20261006-092320743 |
+| ord-order-list-source-summary | order-list-source | ORD | Dòng "1 tới 20 trong 45 đơn" (với sale chỉ tính đơn của sale) | staff, sale, admin | ORD-REQ-20261006-092320743 |
 | ord-order-list-status-badge | order-list | ORD | Badge trạng thái đơn | customer | ORD-REQ-20261006-092320790 |
 | ord-order-list-status-filter | order-list | ORD | Hàng tab lọc trạng thái (dropdown dưới sm) | customer | ORD-REQ-20261006-092320716 |
 | ord-order-list-summary | order-list | ORD | Dòng "1 tới 20 trong 25 đơn" | customer | ORD-REQ-20261006-092320716 |
 | ord-order-list-total | order-list | ORD | Tổng tiền, căn phải | customer | ORD-REQ-20261006-092320716 |
+| ord-order-source-admin-add | order-source-admin | ORD | Nút Thêm nguồn | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-cancel | order-source-admin | ORD | Nút Hủy trong hộp thoại | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-code | order-source-admin | ORD | Mã nguồn (font-mono) | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-dialog | order-source-admin | ORD | Hộp thoại thêm hoặc sửa | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-dialog-error | order-source-admin | ORD | Banner lỗi trong hộp thoại (đủ số nguồn, nguồn được bảo vệ, 403, 429) | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-edit | order-source-admin | ORD | Nút Sửa của một dòng | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-error | order-source-admin | ORD | Banner lỗi tải danh sách | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-field-code | order-source-admin | ORD | Ô Mã (khóa khi sửa) | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-field-error | order-source-admin | ORD | Lỗi dưới ô nhập (400, trùng mã) | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-field-name | order-source-admin | ORD | Ô Tên hiển thị | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-field-position | order-source-admin | ORD | Ô Thứ tự hiển thị | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-loading | order-source-admin | ORD | Khung chờ | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-name | order-source-admin | ORD | Tên hiển thị (luôn escape, văn bản thuần) | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-position | order-source-admin | ORD | Thứ tự hiển thị | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-retry | order-source-admin | ORD | Nút Thử lại | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-row | order-source-admin | ORD | Một dòng nguồn | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-save | order-source-admin | ORD | Nút Lưu | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-saved | order-source-admin | ORD | Thông báo Đã lưu nguồn đơn | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-status-badge | order-source-admin | ORD | Nhãn Đang bật hoặc Đã tắt | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-system-badge | order-source-admin | ORD | Nhãn Hệ thống (chỉ nguồn `website`) | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-table | order-source-admin | ORD | Bảng nguồn đơn (mọi nguồn kể cả đã tắt) | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-toggle | order-source-admin | ORD | Nút Tắt hoặc Bật của một dòng (không có ở nguồn hệ thống) | admin | ORD-REQ-20261015-092748678 |
+| ord-order-source-admin-toggle-confirm | order-source-admin | ORD | Hộp thoại xác nhận Tắt nguồn | admin | ORD-REQ-20261015-092748678 |
 | pay-admin-payment-detail-amount | admin-payment-detail | PAY | Số tiền | staff, admin | PAY-REQ-20261006-103111211 |
 | pay-admin-payment-detail-attempt-item | admin-payment-detail | PAY | Một lượt thử: trạng thái, lý do, mã cổng | staff, admin | PAY-REQ-20261006-103111211 |
 | pay-admin-payment-detail-attempt-list | admin-payment-detail | PAY | Khối lượt thử | staff, admin | PAY-REQ-20261006-103111211 |
@@ -713,47 +811,69 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | prd-admin-product-edit-archive | admin-product-edit | PRD | Nút Ngừng bán, nhãn Hủy nháp khi đang nháp | admin | PRD-REQ-20261006-095502634 |
 | prd-admin-product-edit-archive-cancel | admin-product-edit | PRD | Nút Hủy trong hộp thoại ngừng bán | admin | PRD-REQ-20261006-095502634 |
 | prd-admin-product-edit-archive-confirm | admin-product-edit | PRD | Nút xác nhận trong hộp thoại ngừng bán (đỏ nền mờ, nói rõ không hoàn tác) | admin | PRD-REQ-20261006-095502634 |
-| prd-admin-product-edit-archived-note | admin-product-edit | PRD | Dòng "Sản phẩm đã lưu trữ, không sửa được" | staff, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-edit-archived-note | admin-product-edit | PRD | Dòng "Sản phẩm đã lưu trữ, không sửa được" | staff, sale, admin | PRD-REQ-20261006-095502655 |
 | prd-admin-product-edit-category | admin-product-edit | PRD | Ô chọn danh mục | admin | PRD-REQ-20261006-095502571 |
 | prd-admin-product-edit-conflict | admin-product-edit | PRD | Banner xung đột phiên bản | admin | PRD-REQ-20261006-095502571 |
+| prd-admin-product-edit-cost-price | admin-product-edit | PRD | Ô Giá vốn (trường `cost_price`), số nguyên đồng từ 0, tùy chọn, bỏ trống là chưa có; chỉ render cho admin | admin | PRD-REQ-20261006-095502571 |
 | prd-admin-product-edit-description | admin-product-edit | PRD | Ô mô tả nhiều dòng (tối đa 5000 ký tự) | admin | PRD-REQ-20261006-095502571 |
-| prd-admin-product-edit-error | admin-product-edit | PRD | Banner lỗi (lỗi tải, hết phiên, không có quyền) | staff, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-edit-error | admin-product-edit | PRD | Banner lỗi (lỗi tải, hết phiên, không có quyền) | staff, sale, admin | PRD-REQ-20261006-095502655 |
 | prd-admin-product-edit-field-error | admin-product-edit | PRD | Chữ lỗi dưới ô sai | admin | PRD-REQ-20261006-095502550 |
 | prd-admin-product-edit-image-delete | admin-product-edit | PRD | Nút xóa ảnh | admin | PRD-REQ-20261006-095502592 |
 | prd-admin-product-edit-image-error | admin-product-edit | PRD | Chữ lỗi ở khối ảnh | admin | PRD-REQ-20261006-095502592 |
 | prd-admin-product-edit-image-item | admin-product-edit | PRD | Một ảnh trong khối ảnh | admin | PRD-REQ-20261006-095502592 |
 | prd-admin-product-edit-image-move | admin-product-edit | PRD | Nút đổi thứ tự (trái, phải) trên ảnh | admin | PRD-REQ-20261006-095502592 |
 | prd-admin-product-edit-image-upload | admin-product-edit | PRD | Nút Tải ảnh lên (chọn tệp) | admin | PRD-REQ-20261006-095502592 |
-| prd-admin-product-edit-loading | admin-product-edit | PRD | Khung chờ | staff, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-edit-loading | admin-product-edit | PRD | Khung chờ | staff, sale, admin | PRD-REQ-20261006-095502655 |
 | prd-admin-product-edit-name | admin-product-edit | PRD | Ô tên (tối đa 200 ký tự) | admin | PRD-REQ-20261006-095502571 |
-| prd-admin-product-edit-not-found | admin-product-edit | PRD | Vùng không tìm thấy | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-edit-price | admin-product-edit | PRD | Ô giá, số nguyên đồng | admin | PRD-REQ-20261006-095502571 |
+| prd-admin-product-edit-not-found | admin-product-edit | PRD | Vùng không tìm thấy | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-edit-price | admin-product-edit | PRD | Ô Giá bán (trường `price`), số nguyên đồng | admin | PRD-REQ-20261006-095502571 |
 | prd-admin-product-edit-publish | admin-product-edit | PRD | Nút Công bố (chỉ khi nháp) | admin | PRD-REQ-20261006-095502613 |
 | prd-admin-product-edit-publish-missing | admin-product-edit | PRD | Khối điều kiện công bố, nêu trường còn thiếu | admin | PRD-REQ-20261006-095502613 |
-| prd-admin-product-edit-readonly-note | admin-product-edit | PRD | Dòng "Bạn chỉ có quyền xem" | staff | PRD-REQ-20261006-095502655 |
-| prd-admin-product-edit-retry | admin-product-edit | PRD | Nút Thử lại | staff, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-edit-readonly-note | admin-product-edit | PRD | Dòng "Bạn chỉ có quyền xem" | staff, sale | PRD-REQ-20261006-095502655 |
+| prd-admin-product-edit-retry | admin-product-edit | PRD | Nút Thử lại | staff, sale, admin | PRD-REQ-20261006-095502655 |
 | prd-admin-product-edit-save | admin-product-edit | PRD | Nút Lưu (tạo bản nháp ở chế độ tạo mới, sửa ở chế độ sửa) | admin | PRD-REQ-20261006-095502571 |
 | prd-admin-product-edit-sku | admin-product-edit | PRD | Ô mã sku (khóa khi đang bán) | admin | PRD-REQ-20261006-095502550 |
-| prd-admin-product-edit-status-badge | admin-product-edit | PRD | Badge trạng thái | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-edit-view-fields | admin-product-edit | PRD | Vùng thông tin chỉ đọc (tên, sku, danh mục, giá, mô tả) | staff | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-category-filter | admin-product-list | PRD | Ô chọn danh mục (gồm danh mục con) | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-clear-filter | admin-product-list | PRD | Nút Xóa bộ lọc (chỉ khi đang lọc hoặc tìm) | staff, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-edit-status-badge | admin-product-edit | PRD | Badge trạng thái | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-edit-view-fields | admin-product-edit | PRD | Vùng thông tin chỉ đọc (tên, sku, danh mục, giá bán, mô tả; không giá vốn) | staff, sale | PRD-REQ-20261006-095502655 |
+| prd-admin-product-import-again | admin-product-import | PRD | Nút Import tệp khác | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-confirm | admin-product-import | PRD | Nút Xác nhận import (gửi `dry_run=false`, kèm số dòng sẽ ghi) | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-error | admin-product-import | PRD | Banner lỗi (429, 5xx, hết phiên, không có quyền) | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-errors-only | admin-product-import | PRD | Ô chọn "Chỉ hiện dòng lỗi" | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-file | admin-product-import | PRD | Ô chọn tệp (.xlsx, .csv) | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-file-error | admin-product-import | PRD | Banner lỗi tệp bị từ chối (kèm lý do) | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-file-name | admin-product-import | PRD | Dòng tên và kích thước tệp đã chọn | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-ignored-columns | admin-product-import | PRD | Dòng các cột bị bỏ qua (ĐVT, Tồn kho, cột lạ) | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-loading | admin-product-import | PRD | Khung chờ khi đang kiểm tra | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-no-valid | admin-product-import | PRD | Dòng "Không có dòng hợp lệ để ghi" | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-preview | admin-product-import | PRD | Nút Xem trước (gửi `dry_run=true`) | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-report | admin-product-import | PRD | Bảng báo cáo từng dòng (số dòng, mã hàng, kết quả, chi tiết) | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-result | admin-product-import | PRD | Vùng Kết quả import sau khi ghi (số liệu thật, bảng từng dòng) | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-retry | admin-product-import | PRD | Nút Thử lại | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-row | admin-product-import | PRD | Một dòng của báo cáo | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-row-error | admin-product-import | PRD | Chữ lỗi của dòng (mã và lý do, một hoặc nhiều lỗi) | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-summary | admin-product-import | PRD | Dòng tóm tắt: tạo, cập nhật, không đổi, lỗi | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-import-template | admin-product-import | PRD | Liên kết Tải tệp mẫu (.xlsx) | admin | PRD-REQ-20261015-092431230 |
+| prd-admin-product-import-template-error | admin-product-import | PRD | Chữ lỗi khi không tải được tệp mẫu | admin | PRD-REQ-20261015-092431230 |
+| prd-admin-product-import-writing | admin-product-import | PRD | Trạng thái đang ghi | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-list-category-filter | admin-product-list | PRD | Ô chọn danh mục (gồm danh mục con) | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-clear-filter | admin-product-list | PRD | Nút Xóa bộ lọc (chỉ khi đang lọc hoặc tìm) | staff, sale, admin | PRD-REQ-20261006-095502655 |
 | prd-admin-product-list-create | admin-product-list | PRD | Nút Tạo sản phẩm | admin | PRD-REQ-20261006-095502550 |
-| prd-admin-product-list-empty | admin-product-list | PRD | Vùng rỗng, chưa có sản phẩm | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-empty-filtered | admin-product-list | PRD | Vùng rỗng do lọc | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-error | admin-product-list | PRD | Banner lỗi (lỗi tải, hết phiên, không có quyền) | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-loading | admin-product-list | PRD | Khung chờ | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-name | admin-product-list | PRD | Tên sản phẩm (đã escape) | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-pagination | admin-product-list | PRD | Phân trang ‹ 1 2 › (ẩn khi một trang) | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-price | admin-product-list | PRD | Giá | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-retry | admin-product-list | PRD | Nút Thử lại | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-row | admin-product-list | PRD | Hàng sản phẩm | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-search | admin-product-list | PRD | Ô tìm theo tên hoặc mã sku | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-sku | admin-product-list | PRD | Mã sku | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-status-badge | admin-product-list | PRD | Badge trạng thái | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-status-filter | admin-product-list | PRD | Hàng tab lọc trạng thái (dropdown dưới sm) | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-summary | admin-product-list | PRD | Dòng "1 tới 20 trong 25 sản phẩm" | staff, admin | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-updated-at | admin-product-list | PRD | Ngày cập nhật | staff, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-empty | admin-product-list | PRD | Vùng rỗng, chưa có sản phẩm | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-empty-filtered | admin-product-list | PRD | Vùng rỗng do lọc | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-error | admin-product-list | PRD | Banner lỗi (lỗi tải, hết phiên, không có quyền) | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-import | admin-product-list | PRD | Nút Nhập từ Excel | admin | PRD-REQ-20261015-092431191 |
+| prd-admin-product-list-loading | admin-product-list | PRD | Khung chờ | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-name | admin-product-list | PRD | Tên sản phẩm (đã escape) | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-pagination | admin-product-list | PRD | Phân trang ‹ 1 2 › (ẩn khi một trang) | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-price | admin-product-list | PRD | Giá bán | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-retry | admin-product-list | PRD | Nút Thử lại | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-row | admin-product-list | PRD | Hàng sản phẩm | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-search | admin-product-list | PRD | Ô tìm theo tên hoặc mã sku | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-sku | admin-product-list | PRD | Mã sku | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-status-badge | admin-product-list | PRD | Badge trạng thái | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-status-filter | admin-product-list | PRD | Hàng tab lọc trạng thái (dropdown dưới sm) | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-summary | admin-product-list | PRD | Dòng "1 tới 20 trong 25 sản phẩm" | staff, sale, admin | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-updated-at | admin-product-list | PRD | Ngày cập nhật | staff, sale, admin | PRD-REQ-20261006-095502655 |
 | prd-product-detail-breadcrumb | product-detail | PRD | Breadcrumb danh mục cha tới danh mục chứa sản phẩm | guest, customer, staff, admin | PRD-REQ-20261006-095502676 |
 | prd-product-detail-category | product-detail | PRD | Danh mục | guest, customer, staff, admin | PRD-REQ-20261006-095502676 |
 | prd-product-detail-description | product-detail | PRD | Mô tả (đã escape) | guest, customer, staff, admin | PRD-REQ-20261006-095502676 |
@@ -964,6 +1084,120 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | rev-review-form-success-pending | review-form | REV | Thông báo gửi xong, chờ duyệt | customer | REV-REQ-20261006-103134939 |
 | rev-review-form-success-published | review-form | REV | Thông báo đã đăng | customer | REV-REQ-20261006-103134939 |
 | rev-review-form-verified | review-form | REV | Nhãn "Đã mua hàng" của người viết | customer | REV-REQ-20261006-103135296 |
+| sal-sale-create-order-city | sale-create-order | SAL | Ô thành phố | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-customer-clear | sale-create-order | SAL | Nút Bỏ chọn khách đã gắn | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-customer-name | sale-create-order | SAL | Ô họ tên khách (1 đến 100) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-customer-not-found | sale-create-order | SAL | Banner khách gắn không hợp lệ | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-customer-phone | sale-create-order | SAL | Ô điện thoại khách | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-customer-selected | sale-create-order | SAL | Chip khách đã gắn | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-district | sale-create-order | SAL | Ô quận, huyện (tùy chọn) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-done | sale-create-order | SAL | Khối đã tạo đơn | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-done-code | sale-create-order | SAL | Mã đơn vừa tạo (font-mono) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-done-new | sale-create-order | SAL | Nút Tạo đơn khác | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-done-open | sale-create-order | SAL | Nút Xem đơn | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-error | sale-create-order | SAL | Banner lỗi tải hoặc 503 | sale, admin | SAL-REQ-20261015-092711128 |
+| sal-sale-create-order-form-error | sale-create-order | SAL | Vùng lỗi nhập liệu (tóm tắt các ô sai) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-grand-total | sale-create-order | SAL | Tổng cộng | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-insufficient-stock | sale-create-order | SAL | Banner hết hàng kèm dòng thiếu | sale, admin | SAL-REQ-20261015-092711128 |
+| sal-sale-create-order-items-total | sale-create-order | SAL | Tạm tính | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-line | sale-create-order | SAL | Một dòng hàng của đơn | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-line-note | sale-create-order | SAL | Ô ghi chú dòng hàng (tối đa 500) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-line-qty | sale-create-order | SAL | Ô số lượng (1 đến 100000) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-line-remove | sale-create-order | SAL | Nút Xóa dòng | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-line-stock | sale-create-order | SAL | Nhãn Còn hàng hoặc Hết hàng của dòng | sale, admin | SAL-REQ-20261015-092711128 |
+| sal-sale-create-order-line1 | sale-create-order | SAL | Ô địa chỉ (số nhà, đường, 1 đến 200) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-lines-empty | sale-create-order | SAL | Vùng "Chưa có sản phẩm trong đơn" | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-loading | sale-create-order | SAL | Khung chờ | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-login-expired | sale-create-order | SAL | Thông báo hết phiên kèm liên kết Đăng nhập | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-lookup-empty | sale-create-order | SAL | Vùng "Không thấy khách có tài khoản" | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-lookup-error | sale-create-order | SAL | Vùng lỗi tra khách | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-lookup-key | sale-create-order | SAL | Ô nhập điện thoại hoặc email để tra khách | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-lookup-limited | sale-create-order | SAL | Thông báo tra quá nhanh (429) | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-lookup-pick | sale-create-order | SAL | Nút Chọn ở dòng kết quả | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-lookup-result | sale-create-order | SAL | Một dòng kết quả (họ tên, điện thoại che, email che, trạng thái) | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-lookup-results | sale-create-order | SAL | Danh sách kết quả bản che | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-lookup-submit | sale-create-order | SAL | Nút Tra | sale, admin | SAL-REQ-20261015-092710942 |
+| sal-sale-create-order-note | sale-create-order | SAL | Ô ghi chú đơn (tối đa 1000, văn bản thuần) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-note-counter | sale-create-order | SAL | Bộ đếm ký tự "N/1000" | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-payment-bank-transfer | sale-create-order | SAL | Lựa chọn Chuyển khoản | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-payment-cash | sale-create-order | SAL | Lựa chọn Tiền mặt | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-payment-cod | sale-create-order | SAL | Lựa chọn COD | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-price-changed | sale-create-order | SAL | Banner tổng đã đổi | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-price-changed-confirm | sale-create-order | SAL | Nút Xác nhận tổng mới và tạo đơn | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-product-add | sale-create-order | SAL | Nút Thêm ở dòng kết quả | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-product-empty | sale-create-order | SAL | Vùng "Không có sản phẩm nào khớp" | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-product-results | sale-create-order | SAL | Danh sách sản phẩm tìm được (chỉ đang bán) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-product-search | sale-create-order | SAL | Ô tìm sản phẩm theo tên hoặc mã hàng | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-product-unavailable | sale-create-order | SAL | Banner có sản phẩm không còn bán | sale, admin | SAL-REQ-20261015-092711128 |
+| sal-sale-create-order-rate-limited | sale-create-order | SAL | Banner quá giới hạn tạo đơn | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-receiver | sale-create-order | SAL | Ô người nhận | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-receiver-phone | sale-create-order | SAL | Ô điện thoại người nhận | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-retry | sale-create-order | SAL | Nút Thử lại | sale, admin | SAL-REQ-20261015-092711128 |
+| sal-sale-create-order-same-as-customer | sale-create-order | SAL | Hộp "Người nhận giống khách" | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-shipping-empty | sale-create-order | SAL | Vùng "Chưa có phương thức vận chuyển nào đang bật" | sale, admin | SAL-REQ-20261015-092711037 |
+| sal-sale-create-order-shipping-fee | sale-create-order | SAL | Phí vận chuyển | sale, admin | SAL-REQ-20261015-092711037 |
+| sal-sale-create-order-shipping-option | sale-create-order | SAL | Một phương thức kèm phí | sale, admin | SAL-REQ-20261015-092711037 |
+| sal-sale-create-order-shipping-options | sale-create-order | SAL | Nhóm chọn phương thức vận chuyển | sale, admin | SAL-REQ-20261015-092711037 |
+| sal-sale-create-order-shipping-prompt | sale-create-order | SAL | Dòng nhắc nhập thành phố và thêm hàng | sale, admin | SAL-REQ-20261015-092711037 |
+| sal-sale-create-order-shipping-unavailable | sale-create-order | SAL | Banner phương thức đã tắt | sale, admin | SAL-REQ-20261015-092711037 |
+| sal-sale-create-order-source | sale-create-order | SAL | Ô chọn nguồn đơn (select, bắt buộc, chỉ nguồn đang bật) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-source-empty | sale-create-order | SAL | Vùng "Chưa có nguồn đơn nào đang bật" | sale, admin | SAL-REQ-20261015-092711128 |
+| sal-sale-create-order-source-unavailable | sale-create-order | SAL | Banner nguồn đã tắt | sale, admin | SAL-REQ-20261015-092711128 |
+| sal-sale-create-order-submit | sale-create-order | SAL | Nút Tạo đơn | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-submit-missing | sale-create-order | SAL | Dòng "Còn thiếu: ..." cạnh nút khóa | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-submitting | sale-create-order | SAL | Trạng thái đang gửi (vòng quay trên nút) | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-summary | sale-create-order | SAL | Khối tóm tắt đơn | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-total-out-of-range | sale-create-order | SAL | Thông báo tổng vượt giới hạn | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-create-order-ward | sale-create-order | SAL | Ô phường, xã | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-order-detail-address | sale-order-detail | SAL | Địa chỉ giao (người nhận, điện thoại, địa chỉ) | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-back | sale-order-detail | SAL | Liên kết về Đơn của tôi | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-cancel-reason | sale-order-detail | SAL | Lý do hủy (chỉ khi đã hủy) | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-code | sale-order-detail | SAL | Mã đơn (font-mono) | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-container | sale-order-detail | SAL | Vùng nội dung đơn | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-created-at | sale-order-detail | SAL | Thời điểm tạo (giờ Việt Nam) | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-created-by | sale-order-detail | SAL | Người tạo | admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-customer | sale-order-detail | SAL | Họ tên và điện thoại khách | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-error | sale-order-detail | SAL | Banner lỗi | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-grand-total | sale-order-detail | SAL | Tổng cộng | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-has-account | sale-order-detail | SAL | Nhãn "Đã gắn tài khoản khách" | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-item | sale-order-detail | SAL | Dòng hàng | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-item-note | sale-order-detail | SAL | Ghi chú của dòng hàng (văn bản thuần, đã thoát) | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-items-total | sale-order-detail | SAL | Tạm tính | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-loading | sale-order-detail | SAL | Khung chờ | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-login-expired | sale-order-detail | SAL | Thông báo hết phiên kèm liên kết Đăng nhập | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-not-found | sale-order-detail | SAL | Vùng không tìm thấy đơn | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-note | sale-order-detail | SAL | Ghi chú đơn (văn bản thuần, đã thoát) | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-note-empty | sale-order-detail | SAL | Dòng "Không có ghi chú" | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-payment | sale-order-detail | SAL | Phương thức và trạng thái thanh toán | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-rate-limited | sale-order-detail | SAL | Thông báo quá giới hạn tần suất | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-retry | sale-order-detail | SAL | Nút Thử lại | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-shipping-fee | sale-order-detail | SAL | Phí vận chuyển | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-source | sale-order-detail | SAL | Nguồn đơn | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-detail-status | sale-order-detail | SAL | Badge trạng thái đơn | sale, admin | SAL-REQ-20261015-092711321 |
+| sal-sale-order-list-clear-filter | sale-order-list | SAL | Nút Xoá lọc (chỉ khi đang lọc hoặc tìm) | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-code | sale-order-list | SAL | Mã đơn (font-mono) | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-created-at | sale-order-list | SAL | Ngày tạo | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-created-by | sale-order-list | SAL | Người tạo | admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-created-by-filter | sale-order-list | SAL | Ô chọn người tạo (sale) | admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-customer | sale-order-list | SAL | Họ tên và điện thoại khách | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-empty | sale-order-list | SAL | Vùng rỗng, chưa có đơn hộ | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-empty-filtered | sale-order-list | SAL | Vùng rỗng do tìm hoặc lọc | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-error | sale-order-list | SAL | Banner lỗi | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-loading | sale-order-list | SAL | Khung chờ | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-login-expired | sale-order-list | SAL | Thông báo hết phiên kèm liên kết Đăng nhập | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-new | sale-order-list | SAL | Nút Tạo đơn hộ | sale, admin | SAL-REQ-20261015-092710847 |
+| sal-sale-order-list-pagination | sale-order-list | SAL | Phân trang ‹ 1 2 3 › (ẩn khi một trang) | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-payment | sale-order-list | SAL | Phương thức và trạng thái thanh toán (COD, Tiền mặt, Chuyển khoản) | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-rate-limited | sale-order-list | SAL | Thông báo quá giới hạn tần suất | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-retry | sale-order-list | SAL | Nút Thử lại | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-row | sale-order-list | SAL | Hàng đơn | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-search | sale-order-list | SAL | Ô tìm theo mã đơn (chấp nhận `-`) | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-source | sale-order-list | SAL | Nguồn đơn | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-source-filter | sale-order-list | SAL | Ô chọn nguồn đơn (gồm nguồn đã tắt) | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-status-badge | sale-order-list | SAL | Badge trạng thái đơn | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-status-filter | sale-order-list | SAL | Hàng tab lọc trạng thái | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-summary | sale-order-list | SAL | Dòng "1 tới 20 trong 25 đơn" | sale, admin | SAL-REQ-20261015-092711222 |
+| sal-sale-order-list-total | sale-order-list | SAL | Tổng tiền, căn phải | sale, admin | SAL-REQ-20261015-092711222 |
 | shp-shipment-admin-detail-back-link | shipment-admin-detail | SHP | Liên kết Quay lại danh sách | staff, admin | SHP-REQ-20261006-101103927 |
 | shp-shipment-admin-detail-cod | shipment-admin-detail | SHP | Dòng thu hộ COD | staff, admin | SHP-REQ-20261006-101103927 |
 | shp-shipment-admin-detail-deliver | shipment-admin-detail | SHP | Nút Giao xong (chỉ khi đang giao) | staff, admin | SHP-REQ-20261006-101103903 |
@@ -1019,26 +1253,30 @@ Sinh tự động bởi `.claude/skills/sdlc-ui-ux/scripts/check-ui.mjs` từ `s
 | shp-shipment-admin-detail-toast-shipped | shipment-admin-detail | SHP | Toast Đã bàn giao | staff, admin | SHP-REQ-20261006-101103855 |
 | shp-shipment-admin-detail-toast-tracking | shipment-admin-detail | SHP | Toast Đã lưu mã vận đơn | staff, admin | SHP-REQ-20261006-101103880 |
 | shp-shipment-admin-detail-tracking | shipment-admin-detail | SHP | Mã vận đơn (khi đã bàn giao) | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-clear-filter | shipment-admin-list | SHP | Nút Xoá lọc (chỉ khi đang lọc hoặc tìm) | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-created-at | shipment-admin-list | SHP | Ngày tạo | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-empty | shipment-admin-list | SHP | Vùng rỗng, chưa có vận đơn | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-empty-filtered | shipment-admin-list | SHP | Vùng rỗng do tìm hoặc lọc | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-error | shipment-admin-list | SHP | Banner lỗi | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-forbidden | shipment-admin-list | SHP | Trang không có quyền (customer) | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-loading | shipment-admin-list | SHP | Khung chờ | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-method | shipment-admin-list | SHP | Tên phương thức vận chuyển | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-order-code | shipment-admin-list | SHP | Mã đơn (font-mono) | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-pagination | shipment-admin-list | SHP | Phân trang ‹ 1 2 3 › (ẩn khi một trang) | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-retry | shipment-admin-list | SHP | Nút Thử lại | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-row | shipment-admin-list | SHP | Hàng vận đơn | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-search | shipment-admin-list | SHP | Ô tìm (khớp chính xác, không tìm theo email hay điện thoại) | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-search-by | shipment-admin-list | SHP | Danh sách chọn Mã đơn hoặc Mã vận đơn | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-session-expired | shipment-admin-list | SHP | Hộp thoại phiên đã hết hạn | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-sort | shipment-admin-list | SHP | Danh sách chọn Mới nhất hoặc Cũ nhất | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-status-badge | shipment-admin-list | SHP | Badge trạng thái vận đơn | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-status-filter | shipment-admin-list | SHP | Hàng tab lọc trạng thái | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-summary | shipment-admin-list | SHP | Dòng "1 tới 20 trong 45 vận đơn" | staff, admin | SHP-REQ-20261006-101103927 |
-| shp-shipment-admin-list-tracking | shipment-admin-list | SHP | Mã vận đơn hoặc `—` | staff, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-address | shipment-admin-list | SHP | Địa chỉ một dòng hoặc `—` (vận đơn đã giao, hoàn, hủy) | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-clear-filter | shipment-admin-list | SHP | Nút Xoá lọc (chỉ khi đang lọc hoặc tìm) | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-created-at | shipment-admin-list | SHP | Ngày tạo | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-created-by-name | shipment-admin-list | SHP | Tên sale tạo đơn hoặc `—` (đơn khách tự đặt) | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-customer-name | shipment-admin-list | SHP | Tên khách (luôn có) | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-empty | shipment-admin-list | SHP | Vùng rỗng, chưa có vận đơn | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-empty-filtered | shipment-admin-list | SHP | Vùng rỗng do tìm hoặc lọc | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-error | shipment-admin-list | SHP | Banner lỗi | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-forbidden | shipment-admin-list | SHP | Trang không có quyền (customer) | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-loading | shipment-admin-list | SHP | Khung chờ | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-method | shipment-admin-list | SHP | Tên phương thức vận chuyển | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-order-code | shipment-admin-list | SHP | Mã đơn `HDyymmdd-NNNNN` hoặc mã cũ 12 ký tự (font-mono) | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-pagination | shipment-admin-list | SHP | Phân trang ‹ 1 2 3 › (ẩn khi một trang) | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-phone | shipment-admin-list | SHP | Điện thoại hoặc `—` (vận đơn đã giao, hoàn, hủy) | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-retry | shipment-admin-list | SHP | Nút Thử lại | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-row | shipment-admin-list | SHP | Hàng vận đơn | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-search | shipment-admin-list | SHP | Ô tìm (khớp chính xác, không tìm theo email hay điện thoại) | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-search-by | shipment-admin-list | SHP | Danh sách chọn Mã đơn hoặc Mã vận đơn | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-session-expired | shipment-admin-list | SHP | Hộp thoại phiên đã hết hạn | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-sort | shipment-admin-list | SHP | Danh sách chọn Mới nhất hoặc Cũ nhất | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-status-badge | shipment-admin-list | SHP | Badge trạng thái vận đơn | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-status-filter | shipment-admin-list | SHP | Hàng tab lọc trạng thái | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-summary | shipment-admin-list | SHP | Dòng "1 tới 20 trong 45 vận đơn" | staff, sale, admin | SHP-REQ-20261006-101103927 |
+| shp-shipment-admin-list-tracking | shipment-admin-list | SHP | Mã vận đơn hoặc `—` | staff, sale, admin | SHP-REQ-20261006-101103927 |
 | shp-shipment-tracking-back-link | shipment-tracking | SHP | Liên kết Quay lại đơn hàng | customer | SHP-REQ-20261006-101103927 |
 | shp-shipment-tracking-closed-notice | shipment-tracking | SHP | Dòng báo vận đơn đã hủy hoặc đã hoàn | customer | SHP-REQ-20261006-101103927 |
 | shp-shipment-tracking-copy | shipment-tracking | SHP | Nút Sao chép mã vận đơn | customer | SHP-REQ-20261006-101103927 |

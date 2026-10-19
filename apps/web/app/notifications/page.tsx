@@ -147,5 +147,5 @@ function ListInner() {
 }
 
 export default function NotificationsPage() {
-  return <RequireRole roles={['customer', 'staff', 'admin']}><Suspense fallback={<main className="page" aria-busy="true"><div className="skeleton" /></main>}><ListInner /></Suspense></RequireRole>;
+  return <RequireRole roles={['customer', 'staff', 'sale', 'admin']}><Suspense fallback={<main className="page" aria-busy="true"><div className="skeleton" /></main>}><ListInner /></Suspense></RequireRole>;
 }

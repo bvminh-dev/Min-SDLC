@@ -6,7 +6,7 @@ import { EventsService, OutboxRelay } from './relay-helpers';
 import { API_DIR, truncateAll } from '../support/db';
 import { call, createShpApp, pgCode, q, seedMethod, seedOrderFor, seedShipment, who, type ShpApp } from '../support/shp';
 
-// Cột `shipments.order_code` (SHP-DB, quyết định sau review SHP: bản chụp bất biến của mã đơn lúc tạo vận đơn, bỏ N+1 của danh sách): ghi lúc tạo, danh sách đọc từ cột và không gọi ORD,
+// Cột `shipments.order_code` và `created_by` (SHP-DB, quyết định sau review SHP: bản chụp bất biến của mã đơn lúc tạo vận đơn, bỏ N+1 của danh sách): ghi lúc tạo, danh sách đọc từ cột và không gọi ORD,
 // đúng khuôn, bất biến, backfill cho vận đơn có sẵn.
 const SEC = 'SHP-SEC-20261006-101603066';
 const MIGRATION = join(API_DIR, 'prisma/migrations/20261008000100_shipping_order_code/migration.sql');
@@ -66,6 +66,15 @@ describe('SHP cột order_code của vận đơn', () => {
     for (const bad of [`'ABC'`, `'2N6R4T8W0KM'`, `'2N6R4T8W0KMAA'`, `'2n6r4t8w0kma'`, `'2N6R4T8W0KLA'`, `'2N6R4T8W0KUA'`, `''`]) expect([bad, await ins(bad)]).toEqual([bad, '23514']); // shipments_order_code_format
     expect(await ins('NULL')).toBe('ok');
     expect(await ins(`'2N6R4T8W0KMA'`)).toBe('ok');
+    // migration 20261015000100_shipping_order_code_hd: nhận thêm mã `HDyymmdd-NNNNN` (ADR-024), vẫn từ chối mã sai khuôn
+    for (const bad of [`'HD261015-0001'`, `'HD261015-000001'`, `'HD26101-00001'`, `'hd261015-00001'`, `'HD261015_00001'`, `'XD261015-00001'`, `'HD26101A-00001'`, `'HD261015-0000A'`, `'HD261015-00001X'`]) expect([bad, await ins(bad)]).toEqual([bad, '23514']);
+    expect(await ins(`'HD261015-00001'`)).toBe('ok');
+    expect(await ins(`'HD991231-99999'`)).toBe('ok');
+    // cùng migration: cột created_by (uuid NULL, không FK, không bất biến) và chỉ mục một phần cho danh sách của sale
+    expect(await q(t, `SELECT data_type, is_nullable FROM information_schema.columns WHERE table_name = 'shipments' AND column_name = 'created_by'`)).toEqual([{ data_type: 'uuid', is_nullable: 'YES' }]);
+    expect(await q(t, `SELECT count(*)::int AS n FROM information_schema.table_constraints WHERE table_name = 'shipments' AND constraint_type = 'FOREIGN KEY' AND constraint_name LIKE '%created_by%'`)).toEqual([{ n: 0 }]);
+    const [idx] = await q<{ def: string }>(t, `SELECT indexdef AS def FROM pg_indexes WHERE tablename = 'shipments' AND indexname = 'shipments_created_by_created_at_id_idx'`);
+    expect(idx.def).toMatch(/\(created_by, created_at DESC, id DESC\) WHERE \(created_by IS NOT NULL\)/);
 
     // bất biến
     const upd = (id: string, v: string) => pgCode(q(t, `UPDATE shipments SET order_code = ${v} WHERE id = '${id}'`));

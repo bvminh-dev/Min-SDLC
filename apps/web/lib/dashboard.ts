@@ -2,7 +2,8 @@
 // Dashboard và báo cáo của admin (epic DSH): kiểu dữ liệu, định dạng và hook tải từng khối. Mỗi khối tải ĐỘC LẬP (DSH-REQ-20261006-105126549 BR2): lỗi của khối này không làm hỏng khối kia,
 // khối lỗi không bao giờ hiện 0 hay "không có dữ liệu" thay cho lỗi (SB-39). Ngày theo giờ Việt Nam (UTC+7 cố định), tính tay để không phụ thuộc múi giờ của máy.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api } from './api';
+import { api, SESSION_EXPIRED_EVENT } from './api';
+import { API_BASE_URL } from './config';
 import { STATUS_ORDER, type OrderStatus, type PaymentStatus } from './order';
 import type { BlockStatus, Granularity } from './dashboard-format';
 
@@ -24,6 +25,16 @@ export interface OrdersReport {
   totals: { total: number; by_status: StatusCounts; cancel_rate: number | null; expired_rate: number | null; average_order_value: number | null };
 }
 export interface ProductsReport { from: string; to: string; as_of: string; sort: 'units' | 'amount'; limit: number; units_total: number; distinct_products: number; items: { product_id: string; name: string; units_sold: number; items_amount: number }[] }
+
+/** Báo cáo theo nguồn (DSH-REQ-20261015-092608812): doanh thu là GIÁ TRỊ ĐƠN (không phải tiền PAY), đã loại đơn hủy, hết hạn, hoàn về; thứ tự dòng do máy chủ (khớp tệp CSV). */
+export interface SourcesReport { from: string; to: string; as_of: string; items: { source_id: string; code: string; name: string; is_active: boolean; orders: number; revenue: number }[]; totals: { orders: number; revenue: number; excluded_orders: number } }
+/** Báo cáo theo sale (DSH-REQ-20261015-092608849): `website` là dòng gom đơn khách tự đặt, luôn có, đứng riêng ngoài `items`. */
+export interface SalesReport {
+  from: string; to: string; as_of: string; items: { user_id: string; name: string; orders: number; revenue: number }[];
+  website: { name: string; orders: number; revenue: number }; totals: { orders: number; revenue: number; excluded_orders: number };
+}
+/** Nhãn máy chủ điền khi không tra được tên người tạo (dòng và số liệu vẫn đủ). */
+export const DELETED_ACCOUNT_LABEL = '(tài khoản đã xóa)';
 
 export interface Block<T> { data: T | null; status: BlockStatus; retryAfter?: number; fields: Record<string, string>; reload: () => void }
 
@@ -52,4 +63,32 @@ export function useBlock<T>(path: string | null): Block<T> {
   }, [path, tick]);
   const reload = useCallback(() => { setState((s) => ({ ...s, status: 'loading' })); setTick((x) => x + 1); }, []);
   return { ...state, reload };
+}
+
+/**
+ * Tải tệp CSV của báo cáo (tệp do MÁY CHỦ dựng, chống công thức ở máy chủ: web không tự dựng tệp). `loading` khóa nút; mọi lỗi (400, 403, 429, 503, mạng, thân không phải CSV) là `error`
+ * và KHÔNG tải tệp rỗng; 401 hết phiên mở hộp thoại của AUTH. Tên tệp lấy từ `Content-Disposition` nếu đọc được (cùng site), không thì `fallbackName`.
+ */
+export function useCsvExport() {
+  const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const run = useCallback(async (path: string, fallbackName: string): Promise<void> => {
+    setState('loading');
+    try {
+      const res = await fetch(`${API_BASE_URL}${path}`, { credentials: 'include' });
+      if (!res.ok || !/^text\/csv/i.test(res.headers.get('Content-Type') ?? '')) {
+        if (res.status === 401) { const b = await res.json().catch(() => ({})); if (String(b?.type).endsWith('session_expired')) window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT)); }
+        setState('error');
+        return;
+      }
+      const blob = await res.blob();
+      const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? fallbackName;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      setState('idle');
+    } catch { setState('error'); }
+  }, []);
+  return { state, run, clear: useCallback(() => setState('idle'), []) };
 }

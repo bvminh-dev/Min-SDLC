@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { paginationQuery } from '../platform';
-import { ORDER_STATUSES, REASON_MAX, SEARCH_CODE_MAX } from './config';
+import { ORDER_STATUSES, REASON_MAX, SEARCH_CODE_MAX, SOURCE_CODE_RE } from './config';
 
 // Mã lỗi trường (platform đọc `message` snake_case của zod làm mã): required, invalid_format, too_long, unknown_field.
 const str = { required_error: 'required', invalid_type_error: 'invalid_format' };
@@ -22,13 +22,33 @@ function closedObject<T extends z.ZodRawShape>(shape: T) {
 
 /** `status` đúng MỘT trong tám giá trị chữ thường; hai lần hay rỗng là 400 (ORD-REQ ...716 BR4). Tham số lạ bị từ chối (strict của paginationQuery). */
 export const listQuery = paginationQuery.extend({ status: status.optional() });
-const searchCode = z.string(str).superRefine((v, ctx) => {
+/** Ô tìm mã đơn: 1..32 ký tự SAU khi cắt khoảng trắng hai đầu (ORD-API), không ký tự điều khiển. */
+const searchCode = z.string(str).transform((s) => s.trim()).pipe(z.string().superRefine((v, ctx) => {
   const n = len(v);
   if (n < 1) ctx.addIssue({ code: 'custom', message: 'required' });
   else if (n > SEARCH_CODE_MAX) ctx.addIssue({ code: 'custom', message: 'too_long' });
   else if (CONTROL.test(v)) ctx.addIssue({ code: 'custom', message: 'invalid_format' });
-});
-export const adminListQuery = paginationQuery.extend({ status: status.optional(), code: searchCode.optional() });
+}));
+const sourceCode = z.string(str).refine((v) => SOURCE_CODE_RE.test(v), { message: 'invalid_format' });
+const uuid = z.string(str).refine((v) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v), { message: 'invalid_format' });
+/** Danh sách quản trị (staff, sale, admin): thêm `source` (mã nguồn) và `created_by` (uuid; sale gửi thì service trả 400). Không có tham số theo email, tên, điện thoại (SB-08). */
+export const adminListQuery = paginationQuery.extend({ status: status.optional(), code: searchCode.optional(), source: sourceCode.optional(), created_by: uuid.optional() });
+
+/** `GET /order-sources`: `include_inactive` là `true` hoặc `false` (chỉ staff và admin dùng, service trả 400 cho sale). */
+export const sourcesQuery = z.object({ include_inactive: z.enum(['true', 'false'], { errorMap: () => ({ message: 'invalid_format' }) }).optional() }).strict();
+export const noQuery = z.object({}).strict();
+export const idParams = z.object({ id: z.string() }).strict(); // id sai định dạng là 404 giống id không có (service kiểm uuid), không phải 400
+
+const sourceName = z.string(str).transform((s) => s.trim()).pipe(z.string().superRefine((v, ctx) => {
+  const n = len(v);
+  const c = n < 1 ? 'required' : n > 60 ? 'too_long' : CONTROL.test(v) || /\p{Cs}/u.test(v) ? 'invalid_format' : null;
+  if (c) ctx.addIssue({ code: 'custom', message: c });
+}));
+const position = z.number(str).int({ message: 'invalid_format' }).min(0, { message: 'out_of_range' }).max(999, { message: 'out_of_range' });
+export const sourceCreateBody = closedObject({ code: sourceCode, name: sourceName, position: position.optional() });
+/** `code` và `is_system` không đổi được: khóa lạ (kể cả hai khóa này) là `unknown_field`; thân phải có ít nhất một khóa. */
+export const sourcePatchBody = closedObject({ name: sourceName.optional(), position: position.optional(), is_active: z.boolean({ required_error: 'required', invalid_type_error: 'invalid_format' }).optional() })
+  .superRefine((o, ctx) => { if (o.name === undefined && o.position === undefined && o.is_active === undefined) ctx.addIssue({ code: 'custom', message: 'required' }); });
 
 // `{code}` sai định dạng không phải 400 mà là 404 giống hệt mã không tồn tại (ORD-API Quy ước chung): schema nhận chuỗi, service kiểm định dạng.
 export const codeParams = z.object({ code: z.string() }).strict();
@@ -43,3 +63,6 @@ export const cancelBody = closedObject({ reason: reason.optional() });
 export type ListQuery = z.infer<typeof listQuery>;
 export type AdminListQuery = z.infer<typeof adminListQuery>;
 export type CancelBody = z.infer<typeof cancelBody>;
+export type SourcesQuery = z.infer<typeof sourcesQuery>;
+export type SourceCreateBody = z.infer<typeof sourceCreateBody>;
+export type SourcePatchBody = z.infer<typeof sourcePatchBody>;

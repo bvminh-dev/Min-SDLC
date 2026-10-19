@@ -42,7 +42,17 @@ describe('NTF kiểm quyền và ranh giới trên AppModule thật', () => {
     expect([await count(t, 'notifications'), await count(t, 'email_deliveries'), await count(t, 'outbox_events')]).toEqual(before);
   });
 
-  it(`${SEC} NTF-TC-20261006-104303290 T1, T10 (SB-05, SB-07): mọi route của NTF khai quyền, schema và @Action khớp ma trận (customer, staff, admin đều own); AppModule vẫn sạch; báo khi ma trận hay code sai và đóng khi công cụ hỏng`, async () => {
+  it(`${SEC} sale xem thông báo của chính mình như staff: 200 ở hai route đọc và hai route đánh dấu đã đọc, rỗng (không thấy của người khác)`, async () => {
+    const [c, sale] = [await who(t, 'customer', 'c@shop.vn'), await who(t, 'sale', 'sl@shop.vn')];
+    await t.prisma.$executeRaw`INSERT INTO notifications (user_id, type, title, body, event_id, dedupe_key) VALUES (${c.id}::uuid, 'order_created'::notification_type, 't', 'b', ${randomUUID()}::uuid, 'k1')`;
+    const list = await call(t, 'get', '/notifications', { cookie: sale.cookie });
+    expect([list.status, list.body.items]).toEqual([200, []]);
+    expect(((await call(t, 'get', '/notifications/unread-count', { cookie: sale.cookie })).body)).toMatchObject({ unread_count: 0 });
+    expect((await call(t, 'post', '/notifications/read-all', { cookie: sale.cookie, body: {} })).status).toBe(200);
+    expect((await call(t, 'post', `/notifications/${randomUUID()}/read`, { cookie: sale.cookie, body: {} })).status).toBe(404); // không tồn tại hay của người khác: cùng 404
+  });
+
+  it(`${SEC} NTF-TC-20261006-104303290 T1, T10 (SB-05, SB-07): mọi route của NTF khai quyền, schema và @Action khớp ma trận (customer, staff, sale, admin đều own); AppModule vẫn sạch; báo khi ma trận hay code sai và đóng khi công cụ hỏng`, async () => {
     expect(auditRoutes(t.app)).toEqual([]);
     expect(auditPermissions(t.app, MATRIX, opts)).toEqual([]);
     expect(parseMatrix(MATRIX).filter((r) => r.requirement.startsWith('NTF-REQ-')).map((r) => r.action)).toHaveLength(15);
@@ -53,7 +63,12 @@ describe('NTF kiểm quyền và ranh giới trên AppModule thật', () => {
     // ma trận hẹp hơn code (customer bị bỏ khỏi xem lịch sử) và rộng hơn code (guest) đều bị báo
     const narrowed = MATRIX.replace(/^(\| Xem lịch sử thông báo của mình \(lọc đọc hoặc chưa đọc, theo loại\) \|[^|]*\|[^|]*\|)[^|]*\|/m, '$1 - |');
     expect(narrowed).not.toBe(MATRIX);
-    expect(auditPermissions(t.app, narrowed, opts).join('\n')).toContain('GET /api/v1/notifications: code cho [admin, customer, staff] nhưng ma trận (Xem lịch sử thông báo của mình (lọc đọc hoặc chưa đọc, theo loại)) cho [admin, staff]');
+    expect(auditPermissions(t.app, narrowed, opts).join('\n')).toContain('GET /api/v1/notifications: code cho [admin, customer, sale, staff] nhưng ma trận (Xem lịch sử thông báo của mình (lọc đọc hoặc chưa đọc, theo loại)) cho [admin, sale, staff]');
+    // sale tự phục vụ GIỐNG HỆT staff: cột sale của mọi hàng endpoint NTF bằng cột staff, và bỏ sale khỏi ma trận thì bị báo
+    for (const r of parseMatrix(MATRIX).filter((x) => /^NTF-REQ-/.test(x.requirement) && !INTERNAL.includes(x.action))) expect(r.sale).toBe(r.staff);
+    const noSale = MATRIX.replace(/^(\| Xem số thông báo chưa đọc \|[^|]*\|[^|]*\|[^|]*\|[^|]*\|)[^|]*\|/m, '$1 - |');
+    expect(noSale).not.toBe(MATRIX);
+    expect(auditPermissions(t.app, noSale, opts).join('\n')).toContain('GET /api/v1/notifications/unread-count: code cho [admin, customer, sale, staff] nhưng ma trận (Xem số thông báo chưa đọc) cho [admin, customer, staff]');
     const guestRow = MATRIX.replace(/^(\| Xem số thông báo chưa đọc \|[^|]*\|)[^|]*\|/m, '$1 Y |');
     expect(guestRow).not.toBe(MATRIX);
     expect(auditPermissions(t.app, guestRow, opts).join('\n')).toContain('ma trận cho guest (Xem số thông báo chưa đọc) nhưng code không khai @Public');

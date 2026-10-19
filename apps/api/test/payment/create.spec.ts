@@ -94,6 +94,43 @@ describe('PAY tạo thanh toán theo OrderCreated', () => {
     expect(await relay.stuckCount()).toBe(1);
   }, 120_000);
 
+  // ADR-024 (mã đơn mới) và ADR-026 (đơn hộ): chưa có TC của spec cho PAY, tên ca dùng nhãn PAY-HO-nn (ghi ở report.md)
+  it('PAY-HO-01: mã đơn mới HDyymmdd-NNNNN tạo Payment COD pending (CHECK payments_order_code_format nhận cả hai khuôn); mã sai khuôn bị bỏ qua có log, không ném', async () => {
+    const o = await seedOrder(t, { status: 'confirmed', method: 'cod', payment: 'pending', code: 'HD261015-00005' });
+    await created(o, { grand_total: 200_000, payment_method: 'cod', payment_expires_at: null });
+    expect(await payOfOrder(t, o.id)).toMatchObject({ method: 'cod', status: 'pending', order_code: 'HD261015-00005', amount: '200000', user_id: o.user });
+    for (const bad of ['HD261015-0001', 'hd261015-00001', 'HD26101-000001', 'XD261015-00001', 'HD261015_00001']) {
+      t.logs.clear();
+      await expect(created({ id: randomUUID(), code: bad, user: o.user }, { payment_method: 'cod', payment_expires_at: null })).resolves.toBeUndefined();
+      expect([bad, t.logs.records.filter((r) => r.level === 'warn').length]).toEqual([bad, 1]);
+    }
+    expect(await countOf(t, 'payments')).toBe(1);
+    await expect(t.prisma.$executeRaw`UPDATE payments SET order_code = 'HD2610150-0001' WHERE order_id = ${o.id}::uuid`).rejects.toThrow(/payments_order_code_format/); // CHECK ở CSDL
+  });
+
+  it('PAY-HO-02 (ADR-026): đơn hộ không user_id, hoặc thanh toán cash, bank_transfer: không Payment, không lỗi, không event, log payment-skipped-ho; đơn hộ cod có user_id vẫn có Payment COD; vnpay thiếu user_id là payload không hợp lệ', async () => {
+    const ghost = (code: string) => ({ id: randomUUID(), code, user: randomUUID() });
+    const cases: [string, Record<string, unknown>][] = [
+      ['HD261015-00006', { user_id: null, payment_method: 'cod' }], ['HD261015-00007', { user_id: undefined, payment_method: 'cash' }],
+      ['HD261015-00008', { user_id: null, payment_method: 'bank_transfer' }], ['HD261015-00009', { payment_method: 'cash' }], ['HD261015-00010', { payment_method: 'bank_transfer' }],
+    ];
+    for (const [code, over] of cases) {
+      t.logs.clear();
+      await expect(created(ghost(code), { payment_expires_at: null, ...over })).resolves.toBeUndefined();
+      expect([code, t.logs.records.filter((r) => r.code === 'payment-skipped-ho' && r.level === 'info').length, t.logs.records.filter((r) => r.level === 'warn' || r.level === 'error').length]).toEqual([code, 1, 0]);
+    }
+    expect(await countOf(t, 'payments')).toBe(0);
+    expect(await payOutbox(t)).toEqual([]);
+    t.logs.clear();
+    await created(ghost('HD261015-00011'), { user_id: null, payment_method: 'vnpay' });
+    expect([await countOf(t, 'payments'), t.logs.records.filter((r) => r.level === 'warn').length]).toEqual([0, 1]);
+    const o = await seedOrder(t, { status: 'confirmed', method: 'cod', payment: 'pending', code: 'HD261015-00012' });
+    await created(o, { payment_method: 'cod', payment_expires_at: null });
+    expect(await payOfOrder(t, o.id)).toMatchObject({ method: 'cod', status: 'pending', user_id: o.user });
+    // các event sau của đơn hộ không có Payment: log warn payment-none, không ném
+    await expect(deliver(t, 'OrderDelivered', { order_id: ghost('HD261015-00006').id, delivered_at: new Date().toISOString() })).resolves.toBeUndefined();
+  });
+
   it('PAY-TC-20261006-104538671: giá trị biên 5000, 999999999, 1000000000 đều tạo Payment (khoảng chỉ chặn ở bước bắt đầu), 4999 cũng tạo; đơn 0 đồng không có Payment và log payment-skipped-zero-total', async () => {
     const orders: { o: { id: string; code: string; user: string }; total: number }[] = [];
     const c1 = await who(t, 'customer', 'c1@x.vn');

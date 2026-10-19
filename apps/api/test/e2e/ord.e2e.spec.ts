@@ -1,5 +1,5 @@
 import type { Page } from 'playwright-core';
-import { advance, alignWindow, count, eventually, hasText, id, loginUi, orderState, reset, see, seedOrder, seedUser, sendEvent, startE2e, textOf, withPage, type E2eEnv, API } from './support';
+import { advance, alignWindow, count, eventually, hasText, id, loginUi, orderState, reset, see, seedOrder, seedUser, sendEvent, setOrderSource, startE2e, textOf, withPage, type E2eEnv, API } from './support';
 
 // E2E của ORD chạy bằng Jest và playwright-core điều khiển Chromium thật: API thật (AppModule) trên PostgreSQL thật (`ecom_e2e`), bản build production của web.
 // Đơn dựng thẳng qua cổng điều khiển (không qua CHK); event của PAY, INV, SHP do hạ tầng test giao cho ORD qua cùng đường consumer như relay. Giờ hiển thị là giờ Việt Nam (UTC+7).
@@ -14,8 +14,12 @@ const vn = (day: string, hhmm: string, plusMin = 0): string => new Date(Date.par
 const D = '2026-10-06'; // fixed-clock: mốc của TC, dữ liệu dựng tường minh theo mốc này, không trộn với now() của CSDL
 const ADDR_A = { receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi', ward: 'Bến Nghé', city: 'TP.HCM' };
 const ADDR_B = { receiver: 'Trần Thị B', phone: '0912345678', line1: '45 Nguyễn Huệ', ward: 'Bến Thành', city: 'TP.HCM' };
-/** Chọn một trạng thái ở bộ lọc (select) theo nhãn. */
-const pick = (page: Page, testid: string, label: string) => id(page, testid).selectOption({ label });
+/** Chọn một giá trị ở bộ lọc theo nhãn: ô lọc nguồn, người tạo là select; hàng lọc trạng thái là nhóm nút (seg) theo giao diện hiện hành. */
+const pick = async (page: Page, testid: string, label: string) => {
+  const el = id(page, testid);
+  if ((await el.evaluate((n) => n.tagName)) === 'SELECT') await el.selectOption({ label });
+  else await el.getByRole('button', { name: label, exact: true }).click();
+};
 const bodyText = (page: Page) => page.locator('body').innerText();
 /** Gọi API trực tiếp từ trang đang đăng nhập (cookie phiên của trình duyệt); trả danh sách mã trạng thái. */
 const fromPage = (page: Page, path: string, times = 1, init?: { method: string; body: unknown }): Promise<number[]> => page.evaluate(async ({ api, p, n, i }) => {
@@ -78,7 +82,7 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
     await hasText(id(page, 'ord-order-detail-status-badge'), 'Đã hủy');
     await count(id(page, 'ord-order-detail-history-item'), 3);
     expect(await id(page, 'ord-order-detail-history-item').nth(2).innerText()).toContain('Đã hủy');
-    await hasText(id(page, 'ord-order-detail-history-reason'), 'Lý do: đặt nhầm');
+    await hasText(id(page, 'ord-order-detail-history-reason'), 'đặt nhầm');
     await count(id(page, 'ord-order-detail-cancel-button'), 0);
     await see(id(page, 'ord-order-detail-payment-link'));
     await id(page, 'ord-order-detail-payment-link').click(); // màn thanh toán là của PAY (chưa có code): chỉ kiểm liên kết dẫn tới đường dẫn của PAY rồi quay lại
@@ -125,7 +129,7 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
       seen.push(await textOf(id(page, 'ord-order-detail-notfound')));
       for (const t of ['ord-order-detail-code', 'ord-order-detail-items', 'ord-order-detail-address', 'ord-order-detail-history']) await count(id(page, t), 0);
     }
-    expect(seen[0]).toContain('Không tìm thấy đơn hàng');
+    expect(seen[0]).toContain('Không thấy đơn');
     expect(new Set(seen).size).toBe(1); // giống hệt nhau, không lộ khác biệt
     await id(page, 'ord-order-detail-notfound-back').click();
     await count(id(page, 'ord-order-list-row'), 1);
@@ -142,7 +146,7 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
     const items = await textOf(id(page, 'ord-order-detail-items'));
     expect(items).toContain('Áo thun cổ tròn'); expect(items).toContain('100.000 đ'); expect(items).toContain('Quần jean'); expect(items).toContain('150.000 đ');
     const totals = await textOf(id(page, 'ord-order-detail-totals'));
-    for (const w of ['Tạm tính: 350.000 đ', 'Giảm giá: 0 đ', 'Phí giao hàng: 30.000 đ', 'Tổng cộng: 380.000 đ']) expect(totals).toContain(w);
+    for (const w of ['Tạm tính 350.000 đ', 'Giảm giá 0 đ', 'Giao hàng 30.000 đ', 'Tổng 380.000 đ']) expect(totals.replace(/\s+/g, ' ')).toContain(w);
     const pay = await textOf(id(page, 'ord-order-detail-payment'));
     expect(pay).toContain('COD · Chưa thu tiền');
     expect(pay.toLowerCase()).not.toContain('đã thanh toán');
@@ -173,25 +177,25 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
     for (let i = 0; i < 44; i++) await seedOrder({ email: owners[i % 3], status: i % 5 === 0 ? 'pending' : 'confirmed', method: i % 5 === 0 ? 'vnpay' : 'cod', created_at: vn(D, '08:00', i) });
     await loginUi(page, 'staff@shop.vn');
     await page.goto('/admin/orders');
-    await hasText(id(page, 'ord-order-admin-list-summary'), '1 tới 20 trong 45 đơn');
-    await count(id(page, 'ord-order-admin-list-row'), 20);
+    await hasText(id(page, 'ord-order-list-source-summary'), '1 tới 20 trong 45 đơn');
+    await count(id(page, 'ord-order-list-source-row'), 20);
     expect(await bodyText(page)).not.toMatch(/@x\.vn|0901234567|Nguyễn Văn A/);
-    expect(await id(page, 'ord-order-admin-list-row').first().getByRole('button').count()).toBe(0); // không nút Hủy hay Đã giao trên hàng
-    await id(page, 'ord-order-admin-list-search').fill('7K3M9Q2XH4TB');
-    await count(id(page, 'ord-order-admin-list-row'), 1);
-    await hasText(id(page, 'ord-order-admin-list-code'), '7K3M9Q2XH4TB');
-    await see(id(page, 'ord-order-admin-list-clear-filter'));
-    await id(page, 'ord-order-admin-list-clear-filter').click();
-    await count(id(page, 'ord-order-admin-list-row'), 20);
-    await id(page, 'ord-order-admin-list-search').fill('a@x.vn');
-    await see(id(page, 'ord-order-admin-list-empty-filtered'));
-    await count(id(page, 'ord-order-admin-list-row'), 0);
-    await id(page, 'ord-order-admin-list-clear-filter').click();
-    await count(id(page, 'ord-order-admin-list-row'), 20);
+    expect(await id(page, 'ord-order-list-source-row').first().getByRole('button').count()).toBe(0); // không nút Hủy hay Đã giao trên hàng
+    await id(page, 'ord-order-list-source-search').fill('7K3M9Q2XH4TB');
+    await count(id(page, 'ord-order-list-source-row'), 1);
+    await hasText(id(page, 'ord-order-list-source-code'), '7K3M9Q2XH4TB');
+    await see(id(page, 'ord-order-list-source-clear'));
+    await id(page, 'ord-order-list-source-clear').click();
+    await count(id(page, 'ord-order-list-source-row'), 20);
+    await id(page, 'ord-order-list-source-search').fill('a@x.vn');
+    await see(id(page, 'ord-order-list-source-empty'));
+    await count(id(page, 'ord-order-list-source-row'), 0);
+    await id(page, 'ord-order-list-source-clear').click();
+    await count(id(page, 'ord-order-list-source-row'), 20);
     await pick(page, 'ord-order-admin-list-status-filter', 'Đã thanh toán');
-    await id(page, 'ord-order-admin-list-search').fill('7K3M9Q2XH4TB');
-    await count(id(page, 'ord-order-admin-list-row'), 1);
-    await id(page, 'ord-order-admin-list-row').click();
+    await id(page, 'ord-order-list-source-search').fill('7K3M9Q2XH4TB');
+    await count(id(page, 'ord-order-list-source-row'), 1);
+    await id(page, 'ord-order-list-source-row').click();
     await hasText(id(page, 'ord-order-detail-code'), '7K3M9Q2XH4TB');
     await see(id(page, 'ord-order-detail-items')); await see(id(page, 'ord-order-detail-totals'));
     await hasText(id(page, 'ord-order-detail-address-hidden'), 'Thông tin người nhận được ẩn theo chính sách dữ liệu');
@@ -208,11 +212,11 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
     await loginUi(page, 'admin@shop.vn');
     await page.goto('/admin/orders');
     await pick(page, 'ord-order-admin-list-status-filter', 'Đã thanh toán');
-    await count(id(page, 'ord-order-admin-list-row'), 1);
+    await count(id(page, 'ord-order-list-source-row'), 1);
     for (const b of await id(page, 'ord-order-admin-list-status-badge').all()) expect((await b.innerText()).trim()).toBe('Đã thanh toán');
-    await id(page, 'ord-order-admin-list-search').fill('6V8W0X2Y4Z6A');
-    await count(id(page, 'ord-order-admin-list-row'), 1);
-    await id(page, 'ord-order-admin-list-row').click();
+    await id(page, 'ord-order-list-source-search').fill('6V8W0X2Y4Z6A');
+    await count(id(page, 'ord-order-list-source-row'), 1);
+    await id(page, 'ord-order-list-source-row').click();
     const addr = await textOf(id(page, 'ord-order-detail-address'));
     for (const w of ['Trần Thị B', '0912345678', '45 Nguyễn Huệ', 'Bến Thành', 'TP.HCM']) expect(addr).toContain(w);
     await id(page, 'ord-order-detail-cancel-button').click();
@@ -222,12 +226,12 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
     await see(id(page, 'ord-order-detail-cancel-success'));
     await hasText(id(page, 'ord-order-detail-status-badge'), 'Đã hủy');
     await eventually(async () => { const h = await id(page, 'ord-order-detail-history-item').allInnerTexts(); expect(h.at(-1)).toContain('Đã hủy'); });
-    await hasText(id(page, 'ord-order-detail-history-reason'), 'Lý do: hết hàng thực tế');
+    await hasText(id(page, 'ord-order-detail-history-reason'), 'hết hàng thực tế');
     await id(page, 'ord-order-detail-back-link').click();
-    await see(id(page, 'ord-order-admin-list-row'));
+    await see(id(page, 'ord-order-list-source-row'));
     await pick(page, 'ord-order-admin-list-status-filter', 'Đã thanh toán');
-    await see(id(page, 'ord-order-admin-list-empty-filtered')); // đơn đã hủy không còn trong bộ lọc Đã thanh toán
-    await count(id(page, 'ord-order-admin-list-row'), 0);
+    await see(id(page, 'ord-order-list-source-empty')); // đơn đã hủy không còn trong bộ lọc Đã thanh toán
+    await count(id(page, 'ord-order-list-source-row'), 0);
   });
 
   e2e('ORD-E2E-20261006-111226737: khách chưa có đơn thấy trạng thái rỗng, lỗi tải danh sách có nút thử lại', async (page) => {
@@ -236,7 +240,7 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
     for (let i = 0; i < 25; i++) await seedOrder({ email: 'a@x.vn', created_at: vn(D, '08:00', i) });
     await loginUi(page, 'n@x.vn');
     await page.goto('/orders');
-    await hasText(id(page, 'ord-order-list-empty'), /Bạn chưa có đơn hàng nào\./);
+    await hasText(id(page, 'ord-order-list-empty'), /Chưa có đơn/);
     await count(id(page, 'ord-order-list-row'), 0);
     await count(id(page, 'ord-order-list-pagination'), 0);
     await count(id(page, 'ord-order-list-summary'), 0); // không báo số đơn khác 0
@@ -246,7 +250,7 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
       await p2.route('**/api/v1/orders?*', async (route) => { if (fail) { await new Promise((r) => setTimeout(r, 600)); await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' }); } else await route.continue(); });
       await p2.goto('/orders');
       await see(id(p2, 'ord-order-list-loading'));
-      await hasText(id(p2, 'ord-order-list-error'), /Không tải được danh sách đơn\./);
+      await hasText(id(p2, 'ord-order-list-error'), /Không tải được đơn\./);
       await count(id(p2, 'ord-order-list-row'), 0);
       fail = false;
       await id(p2, 'ord-order-list-retry').click();
@@ -331,8 +335,8 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
     await id(page, 'ord-order-detail-cancel-reason').fill(html);
     await id(page, 'ord-order-detail-cancel-confirm').click();
     await see(id(page, 'ord-order-detail-cancel-success'));
-    await eventually(async () => expect(await textOf(id(page, 'ord-order-detail-history-reason'))).toBe(`Lý do: ${html}`));
-    expect(await id(page, 'ord-order-detail-history').locator('b, img').count()).toBe(0);
+    await eventually(async () => expect(await textOf(id(page, 'ord-order-detail-history-reason'))).toBe(html));
+    expect(await id(page, 'ord-order-detail-history-reason').locator('b, img').count()).toBe(0); // `<b>` ở dòng lịch sử là nhãn trạng thái, nên chỉ kiểm bên trong phần lý do
     expect(await page.title()).not.toBe('xss');
   });
 
@@ -347,7 +351,7 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
       await id(page, 'ord-order-detail-cancel-reason').fill(reason);
       await id(page, 'ord-order-detail-cancel-confirm').click();
       await see(id(page, 'ord-order-detail-cancel-success'));
-      await eventually(async () => expect(await textOf(id(page, 'ord-order-detail-history-reason'))).toBe(`Lý do: ${reason.replace('\n', ' ')}`));
+      await eventually(async () => expect(await textOf(id(page, 'ord-order-detail-history-reason'))).toBe(reason.replace('\n', ' ')));
       await page.reload();
       await hasText(id(page, 'ord-order-detail-status-badge'), 'Đã hủy');
       await see(id(page, 'ord-order-detail-history-reason'));
@@ -362,12 +366,12 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
     await alignWindow();
     expect((await fromPage(page, '/admin/orders?page=1&limit=1', 30)).every((s) => s === 200)).toBe(true);
     await page.goto('/admin/orders'); // lần thứ 31
-    await eventually(async () => expect(await textOf(id(page, 'ord-order-admin-list-error'))).toMatch(/^Thao tác quá nhanh, thử lại sau \d+ giây/));
-    await count(id(page, 'ord-order-admin-list-row'), 0);
+    await eventually(async () => expect(await textOf(id(page, 'ord-order-list-source-error'))).toMatch(/^Thao tác quá nhanh, thử lại sau \d+ giây/));
+    await count(id(page, 'ord-order-list-source-row'), 0);
     await advance(61_000);
-    await id(page, 'ord-order-admin-list-retry').click();
-    await count(id(page, 'ord-order-admin-list-error'), 0);
-    await see(id(page, 'ord-order-admin-list-row'));
+    await id(page, 'ord-order-list-source-retry').click();
+    await count(id(page, 'ord-order-list-source-error'), 0);
+    await see(id(page, 'ord-order-list-source-row'));
   });
 
   e2e('ORD-TC-20261006-111225088: hủy đơn bị giới hạn tần suất (bậc B) hiện lỗi kèm thử lại sau N giây trong hộp thoại, rồi hủy được khi hết giờ chờ', async (page) => {
@@ -387,5 +391,138 @@ describe('E2E ORD (trình duyệt thật, API thật)', () => {
     await id(page, 'ord-order-detail-cancel-confirm').click();
     await see(id(page, 'ord-order-detail-cancel-success'));
     await hasText(id(page, 'ord-order-detail-status-badge'), 'Đã hủy');
+  });
+
+  // ----- Đợt bán hộ 2026-10-15: nguồn đơn, danh sách và chi tiết đơn hộ theo role (ORD-REQ-20261015-092748678, ORD-REQ-20261006-092320743, ORD-REQ-20261006-092320768).
+  // fixed-clock: mốc 2026-10-15 giờ Việt Nam; đơn dựng thẳng qua cổng điều khiển. Chưa chạy được trong môi trường chia sẻ nhiều agent (xem report): kiểm bằng typecheck và build của web.
+  const D15 = '2026-10-15';
+  const srcRow = (page: Page, code: string) => page.locator(`[data-testid="ord-order-source-admin-row"][data-code="${code}"]`);
+  const orderRow = (page: Page, code: string) => page.locator(`[data-testid="ord-order-list-source-row"][data-code="${code}"]`);
+  const hoOrder = (by: string, source: string, o: { code?: string; at?: number; note?: string; itemNotes?: (string | null)[]; costs?: (number | null)[] } = {}) => seedOrder({
+    code: o.code, status: 'confirmed', method: 'cod', created_at: vn(D15, '08:00', o.at ?? 0), items: [{ name: 'Áo thun cổ tròn', price: 100000, qty: 2 }, { name: 'Quần jean', price: 250000, qty: 1 }],
+    ho: { created_by_email: by, source, customer: { full_name: 'Trần Thị Mai', phone: '0912345678' }, note: o.note ?? null, item_notes: o.itemNotes, costs: o.costs },
+  });
+
+  e2e('ORD-E2E-20261015-092749937: admin thêm nguồn đơn, bị chặn trùng mã, tắt một nguồn và thấy nguồn hệ thống không tắt được', async (page) => {
+    await seedUser({ email: 'admin@shop.vn', role: 'admin' }); await seedUser({ email: 'sale@shop.vn', role: 'sale', name: 'Trần Thu' });
+    for (let i = 0; i < 12; i++) await hoOrder('sale@shop.vn', 'tiktok', { at: i });
+    await loginUi(page, 'admin@shop.vn');
+    await page.goto('/admin/order-sources');
+    await see(id(page, 'ord-order-source-admin-table'));
+    await count(id(page, 'ord-order-source-admin-row'), 4);
+    for (const b of await id(page, 'ord-order-source-admin-status-badge').all()) expect((await b.innerText()).trim()).toBe('Đang bật');
+    await count(id(page, 'ord-order-source-admin-system-badge'), 1);
+    await count(srcRow(page, 'website').getByTestId('ord-order-source-admin-toggle'), 0);
+    await id(page, 'ord-order-source-admin-add').click();
+    await see(id(page, 'ord-order-source-admin-dialog'));
+    expect(await id(page, 'ord-order-source-admin-save').isDisabled()).toBe(true);
+    await id(page, 'ord-order-source-admin-field-code').fill('facebook'); await id(page, 'ord-order-source-admin-field-name').fill('FB khác');
+    await id(page, 'ord-order-source-admin-save').click();
+    await hasText(id(page, 'ord-order-source-admin-field-error'), 'Mã này đã có');
+    await see(id(page, 'ord-order-source-admin-dialog'));
+    await count(id(page, 'ord-order-source-admin-row'), 4);
+    await id(page, 'ord-order-source-admin-field-code').fill('zalo'); await id(page, 'ord-order-source-admin-field-name').fill('Zalo OA'); await id(page, 'ord-order-source-admin-field-position').fill('4');
+    await id(page, 'ord-order-source-admin-save').click();
+    await see(id(page, 'ord-order-source-admin-saved'));
+    await count(id(page, 'ord-order-source-admin-dialog'), 0);
+    await count(id(page, 'ord-order-source-admin-row'), 5);
+    await hasText(id(page, 'ord-order-source-admin-code').last(), 'zalo');
+    await hasText(id(page, 'ord-order-source-admin-status-badge').last(), 'Đang bật');
+    await id(page, 'ord-order-source-admin-add').click();
+    await id(page, 'ord-order-source-admin-field-name').fill('x'.repeat(61));
+    await see(id(page, 'ord-order-source-admin-field-error'));
+    expect(await id(page, 'ord-order-source-admin-save').isDisabled()).toBe(true);
+    await id(page, 'ord-order-source-admin-cancel').click();
+    await count(id(page, 'ord-order-source-admin-dialog'), 0);
+    await count(id(page, 'ord-order-source-admin-row'), 5);
+    await srcRow(page, 'tiktok').getByTestId('ord-order-source-admin-toggle').click();
+    await hasText(id(page, 'ord-order-source-admin-toggle-confirm').locator('p'), 'Đơn mới không chọn được nguồn này nữa; đơn cũ giữ nguyên.');
+    await id(page, 'ord-order-source-admin-toggle-confirm').getByRole('button', { name: 'Tắt nguồn' }).click();
+    await hasText(srcRow(page, 'tiktok').getByTestId('ord-order-source-admin-status-badge'), 'Đã tắt');
+    await see(id(page, 'ord-order-source-admin-saved'));
+    await hasText(srcRow(page, 'tiktok').getByTestId('ord-order-source-admin-toggle'), 'Bật');
+    await count(srcRow(page, 'website').getByTestId('ord-order-source-admin-toggle'), 0);
+    await srcRow(page, 'website').getByTestId('ord-order-source-admin-edit').click();
+    expect(await id(page, 'ord-order-source-admin-field-code').isDisabled()).toBe(true);
+    await id(page, 'ord-order-source-admin-field-name').fill('Cửa hàng trực tuyến');
+    await id(page, 'ord-order-source-admin-save').click();
+    await hasText(srcRow(page, 'website').getByTestId('ord-order-source-admin-name'), 'Cửa hàng trực tuyến');
+    await hasText(srcRow(page, 'website').getByTestId('ord-order-source-admin-code'), 'website');
+  });
+
+  e2e('ORD-E2E-20261015-092749975: staff lọc danh sách đơn theo nguồn và người tạo rồi mở đơn hộ thấy nguồn, ghi chú nhưng không thấy khách', async (page) => {
+    await seedUser({ email: 'staff@shop.vn', role: 'staff' }); await seedUser({ email: 'thu@shop.vn', role: 'sale', name: 'Trần Thu' }); await seedUser({ email: 'minh@shop.vn', role: 'sale', name: 'Lê Minh' }); await seedUser({ email: 'c@x.vn' });
+    await hoOrder('thu@shop.vn', 'facebook', { code: 'HD261015-00003', at: 3, note: 'Giao sau 18h', itemNotes: ['size M', null], costs: [60000, 150000] });
+    for (const i of [0, 1, 2]) await hoOrder('thu@shop.vn', 'facebook', { at: 10 + i });
+    for (const i of [0, 1]) await hoOrder('minh@shop.vn', 'facebook', { at: 20 + i });
+    await hoOrder('thu@shop.vn', 'hotline', { at: 30 });
+    for (let i = 0; i < 10; i++) await seedOrder({ email: 'c@x.vn', status: 'confirmed', method: 'cod', created_at: vn(D15, '07:00', i) });
+    await setOrderSource('tiktok', false);
+    await loginUi(page, 'staff@shop.vn');
+    await page.goto('/admin/orders');
+    await count(id(page, 'ord-order-list-source-row'), 17);
+    await hasText(id(page, 'ord-order-list-source-summary'), '1 tới 17 trong 17 đơn');
+    await count(id(page, 'ord-order-list-source-cell'), 17); await count(id(page, 'ord-order-list-source-creator-cell'), 17);
+    expect(await id(page, 'ord-order-list-source-creator-cell').allInnerTexts()).toContain('—'); // đơn khách tự đặt
+    await count(id(page, 'ord-order-list-source-scope-note'), 0);
+    await pick(page, 'ord-order-list-source-filter-source', 'Facebook');
+    await count(id(page, 'ord-order-list-source-row'), 6);
+    for (const c of await id(page, 'ord-order-list-source-cell').all()) expect((await c.innerText()).trim()).toBe('Facebook');
+    await see(id(page, 'ord-order-list-source-clear'));
+    await pick(page, 'ord-order-list-source-filter-creator', 'Trần Thu');
+    await count(id(page, 'ord-order-list-source-row'), 4);
+    for (const c of await id(page, 'ord-order-list-source-creator-cell').all()) expect((await c.innerText()).trim()).toBe('Trần Thu');
+    await hasText(id(page, 'ord-order-list-source-summary'), '1 tới 4 trong 4 đơn');
+    await id(page, 'ord-order-list-source-clear').click();
+    await count(id(page, 'ord-order-list-source-row'), 17);
+    await pick(page, 'ord-order-list-source-filter-source', 'TikTok (đã tắt)');
+    await see(id(page, 'ord-order-list-source-empty'));
+    await count(id(page, 'ord-order-list-source-row'), 0);
+    await id(page, 'ord-order-list-source-clear').first().click();
+    await orderRow(page, 'HD261015-00003').click();
+    await see(id(page, 'ord-order-detail-source-block'));
+    await hasText(id(page, 'ord-order-detail-source-name'), 'Facebook');
+    await hasText(id(page, 'ord-order-detail-source-creator'), 'Trần Thu');
+    await hasText(id(page, 'ord-order-detail-source-note'), 'Giao sau 18h');
+    await hasText(id(page, 'ord-order-detail-source-item-note').first(), 'Ghi chú: size M');
+    await see(id(page, 'ord-order-detail-source-customer-hidden'));
+    expect(await bodyText(page)).not.toMatch(/Trần Thị Mai|0912345678/);
+    await count(id(page, 'ord-order-detail-source-customer'), 0);
+    await count(id(page, 'ord-order-detail-source-cost'), 0); // giá vốn chỉ admin
+  });
+
+  e2e('ORD-E2E-20261015-092750011: sale chỉ thấy đơn do mình tạo, lọc theo nguồn và xem chi tiết đơn của mình có khách, không có giá vốn', async (page) => {
+    await seedUser({ email: 'thu@shop.vn', role: 'sale', name: 'Trần Thu' }); await seedUser({ email: 'minh@shop.vn', role: 'sale', name: 'Lê Minh' }); await seedUser({ email: 'c@x.vn' });
+    await hoOrder('thu@shop.vn', 'facebook', { code: 'HD261015-00003', at: 3, note: 'Giao sau 18h', itemNotes: ['size M', null], costs: [60000, 150000] });
+    for (const i of [0, 1, 2]) await hoOrder('thu@shop.vn', 'facebook', { at: 10 + i });
+    await hoOrder('thu@shop.vn', 'hotline', { at: 30 });
+    await hoOrder('minh@shop.vn', 'facebook', { code: 'HD261015-00007', at: 40 });
+    for (const i of [0, 1]) await hoOrder('minh@shop.vn', 'hotline', { at: 50 + i });
+    for (let i = 0; i < 20; i++) await seedOrder({ email: 'c@x.vn', status: 'confirmed', method: 'cod', created_at: vn(D15, '07:00', i) });
+    await loginUi(page, 'thu@shop.vn');
+    await page.goto('/admin/orders');
+    await hasText(id(page, 'ord-order-list-source-scope-note'), 'Đang xem: đơn do bạn tạo');
+    await count(id(page, 'ord-order-list-source-row'), 5);
+    await hasText(id(page, 'ord-order-list-source-summary'), '1 tới 5 trong 5 đơn');
+    await count(id(page, 'ord-order-list-source-filter-creator'), 0); // sale không lọc theo người tạo
+    for (const c of await id(page, 'ord-order-list-source-creator-cell').all()) expect((await c.innerText()).trim()).toBe('Trần Thu');
+    await pick(page, 'ord-order-list-source-filter-source-sale', 'Hotline');
+    await count(id(page, 'ord-order-list-source-row'), 1);
+    await see(id(page, 'ord-order-list-source-clear'));
+    await id(page, 'ord-order-list-source-clear').click();
+    await count(id(page, 'ord-order-list-source-row'), 5);
+    await orderRow(page, 'HD261015-00003').click();
+    await see(id(page, 'ord-order-detail-source-block'));
+    await hasText(id(page, 'ord-order-detail-source-name'), 'Facebook');
+    await hasText(id(page, 'ord-order-detail-source-creator'), 'Trần Thu');
+    expect(await textOf(id(page, 'ord-order-detail-source-customer'))).toMatch(/Trần Thị Mai.*0912345678/);
+    await hasText(id(page, 'ord-order-detail-source-note'), 'Giao sau 18h');
+    await count(id(page, 'ord-order-detail-source-cost'), 0); // sale không thấy giá vốn
+    await count(id(page, 'ord-order-detail-source-customer-hidden'), 0);
+    await count(id(page, 'ord-order-detail-cancel-button'), 0); // sale không hủy đơn
+    await id(page, 'ord-order-detail-back-link').click();
+    await id(page, 'ord-order-list-source-search').fill('HD261015-00007');
+    await see(id(page, 'ord-order-list-source-empty'));
+    await count(id(page, 'ord-order-list-source-row'), 0); // đơn của sale khác: giống hệt mã không tồn tại
   });
 });

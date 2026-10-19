@@ -2,13 +2,13 @@ import { DomainError } from '../platform';
 import { TOP_LIMIT_DEFAULT, TOP_LIMIT_MAX, type Block } from './config';
 import { paramError, resolveRange, type DateRange, type ParamError } from './range';
 
-export interface Params { range?: DateRange; sort?: 'units' | 'amount'; limit?: number }
+export interface Params { range?: DateRange; sort?: 'units' | 'amount'; limit?: number; format?: 'csv' }
 
-const RANGED: readonly Block[] = ['revenue', 'orders', 'customers', 'report-revenue', 'report-orders', 'report-products'];
+const RANGED: readonly Block[] = ['revenue', 'orders', 'customers', 'report-revenue', 'report-orders', 'report-products', 'report-sources', 'report-sales'];
 /** Tham số cho phép của từng khối (DSH-API, bảng Endpoint): tham số ngoài danh sách là 400, kể cả endpoint không nhận tham số nào. */
 const ALLOWED: Record<Block, readonly string[]> = {
   revenue: ['from', 'to'], orders: ['from', 'to'], customers: ['from', 'to'], products: [], 'low-stock': [], 'recent-orders': [],
-  'report-revenue': ['from', 'to'], 'report-orders': ['from', 'to'], 'report-products': ['from', 'to', 'sort', 'limit'],
+  'report-revenue': ['from', 'to'], 'report-orders': ['from', 'to'], 'report-products': ['from', 'to', 'sort', 'limit'], 'report-sources': ['from', 'to', 'format'], 'report-sales': ['from', 'to', 'format'],
 };
 const SAFE_FIELD = /^[A-Za-z0-9_.[\]-]{1,64}$/;
 
@@ -36,6 +36,11 @@ export function parseParams(block: Block, raw: Record<string, unknown>, now: Dat
     else if (typeof l !== 'string' || !/^(0|[1-9]\d*)$/.test(l)) errors.push(paramError('limit', 'not_integer'));
     else if (l.length > 3 || Number(l) < 1 || Number(l) > TOP_LIMIT_MAX) errors.push(paramError('limit', 'out_of_range'));
     else out.limit = Number(l);
+  }
+  if (block === 'report-sources' || block === 'report-sales') {
+    const f = raw.format; // chỉ đúng `csv` hoặc vắng mặt; lặp tham số (mảng), chuỗi rỗng, giá trị lạ đều `invalid_value` (SB-11, T20)
+    if (f === 'csv') out.format = 'csv';
+    else if (f !== undefined) errors.push(paramError('format', 'invalid_value'));
   }
   if (errors.length) throw new DomainError('invalid-parameter', { errors });
   return out;

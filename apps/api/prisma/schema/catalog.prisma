@@ -42,6 +42,8 @@ model Product {
   sku         String        @unique
   description String?
   price       BigInt
+  // Giá vốn (SB-42): chỉ admin đọc và ghi; NULL là chưa có giá vốn. CHECK 0..1.000.000.000 nằm trong migration.
+  costPrice   BigInt?       @map("cost_price")
   status      ProductStatus @default(draft)
   version     Int           @default(1)
   publishedAt DateTime?     @map("published_at") @db.Timestamptz(6)

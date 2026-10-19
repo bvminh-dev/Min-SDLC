@@ -64,12 +64,12 @@ export const ctl = async (path: string, body?: unknown): Promise<any> => {
   return r.status === 404 ? null : r.json();
 };
 export const reset = () => ctl('/reset', {});
-export const seedUser = (u: { email: string; password?: string; role?: 'customer' | 'staff' | 'admin'; verified?: boolean; name?: string; createdAt?: string; phone?: string; avatar?: boolean }) => ctl('/seed-user', u);
+export const seedUser = (u: { email: string; password?: string; role?: 'customer' | 'staff' | 'sale' | 'admin'; verified?: boolean; name?: string; createdAt?: string; phone?: string; avatar?: boolean }) => ctl('/seed-user', u);
 export const seedAddress = (a: { email: string; receiver?: string; phone?: string; line1?: string; ward?: string; district?: string | null; city?: string; is_default?: boolean; age_ms?: number }) => ctl('/seed-address', a);
 export const s3Keys = async (prefix = 'avatars/'): Promise<string[]> => (await ctl(`/s3-objects?prefix=${encodeURIComponent(prefix)}`)).keys;
 export const seedCategory = async (name: string, parent_id?: string): Promise<string> => (await ctl('/seed-category', { name, parent_id })).id;
-export const seedProduct = async (p: { name: string; category_id: string; sku?: string; price?: number; status?: 'draft' | 'active' | 'archived'; images?: number; rating_count?: number; rating_sum?: number; description?: string; age_ms?: number }): Promise<string> => (await ctl('/seed-product', p)).id;
-export const productState = (id: string): Promise<{ status: string; version: number; price: number; name: string; sku: string; images: number } | null> => ctl(`/product?id=${id}`);
+export const seedProduct = async (p: { name: string; category_id: string; sku?: string; price?: number; cost_price?: number | null; status?: 'draft' | 'active' | 'archived'; images?: number; rating_count?: number; rating_sum?: number; description?: string; age_ms?: number }): Promise<string> => (await ctl('/seed-product', p)).id;
+export const productState = (id: string): Promise<{ status: string; version: number; price: number; cost_price: number | null; name: string; sku: string; images: number } | null> => ctl(`/product?id=${id}`);
 export const advance = (ms: number) => ctl('/advance', { ms });
 /** `seconds`: độ dài cửa sổ cố định cần căn (mặc định 60; bộ đếm thử sai mã của PRM là 600). */
 export const alignWindow = (seconds = 60) => ctl('/align-window', { seconds });
@@ -78,7 +78,11 @@ export const stockState = (product_id: string): Promise<{ on_hand: number; reser
 export const seedCoupon = (c: { code: string; type?: 'percentage' | 'fixed'; value?: number; min_order?: number; max_discount?: number | null; expires_in_sec?: number; usage_limit?: number; per_user_limit?: number | null; consumed?: number; reserved?: number; status?: 'active' | 'disabled' | 'expired' | 'exhausted' | 'deleted'; version?: number; age_sec?: number }): Promise<{ id: string }> => ctl('/seed-coupon', c);
 export const couponState = (code: string): Promise<{ id: string; code: string; status: string; type: string; value: number; min_order_value: number; max_discount: number | null; usage_limit: number; per_user_limit: number | null; consumed_count: number; reserved_count: number; version: number } | null> => ctl(`/coupon?code=${encodeURIComponent(code)}`);
 export const seedMovement = (m: { product_id: string; type: 'in' | 'out' | 'adjust' | 'sale' | 'restock' | 'return'; quantity: number; on_hand_after: number; reason?: string; human?: boolean; minutes_ago?: number }) => ctl('/seed-movement', m);
-export const seedOrder = (o: { email: string; code?: string; status?: string; method?: 'vnpay' | 'cod'; payment?: string; created_at?: string; items?: { name?: string; price?: number; qty?: number }[]; discount?: number; shipping?: number; paid_at?: string; tracking?: string | null; handoff?: string; expires_at?: string; delivered_at?: string; address?: Record<string, string>; cancel?: { reason: string; by: string; text?: string } }): Promise<{ id: string; code: string }> => ctl('/seed-order', o);
+export const seedOrder = (o: { email?: string; code?: string; status?: string; method?: 'vnpay' | 'cod'; payment?: string; created_at?: string; items?: { name?: string; price?: number; qty?: number }[]; discount?: number; shipping?: number; paid_at?: string; tracking?: string | null; handoff?: string; expires_at?: string; delivered_at?: string; address?: Record<string, string>; cancel?: { reason: string; by: string; text?: string };
+  /** Đơn hộ: người tạo theo email (sale hay admin), nguồn theo mã, bản chụp khách, ghi chú đơn, ghi chú và giá vốn từng dòng; `email` vắng nếu khách không có tài khoản. */
+  ho?: { created_by_email: string; role?: 'sale' | 'admin'; source: string; customer: { full_name: string; phone: string }; note?: string | null; item_notes?: (string | null)[]; costs?: (number | null)[] } }): Promise<{ id: string; code: string }> => ctl('/seed-order', o);
+/** ORD: bật hoặc tắt một nguồn đơn theo mã (cổng điều khiển, thay cho thao tác của admin). */
+export const setOrderSource = (code: string, is_active: boolean): Promise<{ ok: boolean }> => ctl('/set-order-source', { code, is_active });
 export const orderState = (code: string): Promise<{ id: string; status: string; payment_status: string; tracking_number: string | null; history: number } | null> => ctl(`/order?code=${code}`);
 export const seedShippingMethod = (m: { name?: string; base_fee?: number; rule?: { free_over?: number | null; surcharge?: number; surcharge_cities?: string[] }; active?: boolean; version?: number; age_sec?: number } = {}): Promise<{ id: string }> => ctl('/seed-shipping-method', m);
 /** Vận đơn dựng thẳng của đơn (theo mã đơn) kèm lịch sử đúng đường đi tới `status`; chưa có phương thức thì tự tạo một phương thức mặc định. */
@@ -175,3 +179,5 @@ export const setPreModeration = (on: boolean) => ctl('/set-pre-moderation', { on
 
 // DSH: gài hoặc gỡ lỗi nguồn PAY của dashboard (`hang`: không trả lời tới khi gỡ; hạn nguồn của máy chủ E2E là 500 ms).
 export const dshFault = (mode: 'hang' | 'ok') => ctl('/dsh-fault', { mode });
+/** DSH: ORD không trả lời (`hang`), ORD tra tên người tạo từ AUTH lỗi (`names`), AUTH không tra được ai (`gone`) hoặc khỏe (`ok`), cho hai báo cáo tính lương. */
+export const dshOrdFault = (mode: 'hang' | 'names' | 'gone' | 'ok') => ctl('/dsh-ord-fault', { mode });

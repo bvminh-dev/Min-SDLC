@@ -32,8 +32,12 @@ export class UndeclaredProbeController {
 /** Stub của epic ORD (chưa có code): các route mà ma trận quyền và AUTH-TC-...941948, ...941994 dùng để thử guard. */
 @Controller()
 export class StubOrdController {
-  @Get('admin/orders') @Roles('staff', 'admin') @Validate({})
+  @Get('admin/orders') @Roles('staff', 'sale', 'admin') @Validate({})
   allOrders() { return { items: [] }; }
+
+  /** Stub của ORD `GET /order-sources` (staff, sale, admin): dùng thử role `sale` đi qua guard. */
+  @Get('order-sources') @Roles('staff', 'sale', 'admin') @Validate({})
+  sources() { return { items: [] }; }
 
   @Get('orders') @Roles('customer') @Validate({})
   myOrders() { return { items: [] }; }

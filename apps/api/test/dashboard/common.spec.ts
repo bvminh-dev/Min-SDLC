@@ -43,7 +43,7 @@ describe('DSH quy tắc chung (DSH-REQ-20261006-105126549)', () => {
     expect(await views()).toHaveLength(1);
   });
 
-  it('DSH-TC-20261006-110332185: staff và customer nhận 403 ở cả chín endpoint, phiên hết hạn 401, năm nguồn được gọi 0 lần; chín tuyến khớp bảng tuyến của ứng dụng', async () => {
+  it('DSH-TC-20261006-110332185: staff và customer nhận 403 ở cả mười một endpoint, phiên hết hạn 401, năm nguồn được gọi 0 lần; mười một tuyến khớp bảng tuyến của ứng dụng', async () => {
     const routes = routeIds(t.app).filter((r) => /\/api\/v1\/admin\/(dashboard|reports)\//.test(r)).sort();
     expect(routes).toEqual(ALL_PATHS.map((x) => `GET /api/v1${x}`).sort()); // không sót tuyến mới và không có tuyến nào khác method GET
     const s = spies();
@@ -239,7 +239,7 @@ describe('DSH quy tắc chung (DSH-REQ-20261006-105126549)', () => {
     } finally { process.off('unhandledRejection', onRej); }
   });
 
-  it(`${SEC} T4: DB_POOL_MAX = 2, chín endpoint song song vẫn trả lời (DSH không giữ kết nối rồi xin thêm), không treo tới hạn chờ`, async () => {
+  it(`${SEC} T4: DB_POOL_MAX = 2, mười một endpoint song song vẫn trả lời (DSH không giữ kết nối rồi xin thêm), không treo tới hạn chờ`, async () => {
     const small = await createDshApp({ env: { DB_POOL_MAX: '2' } });
     try {
       const rs = await Promise.all(ALL_PATHS.map((x) => get(small, p.admin.cookie, x)));

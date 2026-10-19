@@ -84,7 +84,7 @@ const hashOf = (t: AuthApp, pw: string) => {
 export interface SeedUser { id: string; email: string; password: string }
 let counter = 0;
 /** Dữ liệu mồi trực tiếp vào CSDL (fixture), không qua API. */
-export async function seedUser(t: AuthApp, o: { email?: string; password?: string; role?: 'customer' | 'staff' | 'admin'; verified?: boolean; name?: string; createdAt?: Date; status?: 'active' | 'locked'; lockedReason?: 'admin' | 'too_many_attempts'; lockedUntil?: Date; hash?: string } = {}): Promise<SeedUser> {
+export async function seedUser(t: AuthApp, o: { email?: string; password?: string; role?: 'customer' | 'staff' | 'sale' | 'admin'; verified?: boolean; name?: string; createdAt?: Date; status?: 'active' | 'locked'; lockedReason?: 'admin' | 'too_many_attempts'; lockedUntil?: Date; hash?: string } = {}): Promise<SeedUser> {
   const email = (o.email ?? `user${++counter}@shop.vn`).toLowerCase();
   const password = o.password ?? PASSWORD;
   const hash = o.hash ?? (await hashOf(t, password));

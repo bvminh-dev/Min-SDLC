@@ -32,7 +32,7 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
     await id(page, 'auth-register-submit').click();
     await see(id(page, 'auth-register-success'));
     expect(await textOf(id(page, 'auth-register-success'))).toBe(first); // cùng nội dung, không có thông báo email đã tồn tại
-    expect(first).toContain('Chúng tôi đã nhận đăng ký');
+    expect(first).toContain('Đã nhận đăng ký');
     await see(id(page, 'auth-register-login-link'));
 
     await page.goto('/register');
@@ -86,7 +86,7 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
     await id(page, 'auth-login-password').fill(PASSWORD);
     await id(page, 'auth-login-submit').click();
     await urlIs(page, /\/orders$/);
-    await see(page.getByRole('heading', { name: 'Đơn hàng' }));
+    await see(page.getByRole('heading', { name: 'Đơn của tôi' }));
 
     await id(page, 'auth-account-menu-trigger').click();
     await id(page, 'auth-account-menu-logout').click();
@@ -242,6 +242,37 @@ describe('E2E AUTH (trình duyệt thật, API thật)', () => {
     await target.getByTestId('auth-admin-user-list-row-menu').click();
     await id(page, 'auth-admin-user-list-unlock').click();
     await hasText(target.getByTestId('auth-admin-user-list-status'), 'Hoạt động');
+  });
+
+  e2e('AUTH-E2E-20261015-095530603: admin gán role Bán hàng cho khách và lọc danh sách theo role Bán hàng', async (page) => {
+    await seedUser({ email: 'a1@shop.vn', role: 'admin', name: 'Quản Trị', createdAt: '2026-01-01T00:00:00Z' });
+    await seedUser({ email: 'mai@shop.vn', name: 'Mai', createdAt: '2026-01-02T00:00:00Z' });
+    for (let i = 1; i <= 3; i++) await seedUser({ email: `sale${i}@shop.vn`, role: 'sale', name: `Sale ${i}`, createdAt: `2026-01-0${2 + i}T00:00:00Z` });
+    await loginUi(page, 'a1@shop.vn');
+    await page.goto('/admin/users');
+    const rows = id(page, 'auth-admin-user-list-row');
+    await count(rows, 5);
+    const row = rows.filter({ has: id(page, 'auth-admin-user-list-email').getByText('mai@shop.vn', { exact: true }) });
+    await row.getByTestId('auth-admin-user-list-row-menu').click();
+    await id(page, 'auth-admin-user-list-change-role').click();
+    expect(await id(page, 'auth-admin-user-list-role-select').locator('option').allInnerTexts()).toEqual(['Khách hàng', 'Nhân viên', 'Bán hàng', 'Quản trị']); // bốn lựa chọn
+    await id(page, 'auth-admin-user-list-role-select').selectOption({ label: 'Bán hàng' });
+    await id(page, 'auth-admin-user-list-role-save').click();
+    await hasText(row.getByTestId('auth-admin-user-list-role'), 'Bán hàng');
+    await see(id(page, 'auth-admin-user-list-toast-role'));
+
+    await id(page, 'auth-admin-user-list-role-filter').selectOption({ label: 'Bán hàng' });
+    await count(rows, 4);
+    for (const r of await id(page, 'auth-admin-user-list-role').allInnerTexts()) expect(r).toBe('Bán hàng');
+    await hasText(id(page, 'auth-admin-user-list-summary'), '1 tới 4 trong 4 người');
+
+    await id(page, 'auth-admin-user-list-search').fill('mai@');
+    await count(rows, 1);
+    await row.getByTestId('auth-admin-user-list-row-menu').click();
+    await id(page, 'auth-admin-user-list-change-role').click();
+    await id(page, 'auth-admin-user-list-role-select').selectOption({ label: 'Bán hàng' });
+    await id(page, 'auth-admin-user-list-role-save').click();
+    await hasText(id(page, 'auth-admin-user-list-role-error'), 'Role không thay đổi'); // 409 role_unchanged
   });
 
   e2e('AUTH-TC-20261006-100640931: họ tên chứa HTML được hiển thị dạng chữ (escape), không chạy script ở màn quản trị', async (page) => {

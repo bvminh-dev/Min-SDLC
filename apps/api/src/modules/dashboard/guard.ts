@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import { ConfigService, DomainError, RateLimitService, type SessionContext } from '../platform';
 
 /**
- * Giới hạn tần suất bậc D của SB-14 (ADR-014): `DASHBOARD_RATE_LIMIT_PER_MINUTE` mỗi phút mỗi admin trên CẢ chín endpoint (một khóa `dsh:<admin_id>`), kho đếm bảng PostgreSQL của platform
+ * Giới hạn tần suất bậc D của SB-14 (ADR-014): `DASHBOARD_RATE_LIMIT_PER_MINUTE` mỗi phút mỗi admin trên CẢ mười một endpoint (một khóa `dsh:<admin_id>`), kho đếm bảng PostgreSQL của platform
  * nên nhiều instance chung một hạn mức. Đếm NGUYÊN TỬ bằng `take` (một câu UPSERT, không khe giữa kiểm và ghi). Chạy SAU guard toàn cục (phiên 401, role 403) và TRƯỚC schema (400, ADR-016, DSH-API):
  * yêu cầu không qua quyền không tiêu hạn mức của admin. Không giữ giao dịch hay khóa khi gọi nguồn (SB-31).
  */

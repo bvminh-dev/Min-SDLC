@@ -4,7 +4,7 @@ import { AuditService, Clock, DomainError, EventsService, PrismaService, Transac
 import { revokeAllSessions } from './session.store';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-type Role = 'customer' | 'staff' | 'admin';
+type Role = 'customer' | 'staff' | 'sale' | 'admin';
 export interface ListQuery extends PaginationQuery { role?: Role; status?: 'active' | 'locked'; q?: string }
 
 /** `id` sai định dạng xử lý như không tồn tại: cùng 404 cùng nội dung (REQ-956 BR10). */

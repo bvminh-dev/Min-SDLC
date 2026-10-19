@@ -11,8 +11,9 @@ import { PaymentModule } from './modules/payment';
 import { PlatformModule } from './modules/platform';
 import { PromotionModule } from './modules/promotion';
 import { ReviewModule } from './modules/review';
+import { SalesModule } from './modules/sales';
 import { ShippingModule } from './modules/shipping';
 import { UserModule } from './modules/user';
 
-@Module({ imports: [PlatformModule, AuthModule, UserModule, CatalogModule, InventoryModule, PromotionModule, OrderModule, ShippingModule, CartModule, PaymentModule, CheckoutModule, NotificationModule, ReviewModule, DashboardModule] })
+@Module({ imports: [PlatformModule, AuthModule, UserModule, CatalogModule, InventoryModule, PromotionModule, OrderModule, ShippingModule, CartModule, PaymentModule, CheckoutModule, NotificationModule, ReviewModule, DashboardModule, SalesModule] })
 export class AppModule {}

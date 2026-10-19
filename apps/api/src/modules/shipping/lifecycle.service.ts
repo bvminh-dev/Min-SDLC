@@ -49,8 +49,8 @@ export class LifecycleService {
     const now = this.clock.now();
     const cod = o.payment_method === 'cod' ? o.grand_total : 0; // số tiền thu hộ do ORD cung cấp, không tính lại ở SHP
     const [row] = await tx.$queryRaw<{ id: string }[]>`
-      INSERT INTO shipments (order_id, order_code, shipping_method_id, cod_amount, created_at, updated_at)
-      VALUES (${o.order_id}::uuid, ${o.code}, ${o.shipping_method_id}::uuid, ${cod}, ${now}::timestamptz, ${now}::timestamptz)
+      INSERT INTO shipments (order_id, order_code, created_by, shipping_method_id, cod_amount, created_at, updated_at)
+      VALUES (${o.order_id}::uuid, ${o.code}, ${o.created_by}::uuid, ${o.shipping_method_id}::uuid, ${cod}, ${now}::timestamptz, ${now}::timestamptz)
       ON CONFLICT DO NOTHING RETURNING id`;
     if (!row) { this.log.info('đơn đã có vận đơn', { code: 'shipment-exists', event_type: e.type, order_code: o.code }); return; }
     await tx.$executeRaw`

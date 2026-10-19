@@ -74,7 +74,10 @@ function ProductAdminList() {
     <main className="page">
       <div className="page-head">
         <h1>Sản phẩm</h1>
-        <div className="actions">{isAdmin && !(emptyAll && !filtering && page === 1) && create}</div>
+        <div className="actions">
+          {isAdmin && <Link className="btn tight" href="/admin/products/import" data-testid="prd-admin-product-list-import">{ic('upload')} Nhập từ Excel</Link>}
+          {isAdmin && !(emptyAll && !filtering && page === 1) && create}
+        </div>
       </div>
       <div className="ct-bar ct-admin-bar">
         <div className="ct-search">
@@ -103,7 +106,7 @@ function ProductAdminList() {
         <>
           <div className={`panel panel-flush${view === 'ready' ? '' : ' dim'}`}>
             <table className="stack-table ct-table">
-              <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá</th><th>Trạng thái</th><th>Cập nhật</th><th><span className="sr-only">Mở</span></th></tr></thead>
+              <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá bán</th><th>Trạng thái</th><th>Cập nhật</th><th><span className="sr-only">Mở</span></th></tr></thead>
               <tbody>
                 {items.map((p) => (
                   <tr key={p.id} className="row-click" data-testid="prd-admin-product-list-row" data-id={p.id} onClick={(e) => { if (!(e.target as HTMLElement).closest('a')) open(p.id); }}>
@@ -131,5 +134,5 @@ function ProductAdminList() {
 }
 
 export default function AdminProductsPage() {
-  return <RequireRole roles={['staff', 'admin']}><Suspense fallback={null}><ProductAdminList /></Suspense></RequireRole>;
+  return <RequireRole roles={['staff', 'sale', 'admin']}><Suspense fallback={null}><ProductAdminList /></Suspense></RequireRole>;
 }

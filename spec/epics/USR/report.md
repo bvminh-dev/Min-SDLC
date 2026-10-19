@@ -2,9 +2,9 @@
 epic: USR
 status: draft
 kit_version: 3
-clean_run: pass
-test_command: pnpm test
-test_result: Tests:       1791 passed, 1791 total
+clean_run: chưa
+test_command: cd apps/api && ECOM_TEST_DB=ecom_test_fx1 pnpm test -- test/auth test/user test/notification test/platform test/sales test/checkout test/payment
+test_result: Tests:       1 skipped, 800 passed, 801 total
 ---
 # Báo cáo triển khai: USR
 
@@ -26,6 +26,7 @@ Thứ tự theo phụ thuộc: DB, rồi API, rồi giao diện, rồi E2E. Mọ
 | 11 | Màn tra cứu khách (staff, admin) và thẻ khách theo id (admin) | ui/customer-lookup | 7 | done |
 | 12 | E2E: Jest điều khiển Chromium bằng playwright-core; S3 giả và cổng điều khiển trong máy chủ E2E, 7 luồng | USR-E2E-20261006-102054347, USR-E2E-20261006-102054373, USR-E2E-20261006-102054399, USR-E2E-20261006-102054425, USR-E2E-20261006-102054450, USR-E2E-20261006-102054475, USR-E2E-20261006-102054499 | 9, 10, 11 | done |
 | 13 | Kiểm đột biến riêng cho USR (`apps/api/scripts/mutations-usr.mjs`) và cổng kiểm chính bảng đột biến | USR-SEC-20261006-101342524 | 3, 4, 5, 6, 7, 8 | done |
+| 14 | Giao diện nội bộ cho SAL (đợt bán hộ): `UserApi.lookupForSale({ actor_id, actor_role }, { phone, email })` (bản che tối đa 5, audit trước khi trả, khóa tra băm sha256) và `UserApi.isCustomer(user_id)`, export qua `index.ts`; hai endpoint tra cứu của USR giữ `@Roles('staff', 'admin')` nên sale nhận 403 | USR-REQ-20261006-101004117 | 7 | done |
 
 ## Kết quả test
 Mỗi test case và E2E của epic một dòng. Test API chạy bằng Jest trên PostgreSQL 16 thật (docker compose, cổng 5433), đồng hồ giả của ứng dụng, client S3 thật của USR nói chuyện qua HTTP với dịch vụ S3 giả trong tiến trình (mặc định) hoặc MinIO thật của docker compose khi đặt `STORAGE_TEST_ENDPOINT` (kết quả bên dưới là lượt chạy có MinIO; không đặt biến thì bộ `storage.minio.spec.ts` bỏ qua và báo lý do ra stderr, T19 chỉ chạy bản S3 giả); E2E chạy bằng Jest (playwright-core điều khiển Chromium thật) với API thật (CSDL `ecom_e2e` dựng lại từ migration), kho ảnh như trên và bản build production của web. Ngoài TC và E2E còn các test hạ tầng của USR (không có dòng riêng vì không phải TC): kiểm bộ ký SigV4 và client S3 (`apps/api/test/user/storage.spec.ts`), kiểm lệch ma trận quyền cho route USR (`apps/api/test/user/guard.spec.ts`), cổng kiểm bảng đột biến (`apps/api/test/tooling/mutations-usr.spec.ts`).
@@ -92,6 +93,9 @@ Mỗi test case và E2E của epic một dòng. Test API chạy bằng Jest trê
 | USR-TC-20261006-102054570 | TC | apps/api/test/user/profile.spec.ts | pass | - |
 | USR-TC-20261006-102054595 | TC | apps/api/test/user/address.spec.ts | pass | - |
 | USR-TC-20261007-144433797 | TC | apps/api/test/auth/interface.spec.ts | pass | TC mới (sdlc-impact review PRM): 40 lời gọi đổi mật khẩu sai song song chỉ cho 5 lần sai; test ở bộ AUTH vì chạy `AuthApi.changePassword` trực tiếp |
+| USR-TC-20261015-094057672 | TC | apps/api/test/user/sale-lookup.spec.ts | pass | Sale gọi hai endpoint của USR nhận 403 (chạy qua HTTP thật); staff vẫn 200 bản che |
+| USR-TC-20261015-094057707 | TC | apps/api/test/user/sale-lookup.spec.ts | pass | Gọi hàm trực tiếp trong tiến trình; `AuthApi.findCustomersByPhone` bản thật; thứ tự audit kiểm bằng `jest.spyOn(AuditService.prototype, 'record')` (lỗi audit thì ném lỗi và không trả dữ liệu); đồng hồ giả nên các dòng audit cùng `created_at`, test tìm dòng theo khóa băm |
+| USR-TC-20261015-094057743 | TC | apps/api/test/user/sale-lookup.spec.ts | pass | - |
 
 ## Kiểm đột biến
 Thay test-first cho các TC `lỗi` kiểm mối đe dọa SEC của epic: gài đột biến có chủ ý, chạy đúng test của nó, kỳ vọng đỏ do khẳng định của chính ID đó, khôi phục tệp. Chạy lại bằng `node scripts/mutations-usr.mjs` (từ `apps/api`; cần `docker compose up -d db`; dòng SB-12 chạy E2E nên cần Chromium). Mỗi SB `Kiểm bằng: test` của USR-SEC (SB-01, 03, 04, 05, 06, 07, 08, 10, 11, 12, 13, 14, 18, 19, 33) có ít nhất một đột biến; `node scripts/mutations-usr.mjs --check` (và test `apps/api/test/tooling/mutations-usr.spec.ts`) đỏ khi một SB thiếu đột biến, đoạn cần phá đã đổi hay bảng không đọc được USR-SEC. Kết quả `bắt` chỉ khi test đỏ VÀ có dòng thất bại mang đúng ID; test đỏ vì lý do khác (biên dịch) ghi `hỏng` và không tính. Lượt chạy đầu có hai dòng `lọt` (bỏ kiểm tệp cụt hoặc dữ liệu thừa: test chưa có ca dữ liệu thừa sau phần kết thúc ảnh; ghi query vào log: assertion chỉ dò dạng email thô, không dò dạng mã hóa URL): đã sửa test (USR-TC-20261006-102053618, USR-TC-20261006-102054198) và chạy lại, hai dòng nay `bắt`. Không có đột biến tương đương nào được bỏ qua.
@@ -150,6 +154,12 @@ Thay test-first cho các TC `lỗi` kiểm mối đe dọa SEC của epic: gài 
 | SB-33: xóa địa chỉ mặc định không chuyển mặc định cho địa chỉ mới nhất | USR-TC-20261006-102054099 | bắt |
 | SB-33: đổi mặc định cũng đổi updated_at (CHK báo nhầm địa chỉ đã đổi) | USR-TC-20261006-102053968 | bắt |
 | SB-33: thêm địa chỉ is_default không bỏ mặc định cũ | USR-TC-20261006-102053816 | bắt |
+| SB-05: sale gọi được endpoint tra cứu khách theo email của staff (sai ma trận) | USR-TC-20261015-094057672 | bắt |
+| SB-19: UserApi.lookupForSale không ghi audit | USR-TC-20261015-094057707 | bắt |
+| SB-18: audit của lookupForSale ghi số điện thoại gốc thay vì băm | USR-TC-20261015-094057707 | bắt |
+| SB-08: lookupForSale trả email và điện thoại không che | USR-TC-20261015-094057707 | bắt |
+| SB-08: lookupForSale bỏ trần 5 kết quả theo điện thoại | USR-TC-20261015-094057707 | bắt |
+| SB-05: UserApi.isCustomer đúng với mọi người dùng (không lọc role customer) | USR-TC-20261015-094057743 | bắt |
 
 ## Lệch spec
 Chỗ code làm khác spec, hoặc chỗ spec thiếu hay mâu thuẫn. Không sửa `spec/` (hook `guard-approved` giữ nguyên); mục `[cần quyết]` cần người quyết.
@@ -179,3 +189,11 @@ Chỗ code làm khác spec, hoặc chỗ spec thiếu hay mâu thuẫn. Không s
 23. [đã chọn] `kit_version: 3` và số liệu thật sau đợt dọn tồn đọng (2026-10-07): `test_result` là toàn repo 35 suite, 268 test, chạy với `STORAGE_TEST_ENDPOINT=http://localhost:9210` (MinIO thật; nếu không đặt biến thì `storage.minio.spec.ts` bỏ qua và `avatar-cache.spec.ts` chỉ chạy bản S3 giả, số test đã chạy ít đi); `clean_run` chạy lại trong `git worktree` tại HEAD (5781d41) cộng tệp chưa commit, `env -i`, `pnpm install --frozen-lockfile --offline`: lint, typecheck, build exit 0, `pnpm test` exit 0 (35 suite, 268 test; lần chạy đầu thoát 1 sớm không có dòng lỗi nào trong log, hai lần chạy lại liền sau đều xanh, chưa rõ nguyên nhân). Giới hạn như mục 20: HOME vẫn được truyền, workflow GitHub chưa chạy, `audit:deps` cần mạng nên không chạy.
 
 24. [đã chọn] Đồng bộ nền 2026-10-13 (`spec/changes/nen-dong-bo-20261013.md`, REV-REV-15 và bài học L133): khóa bộ đếm giới hạn tần suất của platform nay gồm method và độ dài cửa sổ nên PUT (10 mỗi 3600 giây) và DELETE (120 mỗi 60 giây) `/api/v1/me/avatar` không còn chung một dòng ở đầu giờ; mã USR không đổi. Ca hồi quy ở nền (`PRJ-TC-20261013-184314241`, `apps/api/test/platform/rate-limit.spec.ts`, đỏ trước khi sửa). E2E ảnh đại diện (`apps/api/test/e2e/usr.e2e.spec.ts`) chưa thêm lại `alignWindow(3600)` (bản căn đã bị hoàn tác ở lượt review REV): việc của người nếu muốn kiểm thêm ở tầng trình duyệt; E2E không chạy được trong đợt này vì cổng 3100 đang bị tiến trình ngoài dự án giữ (xem báo cáo PRJ mục 38). `test_result` cập nhật ở frontmatter theo lượt chạy toàn repo (không gồm E2E).
+
+25. [đã chọn] Đợt bán hộ (2026-10-15): `UserApi.lookupForSale` và `UserApi.isCustomer` (USR-REQ-20261006-101004117 BR9). Audit dùng lại `usr.customer_lookup`, `target_type` `customer`, nhưng `target_id` LUÔN là băm sha256 của khóa tra đã chuẩn hóa (không phải id khách, vì một số điện thoại có thể ra tới 5 khách), `after` `{ by: 'phone' | 'email', found: <số kết quả>, mask: 'masked' }`; điện thoại đi qua `normalizePhone` (+84, 84, khoảng trắng) như hồ sơ. Thiếu khóa hay đủ cả hai khóa ném `validation-failed` (400 ở SAL) và không ghi audit. Giới hạn 30 lần mỗi phút chung bộ đếm `usr:customer-lookup` (BR9) do endpoint của SAL khai (`@RateLimit(LIMITS...group)`), USR không có endpoint nào cho sale nên không đặt ở đây.
+26. [đã chọn] Sửa mã nền kèm đợt này: test apps/api/test/user/dsh.spec.ts (DSH-TC-20261006-110330483, nền USR) giữ nguyên ý (DSH chỉ nhận số đếm) nhưng danh sách phương thức của `UserApi` nay có thêm `lookupForSale`, `isCustomer` cho SAL. Phần AUTH (role `sale`, `AuthApi.findCustomersByPhone`, chỉ mục `users_phone_idx`) ghi ở spec/epics/AUTH/report.md (mục 29 đến 33).
+27. [chưa làm] Màn tra cứu khách của USR không mở cho sale (đúng BR9); màn tra khách khi tạo đơn hộ do SAL dựng. Không có E2E mới cho USR đợt này (spec không có E2E mới).
+28. [đã chọn] Thêm ngoài spec: không có hành vi nào ngoài USR-REQ-20261006-101004117 BR9; test `AuthApi.findCustomersByPhone` nằm ở apps/api/test/user/sale-lookup.spec.ts (ghi ở báo cáo AUTH mục 31).
+29. [đã chọn] `clean_run`: CI chưa chạy.
+CI chưa chạy: dựng worktree sạch tại HEAD và cài lại phụ thuộc dùng chung `prisma generate`, CSDL và cổng với các agent đang code song song cùng đợt; lead chạy một lần sau khi các epic xong.
+30. [cần quyết] Sale tự phục vụ GIỐNG HỆT staff (sửa sau review AUTH/USR đợt bán hộ): `ALL_ROLES` của `apps/api/src/modules/user/http.ts` thêm `sale` (hồ sơ, sửa hồ sơ, đổi mật khẩu, ảnh đại diện; sổ địa chỉ vẫn chỉ customer), hai trang web `/account/profile`, `/account/password` mở cho `sale`; ma trận `spec/permissions-matrix.md` cột `sale` của bốn hàng USR (USR-REQ-20261006-101003419, ...3504, ...3591, ...3679) đặt `own`. Test: `apps/api/test/user/sale-lookup.spec.ts` (sale tự phục vụ), `apps/api/test/user/guard.spec.ts` (cột sale bằng cột staff, bỏ sale khỏi ma trận thì bị báo). Lệch spec: bốn requirement trên có `roles:` chưa gồm `sale`: cần `sdlc-impact` thêm `sale` vào `roles:` (lead làm; tài liệu requirement KHÔNG sửa ở đây). Chuỗi biên: `lookupForSale` nay từ chối NUL và email ngoài ASCII (Kelvin) bằng 400 `validation-failed` (xem báo cáo AUTH mục 39), test `sale-lookup.spec.ts`.

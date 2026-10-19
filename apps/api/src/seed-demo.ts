@@ -89,7 +89,9 @@ const REVIEW_TEXT: [number, string][] = [
 ];
 
 async function main() {
+  // eslint-disable-next-line no-restricted-syntax -- điểm vào CLI của seed demo, không phải mã ứng dụng
   if (process.env.APP_ENV !== 'dev') { process.stderr.write('seed-demo bị từ chối: chỉ chạy khi APP_ENV=dev\n'); process.exit(1); }
+  // eslint-disable-next-line no-restricted-syntax -- như trên
   const url = process.env.MIGRATE_DATABASE_URL;
   if (!url || !/localhost|127\.0\.0\.1/.test(url)) { process.stderr.write('seed-demo cần MIGRATE_DATABASE_URL trỏ localhost\n'); process.exit(1); }
   const client = new PrismaClient({ datasources: { db: { url } } });

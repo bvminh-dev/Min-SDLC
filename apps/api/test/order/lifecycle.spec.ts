@@ -363,7 +363,7 @@ describe('ORD chuyển trạng thái theo event', () => {
 
   it('ORD-TC-20261006-140000200: StockCommitFailed đến trước PaymentSucceeded hủy đơn pending do hệ thống (payment_status cancelled, was_paid false, audit system); PaymentSucceeded đến sau là no-op ở status (chỉ payment_status succeeded, không OrderPaid); audit lỗi thì rollback', async () => {
     const { a } = await people(t);
-    const o = await seedOrder(t, { user: a.id, status: 'pending', payment: 'processing', code: '7C9E1G3J5L7N' });
+    const o = await seedOrder(t, { user: a.id, status: 'pending', payment: 'processing', code: '7C9E1G3J5M7N' });
     const E1 = randomUUID();
     await deliver(t, 'StockCommitFailed', { order_id: o.id, reason: 'reservation_expired' }, E1);
     expect(await orderOf(t, o.id)).toMatchObject({ status: 'cancelled', cancel_reason: 'stock_commit_failed', cancelled_by_role: 'system', payment_status: 'cancelled' });

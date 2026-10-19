@@ -2,12 +2,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api } from './api';
 
-export type Role = 'customer' | 'staff' | 'admin';
+export type Role = 'customer' | 'staff' | 'sale' | 'admin';
 export interface User { id: string; email: string; full_name: string; role: Role; email_verified: boolean }
 type Status = 'loading' | 'ready' | 'error';
 interface Ctx { status: Status; user: User | null; refresh: () => Promise<void>; clear: () => void }
 
-export const ROLE_LABEL: Record<Role, string> = { customer: 'Khách hàng', staff: 'Nhân viên', admin: 'Quản trị' };
+export const ROLE_LABEL: Record<Role, string> = { customer: 'Khách hàng', staff: 'Nhân viên', sale: 'Bán hàng', admin: 'Quản trị' };
 /** Trang mặc định sau đăng nhập theo role (khi không có `next` hợp lệ). */
 export const homeFor = (role: Role): string => (role === 'admin' ? '/admin/users' : '/');
 

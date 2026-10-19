@@ -13,10 +13,10 @@ export { EventsService, ProgrammingError, SKIP, type DomainEventInput, type Even
 export { OutboxRelay } from './events/outbox-relay';
 export { JobRunner, type JobDef } from './jobs/job-runner';
 export { RetentionService } from './jobs/retention.service';
-export { IdempotencyService, Idempotent, DbTx } from './http/idempotency';
+export { IdempotencyService, Idempotent, DbTx, isIdempotencyKey, requestHash } from './http/idempotency';
 export { RateLimit, RateLimitService, SkipRateLimit, type RateLimitOptions, type Tier } from './http/rate-limit';
 export { paginate, toPage, paginationQuery, type PaginationQuery } from './http/pagination';
-export { Validate, ValidBody, ValidParams, ValidQuery } from './http/validation';
+export { RawStrings, Validate, ValidBody, ValidParams, ValidQuery } from './http/validation';
 export { Public, Roles, Action, SystemEndpoint, CurrentSession, SESSION_RESOLVER, SessionService, type SessionContext, type SessionResolver } from './http/session';
 export { auditRoutes, auditPermissions, parseMatrix, routeIds } from './http/route-audit';
 export { configureApp, nestLogger } from './http/app-setup';

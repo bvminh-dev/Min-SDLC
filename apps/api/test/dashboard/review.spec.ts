@@ -73,7 +73,7 @@ describe('DSH review: ranh giới đoạn 960 giờ và Cache-Control mọi endp
     expect(paidAgg.n).toBeGreaterThan(8);
   });
 
-  it(`DSH-TC-20261013-232147375 (DSH-REQ-20261006-105126549 Cache-Control): cả chín endpoint trả Cache-Control: private, no-store ở 200, lần đọc nguồn lẫn lần lấy từ bộ nhớ đệm, và ở 400 và 503`, async () => {
+  it(`DSH-TC-20261013-232147375 (DSH-REQ-20261006-105126549 Cache-Control): cả mười một endpoint trả Cache-Control: private, no-store ở 200, lần đọc nguồn lẫn lần lấy từ bộ nhớ đệm, và ở 400 và 503`, async () => {
     await paid(t, new Date('2026-10-05T03:00:00Z'), { amount: 100_000 });
     for (const path of ALL_PATHS) {
       for (const pass of ['nguồn', 'đệm']) {

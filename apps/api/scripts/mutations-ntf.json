@@ -713,7 +713,7 @@
    ],
    "tc": "NTF-SEC-20261006-103815605",
    "file": "src/modules/notification/notification.controller.ts",
-   "find": "@Get() @Action('Xem lịch sử thông báo của mình (lọc đọc hoặc chưa đọc, theo loại)') @Roles('customer', 'staff', 'admin')",
+   "find": "@Get() @Action('Xem lịch sử thông báo của mình (lọc đọc hoặc chưa đọc, theo loại)') @Roles('customer', 'staff', 'sale', 'admin')",
    "replace": "@Get() @Action('Xem lịch sử thông báo của mình (lọc đọc hoặc chưa đọc, theo loại)') @Roles('customer')",
    "test": "node scripts/run-jest.mjs test/notification/guard.spec.ts -t \"T1, T10 \\(SB-05, SB-07\\): mọi route\""
   },
@@ -724,8 +724,8 @@
    ],
    "tc": "NTF-TC-20261006-104303133",
    "file": "src/modules/notification/notification.controller.ts",
-   "find": "@Post('read-all') @Action('Đánh dấu tất cả thông báo đã đọc') @HttpCode(200) @Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.all)",
-   "replace": "@Post('read-all') @Action('Đánh dấu tất cả thông báo đã đọc') @HttpCode(200) @Roles('customer', 'staff', 'admin')",
+   "find": "@Post('read-all') @Action('Đánh dấu tất cả thông báo đã đọc') @HttpCode(200) @Roles('customer', 'staff', 'sale', 'admin') @RateLimit(LIMITS.all)",
+   "replace": "@Post('read-all') @Action('Đánh dấu tất cả thông báo đã đọc') @HttpCode(200) @Roles('customer', 'staff', 'sale', 'admin')",
    "test": "node scripts/run-jest.mjs test/notification/read.spec.ts -t \"NTF-TC-20261006-104303133\""
   },
   {
@@ -1085,8 +1085,8 @@
    "sb": [],
    "tc": "NTF-E2E-20261006-104226604",
    "file": "../web/components/NotificationBell.tsx",
-   "find": "setErrText(r.status === 429 ? 'Thử lại sau ít giây' : 'Không tải được thông báo.'); setView('error'); }\n  }, []);",
-   "replace": "setErrText('Lỗi'); setView('error'); }\n  }, []);",
+   "find": "setErrText(r.status === 429 ? 'Thử lại sau ít giây' : 'Không tải được'); setView('error'); }",
+   "replace": "setErrText('Lỗi'); setView('error'); }",
    "test": "node scripts/run-jest.mjs test/e2e/ntf.e2e.spec.ts -t \"NTF-E2E-20261006-104226604\""
   },
   {

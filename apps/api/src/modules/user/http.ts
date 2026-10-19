@@ -12,7 +12,7 @@ export class NoStoreInterceptor implements NestInterceptor {
   }
 }
 
-export const ALL_ROLES = ['customer', 'staff', 'admin'] as const;
+export const ALL_ROLES = ['customer', 'staff', 'sale', 'admin'] as const;
 
 /** Bảng bậc SB-14 cho USR (USR-API mục Giới hạn tần suất). */
 export const LIMITS = {

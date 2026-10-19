@@ -2,7 +2,7 @@
 screen: admin-dashboard
 epic: DSH
 status: approved
-covers: [DSH-REQ-20261006-105125714, DSH-REQ-20261006-105125811, DSH-REQ-20261006-105125901, DSH-REQ-20261006-105125995, DSH-REQ-20261006-105126089, DSH-REQ-20261006-105126180, DSH-REQ-20261006-105126549]
+covers: [DSH-REQ-20261006-105125714, DSH-REQ-20261006-105125811, DSH-REQ-20261006-105125901, DSH-REQ-20261006-105125995, DSH-REQ-20261006-105126089, DSH-REQ-20261006-105126180, DSH-REQ-20261006-105126549, DSH-REQ-20261015-092608812, DSH-REQ-20261015-092608849]
 roles: [admin]
 ---
 # Dashboard quản trị (tổng quan)
@@ -79,6 +79,8 @@ testid dạng `dsh-admin-dashboard-<phần-tử>`; mọi phần tử chỉ dành
 | dsh-admin-dashboard-rate-limit | Dải "Thao tác quá nhanh" (429) | admin | - | DSH-REQ-20261006-105126549 |
 | dsh-admin-dashboard-refund-alert | Dải cảnh báo hoàn tiền thất bại (chỉ khi N lớn hơn 0) | admin | - | DSH-REQ-20261006-105125714 |
 | dsh-admin-dashboard-refund-alert-link | Liên kết tới hàng đợi hoàn tiền (PAY) | admin | Mở hàng đợi hoàn tiền | DSH-REQ-20261006-105125714 |
+| dsh-admin-dashboard-link-sources | Nút Báo cáo theo nguồn đơn | admin | Mở `/admin/reports/sources` | DSH-REQ-20261015-092608812 |
+| dsh-admin-dashboard-link-sales | Nút Báo cáo theo sale | admin | Mở `/admin/reports/sales` | DSH-REQ-20261015-092608849 |
 | dsh-admin-dashboard-kpi-revenue | Ô Doanh thu thuần (số lớn, tabular-nums) | admin | - | DSH-REQ-20261006-105125714 |
 | dsh-admin-dashboard-kpi-revenue-detail | Dòng phụ Thu, Hoàn, số giao dịch | admin | - | DSH-REQ-20261006-105125714 |
 | dsh-admin-dashboard-kpi-revenue-report-link | Liên kết Xem báo cáo doanh thu | admin | Mở màn báo cáo doanh thu | DSH-REQ-20261006-105125714 |

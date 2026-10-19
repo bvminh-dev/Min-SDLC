@@ -1,6 +1,6 @@
 import type { Locator, Page } from 'playwright-core';
 import {
-  advance, alignWindow, count, ctl, dshFault, eventually, gateway, hasText, id, loginUi, orderState, paymentState, relay, reset, see, seedAddress, seedCart, seedCategory, seedOrder, seedPayment, seedProduct, seedRefund, seedShippingMethod,
+  advance, alignWindow, API, count, ctl, dshFault, dshOrdFault, eventually, gateway, hasText, id, loginUi, orderState, paymentState, relay, reset, see, seedAddress, seedCart, seedCategory, seedOrder, seedPayment, seedProduct, seedRefund, seedShippingMethod,
   seedStock, seedUser, startE2e, textOf, urlIs, withPage, type E2eEnv, GATE} from './support';
 
 // E2E của DSH chạy bằng Jest và playwright-core điều khiển Chromium thật: API thật (AppModule: mọi module thật) trên PostgreSQL thật (`ecom_e2e`), bản build production của web. Dữ liệu mồi (đơn, thanh toán, hoàn tiền,
@@ -9,8 +9,9 @@ import {
 let env: E2eEnv;
 beforeAll(async () => { env = await startE2e(); }, 420_000);
 afterAll(async () => { await env?.stop(); });
-beforeEach(async () => { await reset(); await dshFault('ok'); });
+beforeEach(async () => { await reset(); await dshFault('ok'); await dshOrdFault('ok'); });
 const e2e = (name: string, fn: (page: Page) => Promise<void>) => it(name, () => withPage(env.browser, fn), 180_000);
+const SO = 'dsh-analytics-sources', SA = 'dsh-analytics-sales';
 const D = 'dsh-admin-dashboard', R = 'dsh-analytics-revenue', O = 'dsh-analytics-orders', PR = 'dsh-analytics-products';
 const DAY = 86_400_000;
 const ymd = (ms: number): string => new Date(ms + 7 * 3_600_000).toISOString().slice(0, 10);
@@ -61,8 +62,7 @@ describe('E2E DSH (trình duyệt thật, API thật)', () => {
     await setRange(page, D, ymd(Date.now() - 5 * DAY), today());
     await hasText(id(page, `${D}-kpi-revenue`), '470.000 đ');
     const detail = await textOf(id(page, `${D}-kpi-revenue-detail`));
-    expect(detail).toContain('Thu 670.000 đ');
-    expect(detail).toContain('Hoàn 200.000 đ');
+    expect(detail).toContain('hoàn 200.000 đ'); // giao diện hiện hành không còn số Thu ở dòng chi tiết
     expect(detail).toContain('3 giao dịch');
     await hasText(id(page, `${D}-kpi-orders`), '45');
     await hasText(id(page, `${D}-kpi-orders-effective`), 'Hiệu lực 37');
@@ -90,7 +90,7 @@ describe('E2E DSH (trình duyệt thật, API thật)', () => {
     }
     await admin(page);
     await page.goto('/admin/dashboard');
-    await hasText(id(page, `${D}-refund-alert`), /^2 hoàn tiền thất bại cần xử lý/);
+    await hasText(id(page, `${D}-refund-alert`), /^2 hoàn tiền lỗi/);
     await id(page, `${D}-refund-alert-link`).click();
     await urlIs(page, /\/admin\/refunds\?status=failed/);
     await count(id(page, 'pay-admin-refund-queue-row'), 2);
@@ -176,7 +176,7 @@ describe('E2E DSH (trình duyệt thật, API thật)', () => {
     await page.goto('/admin/reports/revenue');
     await see(id(page, `${R}-total-net`));
     await setRange(page, R, '2026-07-01', '2026-09-30');
-    await hasText(id(page, `${R}-granularity`), /^Doanh thu theo tuần/);
+    await hasText(id(page, `${R}-granularity`), /^Theo tuần/);
     await count(id(page, `${R}-row`), 14);
     expect(await id(page, `${R}-row`).first().innerText()).toContain('29/06/2026');
     await hasText(id(page, `${R}-total-gross`), '600.000 đ');
@@ -191,7 +191,7 @@ describe('E2E DSH (trình duyệt thật, API thật)', () => {
     await count(id(page, `${R}-row`), 14);
     await setRange(page, R, '2026-09-01', '2026-09-30');
     await see(id(page, `${R}-empty`));
-    await hasText(id(page, `${R}-empty`), /^Không có giao dịch từ 01\/09\/2026 tới 30\/09\/2026/);
+    await hasText(id(page, `${R}-empty`), /^Chưa có giao dịch/);
     await hasText(id(page, `${R}-total-net`), '0 đ');
     await count(id(page, `${R}-range-error`), 0);
   });
@@ -237,7 +237,7 @@ describe('E2E DSH (trình duyệt thật, API thật)', () => {
     await id(page, `${PR}-range-apply`).click();
     await eventually(async () => { expect((await id(page, `${PR}-row`).allInnerTexts()).map((t) => /P(\d)/.exec(t)?.[1])).toEqual(['2', '1', '3']); });
     for (let i = 4; i <= 12; i++) await sell(await mk(`Sản phẩm P${i}`), 10_000, 1); // thêm 9 sản phẩm: tổng 12
-    await id(page, `${PR}-limit`).selectOption({ label: '5' });
+    await id(page, `${PR}-limit`).selectOption({ label: '5 dòng' });
     await count(id(page, `${PR}-row`), 5);
     await hasText(id(page, `${PR}-distinct`), '12');
     await hasText(id(page, `${PR}-units-total`), '99');
@@ -321,7 +321,7 @@ describe('E2E DSH (trình duyệt thật, API thật)', () => {
       await admin(adminPage);
       await adminPage.goto('/admin/dashboard');
       await hasText(id(adminPage, `${D}-kpi-revenue`), '180.000 đ');
-      expect(await textOf(id(adminPage, `${D}-kpi-revenue-detail`))).toMatch(/Thu 180\.000 đ · Hoàn 0 đ · 1 giao dịch/);
+      expect(await textOf(id(adminPage, `${D}-kpi-revenue-detail`))).toMatch(/1 giao dịch · hoàn 0 đ/);
       await hasText(id(adminPage, `${D}-kpi-orders`), '1');
       await hasText(id(adminPage, `${D}-kpi-products`), '1');
       await count(id(adminPage, `${D}-recent-orders-row`), 1);
@@ -336,13 +336,13 @@ describe('E2E DSH (trình duyệt thật, API thật)', () => {
     await admin(page);
     await page.goto('/admin/dashboard');
     await hasText(id(page, `${D}-kpi-revenue`), '0 đ');
-    expect(await textOf(id(page, `${D}-kpi-revenue-detail`))).toMatch(/Thu 0 đ · Hoàn 0 đ · 0 giao dịch/);
+    expect(await textOf(id(page, `${D}-kpi-revenue-detail`))).toMatch(/0 giao dịch · hoàn 0 đ/);
     await hasText(id(page, `${D}-kpi-orders`), '0');
     await hasText(id(page, `${D}-kpi-customers`), '0');
     await hasText(id(page, `${D}-kpi-products`), '0');
-    await hasText(id(page, `${D}-recent-orders-empty`), 'Chưa có đơn hàng nào');
+    await hasText(id(page, `${D}-recent-orders-empty`), 'Chưa có đơn');
     await count(id(page, `${D}-recent-orders-view-all`), 0);
-    await hasText(id(page, `${D}-low-stock-empty`), 'Không có sản phẩm tồn thấp');
+    await hasText(id(page, `${D}-low-stock-empty`), 'Đủ hàng');
     await count(id(page, `${D}-low-stock-view-all`), 0);
     await count(id(page, `${D}-refund-alert`), 0);
     const old = await pay({ amount: 200_000, status: 'refunded', paid_at: ago(40), created_at: ago(40) });
@@ -350,7 +350,7 @@ describe('E2E DSH (trình duyệt thật, API thật)', () => {
     await advance(61_000); // hết đệm 60 giây
     await id(page, `${D}-refresh`).click();
     await hasText(id(page, `${D}-kpi-revenue`), '-200.000 đ');
-    expect(await textOf(id(page, `${D}-kpi-revenue-detail`))).toMatch(/Thu 0 đ · Hoàn 200\.000 đ · 0 giao dịch/);
+    expect(await textOf(id(page, `${D}-kpi-revenue-detail`))).toMatch(/0 giao dịch · hoàn 200\.000 đ/);
   });
 
   e2e('DSH-E2E-20261006-110408086 (đang tải): khối doanh thu hiện khung chờ khi nguồn chậm rồi hiện số, các khối khác không chờ nó', async (page) => {
@@ -383,6 +383,118 @@ describe('E2E DSH (trình duyệt thật, API thật)', () => {
     await count(id(page, `${D}-kpi-revenue-error`), 0);
   });
 
+  // --- báo cáo theo nguồn và theo sale (đợt bán hộ): đơn hộ dựng qua cổng điều khiển (`ho`), lỗi ORD và AUTH gài qua `dshOrdFault`
+  const made = new Set<string>();
+  beforeEach(() => { made.clear(); });
+  /** Một sale (nếu chưa có) và `n` đơn hộ của sale đó vào nguồn `source`, tạo hôm kia, trạng thái `status`. */
+  async function hoOrders(n: number, o: { by?: string; name?: string; source?: string; status?: string; price?: number } = {}): Promise<void> {
+    const by = o.by ?? 'sale1@x.vn';
+    if (!made.has(by)) { made.add(by); await seedUser({ email: by, role: 'sale', name: o.name ?? 'Dũng' }); }
+    for (let i = 0; i < n; i++) await seedOrder({ status: o.status, created_at: ago(2), shipping: 30_000, items: [{ price: o.price ?? 70_000, qty: 1 }], ho: { created_by_email: by, role: 'sale', source: o.source ?? 'hotline', customer: { full_name: 'Khách lẻ', phone: '0900000000' } } });
+  }
+  /** Dùng hết 29 yêu cầu còn lại của cửa sổ 60 giây (1 yêu cầu đã dành cho lần mở trang): yêu cầu kế là thứ 31. */
+  const burn = (page: Page) => page.evaluate(async (u) => { for (let i = 0; i < 29; i++) await fetch(u, { credentials: 'include' }); }, `${API}/admin/dashboard/products`);
+
+  e2e('DSH-TC-20261015-093334777 (E2E báo cáo theo nguồn): dải quá nhiều yêu cầu hiện rồi biến mất, xuất CSV khóa nút rồi mở lại và báo lỗi', async (page) => {
+    await hoOrders(1);
+    await admin(page);
+    await alignWindow();
+    await page.goto('/admin/reports/sources');
+    await see(id(page, `${SO}-table`));
+    await burn(page);
+    await id(page, `${SO}-range-apply`).click();
+    await see(id(page, `${SO}-rate-limit`));
+    expect(await textOf(id(page, `${SO}-rate-limit`))).toMatch(/^Thao tác quá nhanh, thử lại sau \d+ giây/);
+    await see(id(page, `${SO}-table`)); // bảng cũ còn, không hiện 0
+    await hoOrders(1, { source: 'facebook' });
+    await advance(61_000); // sang cửa sổ mới, hết bộ nhớ đệm
+    await id(page, `${SO}-range-apply`).click();
+    await count(id(page, `${SO}-rate-limit`), 0);
+    await hasText(id(page, `${SO}-total-orders`), '2');
+    // xuất CSV khi ORD chậm: nút khóa kèm "Đang tạo tệp", tải xong thì mở lại
+    await page.route('**/admin/reports/sources?*format=csv*', async (route) => { await new Promise((r) => setTimeout(r, 1200)); await route.continue(); });
+    const dl = page.waitForEvent('download');
+    await id(page, `${SO}-export-csv`).click();
+    await see(id(page, `${SO}-export-loading`));
+    expect(await id(page, `${SO}-export-csv`).isDisabled()).toBe(true);
+    expect((await dl).suggestedFilename()).toMatch(/^bao-cao-nguon-don_\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.csv$/);
+    await count(id(page, `${SO}-export-loading`), 0);
+    await eventually(async () => { expect(await id(page, `${SO}-export-csv`).isDisabled()).toBe(false); });
+    await page.unroute('**/admin/reports/sources?*format=csv*');
+    // API trả 503: dòng lỗi, không tải tệp rỗng, nút mở lại
+    await advance(61_000);
+    await dshOrdFault('hang');
+    await id(page, `${SO}-export-csv`).click();
+    await see(id(page, `${SO}-export-error`));
+    await eventually(async () => { expect(await id(page, `${SO}-export-csv`).isDisabled()).toBe(false); });
+  });
+
+  e2e('DSH-TC-20261015-093334820 (E2E báo cáo theo sale): dải quá nhiều yêu cầu biến mất khi hết giờ, dòng website và nhãn tài khoản đã xóa', async (page) => {
+    await hoOrders(2);
+    await cust('khach-web@x.vn');
+    await seedOrder({ email: 'khach-web@x.vn', status: 'paid', payment: 'succeeded', created_at: ago(2), shipping: 30_000, items: [{ price: 50_000, qty: 1 }] });
+    await admin(page);
+    await alignWindow();
+    await page.goto('/admin/reports/sales');
+    await see(id(page, `${SA}-table`));
+    await burn(page);
+    await id(page, `${SA}-range-apply`).click();
+    await see(id(page, `${SA}-rate-limit`));
+    expect(await textOf(id(page, `${SA}-rate-limit`))).toMatch(/^Thao tác quá nhanh, thử lại sau \d+ giây/);
+    await see(id(page, `${SA}-row`)); // bảng cũ giữ nguyên
+    await advance(61_000);
+    await dshOrdFault('gone'); // không tra được tên người tạo: dòng vẫn đủ số đơn
+    await id(page, `${SA}-range-apply`).click();
+    await count(id(page, `${SA}-rate-limit`), 0);
+    await hasText(id(page, `${SA}-row-deleted`), '(tài khoản đã xóa)');
+    await hasText(id(page, `${SA}-row`), /2/);
+    const rows = await page.locator(`[data-testid="${SA}-table"] tbody tr`).evaluateAll((trs) => trs.map((tr) => tr.getAttribute('data-testid')));
+    expect(rows.at(-1)).toBe(`${SA}-website-row`); // dòng website luôn là dòng cuối
+    await hasText(id(page, `${SA}-website-row`), /Khách tự đặt \(website\)/);
+  });
+
+  e2e('DSH-TC-20261015-093334858 (E2E báo cáo theo nguồn): chú thích loại đơn và ghi chú giá trị đơn, 503 có Thử lại không vẽ bảng 0', async (page) => {
+    await hoOrders(1);
+    await hoOrders(2, { status: 'cancelled' });
+    await admin(page);
+    await page.goto('/admin/reports/sources');
+    await see(id(page, `${SO}-table`));
+    await hasText(id(page, `${SO}-excluded-note`), /hủy, hết hạn, hoàn về.*2/);
+    await hasText(id(page, `${SO}-revenue-note`), /giá trị đơn.*không phải tiền đã thu/);
+    await hasText(id(page, `${SO}-total-excluded`), '2');
+    await dshOrdFault('hang');
+    await advance(61_000);
+    await id(page, `${SO}-range-apply`).click();
+    await see(id(page, `${SO}-error`));
+    await see(id(page, `${SO}-retry`));
+    await count(id(page, `${SO}-table`), 0); // không vẽ bảng toàn 0
+    await dshOrdFault('ok');
+    await id(page, `${SO}-retry`).click();
+    await count(id(page, `${SO}-error`), 0);
+    await see(id(page, `${SO}-table`));
+    await hasText(id(page, `${SO}-total-orders`), '1');
+  });
+
+  e2e('DSH-TC-20261015-093334896 (E2E báo cáo theo sale): chú thích loại đơn và ghi chú giá trị đơn, lỗi tra tên 503 có Thử lại không hiện bảng thiếu tên', async (page) => {
+    await hoOrders(1);
+    await hoOrders(2, { status: 'cancelled', by: 'sale2@x.vn', name: 'Hà' });
+    await admin(page);
+    await page.goto('/admin/reports/sales');
+    await see(id(page, `${SA}-table`));
+    await hasText(id(page, `${SA}-excluded-note`), /hủy, hết hạn, hoàn về.*2/);
+    await hasText(id(page, `${SA}-revenue-note`), /giá trị đơn.*không phải tiền đã thu/);
+    await dshOrdFault('names');
+    await advance(61_000);
+    await id(page, `${SA}-range-apply`).click();
+    await see(id(page, `${SA}-error`));
+    await see(id(page, `${SA}-retry`));
+    await count(id(page, `${SA}-row`), 0); // không dòng nào thiếu tên
+    await dshOrdFault('ok');
+    await id(page, `${SA}-retry`).click();
+    await count(id(page, `${SA}-error`), 0);
+    await hasText(id(page, `${SA}-row`), /Dũng/);
+  });
+
   e2e('DSH-E2E-20261006-110408086 (hết phiên): phiên hết hạn khi đang xem thì hộp thoại của AUTH chặn, số đang hiển thị không bị thay bằng 0', async (page) => {
     await pay({ amount: 350_000, paid_at: ago(1), created_at: ago(1) });
     await admin(page);
@@ -395,4 +507,23 @@ describe('E2E DSH (trình duyệt thật, API thật)', () => {
     await id(page, 'auth-account-menu-session-expired-login').click();
     await urlIs(page, /\/login\?next=/);
   });
+
+  // YẾU (REV-DSH-16): kịch bản đã viết nhưng `it.skip`: E2E dùng chung CSDL `ecom_e2e` và bản build `apps/web/.next` với mọi agent đang chạy song song (đợt bán hộ), chạy chồng làm hỏng cả hai bên;
+  // bỏ `.skip` rồi chạy riêng một lần: `E2E_PORT_BASE=<cổng trống> pnpm test -- test/e2e/dsh.e2e.spec.ts -t "hai nút link"`.
+  it.skip('REV-DSH-16 (hai nút link): bấm "Báo cáo theo nguồn đơn" và "Báo cáo theo sale" ở dashboard thì tới đúng trang, giữ khoảng ngày đang xem (?from=&to=)', () => withPage(env.browser, async (page) => {
+    await admin(page);
+    const from = ymd(Date.now() - 5 * DAY), to = today();
+    await page.goto('/admin/dashboard');
+    await setRange(page, D, from, to);
+    for (const [name, table, path] of [['sources', SO, 'sources'], ['sales', SA, 'sales']] as const) {
+      await page.goto('/admin/dashboard');
+      await setRange(page, D, from, to);
+      await urlIs(page, new RegExp(`/admin/dashboard\\?.*from=${from}`));
+      await id(page, `${D}-link-${name}`).click();
+      await urlIs(page, new RegExp(`/admin/reports/${path}\\?(?=.*from=${from})(?=.*to=${to})`));
+      await see(id(page, `${table}-table`));
+      await valueIs(id(page, `${table}-range-from`), from); // báo cáo mở đúng khoảng của dashboard
+      await valueIs(id(page, `${table}-range-to`), to);
+    }
+  }), 180_000);
 });

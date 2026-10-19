@@ -5,11 +5,11 @@ import {
 } from '../platform';
 import { HOUR_MS } from './config';
 import { hashPassword, verifyPassword, type ArgonParams } from './crypto';
-import { fullNameField, normalizeEmail, passwordField, sameAsEmail } from './policy';
+import { fullNameField, isAsciiEmail, normalizeEmail, passwordField, sameAsEmail } from './policy';
 import { createSession, emitSessionRevoked } from './session.store';
 
-type Role = 'customer' | 'staff' | 'admin';
-const ROLES: readonly Role[] = ['customer', 'staff', 'admin'];
+type Role = 'customer' | 'staff' | 'sale' | 'admin';
+const ROLES: readonly Role[] = ['customer', 'staff', 'sale', 'admin'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID.test(v);
 const MAX_LIST = 200;
@@ -87,7 +87,18 @@ export class AuthApi {
     return isUuid(id) ? this.one(Prisma.sql`id = ${id}::uuid AND role = 'customer'`) : null;
   }
   async findCustomerByEmail(email: string): Promise<UserView | null> {
-    return typeof email === 'string' ? this.one(Prisma.sql`email = ${normalizeEmail(email)}::citext AND role = 'customer'`) : null;
+    return typeof email === 'string' && isAsciiEmail(email) ? this.one(Prisma.sql`email = ${normalizeEmail(email)}::citext AND role = 'customer'`) : null;
+  }
+  /**
+   * SAL qua `UserApi.lookupForSale` (tra khách tạo đơn hộ): khớp CHÍNH XÁC `phone` (bên gọi đã chuẩn hóa), chỉ role `customer`, mọi trạng thái; số không duy nhất nên trả tối đa `limit` (trần 20),
+   * mới nhất trước (`created_at DESC, id`, SAL-REQ lấy tối đa 5 khách gần nhất) để kết quả ổn định. Dùng chỉ mục `users_phone_idx`.
+   */
+  async findCustomersByPhone(phone: string, limit = 5): Promise<UserView[]> {
+    if (typeof phone !== 'string' || !phone) return [];
+    const take = Math.min(Math.max(1, Math.trunc(limit) || 5), 20);
+    return this.prisma.$queryRaw<ViewRow[]>`
+      SELECT id, email::text AS email, full_name, phone, avatar_url, role, status, (email_verified_at IS NOT NULL) AS email_verified, created_at
+      FROM users WHERE phone = ${phone} AND role = 'customer' ORDER BY created_at DESC, id LIMIT ${take}`;
   }
   private async one(cond: Prisma.Sql): Promise<UserView | null> {
     const rows = await this.prisma.$queryRaw<ViewRow[]>`

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Kiểm đột biến cho USR (sdlc-implement: epic có TC `lỗi` kiểm SEC thay "test fail đúng lý do"): gài một lỗi có chủ ý vào mã, chạy ĐÚNG test của nó,
 // kỳ vọng ĐỎ do khẳng định của chính test đó; luôn khôi phục tệp. In bảng cho report.md.
-// Dùng: node scripts/mutations-usr.mjs [--only <SB-xx>] [--check]   (chạy từ apps/api; cần `docker compose up -d db`; mục web cần Chromium cho E2E)
+// Dùng: node scripts/mutations-usr.mjs [--only <SB-xx>] [--match <chuỗi ID>] [--check]   (chạy từ apps/api; cần `docker compose up -d db`; mục web cần Chromium cho E2E)
 //   --check              không chạy test: kiểm CHÍNH bảng đột biến (đoạn cần phá còn tồn tại đúng một lần trong mã, test có thật và chứa ID,
 //                        mỗi SB `Kiểm bằng: test` của USR-SEC đều có ít nhất một đột biến). Đỏ khi bảng lỗi thời hoặc không đọc được USR-SEC.
 //   --print              in bảng ra JSON (test của công cụ dùng)
@@ -53,7 +53,7 @@ export const MUTATIONS = [
   { sb: 'SB-10', what: 'cache ảnh đại diện thành 1 năm và immutable (ảnh đã xóa còn phát cả năm, T19)', edits: [{ file: `${U}/config.ts`, from: "AVATAR_CACHE_CONTROL = 'public, max-age=300'", to: "AVATAR_CACHE_CONTROL = 'public, max-age=31536000, immutable'" }], test: J('test/user/avatar-cache.spec.ts'), id: 'USR-TC-20261007-080907024' },
   { sb: 'SB-10', what: 'job quét ảnh mồ côi vẫn chạy khi avatar_url không ánh xạ được về khóa (đổi gốc URL công khai xóa ảnh đang dùng, T19)', edits: [{ file: `${U}/avatar.service.ts`, from: 'if (keys.some((k) => !k)) throw', to: 'if (false as boolean) throw' }], test: J('test/user/avatar-cache.spec.ts'), id: 'USR-TC-20261007-080907024' },
   { sb: 'SB-12', what: 'cho ký tự điều khiển lọt vào họ tên và địa chỉ', edits: [{ file: `${U}/policy.ts`, from: 'const CONTROL = /[\\u0000-\\u001F\\u007F]/;', to: 'const CONTROL = /a^/;' }], test: J('test/user/profile.spec.ts'), id: 'USR-TC-20261006-102053348' },
-  { sb: 'SB-12', what: 'màn tra cứu của admin hiển thị họ tên bằng innerHTML', edits: [{ file: '../web/components/CustomerCard.tsx', from: '<h2 data-testid="usr-customer-lookup-name" style={{ margin: 0 }}>{c.full_name}</h2>', to: '<h2 data-testid="usr-customer-lookup-name" style={{ margin: 0 }} dangerouslySetInnerHTML={{ __html: c.full_name }} />' }], test: E2E, id: 'USR-E2E-20261006-102054475', slow: true },
+  { sb: 'SB-12', what: 'màn tra cứu của admin hiển thị họ tên bằng innerHTML', edits: [{ file: '../web/components/CustomerCard.tsx', from: '<h2 data-testid="usr-customer-lookup-name">{c.full_name}</h2>', to: '<h2 data-testid="usr-customer-lookup-name" dangerouslySetInnerHTML={{ __html: c.full_name }} />' }], test: E2E, id: 'USR-E2E-20261006-102054475', slow: true },
   { sb: 'SB-13', what: 'bỏ kiểm Origin (CSRF)', edits: [{ file: 'src/modules/platform/http/csrf.guard.ts', from: "if (!origin || !this.allowed.has(origin)) throw new DomainError('csrf_failed');", to: '' }], test: J('test/user/profile.spec.ts'), id: 'USR-TC-20261006-102053322' },
   { sb: 'SB-13', what: 'ngoại lệ multipart áp cho mọi route (không chỉ tải ảnh)', edits: [{ file: 'src/modules/platform/http/multipart.ts', from: "[...routes].some(([k, re]) => k.startsWith(`${req.method} `) && re.test(path)) && !!req.is('multipart/form-data')", to: "!!req.is('multipart/form-data')" }], test: J('test/user/avatar.spec.ts'), id: 'USR-TC-20261006-102053643' },
   { sb: 'SB-14', what: 'giới hạn tra cứu khách 30 thành 3000 mỗi phút', edits: [{ file: `${U}/http.ts`, from: "lookup: { tier: 'D', limit: 30,", to: "lookup: { tier: 'D', limit: 3000," }], test: J('test/user/lookup.spec.ts'), id: 'USR-TC-20261006-102054297' },
@@ -72,6 +72,12 @@ export const MUTATIONS = [
   { sb: 'SB-33', what: 'xóa địa chỉ mặc định không chuyển mặc định cho địa chỉ mới nhất', edits: [{ file: `${U}/address.service.ts`, from: 'if (cur.is_default) { // địa chỉ mới tạo nhất', to: 'if (false as boolean) { // địa chỉ mới tạo nhất' }], test: J('test/user/address.spec.ts'), id: 'USR-TC-20261006-102054099' },
   { sb: 'SB-33', what: 'đổi mặc định cũng đổi updated_at (CHK báo nhầm địa chỉ đã đổi)', edits: [{ file: `${U}/address.service.ts`, from: 'updated_at = ${contentChanged ? now : cur.updated_at}::timestamptz', to: 'updated_at = ${now}::timestamptz' }], test: J('test/user/address.spec.ts'), id: 'USR-TC-20261006-102053968' },
   { sb: 'SB-33', what: 'thêm địa chỉ is_default không bỏ mặc định cũ', edits: [{ file: `${U}/address.service.ts`, from: 'if (isDefault) await tx.$executeRaw`UPDATE addresses SET is_default = false', to: 'if (false as boolean) await tx.$executeRaw`UPDATE addresses SET is_default = false' }], test: J('test/user/address.spec.ts'), id: 'USR-TC-20261006-102053816' },
+  { sb: 'SB-05', what: 'sale gọi được endpoint tra cứu khách theo email của staff (sai ma trận)', edits: [{ file: `${U}/customer.controller.ts`, from: "@Get() @Action(BY_EMAIL) @Roles('staff', 'admin')", to: "@Get() @Action(BY_EMAIL) @Roles('staff', 'sale', 'admin')" }], test: J('test/user/sale-lookup.spec.ts'), id: 'USR-TC-20261015-094057672' },
+  { sb: 'SB-19', what: 'UserApi.lookupForSale không ghi audit', edits: [{ file: `${U}/lookup.service.ts`, from: 'await this.transactions.run((tx) => this.audit.record(tx, {\n      actor_id: actor.actor_id,', to: 'if ((0 as number) > 1) await this.transactions.run((tx) => this.audit.record(tx, {\n      actor_id: actor.actor_id,' }], test: J('test/user/sale-lookup.spec.ts'), id: 'USR-TC-20261015-094057707' },
+  { sb: 'SB-18', what: 'audit của lookupForSale ghi số điện thoại gốc thay vì băm', edits: [{ file: `${U}/lookup.service.ts`, from: 'target_id: sha256(input), after: { by, found: found.length', to: 'target_id: input, after: { by, found: found.length' }], test: J('test/user/sale-lookup.spec.ts'), id: 'USR-TC-20261015-094057707' },
+  { sb: 'SB-08', what: 'lookupForSale trả email và điện thoại không che', edits: [{ file: `${U}/lookup.service.ts`, from: 'email: maskEmail(u.email), phone: maskPhone(u.phone), status: u.status', to: 'email: u.email, phone: u.phone, status: u.status' }], test: J('test/user/sale-lookup.spec.ts'), id: 'USR-TC-20261015-094057707' },
+  { sb: 'SB-08', what: 'lookupForSale bỏ trần 5 kết quả theo điện thoại', edits: [{ file: `${U}/lookup.service.ts`, from: 'const MAX_SALE_ITEMS = 5;', to: 'const MAX_SALE_ITEMS = 500;' }], test: J('test/user/sale-lookup.spec.ts'), id: 'USR-TC-20261015-094057707' },
+  { sb: 'SB-05', what: 'UserApi.isCustomer đúng với mọi người dùng (không lọc role customer)', edits: [{ file: `${U}/lookup.service.ts`, from: '(await this.auth.findCustomerById(id)) !== null;', to: '(await this.auth.getUser(id)) !== null;' }], test: J('test/user/sale-lookup.spec.ts'), id: 'USR-TC-20261015-094057743' },
 ];
 
 const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : null);
@@ -140,8 +146,9 @@ if (process.argv.includes('--check')) {
 const { problems } = checkTable();
 if (problems.length) { process.stderr.write(`bảng đột biến lỗi thời, không chạy:\n${problems.join('\n')}\n`); process.exit(1); }
 const only = arg('--only');
+const match = arg('--match'); // chỉ chạy đột biến có ID test chứa chuỗi này (ví dụ 20261015: đợt bán hộ)
 const rows = [];
-for (const m of table.filter((x) => !only || x.sb === only)) {
+for (const m of table.filter((x) => (!only || x.sb === only) && (!match || x.id.includes(match)))) {
   const saved = new Map();
   try {
     for (const e of m.edits) {

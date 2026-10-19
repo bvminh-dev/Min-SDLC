@@ -1238,8 +1238,8 @@
    ],
    "tc": "DSH-TC-20261006-110332125",
    "file": "src/modules/dashboard/dashboard.service.ts",
-   "find": "after: { block, from: p.range?.from ?? null, to: p.range?.to ?? null },",
-   "replace": "after: { block, from: p.range?.from ?? null, to: p.range?.to ?? null, data: body },",
+   "find": "{ block, from: p.range?.from ?? null, to: p.range?.to ?? null }); // chỉ khối",
+   "replace": "{ block, from: p.range?.from ?? null, to: p.range?.to ?? null, data: p }); // chỉ khối",
    "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332125\""
   },
   {
@@ -1260,8 +1260,8 @@
    ],
    "tc": "DSH-TC-20261006-110330139",
    "file": "src/modules/dashboard/dashboard.service.ts",
-   "find": "    const body = await this.cache.get(cacheKey(block, p), () => this.load(block, p));\n    await this.record(session, block, p);",
-   "replace": "    await this.record(session, block, p);\n    const body = await this.cache.get(cacheKey(block, p), () => this.load(block, p));",
+   "find": "const { p, body } = await this.read(block, rawQuery);\n    await this.record(session, block, p);\n    return body;",
+   "replace": "const p = parseParams(block, rawQuery, this.clock.now());\n    await this.record(session, block, p);\n    const { body } = await this.read(block, rawQuery);\n    return body;",
    "test": "node scripts/run-jest.mjs test/dashboard/revenue.spec.ts -t \"DSH-TC-20261006-110330139\""
   },
   {
@@ -1271,8 +1271,8 @@
    ],
    "tc": "DSH-TC-20261006-110332377",
    "file": "src/modules/dashboard/dashboard.service.ts",
-   "find": "action: AUDIT_ACTION, trace_id: currentCorrelationId() ?? 'none' });",
-   "replace": "action: AUDIT_ACTION });",
+   "find": "this.log.error('audit-write-failed', { err, action, trace_id: currentCorrelationId() ?? 'none' });",
+   "replace": "this.log.error('audit-write-failed', { err, action });",
    "test": "node scripts/run-jest.mjs test/dashboard/common.spec.ts -t \"DSH-TC-20261006-110332377\""
   },
   {
@@ -1550,6 +1550,552 @@
    "find": "from: from || addDays(end, -29), to: end",
    "replace": "from: from || addDays(todayYmd(now), -29), to: end",
    "test": "node scripts/run-jest.mjs test/dashboard/web.spec.ts -t \"110330022 \\(giao diện\\)\""
+  },
+  {
+   "id": "T14 SB-05, SB-07: báo cáo theo nguồn mở cho staff (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261015-093255879",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Get('reports/sources') @Action('Xem hoặc xuất CSV báo cáo số đơn và doanh thu theo nguồn đơn') @Roles('admin')",
+   "replace": "@Get('reports/sources') @Action('Xem hoặc xuất CSV báo cáo số đơn và doanh thu theo nguồn đơn') @Roles('admin', 'staff')",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255879\""
+  },
+  {
+   "id": "T14 SB-05, SB-07: báo cáo theo sale mở cho sale (thêm vào @Roles)",
+   "sb": [
+    "SB-05",
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261015-093300101",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Roles('admin') @Header('Cache-Control', NO_STORE) @Validate({ query: ANY_QUERY })\n  reportSales",
+   "replace": "@Roles('admin', 'sale') @Header('Cache-Control', NO_STORE) @Validate({ query: ANY_QUERY })\n  reportSales",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093300101\""
+  },
+  {
+   "id": "T14 SB-07: báo cáo theo sale mở cho customer (thêm vào @Roles)",
+   "sb": [
+    "SB-07"
+   ],
+   "tc": "DSH-TC-20261015-093302456",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Roles('admin') @Header('Cache-Control', NO_STORE) @Validate({ query: ANY_QUERY })\n  reportSales",
+   "replace": "@Roles('admin', 'customer') @Header('Cache-Control', NO_STORE) @Validate({ query: ANY_QUERY })\n  reportSales",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-ho-common.spec.ts -t \"DSH-TC-20261015-093302456\""
+  },
+  {
+   "id": "T19 SB-13: báo cáo theo nguồn bỏ Cache-Control no-store",
+   "sb": [
+    "SB-13",
+    "SB-20"
+   ],
+   "tc": "DSH-TC-20261015-093302350",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "@Roles('admin') @Header('Cache-Control', NO_STORE) @Validate({ query: ANY_QUERY })\n  reportSources",
+   "replace": "@Roles('admin') @Validate({ query: ANY_QUERY })\n  reportSources",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-ho-common.spec.ts -t \"DSH-TC-20261015-093302350\""
+  },
+  {
+   "id": "T19 SB-13: CSV không còn là attachment (tên tệp đổi sang inline)",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "DSH-TC-20261015-093255763",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "`attachment; filename=",
+   "replace": "`inline; filename=",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255763\""
+  },
+  {
+   "id": "T19: Content-Type của tệp CSV thành text/plain",
+   "sb": [
+    "SB-13"
+   ],
+   "tc": "DSH-TC-20261015-093255763",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "res.setHeader('Content-Type', 'text/csv; charset=utf-8')",
+   "replace": "res.setHeader('Content-Type', 'text/plain; charset=utf-8')",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255763\""
+  },
+  {
+   "id": "T20 SB-11: yêu cầu có format vẫn trả JSON (bỏ nhánh CSV của controller)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261015-093255763",
+   "file": "src/modules/dashboard/dashboard.controller.ts",
+   "find": "if (!Object.prototype.hasOwnProperty.call(req.query, 'format')) return this.run(s, req, block);",
+   "replace": "return this.run(s, req, block);",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255763\""
+  },
+  {
+   "id": "T16: tệp CSV mất BOM UTF-8",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093255763",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "const BOM = '\\uFEFF';",
+   "replace": "const BOM = '';",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255763\""
+  },
+  {
+   "id": "T16: CSV kết thúc dòng bằng LF thay CRLF",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093255763",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "join('\\r\\n') + '\\r\\n'",
+   "replace": "join('\\n') + '\\n'",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255763\""
+  },
+  {
+   "id": "T16: dòng Tổng của CSV theo nguồn lấy doanh thu 0",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093255763",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "i.orders, i.revenue]), ['Tổng', '', totals.orders, totals.revenue]), rows: items.length",
+   "replace": "i.orders, i.revenue]), ['Tổng', '', totals.orders, 0]), rows: items.length",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255763\""
+  },
+  {
+   "id": "T16 SB-43: chống công thức của CSV bỏ ký tự đầu =",
+   "sb": [
+    "SB-43"
+   ],
+   "tc": "DSH-TC-20261015-093258155",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "const FORMULA_LEAD = /^[=+\\-@\\t\\r]/;",
+   "replace": "const FORMULA_LEAD = /^[+\\-@\\t\\r]/;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093258155\""
+  },
+  {
+   "id": "T16 SB-43: chống công thức của CSV bỏ ký tự đầu +",
+   "sb": [
+    "SB-43"
+   ],
+   "tc": "DSH-TC-20261015-093258155",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "const FORMULA_LEAD = /^[=+\\-@\\t\\r]/;",
+   "replace": "const FORMULA_LEAD = /^[=\\-@\\t\\r]/;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093258155\""
+  },
+  {
+   "id": "T16 SB-43: chống công thức của CSV bỏ ký tự đầu -",
+   "sb": [
+    "SB-43"
+   ],
+   "tc": "DSH-TC-20261015-093258155",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "const FORMULA_LEAD = /^[=+\\-@\\t\\r]/;",
+   "replace": "const FORMULA_LEAD = /^[=+@\\t\\r]/;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093258155\""
+  },
+  {
+   "id": "T16 SB-43: chống công thức của CSV bỏ ký tự đầu @",
+   "sb": [
+    "SB-43"
+   ],
+   "tc": "DSH-TC-20261015-093301648",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "const FORMULA_LEAD = /^[=+\\-@\\t\\r]/;",
+   "replace": "const FORMULA_LEAD = /^[=+\\-\\t\\r]/;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093301648\""
+  },
+  {
+   "id": "T16 SB-43: chống công thức của CSV bỏ ký tự đầu tab",
+   "sb": [
+    "SB-43"
+   ],
+   "tc": "DSH-TC-20261015-093258155",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "const FORMULA_LEAD = /^[=+\\-@\\t\\r]/;",
+   "replace": "const FORMULA_LEAD = /^[=+\\-@\\r]/;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093258155\""
+  },
+  {
+   "id": "T16 SB-43: chống công thức của CSV bỏ ký tự đầu CR",
+   "sb": [
+    "SB-43"
+   ],
+   "tc": "DSH-TC-20261015-093301648",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "const FORMULA_LEAD = /^[=+\\-@\\t\\r]/;",
+   "replace": "const FORMULA_LEAD = /^[=+\\-@\\t]/;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093301648\""
+  },
+  {
+   "id": "T16 SB-43: không còn thêm dấu nháy đơn trước ô nguy hiểm",
+   "sb": [
+    "SB-43"
+   ],
+   "tc": "DSH-TC-20261015-093258155",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "if (FORMULA_LEAD.test(s)) s = `'${s}`;",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093258155\""
+  },
+  {
+   "id": "T16: nháy kép trong ô không được nhân đôi (RFC 4180)",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093258155",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "`\"${s.replace(/\"/g, '\"\"')}\"`",
+   "replace": "`\"${s}\"`",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093258155\""
+  },
+  {
+   "id": "T16: ô có xuống dòng không được bao nháy kép (chỉ bao khi có dấu phẩy hoặc nháy)",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093301648",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "/[\",\\r\\n]/.test(s)",
+   "replace": "/[\",]/.test(s)",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093301648\""
+  },
+  {
+   "id": "T16: nửa cặp thay thế lẻ không được thay bằng U+FFFD",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093301648",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": ".replace(LONE_SURROGATE, '\\uFFFD')",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093301648\""
+  },
+  {
+   "id": "T16: ký tự NUL không bị bỏ khỏi ô",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093301648",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "let s = v.split('\\u0000').join('')",
+   "replace": "let s = v",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093301648\""
+  },
+  {
+   "id": "T16: dòng website của CSV theo sale điền mã người dùng",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093259813",
+   "file": "src/modules/dashboard/csv.ts",
+   "find": "[website.name, '', website.orders, website.revenue]",
+   "replace": "[website.name, 'website', website.orders, website.revenue]",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093259813\""
+  },
+  {
+   "id": "T16: báo cáo theo nguồn sắp doanh thu tăng dần",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093255510",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "b.revenue - a.revenue || cmp(a.code, b.code)",
+   "replace": "a.revenue - b.revenue || cmp(a.code, b.code)",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255510\""
+  },
+  {
+   "id": "T16: báo cáo theo nguồn bỏ khóa phụ theo mã khi cùng doanh thu",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093257900",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "b.revenue - a.revenue || cmp(a.code, b.code)",
+   "replace": "b.revenue - a.revenue",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093257900\""
+  },
+  {
+   "id": "T16: excluded_orders của báo cáo theo nguồn luôn 0",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093256387",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "excluded_orders: rep.excluded_orders } };\n  }\n\n  /**\n   * Báo cáo theo sale",
+   "replace": "excluded_orders: 0 } };\n  }\n\n  /**\n   * Báo cáo theo sale",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093256387\""
+  },
+  {
+   "id": "T16: totals.revenue của báo cáo theo nguồn cộng số đơn",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093255510",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "revenue: sum2(items, 'revenue'), excluded_orders: rep.excluded_orders } };\n  }\n\n  /**\n   * Báo cáo theo sale",
+   "replace": "revenue: sum2(items, 'orders'), excluded_orders: rep.excluded_orders } };\n  }\n\n  /**\n   * Báo cáo theo sale",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255510\""
+  },
+  {
+   "id": "T16: báo cáo theo sale gán đơn khách tự đặt cho một người (đảo nhánh created_by rỗng)",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093259634",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "if (i.created_by === null) {",
+   "replace": "if (i.created_by !== null) {",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093259634\""
+  },
+  {
+   "id": "T16: tài khoản không tra được tên thì dòng mang tên rỗng thay vì nhãn",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093301220",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "name: i.name ?? DELETED_LABEL",
+   "replace": "name: i.name ?? ''",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093301220\""
+  },
+  {
+   "id": "T16: totals.orders của báo cáo theo sale không cộng dòng website",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093259634",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "orders: sum2(items, 'orders') + web.orders",
+   "replace": "orders: sum2(items, 'orders')",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093259634\""
+  },
+  {
+   "id": "T16: totals.revenue của báo cáo theo sale không cộng dòng website",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093259634",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "revenue: sum2(items, 'revenue') + web.revenue",
+   "replace": "revenue: sum2(items, 'revenue')",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093259634\""
+  },
+  {
+   "id": "T16: báo cáo theo sale bỏ khóa phụ theo tên khi cùng doanh thu",
+   "sb": [],
+   "tc": "DSH-SEC-20261015-092608917",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "|| cmp(a.name, b.name) || cmp(a.user_id, b.user_id)",
+   "replace": "|| cmp(a.user_id, b.user_id)",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"T16: cùng doanh thu thì xếp theo tên\""
+  },
+  {
+   "id": "T16: báo cáo theo sale sắp doanh thu tăng dần",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093259634",
+   "file": "src/modules/dashboard/blocks.service.ts",
+   "find": "items.sort((a, b) => b.revenue - a.revenue ||",
+   "replace": "items.sort((a, b) => a.revenue - b.revenue ||",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093259634\""
+  },
+  {
+   "id": "T16: nhãn dòng website đổi chữ",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093259634",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "export const WEBSITE_LABEL = 'Khách tự đặt (website)';",
+   "replace": "export const WEBSITE_LABEL = 'Website';",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093259634\""
+  },
+  {
+   "id": "T20 SB-11: format=xlsx được nhận (không còn từ chối giá trị lạ)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261015-093256196",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "    else if (f !== undefined) errors.push(paramError('format', 'invalid_value'));\n",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093256196\""
+  },
+  {
+   "id": "T20 SB-11: báo cáo theo nguồn nhận tham số granularity",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261015-093256196",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "'report-sources': ['from', 'to', 'format']",
+   "replace": "'report-sources': ['from', 'to', 'format', 'granularity']",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093256196\""
+  },
+  {
+   "id": "T20 SB-11: báo cáo theo sale nhận tham số created_by",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261015-093300553",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "'report-sales': ['from', 'to', 'format']",
+   "replace": "'report-sales': ['from', 'to', 'format', 'created_by']",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093300553\""
+  },
+  {
+   "id": "T20: báo cáo theo nguồn không còn chặn khoảng 367 ngày (bỏ khỏi nhóm có khoảng ngày)",
+   "sb": [
+    "SB-11"
+   ],
+   "tc": "DSH-TC-20261015-093259275",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "'report-products', 'report-sources', 'report-sales'];",
+   "replace": "'report-products', 'report-sales'];",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093259275\""
+  },
+  {
+   "id": "T18: khóa đệm gồm cả format (CSV không dùng chung bản đệm với JSON)",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "DSH-TC-20261015-093258880",
+   "file": "src/modules/dashboard/policy.ts",
+   "find": "p.sort ?? '-', p.limit ?? '-'].join(':')",
+   "replace": "p.sort ?? '-', p.limit ?? '-', p.format ?? '-'].join(':')",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093258880\""
+  },
+  {
+   "id": "T17 SB-19: audit xuất CSV ghi nhầm hành động dashboard.view",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261015-093255763",
+   "file": "src/modules/dashboard/config.ts",
+   "find": "export const EXPORT_ACTION = 'dashboard.export';",
+   "replace": "export const EXPORT_ACTION = 'dashboard.view';",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255763\""
+  },
+  {
+   "id": "T17 SB-19: audit xuất CSV ghi số dòng 0",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261015-093255763",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "to: r.to, rows: csv.rows }",
+   "replace": "to: r.to, rows: 0 }",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255763\""
+  },
+  {
+   "id": "T17 SB-19: audit xuất CSV ghi nội dung số liệu (tổng doanh thu)",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261015-093255763",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "to: r.to, rows: csv.rows }",
+   "replace": "to: r.to, rows: csv.rows, revenue: totals.revenue }",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255763\""
+  },
+  {
+   "id": "T17 SB-19: ghi audit xuất lỗi thì chặn tải tệp",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261015-093302793",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "this.log.error('audit-write-failed', { err, action, trace_id: currentCorrelationId() ?? 'none' });",
+   "replace": "throw err;",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-ho-common.spec.ts -t \"DSH-TC-20261015-093302793\""
+  },
+  {
+   "id": "T17 SB-19: audit xuất CSV gộp theo phút như dashboard.view (bỏ qua lần xuất thứ hai trong phút)",
+   "sb": [
+    "SB-19"
+   ],
+   "tc": "DSH-TC-20261015-093302708",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "await this.audit.record(this.prisma, { actor_id: session.user_id, actor_role: 'admin', action, target_type: 'dashboard', target_id: block, after });",
+   "replace": "await this.audit.record(this.prisma, { actor_id: session.user_id, actor_role: 'admin', action, target_type: 'dashboard', target_id: block, after }, { coalesce: { window: 60 } });",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-ho-common.spec.ts -t \"DSH-TC-20261015-093302708\""
+  },
+  {
+   "id": "T19: tên tệp CSV theo sale đổi",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093259813",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "'bao-cao-sale'",
+   "replace": "'bao-cao-sales'",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093259813\""
+  },
+  {
+   "id": "T19: tên tệp CSV theo nguồn đổi",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093255763",
+   "file": "src/modules/dashboard/dashboard.service.ts",
+   "find": "'bao-cao-nguon-don'",
+   "replace": "'bao-cao-nguon'",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093255763\""
+  },
+  {
+   "id": "T16 ORD: báo cáo theo nguồn không loại đơn returned khỏi số đơn tính",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093256387",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "(count(o.id) FILTER (WHERE o.status NOT IN ('cancelled', 'expired', 'returned')))::int AS orders",
+   "replace": "(count(o.id) FILTER (WHERE o.status NOT IN ('cancelled', 'expired')))::int AS orders",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093256387\""
+  },
+  {
+   "id": "T16 ORD: báo cáo theo nguồn không loại đơn expired khỏi doanh thu",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093256387",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "COALESCE(sum(o.grand_total) FILTER (WHERE o.status NOT IN ('cancelled', 'expired', 'returned')), 0) AS revenue",
+   "replace": "COALESCE(sum(o.grand_total) FILTER (WHERE o.status NOT IN ('cancelled', 'returned')), 0) AS revenue",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093256387\""
+  },
+  {
+   "id": "T16 ORD: báo cáo theo nguồn bỏ đơn cancelled khỏi excluded_orders",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093256387",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "(count(o.id) FILTER (WHERE o.status IN ('cancelled', 'expired', 'returned')))::int AS excluded",
+   "replace": "(count(o.id) FILTER (WHERE o.status IN ('expired', 'returned')))::int AS excluded",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093256387\""
+  },
+  {
+   "id": "T16 ORD: khoảng ngày của báo cáo theo nguồn thành đóng hai đầu (<= to)",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093257392",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "o.created_at < ${range.to}::timestamptz GROUP BY s.id",
+   "replace": "o.created_at <= ${range.to}::timestamptz GROUP BY s.id",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093257392\""
+  },
+  {
+   "id": "T16 ORD: khoảng ngày của báo cáo theo nguồn bỏ đầu mút from (> from)",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093257392",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "o.created_at >= ${range.from}::timestamptz AND o.created_at < ${range.to}::timestamptz GROUP BY s.id",
+   "replace": "o.created_at > ${range.from}::timestamptz AND o.created_at < ${range.to}::timestamptz GROUP BY s.id",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093257392\""
+  },
+  {
+   "id": "T16 ORD: nguồn đã tắt không đơn vẫn hiện (bỏ lọc is_active hoặc orders > 0)",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093256965",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "rows.filter((r) => r.is_active || r.orders > 0)",
+   "replace": "rows.filter((r) => true)",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093256965\""
+  },
+  {
+   "id": "T16 ORD: nguồn đã tắt có đơn bị ẩn",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093256965",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "rows.filter((r) => r.is_active || r.orders > 0)",
+   "replace": "rows.filter((r) => r.is_active)",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sources.spec.ts -t \"DSH-TC-20261015-093256965\""
+  },
+  {
+   "id": "T16 ORD: báo cáo theo sale có dòng cho người chỉ có đơn bị loại",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093300869",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "items: rows.filter((r) => r.orders > 0).map((r) => ({ created_by",
+   "replace": "items: rows.map((r) => ({ created_by",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093300869\""
+  },
+  {
+   "id": "T16 ORD: báo cáo theo sale không loại đơn cancelled khỏi doanh thu",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093300869",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "COALESCE(sum(grand_total) FILTER (WHERE status NOT IN ('cancelled', 'expired', 'returned')), 0) AS revenue,\n             (count(*) FILTER (WHERE status IN ('cancelled', 'expired', 'returned')))::int AS excluded\n      FROM orders WHERE created_at >= ${range.from}::timestamptz AND created_at < ${range.to}::timestamptz GROUP BY created_by",
+   "replace": "COALESCE(sum(grand_total) FILTER (WHERE status NOT IN ('expired', 'returned')), 0) AS revenue,\n             (count(*) FILTER (WHERE status IN ('cancelled', 'expired', 'returned')))::int AS excluded\n      FROM orders WHERE created_at >= ${range.from}::timestamptz AND created_at < ${range.to}::timestamptz GROUP BY created_by",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093300869\""
+  },
+  {
+   "id": "T16 ORD: tên người tạo tra từng người thay vì theo lô (N+1)",
+   "sb": [],
+   "tc": "DSH-TC-20261015-093302229",
+   "file": "src/modules/order/internal.service.ts",
+   "find": "const names = await this.names(rows.map((r) => r.created_by));\n    return {\n      items: rows.filter((r) => r.orders > 0)",
+   "replace": "const names = new Map<string, string | null>(); for (const r of rows) for (const [k, v] of await this.names([r.created_by])) names.set(k, v);\n    return {\n      items: rows.filter((r) => r.orders > 0)",
+   "test": "node scripts/run-jest.mjs test/dashboard/report-sales.spec.ts -t \"DSH-TC-20261015-093302229\""
   }
  ]
 }

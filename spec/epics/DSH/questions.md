@@ -113,3 +113,14 @@ Nền đã áp dụng: AuditLog (E-02), `Order.paid_at` và `Refund.resolved_at`
 - Câu 25 (tải của truy vấn tổng hợp): giữ yêu cầu chỉ mục theo thời gian ở module chủ, đo tải thật ở implement; lý do: chưa có số đo.
 - Mục "Nền còn thiếu" 1, 4, 5, 6, 7: đánh đã chốt vì nền đợt 3 đã có SB-39, biến cấu hình ở ADR-007, giao diện đọc ở năm epic, bảng Giao diện module làm rõ `refunded`, ma trận quyền đã có dòng DSH; riêng PAY-API còn ghi gọn "bỏ `late_payment`", PAY cần khớp với nền (áp dụng ở epic, nền chưa mâu thuẫn).
 - DSH-SEC T11: điền SB-39 (nền đợt 3, R-44).
+
+## Nền cần sửa
+Đợt bán hàng hộ 2026-10-15 (báo cáo theo nguồn đơn, theo sale). Chạy tự động nên ghi để lead gom (`collect-foundation-requests.mjs`):
+- spec/architecture.md; bảng "Giao diện module" thêm hàng `DSH | ORD`: `OrderApi.getSourcesReport(range_utc)` và `OrderApi.getSalesReport(range_utc)` (hợp đồng ở DSH-API, mục Giao tiếp giữa module), và đoạn "Hành vi lỗi của các giao diện đọc cho DSH" nhận hai hàm mới (`range_utc` hợp lệ, lỗi CSDL ném nguyên); trung bình; DSH
+- spec/architecture.md; bảng "Giao diện module" thêm hàng `ORD | AUTH`: `AuthApi.getDisplayNames(user_ids)` để ORD tra tên người tạo đơn (cho `getSalesReport` và `getShipmentDisplay`), sửa ghi chú "ORD giữ AUTH ... không có lời gọi nào"; cao; DSH
+- spec/security-baseline.md; thêm quy tắc xuất CSV từ báo cáo (chống công thức `=`, `+`, `-`, `@`, tab, CR ở ô chữ, `Cache-Control: private, no-store`, audit `dashboard.export` mỗi lần, không gộp), cùng nguyên tắc SB-43; trung bình; DSH
+- spec/security-baseline.md; SB-19 liệt kê thêm thao tác audit `dashboard.export` (xuất tệp báo cáo tính lương) cạnh `dashboard.view`; thấp; DSH
+- spec/security-baseline.md; SB-14 bậc D: ghi DSH nay có 11 endpoint dùng chung một hạn mức 30 mỗi phút mỗi admin; thấp; DSH
+- spec/domain/entities.md; thêm vào đoạn AuditLog hành động `dashboard.export` (nếu có danh sách hành động); thấp; DSH
+- spec/permissions-matrix.md; gộp `spec/epics/DSH/permission-rows.md` (hai dòng báo cáo theo nguồn, theo sale, chỉ admin) bằng merge-matrix; thấp; DSH
+- spec/architecture.md; ADR-020: ghi báo cáo theo nguồn và theo sale là GIÁ TRỊ ĐƠN theo ORD (`grand_total`), không phải tiền PAY, nên không trái SB-23 (SB-23 chỉ áp cho số tiền thu và hoàn); thấp; DSH

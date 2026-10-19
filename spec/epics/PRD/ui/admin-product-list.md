@@ -2,8 +2,8 @@
 screen: admin-product-list
 epic: PRD
 status: approved
-covers: [PRD-REQ-20261006-095502655, PRD-REQ-20261006-095502550]
-roles: [staff, admin]
+covers: [PRD-REQ-20261006-095502655, PRD-REQ-20261006-095502550, PRD-REQ-20261015-092431191]
+roles: [staff, sale, admin]
 ---
 # Quản lý sản phẩm (danh sách quản trị)
 
@@ -19,18 +19,18 @@ Phương án đã chọn: **A** (bảng dữ liệu nhiều cột, hàng tab tr�
 Lý do chọn A: màn làm việc cả ngày của staff và admin, cần so sánh nhiều sản phẩm theo mã, giá, trạng thái.
 
 ```
-Header:  ☰  Sản phẩm                                              [ + Tạo sản phẩm ]   (admin)
+Header:  ☰  Sản phẩm                          [ Nhập từ Excel ]  [ + Tạo sản phẩm ]   (admin)
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
 │ [Tất cả] Nháp  Đang bán  Đã lưu trữ         [ Tìm tên hoặc mã sku... ]  Danh mục [▾]  │
 ├──────────────────────────────────────────────────────────────────────────────────────┤
-│ Mã      Tên               Danh mục  Giá        Trạng thái   Cập nhật         Mở       │
+│ Mã      Tên               Danh mục  Giá bán    Trạng thái   Cập nhật         Mở       │
 │ AT-001  Áo thun cotton    Áo        150.000 đ  (Đang bán)   06/10/2026 09:00  Sửa      │
 │ AT-002  Áo thun cổ tim    Áo        160.000 đ  (Nháp)       05/10/2026 17:20  Sửa      │
 │ QJ-010  Quần jean         Quần      320.000 đ  (Đã lưu trữ) 01/10/2026 08:02  Xem      │
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │ 1 tới 20 trong 25 sản phẩm                                              ‹ 1 2 ›        │
 └──────────────────────────────────────────────────────────────────────────────────────┘
-Staff thấy cột Mở là "Xem" và không có nút Tạo. Dưới sm: tab thành nút "Trạng thái: Tất cả · 25"; mỗi hàng hai tầng.
+Staff và sale thấy cột Mở là "Xem", không có nút Tạo và Nhập từ Excel. Danh sách không có cột giá vốn cho mọi role (giá vốn xem ở trang sửa, chỉ admin). Dưới sm: tab thành nút "Trạng thái: Tất cả · 25"; mỗi hàng hai tầng.
 ```
 
 ## Trạng thái
@@ -48,29 +48,31 @@ Staff thấy cột Mở là "Xem" và không có nút Tạo. Dưới sm: tab th�
 ## Phần tử
 | testid | Phần tử | Role | Hành động | Requirement |
 |---|---|---|---|---|
-| prd-admin-product-list-status-filter | Hàng tab lọc trạng thái (dropdown dưới sm) | staff, admin | Chọn Tất cả, Nháp, Đang bán, Đã lưu trữ | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-category-filter | Ô chọn danh mục (gồm danh mục con) | staff, admin | Lọc theo danh mục | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-search | Ô tìm theo tên hoặc mã sku | staff, admin | Gõ từ khóa | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-clear-filter | Nút Xóa bộ lọc (chỉ khi đang lọc hoặc tìm) | staff, admin | Về Tất cả | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-status-filter | Hàng tab lọc trạng thái (dropdown dưới sm) | staff, sale, admin | Chọn Tất cả, Nháp, Đang bán, Đã lưu trữ | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-category-filter | Ô chọn danh mục (gồm danh mục con) | staff, sale, admin | Lọc theo danh mục | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-search | Ô tìm theo tên hoặc mã sku | staff, sale, admin | Gõ từ khóa | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-clear-filter | Nút Xóa bộ lọc (chỉ khi đang lọc hoặc tìm) | staff, sale, admin | Về Tất cả | PRD-REQ-20261006-095502655 |
 | prd-admin-product-list-create | Nút Tạo sản phẩm | admin | Mở màn tạo sản phẩm nháp | PRD-REQ-20261006-095502550 |
-| prd-admin-product-list-row | Hàng sản phẩm | staff, admin | Bấm để mở chi tiết (admin sửa được, staff chỉ xem) | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-sku | Mã sku | staff, admin | - | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-name | Tên sản phẩm (đã escape) | staff, admin | - | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-price | Giá | staff, admin | - | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-status-badge | Badge trạng thái | staff, admin | - | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-updated-at | Ngày cập nhật | staff, admin | - | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-summary | Dòng "1 tới 20 trong 25 sản phẩm" | staff, admin | - | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-pagination | Phân trang ‹ 1 2 › (ẩn khi một trang) | staff, admin | Sang trang khác | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-loading | Khung chờ | staff, admin | - | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-empty | Vùng rỗng, chưa có sản phẩm | staff, admin | - | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-empty-filtered | Vùng rỗng do lọc | staff, admin | - | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-error | Banner lỗi (lỗi tải, hết phiên, không có quyền) | staff, admin | - | PRD-REQ-20261006-095502655 |
-| prd-admin-product-list-retry | Nút Thử lại | staff, admin | Tải lại danh sách | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-import | Nút Nhập từ Excel | admin | Mở màn import sản phẩm (admin-product-import) | PRD-REQ-20261015-092431191 |
+| prd-admin-product-list-row | Hàng sản phẩm | staff, sale, admin | Bấm để mở chi tiết (admin sửa được, staff chỉ xem) | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-sku | Mã sku | staff, sale, admin | - | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-name | Tên sản phẩm (đã escape) | staff, sale, admin | - | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-price | Giá bán | staff, sale, admin | - | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-status-badge | Badge trạng thái | staff, sale, admin | - | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-updated-at | Ngày cập nhật | staff, sale, admin | - | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-summary | Dòng "1 tới 20 trong 25 sản phẩm" | staff, sale, admin | - | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-pagination | Phân trang ‹ 1 2 › (ẩn khi một trang) | staff, sale, admin | Sang trang khác | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-loading | Khung chờ | staff, sale, admin | - | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-empty | Vùng rỗng, chưa có sản phẩm | staff, sale, admin | - | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-empty-filtered | Vùng rỗng do lọc | staff, sale, admin | - | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-error | Banner lỗi (lỗi tải, hết phiên, không có quyền) | staff, sale, admin | - | PRD-REQ-20261006-095502655 |
+| prd-admin-product-list-retry | Nút Thử lại | staff, sale, admin | Tải lại danh sách | PRD-REQ-20261006-095502655 |
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - **Audit (câu 2 của evon):** chưa có codebase, nên theo mặc định evon (flat, Tailwind, `references/tokens.css`); thư viện UI và CSS đã chốt Tailwind và `references/tokens.css` (questions.md câu 10; nền chưa có ADR, áp dụng ở epic).
 - Mẫu theo evon "Bảng dữ liệu" có tab trạng thái; dưới `sm` thành nút dropdown có nhãn "Trạng thái:" (luật chủ dự án số 7).
-- Staff chỉ xem: không có nút Tạo, cột Mở ghi "Xem" (PRD-REQ-20261006-095502655 BR1). Quyền kiểm lại ở server, giao diện chỉ ẩn nút.
+- Nhãn cột và ô giá là "Giá bán" (trường `price`); không có cột giá vốn ở danh sách cho mọi role (SB-42).
+- Staff và sale chỉ xem: không có nút Tạo và Nhập từ Excel, cột Mở ghi "Xem" (PRD-REQ-20261006-095502655 BR1). Quyền kiểm lại ở server, giao diện chỉ ẩn nút.
 - Ô tìm khớp tên và sku giống tìm kiếm công khai (PRD-REQ-20261006-095502718 BR3) nhưng ở đây thấy cả nháp và đã lưu trữ.
 - Màn không có hành động hàng loạt; công bố và ngừng bán nằm ở `admin-product-edit`.
 - Không viết code giao diện; dựng thật là việc của `implement`.

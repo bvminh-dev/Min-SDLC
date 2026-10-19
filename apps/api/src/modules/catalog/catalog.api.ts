@@ -5,6 +5,8 @@ import { ACTIVE_ID_LIMIT, BATCH_LIMIT, SEARCH_LIMIT, SEARCH_Q_MAX } from './conf
 import { UUID_RE, likeEscape, searchTerms } from './text';
 
 export interface CartProduct { product_id: string; name: string; sku: string; price: number; image_url: string | null; sellable: boolean }
+/** SAL (đơn hộ): `cost_price` chỉ ở trong tiến trình, KHÔNG BAO GIỜ ra HTTP cho sale, staff hay customer (SB-42). */
+export interface SaleProduct { product_id: string; name: string; sku: string; price: number; cost_price: number | null; sellable: boolean }
 export interface ProductSummary { product_id: string; name: string; sku: string; image_url: string | null; status: 'draft' | 'active' | 'archived' }
 
 const FIRST_IMAGE = Prisma.sql`(SELECT i.storage_key FROM product_images i WHERE i.product_id = p.id ORDER BY i.position LIMIT 1)`;
@@ -34,6 +36,18 @@ export class CatalogApi {
     const rows = await this.prisma.$queryRaw<{ id: string; name: string; sku: string; price: bigint; status: string; image_key: string | null }[]>`
       SELECT p.id, p.name, p.sku, p.price, p.status, ${FIRST_IMAGE} AS image_key FROM products p WHERE p.id = ANY(${list}::uuid[]) ORDER BY p.id`;
     return rows.map((r) => ({ product_id: r.id, name: r.name, sku: r.sku, price: Number(r.price), image_url: this.url(r.image_key), sellable: r.status === 'active' }));
+  }
+
+  /**
+   * SAL: dòng đơn hộ theo lô (tối đa 100 id, quá thì RangeError, không trả một phần); `sellable` = `active`; `cost_price` số hoặc null để SAL chụp `cost_snapshot` và truyền sang `OrderApi.createHo`.
+   * Không có endpoint HTTP tương ứng và kết quả không được đưa vào phản hồi của sale (PRD-API mục Giao tiếp giữa module, SB-42).
+   */
+  async getForSale(productIds: string[]): Promise<SaleProduct[]> {
+    const list = ids(productIds, BATCH_LIMIT, 'getForSale');
+    if (!list.length) return [];
+    const rows = await this.prisma.$queryRaw<{ id: string; name: string; sku: string; price: bigint; cost_price: bigint | null; status: string }[]>`
+      SELECT p.id, p.name, p.sku, p.price, p.cost_price, p.status FROM products p WHERE p.id = ANY(${list}::uuid[]) ORDER BY p.id`;
+    return rows.map((r) => ({ product_id: r.id, name: r.name, sku: r.sku, price: Number(r.price), cost_price: r.cost_price === null ? null : Number(r.cost_price), sellable: r.status === 'active' }));
   }
 
   /** INV, REV: tên, sku, ảnh đại diện và trạng thái theo lô (tối đa 100 id), mọi trạng thái. Không có giá hay mô tả. */

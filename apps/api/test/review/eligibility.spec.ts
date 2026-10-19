@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { truncateAll } from '../support/db';
+import { insertOrder } from '../support/order-fixture';
 import { freshClock, createReview, createRevApp, eligible, revCount, seedOrderItem, seedProduct, seedReview, world, call, type RevApp, type World } from '../support/rev';
 
 const SEC = 'REV-SEC-20261006-103618395';
@@ -26,6 +27,22 @@ describe('REV mua có xác minh (REV-REQ-20261006-103135296)', () => {
     await t.prisma.$executeRaw`UPDATE reviews SET status = 'published', published_at = now() WHERE id = ${r.body.id}::uuid`;
     const pub = await call(t, 'get', `/products/${w.p1}/reviews`);
     expect(pub.body.items[0].verified_purchase).toBe(true);
+  });
+
+  it(`REV-TC-20261015-092750203 đơn hộ không có user_id không có đánh giá (không lỗi 500), đơn hộ gắn tài khoản được đánh giá sau khi giao`, async () => {
+    const p2 = await prod(), p3 = await prod();
+    const now = t.clock.now(), ho = { createdBy: w.b.id, source: 'facebook', customer: { full_name: 'Khách lẻ', phone: '0901234567' } };
+    await insertOrder(t.prisma, now, { user: null, status: 'delivered', ho, code: 'HD261015-00001', items: [{ product: p2 }], deliveredAt: new Date(now.getTime() - 2 * DAY), createdAt: new Date(now.getTime() - 3 * DAY) });
+    expect(await elig(w.a.cookie, p2)).toMatchObject({ status: 200, body: { eligible: false, reason: 'not_purchased' } });
+    const r = await createReview(t, w.a.cookie, p2, { rating: 5 });
+    expect([r.status, r.body.code]).toEqual([409, 'not_purchased']);
+    expect(await revCount(t)).toBe(0);
+    const o = await insertOrder(t.prisma, now, { user: w.a.id, status: 'delivered', ho, code: 'HD261015-00002', items: [{ product: p3 }], deliveredAt: new Date(now.getTime() - 10 * DAY), createdAt: new Date(now.getTime() - 11 * DAY) });
+    expect((await elig(w.a.cookie, p3)).body).toEqual({ eligible: true, reason: null });
+    const ok = await createReview(t, w.a.cookie, p3, { rating: 4 });
+    expect(ok.status).toBe(201);
+    const [row] = await t.prisma.$queryRaw<{ order_id: string }[]>`SELECT i.order_id FROM reviews r JOIN order_items i ON i.id = r.order_item_id WHERE r.id = ${ok.body.id}::uuid`;
+    expect(row.order_id).toBe(o.id);
   });
 
   it(`REV-TC-20261006-104525491 ${SEC} T5: chưa mua, đơn chưa giao, đơn đã hủy và đơn của người khác đều không cho đánh giá`, async () => {

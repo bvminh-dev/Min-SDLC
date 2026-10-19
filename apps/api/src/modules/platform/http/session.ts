@@ -6,7 +6,7 @@ import { DomainError } from '../errors/registry';
 /** Phiên hiện tại. Platform định nghĩa, AUTH cài đặt (ADR-012, đảo phụ thuộc): platform không phụ thuộc AUTH. */
 export interface SessionContext {
   user_id: string;
-  role: 'customer' | 'staff' | 'admin';
+  role: 'customer' | 'staff' | 'sale' | 'admin';
   email_verified: boolean;
   /** ADR-012 (đợt 4): chỉ để hiển thị và ghi vết, không dùng phân quyền. */
   display_name?: string;

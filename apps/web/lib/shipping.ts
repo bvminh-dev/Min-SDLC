@@ -21,7 +21,11 @@ export interface Shipment {
 }
 export interface ShipmentView { order_code: string; shipment: Shipment | null; recipient?: Recipient | null }
 export interface HistoryEntry { at: string; event: 'status_changed' | 'tracking_changed'; status: ShipmentStatus; tracking_number?: string | null; reason_code?: string | null; note?: string | null }
-export interface ShipmentRow { order_code: string; status: ShipmentStatus; tracking_number: string | null; method_name: string; created_at: string; updated_at: string }
+/** Dòng danh sách (SHP-API GET /shipping/shipments): khóa luôn có mặt; `phone`, `address` null khi vận đơn đã giao, hoàn, hủy (server ẩn, SB-08 (d)); `created_by_name` null với đơn khách tự đặt. */
+export interface ShipmentRow {
+  order_code: string; status: ShipmentStatus; tracking_number: string | null; method_name: string; created_at: string; updated_at: string;
+  customer_name: string; phone: string | null; address: string | null; created_by_name: string | null;
+}
 export interface MethodRule { free_over?: number | null; surcharge?: number; surcharge_cities?: string[] }
 export interface ShippingMethod { id: string; name: string; base_fee: number; rule: MethodRule; is_active: boolean; version: number }
 

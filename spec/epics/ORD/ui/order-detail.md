@@ -3,9 +3,11 @@ screen: order-detail
 epic: ORD
 status: approved
 covers: [ORD-REQ-20261006-092320768, ORD-REQ-20261006-092320790, ORD-REQ-20261006-092320812, ORD-REQ-20261006-092320834]
-roles: [customer, staff, admin]
+roles: [customer, staff, sale, admin]
 ---
 # Chi tiết đơn hàng (kèm lịch sử trạng thái và hủy đơn)
+
+Sale dùng CÙNG trang này cho đơn do chính mình tạo (ORD-REQ-20261006-092320768 BR1): thấy mặt hàng, tiền, thanh toán, người nhận, mã vận đơn và lịch sử như chủ đơn, nhưng KHÔNG có nút Hủy đơn, không có liên kết Xem thanh toán và Theo dõi vận chuyển (dành cho customer). Khối nguồn, người tạo, ghi chú đơn, ghi chú dòng, khách của đơn hộ và giá vốn (admin) có testid riêng ở màn `order-detail-source`; hai tài liệu mô tả MỘT trang chi tiết và phải dựng cùng nhau. Đơn của sale khác hay đơn khách tự đặt: sale thấy khối 404 như đơn không tồn tại.
 
 ## Wireframe
 Phương án đã chọn: **A** (trang chi tiết bản ghi: cột chính gồm sản phẩm và lịch sử trạng thái, cột phải gồm giao hàng và thanh toán). **Đây là lựa chọn mặc định** (khuyến nghị theo `U3`), chưa có người dùng chọn.
@@ -57,7 +59,8 @@ Thứ tự lịch sử: cũ nhất trước theo ORD-REQ-20261006-092320812 BR7 
 | có dữ liệu | Đầu trang có mã, badge trạng thái, ngày tạo; khối sản phẩm, giao hàng, thanh toán, lịch sử đủ | ORD-REQ-20261006-092320768 |
 | đang tải | Khung chờ đúng hình các khối (dòng sản phẩm, vòng và đường nối của lịch sử) | ORD-REQ-20261006-092320768 |
 | lỗi | Banner "Không tải được đơn hàng." kèm "Thử lại" (lỗi mạng, 5xx hay 429 quá giới hạn tần suất); chưa đăng nhập (401) về đăng nhập | ORD-REQ-20261006-092320768 |
-| không tìm thấy | Khối căn giữa: "404" mờ, "Không tìm thấy đơn hàng", một câu vì sao, nút đặc "Về danh sách đơn hàng". Cùng một giao diện cho đơn của người khác, đơn không tồn tại và mã sai định dạng, không để lộ khác biệt (customer) | ORD-REQ-20261006-092320768 |
+| sale xem đơn của mình | Cùng bố cục như chủ đơn: có khối Giao hàng đầy đủ (người nhận, điện thoại, địa chỉ), lịch sử, thanh toán; không có nút Hủy đơn, không có hai liên kết của customer | ORD-REQ-20261006-092320768 |
+| không tìm thấy | Khối căn giữa: "404" mờ, "Không tìm thấy đơn hàng", một câu vì sao, nút đặc "Về danh sách đơn hàng". Cùng một giao diện cho đơn của người khác, đơn không tồn tại và mã sai định dạng, không để lộ khác biệt (customer; sale với đơn của sale khác hoặc đơn khách tự đặt) | ORD-REQ-20261006-092320768 |
 | staff không thấy địa chỉ | Khối Giao hàng của staff hiện dòng "Thông tin người nhận được ẩn theo chính sách dữ liệu", không có người nhận, điện thoại, địa chỉ | ORD-REQ-20261006-092320768 |
 | đơn chưa giao | Không có mã vận đơn (chỉ hiện từ khi đơn đã giao cho vận chuyển) | ORD-REQ-20261006-092320768 |
 | đơn online chờ thanh toán | Khối Thanh toán hiện "Hạn thanh toán" (từ `payment_expires_at`); đơn COD và đơn đã rời "Chờ xử lý" không có dòng này | ORD-REQ-20261006-092320768 |
@@ -79,24 +82,24 @@ Thứ tự lịch sử: cũ nhất trước theo ORD-REQ-20261006-092320812 BR7 
 ## Phần tử
 | testid | Phần tử | Role | Hành động | Requirement |
 |---|---|---|---|---|
-| ord-order-detail-back-link | Liên kết Quay lại danh sách | customer, staff, admin | Về danh sách đơn của role đó | ORD-REQ-20261006-092320768 |
-| ord-order-detail-code | Mã đơn trong đầu trang (font-mono) | customer, staff, admin | - | ORD-REQ-20261006-092320768 |
-| ord-order-detail-created-at | Thời điểm tạo đơn | customer, staff, admin | - | ORD-REQ-20261006-092320768 |
-| ord-order-detail-status-badge | Badge trạng thái đơn | customer, staff, admin | - | ORD-REQ-20261006-092320790 |
-| ord-order-detail-items | Bảng sản phẩm (tên, đơn giá, số lượng, thành tiền theo snapshot) | customer, staff, admin | - | ORD-REQ-20261006-092320768 |
-| ord-order-detail-totals | Tạm tính, giảm giá, phí giao hàng, tổng cộng | customer, staff, admin | - | ORD-REQ-20261006-092320768 |
-| ord-order-detail-payment | Khối thanh toán (phương thức, trạng thái thanh toán) | customer, staff, admin | - | ORD-REQ-20261006-092320768 |
-| ord-order-detail-address | Khối người nhận, điện thoại, địa chỉ giao | customer, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-back-link | Liên kết Quay lại danh sách | customer, staff, sale, admin | Về danh sách đơn của role đó | ORD-REQ-20261006-092320768 |
+| ord-order-detail-code | Mã đơn trong đầu trang (font-mono) | customer, staff, sale, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-created-at | Thời điểm tạo đơn | customer, staff, sale, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-status-badge | Badge trạng thái đơn | customer, staff, sale, admin | - | ORD-REQ-20261006-092320790 |
+| ord-order-detail-items | Bảng sản phẩm (tên, đơn giá, số lượng, thành tiền theo snapshot) | customer, staff, sale, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-totals | Tạm tính, giảm giá, phí giao hàng, tổng cộng | customer, staff, sale, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-payment | Khối thanh toán (phương thức, trạng thái thanh toán) | customer, staff, sale, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-address | Khối người nhận, điện thoại, địa chỉ giao | customer, sale, admin | - | ORD-REQ-20261006-092320768 |
 | ord-order-detail-address-hidden | Dòng "ẩn theo chính sách dữ liệu" thay khối địa chỉ | staff | - | ORD-REQ-20261006-092320768 |
-| ord-order-detail-tracking | Mã vận đơn (khi đã giao cho vận chuyển) | customer, staff, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-tracking | Mã vận đơn (khi đã giao cho vận chuyển) | customer, staff, sale, admin | - | ORD-REQ-20261006-092320768 |
 | ord-order-detail-tracking-link | Liên kết Theo dõi vận chuyển (khi có mã vận đơn) | customer | Mở màn theo dõi vận chuyển của SHP | ORD-REQ-20261006-092320768 |
-| ord-order-detail-payment-expires | Dòng Hạn thanh toán (đơn online ở Chờ xử lý) | customer, staff, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-payment-expires | Dòng Hạn thanh toán (đơn online ở Chờ xử lý) | customer, staff, sale, admin | - | ORD-REQ-20261006-092320768 |
 | ord-order-detail-payment-link | Liên kết Xem thanh toán | customer | Mở màn thanh toán của PAY | ORD-REQ-20261006-092320768 |
-| ord-order-detail-history | Khối lịch sử trạng thái (timeline) | customer, staff, admin | - | ORD-REQ-20261006-092320812 |
-| ord-order-detail-history-item | Một dòng lịch sử: thời điểm và trạng thái (gồm dòng giao thất bại) | customer, staff, admin | - | ORD-REQ-20261006-092320812 |
-| ord-order-detail-history-reason | Lý do trong dòng lịch sử (lý do hủy hoặc lý do giao thất bại, chỉ khi có) | customer, staff, admin | - | ORD-REQ-20261006-092320812 |
-| ord-order-detail-history-error | Banner lỗi riêng của khối lịch sử | customer, staff, admin | - | ORD-REQ-20261006-092320812 |
-| ord-order-detail-history-retry | Nút Thử lại của lịch sử | customer, staff, admin | Tải lại lịch sử | ORD-REQ-20261006-092320812 |
+| ord-order-detail-history | Khối lịch sử trạng thái (timeline) | customer, staff, sale, admin | - | ORD-REQ-20261006-092320812 |
+| ord-order-detail-history-item | Một dòng lịch sử: thời điểm và trạng thái (gồm dòng giao thất bại) | customer, staff, sale, admin | - | ORD-REQ-20261006-092320812 |
+| ord-order-detail-history-reason | Lý do trong dòng lịch sử (lý do hủy hoặc lý do giao thất bại, chỉ khi có) | customer, staff, sale, admin | - | ORD-REQ-20261006-092320812 |
+| ord-order-detail-history-error | Banner lỗi riêng của khối lịch sử | customer, staff, sale, admin | - | ORD-REQ-20261006-092320812 |
+| ord-order-detail-history-retry | Nút Thử lại của lịch sử | customer, staff, sale, admin | Tải lại lịch sử | ORD-REQ-20261006-092320812 |
 | ord-order-detail-cancel-button | Nút Hủy đơn (ẩn khi không hủy được) | customer, admin | Mở hộp thoại hủy | ORD-REQ-20261006-092320834 |
 | ord-order-detail-cancel-dialog | Hộp thoại xác nhận hủy | customer, admin | - | ORD-REQ-20261006-092320834 |
 | ord-order-detail-cancel-refund-notice | Dòng thông báo hoàn tiền tự động toàn phần (chỉ đơn paid) | customer, admin | - | ORD-REQ-20261006-092320834 |
@@ -106,15 +109,15 @@ Thứ tự lịch sử: cũ nhất trước theo ORD-REQ-20261006-092320812 BR7 
 | ord-order-detail-cancel-error | Vùng lỗi trong hộp thoại (409, 400, 403, 401, 429) | customer, admin | - | ORD-REQ-20261006-092320834 |
 | ord-order-detail-cancel-reload | Nút Tải lại đơn trong lỗi 409 | customer, admin | Tải lại đơn | ORD-REQ-20261006-092320834 |
 | ord-order-detail-cancel-success | Thông báo "Đã hủy đơn" | customer, admin | - | ORD-REQ-20261006-092320834 |
-| ord-order-detail-loading | Khung chờ | customer, staff, admin | - | ORD-REQ-20261006-092320768 |
-| ord-order-detail-error | Banner lỗi toàn trang | customer, staff, admin | - | ORD-REQ-20261006-092320768 |
-| ord-order-detail-retry | Nút Thử lại toàn trang | customer, staff, admin | Tải lại đơn | ORD-REQ-20261006-092320768 |
-| ord-order-detail-notfound | Khối "Không tìm thấy đơn hàng" (404) | customer, staff, admin | - | ORD-REQ-20261006-092320768 |
-| ord-order-detail-notfound-back | Nút đặc Về danh sách đơn hàng | customer, staff, admin | Về danh sách | ORD-REQ-20261006-092320768 |
+| ord-order-detail-loading | Khung chờ | customer, staff, sale, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-error | Banner lỗi toàn trang | customer, staff, sale, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-retry | Nút Thử lại toàn trang | customer, staff, sale, admin | Tải lại đơn | ORD-REQ-20261006-092320768 |
+| ord-order-detail-notfound | Khối "Không tìm thấy đơn hàng" (404) | customer, staff, sale, admin | - | ORD-REQ-20261006-092320768 |
+| ord-order-detail-notfound-back | Nút đặc Về danh sách đơn hàng | customer, staff, sale, admin | Về danh sách | ORD-REQ-20261006-092320768 |
 
 ## Ghi chú thiết kế (mặc định, chưa duyệt)
 - **Báo trước theo skill evon:** skill giao diện chưa được dạy cho cửa hàng online phía người mua; phần dành cho customer vẫn làm theo mẫu "Trang chi tiết bản ghi" và `timeline.md`, kết quả có thể chưa đẹp bằng màn trong app.
-- Màn dùng chung ba role nên phần tử chỉ dành cho một số role ghi đúng role đó: Hủy đơn chỉ customer và admin (không có cho staff, ORD-REQ-20261006-092320834 BR1); khối địa chỉ chỉ customer và admin, staff có dòng ẩn (SB-08 ngoại lệ (c), K-13; staff xem người nhận ở màn bàn giao của SHP). Hai liên kết Xem thanh toán và Theo dõi vận chuyển chỉ cho customer vì màn đích của PAY, SHP dành cho customer.
+- Màn dùng chung bốn role nên phần tử chỉ dành cho một số role ghi đúng role đó: Hủy đơn chỉ customer và admin (không có cho staff và sale, ORD-REQ-20261006-092320834 BR1); khối địa chỉ cho customer, sale (đơn của mình, SB-08 (e)) và admin, staff có dòng ẩn (SB-08 ngoại lệ (c), K-13; staff xem người nhận ở màn bàn giao của SHP). Hai liên kết Xem thanh toán và Theo dõi vận chuyển chỉ cho customer (sale không có) vì màn đích của PAY, SHP dành cho customer.
 - Nút Hủy đơn hiện theo `can_cancel` của API (ORD-API; `can_cancel` là false cả khi đơn đã được SHP khóa bàn giao, R-04); việc kiểm quyền thật nằm ở server, giao diện chỉ phản ánh.
 - Hộp thoại hủy có ô nhập nên bấm ra ngoài không đóng (luật `I20` của evon). Hủy là thao tác không hoàn tác nên có bước xác nhận.
 - Đơn paid bị hủy có thông báo "hoàn tiền tự động toàn phần" (K-03d, SB-24); **ORD không dựng màn hay trạng thái hoàn tiền**: kết quả hoàn tiền hiện ở khối Hoàn tiền của màn thanh toán của PAY (PAY-REQ-20261006-103111122), customer vào qua liên kết `ord-order-detail-payment-link`.

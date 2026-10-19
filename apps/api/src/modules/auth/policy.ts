@@ -7,6 +7,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const reqStr = (extra?: object) => z.string({ required_error: 'required', invalid_type_error: 'invalid_format', ...extra });
 
 export const normalizeEmail = (s: string): string => s.trim().toLowerCase();
+/** citext của PostgreSQL gấp ký hiệu Kelvin (U+212A) thành `k`: khi TRA tài khoản, email THÔ (kiểm trước `toLowerCase`, vì nó cũng đổi Kelvin thành `k`) chứa ký tự ngoài ASCII không khớp ai (SB-11). */
+export const isAsciiEmail = (s: string): boolean => /^[\x20-\x7e]*$/.test(s.trim());
 
 export const emailField = reqStr()
   .transform(normalizeEmail)
@@ -45,12 +47,12 @@ export const emailOnlyBody = closedObject({ email: emailField });
 export const tokenBody = closedObject({ token: tokenField });
 export const resetBody = closedObject({ token: tokenField, new_password: passwordField });
 export const lockBody = closedObject({ reason: z.string({ invalid_type_error: 'invalid_format' }).max(200, 'too_long').optional() });
-export const roleBody = closedObject({ role: z.enum(['customer', 'staff', 'admin'], { errorMap: (i, c) => ({ message: i.code === 'invalid_type' && c.data === undefined ? 'required' : 'invalid_format' }) }) });
+export const roleBody = closedObject({ role: z.enum(['customer', 'staff', 'sale', 'admin'], { errorMap: (i, c) => ({ message: i.code === 'invalid_type' && c.data === undefined ? 'required' : 'invalid_format' }) }) });
 export const idParams = z.object({ id: z.string() }).strict();
 export const adminListQuery = z.object({
   page: z.string().regex(/^\d+$/, 'invalid_format').transform(Number).pipe(z.number().int().min(1, 'invalid_format')).optional().transform((v) => v ?? 1),
   limit: z.string().regex(/^\d+$/, 'invalid_format').transform(Number).pipe(z.number().int().min(1, 'invalid_format').max(100, 'too_long')).optional().transform((v) => v ?? 20),
-  role: z.enum(['customer', 'staff', 'admin'], { errorMap: () => ({ message: 'invalid_format' }) }).optional(),
+  role: z.enum(['customer', 'staff', 'sale', 'admin'], { errorMap: () => ({ message: 'invalid_format' }) }).optional(),
   status: z.enum(['active', 'locked'], { errorMap: () => ({ message: 'invalid_format' }) }).optional(),
   q: z.string().min(3, 'too_short').max(254, 'too_long').optional(),
 }).strict();

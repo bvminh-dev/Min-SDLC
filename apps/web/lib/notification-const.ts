@@ -16,7 +16,7 @@ export const TYPE_LABEL: Record<NotifType, string> = {
 };
 const CUSTOMER_TYPES: NotifType[] = ['order_created', 'order_confirmed', 'payment_succeeded', 'payment_failed', 'order_cancelled', 'order_expired', 'refund_succeeded', 'order_shipped', 'shipment_failed', 'order_delivered', 'order_returned', 'welcome', 'password_changed'];
 /** Loại trong ô lọc theo role: customer chỉ các loại nó nhận được; staff thêm `low_stock`; admin thêm `low_stock` và `refund_failed` (NTF-REQ-20261006-103209168 BR1 đến BR3). */
-export const typesFor = (role: 'customer' | 'staff' | 'admin' | undefined): NotifType[] =>
+export const typesFor = (role: 'customer' | 'staff' | 'sale' | 'admin' | undefined): NotifType[] =>
   role === 'admin' ? [...CUSTOMER_TYPES, 'low_stock', 'refund_failed'] : role === 'staff' ? [...CUSTOMER_TYPES, 'low_stock'] : CUSTOMER_TYPES;
 export const isType = (v: string | null | undefined): v is NotifType => typeof v === 'string' && Object.prototype.hasOwnProperty.call(TYPE_LABEL, v);
 

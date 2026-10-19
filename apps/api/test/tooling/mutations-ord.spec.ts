@@ -23,16 +23,16 @@ describe('Bảng đột biến ORD được kiểm lại bằng `check-mutations
   it('ORD-SEC-20261006-092703802: bảng thật hợp lệ và phủ mọi SB kiểm bằng test của ORD-SEC', () => {
     const r = run(process.execPath, ['scripts/check-mutations.mjs', TABLE, '--sec', SEC], { cwd: API_DIR });
     expect([r.status, r.stderr]).toEqual([0, '']);
-    for (const sb of ['SB-05', 'SB-06', 'SB-07', 'SB-08', 'SB-11', 'SB-12', 'SB-13', 'SB-14', 'SB-18', 'SB-19', 'SB-20', 'SB-22', 'SB-23', 'SB-24', 'SB-27', 'SB-35']) expect(r.stdout).toContain(sb);
+    for (const sb of ['SB-05', 'SB-06', 'SB-07', 'SB-08', 'SB-11', 'SB-12', 'SB-13', 'SB-14', 'SB-18', 'SB-19', 'SB-20', 'SB-22', 'SB-23', 'SB-24', 'SB-27', 'SB-31', 'SB-35', 'SB-42', 'SB-44', 'SB-45']) expect(r.stdout).toContain(sb);
     const t = real();
-    expect(t.mutations.length).toBeGreaterThanOrEqual(90);
+    expect(t.mutations.length).toBeGreaterThanOrEqual(120);
     for (const m of t.mutations) { expect(m.tc).toMatch(/^ORD-(TC|E2E)-\d{8}-\d{9}$/); expect(m.test).toContain(m.tc); } // lệnh chạy đúng một TC, không chạy rộng
     expect(t.mutations.filter((m) => m.equivalent)).toHaveLength(0); // mọi đột biến phải bị bắt, không có ca tương đương
     expect(t.mutations.some((m) => m.file.startsWith('src/modules/platform/'))).toBe(true); // phủ cả nền sửa kèm (thứ tự ghi của outbox)
     expect(t.mutations.some((m) => m.file.startsWith('../web/'))).toBe(true); // và giao diện (escape lý do hủy)
     expect(t.mutations.some((m) => m.file.startsWith('prisma/migrations/'))).toBe(true); // và migration (trigger chỉ-thêm, thu quyền)
     const sec = readFileSync(SEC, 'utf8');
-    expect((sec.match(/^\| T\d+ /gm) ?? []).length).toBe(23); // dương tính: ORD-SEC thật có 23 mối đe dọa
+    expect((sec.match(/^\| T\d+ /gm) ?? []).length).toBe(30); // dương tính: ORD-SEC thật có 30 mối đe dọa (T1 đến T23 và T24 đến T30 của đợt bán hộ)
   });
 
   it('ORD-SEC-20261006-092703802: đỏ khi một SB kiểm bằng test không còn đột biến nào', () => {

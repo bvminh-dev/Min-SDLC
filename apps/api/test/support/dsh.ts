@@ -69,7 +69,7 @@ export async function people(t: DshApp): Promise<People> {
 
 export const get = (t: AuthApp, cookie: string | undefined, path: string, o: CallOpts = {}): Test => callJson(t, 'get', path, { cookie, ...o });
 export const DASH = { revenue: '/admin/dashboard/revenue', orders: '/admin/dashboard/orders', customers: '/admin/dashboard/customers', products: '/admin/dashboard/products', lowStock: '/admin/dashboard/low-stock', recent: '/admin/dashboard/recent-orders' };
-export const REPORT = { revenue: '/admin/reports/revenue', orders: '/admin/reports/orders', products: '/admin/reports/products' };
+export const REPORT = { revenue: '/admin/reports/revenue', orders: '/admin/reports/orders', products: '/admin/reports/products', sources: '/admin/reports/sources', sales: '/admin/reports/sales' };
 export const ALL_PATHS = [...Object.values(DASH), ...Object.values(REPORT)];
 export const RANGE_Q = '?from=2026-10-01&to=2026-10-06';
 /** Hàng đợi sự kiện khỏi việc: bỏ `trace_id` khi so sánh thân phản hồi. */
@@ -134,3 +134,55 @@ export async function bulkUsers(t: AuthApp, o: { role?: 'customer' | 'staff' | '
            ${o.createdAt}::timestamptz, ${o.createdAt}::timestamptz
     FROM generate_series(1, ${o.n}) g`;
 }
+
+// --- Hai báo cáo tính lương (đợt bán hộ): đơn dựng thẳng bằng fixture `insertOrder` (đơn hộ có `ho`, đơn khách tự đặt không có), nguồn dữ liệu vẫn là `OrderApi` thật; hôm nay là 15/10/2026.
+/** Hôm nay của hai báo cáo mới (fixed-clock: DSH-TC-20261015-* ghi đồng hồ cố định 2026-10-15T03:00:00Z = 10:00 giờ Việt Nam). */
+export const NOW15 = new Date('2026-10-15T03:00:00Z'); // fixed-clock: mốc cố định của test hai báo cáo bán hộ
+/** Sổ sạch, đồng hồ về 15/10/2026 TRƯỚC khi tạo người dùng (phiên tính theo đồng hồ), danh mục nguồn về dữ liệu mồi. */
+export async function resetSales(t: DshApp): Promise<People> {
+  await reset(t);
+  t.clock.set(NOW15);
+  for (const sql of ['ALTER TABLE order_sources DISABLE TRIGGER USER', "DELETE FROM order_sources WHERE code NOT IN ('website', 'facebook', 'tiktok', 'hotline')",
+    "INSERT INTO order_sources (code, name) VALUES ('facebook', 'Facebook'), ('tiktok', 'TikTok'), ('hotline', 'Hotline') ON CONFLICT (code) DO NOTHING", // test trước có thể đã xóa bớt nguồn
+    "UPDATE order_sources SET is_active = true, position = 0, name = CASE code WHEN 'tiktok' THEN 'TikTok' ELSE initcap(code) END", 'ALTER TABLE order_sources ENABLE TRIGGER USER']) await q(t, sql);
+  return people(t);
+}
+/** Nguồn đơn do admin thêm (`active` mặc định bật). */
+export async function addSource(t: DshApp, code: string, name: string, active = true): Promise<void> {
+  await t.prisma.$executeRaw`INSERT INTO order_sources (code, name, is_active) VALUES (${code}, ${name}, ${active})`;
+}
+/** Đơn hộ của `by` (id người tạo) vào nguồn `source` (mã), mặc định `confirmed`, 100.000 + 30.000 vận chuyển bị thay bằng `total` (một dòng hàng `total - 30000`). */
+export async function hoOrder(t: DshApp, by: string, o: { source?: string; total: number; status?: Status; at?: Date; role?: 'sale' | 'admin' }): Promise<string> {
+  const r = await insertOrder(t.prisma, t.clock.now(), {
+    user: null, status: o.status ?? 'confirmed', createdAt: o.at ?? new Date('2026-10-02T03:00:00Z'), items: [{ price: o.total - 30_000, qty: 1 }], shipping: 30_000,
+    ho: { createdBy: by, role: o.role, source: o.source ?? 'hotline', customer: { full_name: 'Khách lẻ', phone: '0900000000' } },
+  });
+  return r.id;
+}
+/** Đơn khách tự đặt (`created_by` rỗng, nguồn `website`) của một khách có tài khoản. */
+export async function webOrder(t: DshApp, o: { total: number; status?: Status; at?: Date }): Promise<string> {
+  return (await order(t, { status: o.status ?? 'paid', createdAt: o.at ?? new Date('2026-10-02T03:00:00Z'), items: [{ price: o.total - 30_000, qty: 1 }], shipping: 30_000 })).id;
+}
+/** Người dùng role `sale` có tên. */
+export async function saleUser(t: DshApp, name: string, role: 'sale' | 'staff' | 'customer' | 'admin' = 'sale'): Promise<string> {
+  return (await seedUser(t, { role, name, email: `${name.normalize('NFD').replace(/[^a-z0-9]/gi, '').toLowerCase()}${++seq}@shop.vn` })).id;
+}
+
+/** Bộ phân tích CSV RFC 4180 tối thiểu (dấu phẩy, nháy kép nhân đôi, xuống dòng trong ô được bao nháy): chính tệp CSV được đọc lại, không so chuỗi. Bỏ BOM đầu nếu có. */
+export function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [], cell = '', quoted = false;
+  const s = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (quoted) { if (c === '"') { if (s[i + 1] === '"') { cell += '"'; i++; } else quoted = false; } else cell += c; continue; }
+    if (c === '"') quoted = true;
+    else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\r' && s[i + 1] === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; i++; }
+    else cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+/** Dòng `dashboard.export` trong kho audit, theo thứ tự thời gian. */
+export const exportRows = (t: AuthApp) => q<{ actor_id: string; actor_role: string; action: string; target_type: string; target_id: string; after: { report: string; from: string; to: string; rows: number }; created_at: Date }>(t, "SELECT actor_id, actor_role, action, target_type, target_id, after, created_at FROM audit_logs WHERE action = 'dashboard.export' ORDER BY created_at, id");

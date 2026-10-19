@@ -2,7 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { DiscoveryModule } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
-import { Action, Public, Roles, auditPermissions } from '../../src/modules/platform';
+import { Action, Public, Roles, auditPermissions, parseMatrix } from '../../src/modules/platform';
 
 // Cổng lệch ma trận quyền ở nền (AUTH-REQ-20261006-095515918 BR5; dùng bởi AUTH và USR): mỗi hàng ma trận khớp ĐÚNG role của mọi endpoint nó phủ, không có ngoại lệ
 // (tùy chọn `narrow` đã xóa: hàng phủ endpoint hẹp hơn phải được tách thành hai hàng). Test dùng ma trận và controller nhỏ tại chỗ, không đọc spec thật.
@@ -64,6 +64,37 @@ describe('platform auditPermissions: lệch ma trận (AUTH-REQ-20261006-0955159
     try {
       expect(auditPermissions(app, '', opts)).toEqual(['ma trận quyền rỗng hoặc không đọc được (không tìm thấy hàng nào có mã requirement)']);
       expect(auditPermissions(app, MATRIX, { scope: () => false, epic: 'ZZZ', prefix: '' }).filter((l) => l.includes('không có endpoint nào khai @Action'))).toHaveLength(3);
+    } finally { await app.close(); }
+  });
+});
+
+describe('platform parseMatrix và auditPermissions: cột `sale` (đợt bán hộ, AUTH-REQ-20261006-095515918 BR5)', () => {
+  // bảng 8 cột có `sale`; hàng `Sale <việc>` của cùng requirement gộp vào hàng `<Việc>`
+  const SALE_MATRIX = `| Hành động | Requirement | guest | customer | staff | sale | admin | system |
+|---|---|---|---|---|---|---|---|
+| Xem theo email | ZZZ-REQ-2 | - | - | Y | - | Y | - |
+| Sale xem theo email | ZZZ-REQ-2 | - | - | - | own | - | - |
+| Xem theo id | ZZZ-REQ-3 | - | - | - | - | Y | - |
+`;
+  @Controller('sale-probe')
+  class SaleProbe {
+    @Get('email') @Roles('staff', 'sale', 'admin') @Action('Xem theo email') byEmail() { return {}; }
+    @Get('id') @Roles('sale', 'admin') @Action('Xem theo id') byId() { return {}; } // thừa sale so với hàng của nó
+  }
+
+  it('đọc đủ tám cột, hàng bảy cột cũ có sale là `-`', () => {
+    const rows = parseMatrix(SALE_MATRIX);
+    expect(rows.map((r) => [r.action, r.staff, r.sale, r.admin, r.system])).toEqual([
+      ['Xem theo email', 'Y', '-', 'Y', '-'], ['Sale xem theo email', '-', 'own', '-', '-'], ['Xem theo id', '-', '-', 'Y', '-'],
+    ]);
+    expect(parseMatrix(MATRIX).map((r) => r.sale)).toEqual(['-', '-', '-']);
+  });
+
+  it('so cả cột sale: hàng `Sale ...` gộp vào hàng gốc, endpoint thừa sale bị báo, hàng `Sale ...` không bị coi là thiếu endpoint', async () => {
+    const app = await build(SaleProbe);
+    try {
+      const out = auditPermissions(app, SALE_MATRIX, { ...opts, epic: 'ZZZ' });
+      expect(out).toEqual(['GET /sale-probe/id: code cho [admin, sale] nhưng ma trận (Xem theo id) cho [admin]']);
     } finally { await app.close(); }
   });
 });

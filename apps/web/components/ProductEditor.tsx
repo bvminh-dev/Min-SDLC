@@ -10,17 +10,17 @@ import { Field } from './Form';
 import { ProductImages, type ProductImage } from './ProductImages';
 import { useCountdown } from './useCountdown';
 
-interface Product { id: string; name: string; sku: string; price: number; description: string | null; status: ProductStatus; version: number; category_id?: string; category?: { id: string; name: string } | null; images?: any[] }
-interface FormState { name: string; sku: string; categoryId: string; price: string; description: string }
-const EMPTY: FormState = { name: '', sku: '', categoryId: '', price: '', description: '' };
-const FIELD_KEY: Record<keyof FormState, string> = { name: 'name', sku: 'sku', categoryId: 'category_id', price: 'price', description: 'description' };
+interface Product { id: string; name: string; sku: string; price: number; cost_price?: number | null; description: string | null; status: ProductStatus; version: number; category_id?: string; category?: { id: string; name: string } | null; images?: any[] }
+interface FormState { name: string; sku: string; categoryId: string; price: string; costPrice: string; description: string }
+const EMPTY: FormState = { name: '', sku: '', categoryId: '', price: '', costPrice: '', description: '' };
+const FIELD_KEY: Record<keyof FormState, string> = { name: 'name', sku: 'sku', categoryId: 'category_id', price: 'price', costPrice: 'cost_price', description: 'description' };
 const FIELD_MSG: Record<string, string> = {
   name: 'Tên không được rỗng và tối đa 200 ký tự', sku: 'Mã sku chỉ gồm chữ, số, dấu - và _', category_id: 'Chọn danh mục',
-  price: 'Giá phải là số nguyên từ 1 đến 1.000.000.000', description: 'Mô tả tối đa 5000 ký tự',
+  price: 'Giá bán phải là số nguyên từ 1 đến 1.000.000.000', cost_price: 'Giá vốn phải là số nguyên từ 0 đến 1.000.000.000', description: 'Mô tả tối đa 5000 ký tự',
 };
-const MISSING_MSG: Record<string, string> = { images: 'Cần ít nhất 1 ảnh', name: 'Cần tên', sku: 'Cần mã sku', price: 'Cần giá', category_id: 'Cần danh mục', category: 'Cần danh mục' };
+const MISSING_MSG: Record<string, string> = { images: 'Cần ít nhất 1 ảnh', name: 'Cần tên', sku: 'Cần mã sku', price: 'Cần giá bán', category_id: 'Cần danh mục', category: 'Cần danh mục' };
 
-const toForm = (p: Product): FormState => ({ name: p.name, sku: p.sku, categoryId: p.category_id ?? p.category?.id ?? '', price: String(p.price), description: p.description ?? '' });
+const toForm = (p: Product): FormState => ({ name: p.name, sku: p.sku, categoryId: p.category_id ?? p.category?.id ?? '', price: String(p.price), costPrice: p.cost_price == null ? '' : String(p.cost_price), description: p.description ?? '' });
 const toImages = (p: Product): ProductImage[] => {
   const raw = (Array.isArray(p.images) ? p.images : []).map((i) => ({ id: String(i.id ?? i.image_id), url: String(i.url), position: typeof i.position === 'number' ? i.position : null }));
   return raw.every((i) => i.position !== null) ? raw.sort((a, b) => a.position! - b.position!) : raw;
@@ -101,11 +101,15 @@ export function ProductEditor({ id }: { id?: string }) {
     if (changed('sku') && (!id || status === 'draft') && !/^[A-Za-z0-9_-]+$/.test(form.sku.trim())) errs.sku = FIELD_MSG.sku;
     if (changed('categoryId') && !form.categoryId) errs.category_id = FIELD_MSG.category_id;
     if (changed('price') && (price === null || price < 1 || price > 1_000_000_000)) errs.price = FIELD_MSG.price; // cùng khoảng với server (PRD-REQ BR4)
+    // Giá vốn (SB-42): chỉ admin có ô này; bỏ trống là chưa có (không bắt buộc), có thì số nguyên 0..1.000.000.000
+    const cost = form.costPrice.trim() === '' ? null : parseMoney(form.costPrice);
+    if (isAdmin && changed('costPrice') && form.costPrice.trim() !== '' && (cost === null || cost > 1_000_000_000)) errs.cost_price = FIELD_MSG.cost_price;
     if (changed('description') && form.description.length > 5000) errs.description = FIELD_MSG.description;
     if (Object.keys(errs).length) { setFieldErrors(errs); return false; }
 
     if (!id) {
       const body: Record<string, unknown> = { name: form.name.trim(), sku: form.sku.trim(), category_id: form.categoryId, price };
+      if (cost !== null) body.cost_price = cost;
       if (form.description.trim()) body.description = form.description;
       const r = await api<Product>('/admin/products', { method: 'POST', body });
       if (r.status === 201 || r.ok) { router.replace(`/admin/products/${r.body.id}`); return true; }
@@ -118,6 +122,7 @@ export function ProductEditor({ id }: { id?: string }) {
     if (changed('sku') && status === 'draft') body.sku = form.sku.trim();
     if (changed('categoryId')) body.category_id = form.categoryId;
     if (changed('price')) body.price = price;
+    if (isAdmin && changed('costPrice')) body.cost_price = cost; // xóa trống gửi null (xóa giá vốn)
     if (changed('description')) body.description = form.description;
     if (Object.keys(body).length === 1) { setSaved('Không có thay đổi để lưu.'); return true; }
     const r = await api(`/admin/products/${id}`, { method: 'PATCH', body });
@@ -182,7 +187,8 @@ export function ProductEditor({ id }: { id?: string }) {
   const images = p ? toImages(p) : [];
   const categoryName = cats.items.find((c) => c.id === form.categoryId)?.name ?? p?.category?.name ?? '';
   const priceNum = parseMoney(form.price);
-  const checklist: [string, boolean][] = [['Tên', !!base.name.trim()], ['Mã', !!base.sku.trim()], ['Giá', parseMoney(base.price) !== null], ['Danh mục', !!base.categoryId], ['Có ảnh', images.length > 0]];
+  const costNum = parseMoney(form.costPrice);
+  const checklist: [string, boolean][] = [['Tên', !!base.name.trim()], ['Mã', !!base.sku.trim()], ['Giá bán', parseMoney(base.price) !== null], ['Danh mục', !!base.categoryId], ['Có ảnh', images.length > 0]];
   const ro = !canWrite;
   const fieldsDisabled = ro || busy;
   const showStatus = !!id && canWrite;
@@ -221,7 +227,7 @@ export function ProductEditor({ id }: { id?: string }) {
               <dt>Tên</dt><dd>{p.name}</dd>
               <dt>Mã</dt><dd>{p.sku}</dd>
               <dt>Danh mục</dt><dd>{p.category?.name ?? categoryName}</dd>
-              <dt>Giá</dt><dd className="money">{formatPrice(p.price)}</dd>
+              <dt>Giá bán</dt><dd className="money">{formatPrice(p.price)}</dd>
               <dt>Mô tả</dt><dd className="pre">{p.description ?? ''}</dd>
             </dl>
           ) : (
@@ -233,10 +239,15 @@ export function ProductEditor({ id }: { id?: string }) {
                 <Field label="Mã sku *" error={fieldErrors.sku} errorTestId="prd-admin-product-edit-field-error" field="sku" hint={id && status !== 'draft' ? 'Đã khóa' : 'Chữ, số, - và _'}>
                   {(i, d) => <input id={i} aria-describedby={d} value={form.sku} maxLength={64} disabled={fieldsDisabled || (!!id && status !== 'draft')} autoComplete="off" onChange={(e) => set('sku', e.target.value)} data-testid="prd-admin-product-edit-sku" />}
                 </Field>
-                <Field label="Giá (đ) *" error={fieldErrors.price} errorTestId="prd-admin-product-edit-field-error" field="price" hint={priceNum !== null ? formatPrice(priceNum) : undefined}>
+                <Field label="Giá bán (đ) *" error={fieldErrors.price} errorTestId="prd-admin-product-edit-field-error" field="price" hint={priceNum !== null ? formatPrice(priceNum) : undefined}>
                   {(i, d) => <input id={i} aria-describedby={d} inputMode="numeric" value={form.price} disabled={fieldsDisabled} onChange={(e) => set('price', e.target.value)} data-testid="prd-admin-product-edit-price" />}
                 </Field>
               </div>
+              {isAdmin && ( // giá vốn: chỉ admin, không render cho staff và sale (SB-42), không bắt buộc để công bố
+                <Field label="Giá vốn (đ)" error={fieldErrors.cost_price} errorTestId="prd-admin-product-edit-field-error" field="cost_price" hint={costNum !== null ? formatPrice(costNum) : 'Bỏ trống nếu chưa có'}>
+                  {(i, d) => <input id={i} aria-describedby={d} inputMode="numeric" value={form.costPrice} disabled={fieldsDisabled} onChange={(e) => set('costPrice', e.target.value)} data-testid="prd-admin-product-edit-cost-price" />}
+                </Field>
+              )}
               <Field label="Danh mục *" error={fieldErrors.category_id} errorTestId="prd-admin-product-edit-field-error" field="category_id">
                 {(i, d) => (
                   <select id={i} aria-describedby={d} value={form.categoryId} disabled={fieldsDisabled} onChange={(e) => set('categoryId', e.target.value)} data-testid="prd-admin-product-edit-category">

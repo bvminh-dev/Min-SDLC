@@ -1,9 +1,9 @@
-Dòng ma trận mới của epic REV (đợt 3), đúng khuôn `spec/permissions-matrix.md` (cột: Hành động, Requirement, guest, customer, staff, admin, system). Dán vào bảng chính và thêm một dòng vào mục Thay đổi.
+Dòng ma trận mới của epic REV (đợt 3), đúng khuôn `spec/permissions-matrix.md` (cột: Hành động, Requirement, guest, customer, staff, sale, admin, system). Dán vào bảng chính và thêm một dòng vào mục Thay đổi.
 
-| Hành động | Requirement | guest | customer | staff | admin | system |
-|---|---|---|---|---|---|---|
-| Bỏ ẩn đánh giá (hidden về published) | REV-REQ-20261006-103135835 | - | - | - | Y | - |
-| Dọn ảnh mồ côi và ảnh của đánh giá đã xóa (job nền `rev.sweep-orphan-images`, không có endpoint) | REV-REQ-20261006-103135207 | - | - | - | - | Y |
+| Hành động | Requirement | guest | customer | staff | sale | admin | system |
+|---|---|---|---|---|---|---|---|
+| Bỏ ẩn đánh giá (hidden về published) | REV-REQ-20261006-103135835 | - | - | - | - | Y | - |
+| Dọn ảnh mồ côi và ảnh của đánh giá đã xóa (job nền `rev.sweep-orphan-images`, không có endpoint) | REV-REQ-20261006-103135207 | - | - | - | - | - | Y |
 
 | Ngày | Dòng | Từ | Thành | Lý do | Người duyệt |
 |---|---|---|---|---|---|

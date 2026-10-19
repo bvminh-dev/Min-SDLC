@@ -54,6 +54,22 @@ describe('Kiểm ranh giới module (PRJ-REQ-20261006-095422475 BR5, BR11; SB-35
     expect(runScript('scripts/check-boundaries.mjs', ok).status).toBe(0);
   });
 
+  it('review SAL, ORD (đợt bán hộ): module không sở hữu bảng bị chặn import động @prisma/client và $queryRawUnsafe, $executeRawUnsafe', () => {
+    const r = check('sal331');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/sales\/dyn-import\.ts:1: \[sales\] module không sở hữu bảng không được import động @prisma\/client/);
+    expect(r.stderr).toMatch(/sales\/unsafe-sql\.ts:1: \[sales\] module không sở hữu bảng không được chạy SQL thô \(\$queryRawUnsafe\)/);
+    expect(r.stderr).toMatch(/sales\/unsafe-sql\.ts:2: \[sales\] module không sở hữu bảng không được chạy SQL thô \(\$executeRawUnsafe\)/);
+  });
+
+  it('review ORD (đợt bán hộ): tên hàm XxxApi được gọi phải nằm trong bảng Giao diện module đúng cặp gọi -> được gọi (hàm có ở cặp khác cũng bị chặn)', () => {
+    const r = check('api331');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/payment\/uses-order\.ts:6: \[payment -> order\] OrderApi\.createPending không có trong bảng Giao diện module/);
+    expect(r.stderr).toMatch(/shipping\/uses-order\.ts:6: \[shipping -> order\] OrderApi\.getSalesReport không có trong bảng Giao diện module/); // DSH -> ORD mới có hàm này
+    expect(r.stderr).not.toMatch(/uses-order\.ts:5/); // findForPayment (PAY), findForShipment (SHP) hợp lệ
+  });
+
   it('mã thật của repo sạch', () => {
     expect(runScript('scripts/check-boundaries.mjs').status).toBe(0);
   });

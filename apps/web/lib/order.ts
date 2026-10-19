@@ -8,9 +8,12 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
 export type PaymentStatus = 'pending' | 'processing' | 'succeeded' | 'failed' | 'expired' | 'cancelled' | 'refunded';
 const PAYMENT_LABEL: Record<PaymentStatus, string> = { pending: 'Chờ thanh toán', processing: 'Đang xử lý', succeeded: 'Thành công', failed: 'Thất bại', expired: 'Hết hạn', cancelled: 'Đã hủy', refunded: 'Đã hoàn tiền' };
 
-/** "VNPay · Thành công", "COD · Chưa thu tiền", "COD · Đã thu tiền". COD chưa thu không bao giờ mang chữ "đã thanh toán" (ui/order-detail). */
-export function paymentText(method: 'vnpay' | 'cod', status: PaymentStatus): string {
-  if (method === 'cod') return `COD · ${status === 'pending' ? 'Chưa thu tiền' : status === 'succeeded' ? 'Đã thu tiền' : PAYMENT_LABEL[status]}`;
+export type PaymentMethod = 'vnpay' | 'cod' | 'cash' | 'bank_transfer';
+/** Đơn hộ (cod, cash, bank_transfer) thu sau hoặc ngoài cổng: chưa thu không bao giờ mang chữ "đã thanh toán". */
+const OFFLINE_LABEL: Record<Exclude<PaymentMethod, 'vnpay'>, string> = { cod: 'COD', cash: 'Tiền mặt', bank_transfer: 'Chuyển khoản' };
+/** "VNPay · Thành công", "COD · Chưa thu tiền", "Tiền mặt · Đã thu tiền", "Chuyển khoản · Chưa thu tiền". COD chưa thu không bao giờ mang chữ "đã thanh toán" (ui/order-detail). */
+export function paymentText(method: PaymentMethod, status: PaymentStatus): string {
+  if (method !== 'vnpay') return `${OFFLINE_LABEL[method]} · ${status === 'pending' ? 'Chưa thu tiền' : status === 'succeeded' ? 'Đã thu tiền' : PAYMENT_LABEL[status]}`;
   return `VNPay · ${PAYMENT_LABEL[status]}`;
 }
 
@@ -22,10 +25,18 @@ const REASON_LABEL: Record<string, string> = {
 const hasLabel = (reason: string): boolean => Object.prototype.hasOwnProperty.call(REASON_LABEL, reason); // lý do do người nhập: `__proto__`, `constructor` không được tra ra thuộc tính của Object.prototype
 export const reasonText = (status: string, reason: string, failedDelivery: boolean): string => (failedDelivery || status === 'cancelled' ? (hasLabel(reason) ? REASON_LABEL[reason] : reason) : reason);
 
-export interface OrderRow { code: string; created_at: string; status: OrderStatus; grand_total: number; payment_method: 'vnpay' | 'cod'; payment_status: PaymentStatus; item_count: number }
+/** Dòng danh sách: `source`, `created_by_name`, `created_by` chỉ có ở danh sách quản trị (staff, sale, admin; customer không có, ORD-API). */
+export interface OrderRow {
+  code: string; created_at: string; status: OrderStatus; grand_total: number; payment_method: PaymentMethod; payment_status: PaymentStatus; item_count: number;
+  source?: { code: string; name: string }; created_by_name?: string | null; created_by?: string | null;
+}
+/** Nguồn đơn của danh mục (`GET /order-sources`). */
+export interface SourceOption { id: string; code: string; name: string; is_active: boolean }
 export interface OrderDetail {
-  code: string; status: OrderStatus; created_at: string; items: { name: string; unit_price: number; quantity: number; line_total: number }[];
-  items_total: number; discount: number; shipping_fee: number; grand_total: number; payment_method: 'vnpay' | 'cod'; payment_status: PaymentStatus;
+  code: string; status: OrderStatus; created_at: string; items: { name: string; unit_price: number; quantity: number; line_total: number; note?: string | null; cost_snapshot?: number | null }[];
+  items_total: number; discount: number; shipping_fee: number; grand_total: number; payment_method: PaymentMethod; payment_status: PaymentStatus;
+  /** Chỉ staff, sale, admin (customer không có): nguồn, người tạo, ghi chú; `customer` chỉ sale và admin, đơn hộ; `items[].cost_snapshot` chỉ admin (ORD-REQ-20261006-092320768 BR10). */
+  source?: { code: string; name: string }; created_by_name?: string | null; note?: string | null; customer?: { full_name: string; phone: string };
   tracking_number?: string; payment_expires_at?: string; shipping_address?: { receiver: string; phone: string; line1: string; ward: string; district?: string | null; city: string }; can_cancel: boolean;
 }
 export interface HistoryItem { at: string; status: OrderStatus; reason?: string }

@@ -16,7 +16,11 @@ const STAGE: Record<OrderStatus, number> = { pending: 0, confirmed: 0, paid: 1, 
 const STEPS: [string, string][] = [['receipt', 'Đặt'], ['card', 'Thanh toán'], ['truck', 'Giao'], ['box', 'Nhận']];
 type View = 'loading' | 'ready' | 'notfound' | 'error';
 
-/** Chi tiết đơn (ui/order-detail): thông tin đơn, lịch sử trạng thái (khối tải riêng, lỗi riêng) và hủy đơn (hộp thoại). Customer chỉ thấy đơn của mình; staff không thấy địa chỉ; staff và admin vào qua danh sách quản trị. */
+/**
+ * Chi tiết đơn (ui/order-detail, ui/order-detail-source): thông tin đơn, lịch sử trạng thái (khối tải riêng, lỗi riêng) và hủy đơn (hộp thoại). Customer chỉ thấy đơn của mình; sale chỉ đơn do mình tạo (không hủy);
+ * staff không thấy địa chỉ và khách; staff, sale, admin vào qua danh sách quản trị và thấy khối Thông tin bán hàng (nguồn, người tạo, ghi chú); chỉ admin thấy giá vốn. Server loại khóa theo role,
+ * giao diện chỉ hiện cái server đã trả. Ghi chú là văn bản thuần: React escape, xuống dòng giữ bằng CSS (SB-12, SB-45).
+ */
 function OrderDetailView({ code }: { code: string }) {
   const { user } = useAuth();
   const expired = useLoginRedirect();
@@ -107,8 +111,11 @@ function OrderDetailView({ code }: { code: string }) {
               {order.items.map((i, k) => (
                 <li key={k}>
                   <span className="tile gray"><span className="i i-box" aria-hidden="true" /></span>
-                  <div className="grow"><div className="strong">{i.name}</div><div className="muted small">{formatPrice(i.unit_price)} × {i.quantity}</div></div>
-                  <span className="money">{formatPrice(i.line_total)}</span>
+                  <div className="grow">
+                    <div className="strong">{i.name}</div><div className="muted small">{formatPrice(i.unit_price)} × {i.quantity}</div>
+                    {i.note && <div className="small ord-note" data-testid="ord-order-detail-source-item-note">Ghi chú: {i.note}</div>}
+                  </div>
+                  <span className="money">{formatPrice(i.line_total)}{i.cost_snapshot !== undefined && <span className="muted small ord-cost" data-testid="ord-order-detail-source-cost">Giá vốn {i.cost_snapshot === null ? '—' : formatPrice(i.cost_snapshot)}</span>}</span>
                 </li>
               ))}
             </ul>
@@ -144,6 +151,19 @@ function OrderDetailView({ code }: { code: string }) {
               ? <div className="ord-addr" data-testid="ord-order-detail-address"><b>{addr.receiver}</b><span className="muted"><span className="i i-phone" aria-hidden="true" /> {addr.phone}</span><span className="muted">{[addr.line1, addr.ward, addr.district, addr.city].filter(Boolean).join(', ')}</span></div>
               : <p className="muted small" data-testid="ord-order-detail-address-hidden"><span className="i i-eyeoff" aria-hidden="true" /> Thông tin người nhận được ẩn theo chính sách dữ liệu</p>}
           </section>
+
+          {order.source && (
+            <section className="panel" data-testid="ord-order-detail-source-block">
+              <div className="panel-head"><h2><span className="i i-bag" aria-hidden="true" />Thông tin bán hàng</h2></div>
+              <dl className="kv">
+                <dt>Nguồn</dt><dd data-testid="ord-order-detail-source-name">{order.source.name}</dd>
+                <dt>Người tạo</dt><dd data-testid="ord-order-detail-source-creator">{order.created_by_name ?? '—'}</dd>
+                {order.customer && <><dt>Khách</dt><dd data-testid="ord-order-detail-source-customer">{order.customer.full_name} · {order.customer.phone}</dd></>}
+                {user?.role === 'staff' && (order.created_by_name != null || order.source.code !== 'website') && <><dt>Khách</dt><dd className="muted small" data-testid="ord-order-detail-source-customer-hidden"><span className="i i-eyeoff" aria-hidden="true" /> Thông tin khách được ẩn theo chính sách dữ liệu</dd></>}
+                <dt>Ghi chú đơn</dt><dd className="ord-note" data-testid="ord-order-detail-source-note">{order.note ? order.note : '—'}</dd>
+              </dl>
+            </section>
+          )}
 
           <section data-testid="ord-order-detail-payment">
             {customer
@@ -217,5 +237,5 @@ function CancelDialogButton({ order, onDone, onReload }: { order: OrderDetail; o
 
 export default function OrderDetailPage() {
   const params = useParams<{ code: string }>();
-  return <RequireRole roles={['customer', 'staff', 'admin']}><OrderDetailView code={String(params.code ?? '')} /></RequireRole>;
+  return <RequireRole roles={['customer', 'staff', 'sale', 'admin']}><OrderDetailView code={String(params.code ?? '')} /></RequireRole>;
 }

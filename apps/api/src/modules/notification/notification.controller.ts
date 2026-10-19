@@ -12,15 +12,15 @@ import { ReadService } from './read.service';
 export class NotificationController {
   constructor(private readonly reads: ReadService) {}
 
-  @Get() @Action('Xem lịch sử thông báo của mình (lọc đọc hoặc chưa đọc, theo loại)') @Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.all) @Validate({ query: listQuery })
+  @Get() @Action('Xem lịch sử thông báo của mình (lọc đọc hoặc chưa đọc, theo loại)') @Roles('customer', 'staff', 'sale', 'admin') @RateLimit(LIMITS.all) @Validate({ query: listQuery })
   list(@CurrentSession() s: SessionContext, @ValidQuery() q: ListQuery) { return this.reads.list(s.user_id, q); }
 
-  @Get('unread-count') @Action('Xem số thông báo chưa đọc') @Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.all) @Validate({})
+  @Get('unread-count') @Action('Xem số thông báo chưa đọc') @Roles('customer', 'staff', 'sale', 'admin') @RateLimit(LIMITS.all) @Validate({})
   count(@CurrentSession() s: SessionContext) { return this.reads.count(s.user_id); }
 
-  @Post('read-all') @Action('Đánh dấu tất cả thông báo đã đọc') @HttpCode(200) @Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.all) @Validate({ body: readAllBody })
+  @Post('read-all') @Action('Đánh dấu tất cả thông báo đã đọc') @HttpCode(200) @Roles('customer', 'staff', 'sale', 'admin') @RateLimit(LIMITS.all) @Validate({ body: readAllBody })
   readAll(@CurrentSession() s: SessionContext, @ValidBody() b: ReadAllBody) { return this.reads.markAll(s.user_id, b.up_to); }
 
-  @Post(':id/read') @Action('Đánh dấu một thông báo đã đọc') @HttpCode(200) @Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.all) @Validate({ params: idParams, body: emptyBody })
+  @Post(':id/read') @Action('Đánh dấu một thông báo đã đọc') @HttpCode(200) @Roles('customer', 'staff', 'sale', 'admin') @RateLimit(LIMITS.all) @Validate({ params: idParams, body: emptyBody })
   read(@CurrentSession() s: SessionContext, @ValidParams() p: { id: string }) { return this.reads.markRead(s.user_id, p.id); }
 }

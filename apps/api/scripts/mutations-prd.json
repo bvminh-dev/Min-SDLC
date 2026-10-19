@@ -98,8 +98,8 @@
    ],
    "tc": "PRD-TC-20261006-100355569",
    "file": "src/modules/catalog/policy.ts",
-   "find": ".max(1_000_000_000, { message: 'out_of_range' })",
-   "replace": ".max(1_000_000_000_000, { message: 'out_of_range' })",
+   "find": ".min(1, { message: 'out_of_range' }).max(1_000_000_000, { message: 'out_of_range' })",
+   "replace": ".min(1, { message: 'out_of_range' }).max(1_000_000_000_000, { message: 'out_of_range' })",
    "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261006-100355569\""
   },
   {
@@ -333,8 +333,8 @@
    ],
    "tc": "PRD-TC-20261006-100355901",
    "file": "src/modules/catalog/http.ts",
-   "find": "limit: 30,",
-   "replace": "limit: 3000,",
+   "find": "limit: 30, windowSeconds: 60, group: 'prd:admin-read'",
+   "replace": "limit: 3000, windowSeconds: 60, group: 'prd:admin-read'",
    "test": "node scripts/run-jest.mjs test/catalog/admin-read.spec.ts -t \"PRD-TC-20261006-100355901\""
   },
   {
@@ -477,8 +477,8 @@
    ],
    "tc": "PRD-TC-20261006-100355569",
    "file": "../web/app/products/page.tsx",
-   "find": "<span className=\"pcard-name\" data-testid=\"prd-product-list-card-name\">{c.name}</span>",
-   "replace": "<span className=\"pcard-name\" data-testid=\"prd-product-list-card-name\" dangerouslySetInnerHTML={{ __html: c.name }} />",
+   "find": "<span className=\"ct-name\" data-testid=\"prd-product-list-card-name\">{c.name}</span>",
+   "replace": "<span className=\"ct-name\" data-testid=\"prd-product-list-card-name\" dangerouslySetInnerHTML={{ __html: c.name }} />",
    "test": "NEXT_TELEMETRY_DISABLED=1 node scripts/run-jest.mjs test/e2e/prd.e2e.spec.ts -t \"PRD-TC-20261006-100355569\""
   },
   {
@@ -524,6 +524,232 @@
    "find": "if (typeof v === 'string' && /\\p{Cs}/u.test(v)) throw new SyntaxError('nửa cặp thay thế lẻ'); return v;",
    "replace": "return v;",
    "test": "node scripts/run-jest.mjs test/catalog/product-write.spec.ts -t \"PRD-TC-20261007-104008808\""
+  },
+  {
+   "id": "SB-42: danh sách quản trị trả cost_price cho mọi role (staff, sale)",
+   "sb": [
+    "SB-42"
+   ],
+   "tc": "PRD-TC-20261015-093100130",
+   "file": "src/modules/catalog/query.service.ts",
+   "find": "...(withCost ? { cost_price: costOf(r.cost_price) } : {}),",
+   "replace": "cost_price: costOf(r.cost_price),",
+   "test": "node scripts/run-jest.mjs test/catalog/cost-price.spec.ts -t \"PRD-TC-20261015-093100130\""
+  },
+  {
+   "id": "SB-42: chi tiết quản trị trả cost_price cho mọi role (sale)",
+   "sb": [
+    "SB-42"
+   ],
+   "tc": "PRD-TC-20261015-093100143",
+   "file": "src/modules/catalog/query.service.ts",
+   "find": "...(withCost ? { cost_price: costOf(p.cost_price) } : {}),",
+   "replace": "cost_price: costOf(p.cost_price),",
+   "test": "node scripts/run-jest.mjs test/catalog/cost-price.spec.ts -t \"PRD-TC-20261015-093100143\""
+  },
+  {
+   "id": "SB-42: staff được sửa sản phẩm (kể cả giá vốn)",
+   "sb": [
+    "SB-42",
+    "SB-07"
+   ],
+   "tc": "PRD-TC-20261015-093100078",
+   "file": "src/modules/catalog/admin.controller.ts",
+   "find": "@Patch(':id') @Action('Sửa thông tin sản phẩm') @Roles('admin')",
+   "replace": "@Patch(':id') @Action('Sửa thông tin sản phẩm') @Roles('staff', 'sale', 'admin')",
+   "test": "node scripts/run-jest.mjs test/catalog/cost-price.spec.ts -t \"PRD-TC-20261015-093100078\""
+  },
+  {
+   "id": "SB-42: trần giá vốn 1.000.000.000 thành 1.000.000.000.000 (chỉ còn CHECK của DB)",
+   "sb": [
+    "SB-42"
+   ],
+   "tc": "PRD-TC-20261015-093100013",
+   "file": "src/modules/catalog/policy.ts",
+   "find": ".min(0, { message: 'out_of_range' }).max(1_000_000_000, { message: 'out_of_range' });",
+   "replace": ".min(0, { message: 'out_of_range' }).max(1_000_000_000_000, { message: 'out_of_range' });",
+   "test": "node scripts/run-jest.mjs test/catalog/cost-price.spec.ts -t \"PRD-TC-20261015-093100013\""
+  },
+  {
+   "id": "SB-43: bỏ kiểm chữ ký zip của xlsx (tin phần mở rộng)",
+   "sb": [
+    "SB-43",
+    "SB-10"
+   ],
+   "tc": "PRD-TC-20261015-093100338",
+   "file": "src/modules/catalog/import-file.ts",
+   "find": "if (!(buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 3 && buf[3] === 4)) throw new ImportFileError('unsupported_type');",
+   "replace": "if (false as boolean) throw new ImportFileError('unsupported_type');",
+   "test": "node scripts/run-jest.mjs test/catalog/import-limits.spec.ts -t \"PRD-TC-20261015-093100338\""
+  },
+  {
+   "id": "SB-43: trần giải nén 50 MB thành 50 GB",
+   "sb": [
+    "SB-43",
+    "SB-14",
+    "SB-31"
+   ],
+   "tc": "PRD-TC-20261015-093100403",
+   "file": "src/modules/catalog/import-file.ts",
+   "find": "if (total > IMPORT_MAX_UNCOMPRESSED) {",
+   "replace": "if (total > IMPORT_MAX_UNCOMPRESSED * 1000) {",
+   "test": "node scripts/run-jest.mjs test/catalog/import-limits.spec.ts -t \"PRD-TC-20261015-093100403\""
+  },
+  {
+   "id": "SB-43: trần byte tệp import mặc định 5 MB thành 50 MB",
+   "sb": [
+    "SB-43",
+    "SB-14"
+   ],
+   "tc": "PRD-TC-20261015-093100364",
+   "file": "src/modules/catalog/config.ts",
+   "find": "PRD_IMPORT_MAX_BYTES: cfg.int({ default: 5_242_880, min: 1 }),",
+   "replace": "PRD_IMPORT_MAX_BYTES: cfg.int({ default: 52_428_800, min: 1 }),",
+   "test": "node scripts/run-jest.mjs test/catalog/import-limits.spec.ts -t \"PRD-TC-20261015-093100364\""
+  },
+  {
+   "id": "SB-43: chữ bắt đầu bằng + - @ tab xuống dòng không bị coi là công thức",
+   "sb": [
+    "SB-43",
+    "SB-12"
+   ],
+   "tc": "PRD-TC-20261015-093100299",
+   "file": "src/modules/catalog/import.service.ts",
+   "find": "const FORMULA_START = /^[=+\\-@\\t\\r\\n]/;",
+   "replace": "const FORMULA_START = /^[=]/;",
+   "test": "node scripts/run-jest.mjs test/catalog/import.spec.ts -t \"PRD-TC-20261015-093100299\""
+  },
+  {
+   "id": "SB-43: ô công thức của xlsx bị đọc như ô giá trị",
+   "sb": [
+    "SB-43",
+    "SB-12"
+   ],
+   "tc": "PRD-TC-20261015-093100299",
+   "file": "src/modules/catalog/import-file.ts",
+   "find": "if (/<f[\\s>/]/.test(inner)) return { t: 'formula' };",
+   "replace": "if (false as boolean) return { t: 'formula' };",
+   "test": "node scripts/run-jest.mjs test/catalog/import.spec.ts -t \"PRD-TC-20261015-093100299\""
+  },
+  {
+   "id": "SB-43: dry_run vẫn đi vào nhánh ghi (không còn chế độ chỉ đọc)",
+   "sb": [
+    "SB-43",
+    "SB-40"
+   ],
+   "tc": "PRD-TC-20261015-093100247",
+   "file": "src/modules/catalog/import.service.ts",
+   "find": "if (dryRun) { // không mở giao dịch ghi, không audit, không đụng IdempotencyKey (BR2)",
+   "replace": "if (dryRun && (false as boolean)) { // không mở giao dịch ghi, không audit, không đụng IdempotencyKey (BR2)",
+   "test": "node scripts/run-jest.mjs test/catalog/import.spec.ts -t \"PRD-TC-20261015-093100247\""
+  },
+  {
+   "id": "SB-40: xác nhận import không cần Idempotency-Key",
+   "sb": [
+    "SB-40",
+    "SB-43"
+   ],
+   "tc": "PRD-TC-20261015-093100455",
+   "file": "src/modules/catalog/import.service.ts",
+   "find": "if (!dryRun && !isIdempotencyKey(key)) throw new DomainError('idempotency-key-required'); // trước khi đọc tệp",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/import-limits.spec.ts -t \"PRD-TC-20261015-093100455\""
+  },
+  {
+   "id": "SB-30: import cập nhật cả sản phẩm đã lưu trữ (bỏ lỗi product_archived)",
+   "sb": [
+    "SB-30",
+    "SB-43"
+   ],
+   "tc": "PRD-TC-20261015-093100481",
+   "file": "src/modules/catalog/import.service.ts",
+   "find": "if (cur?.status === 'archived') errors.push(err('sku', 'product_archived', COLS.sku, 'sản phẩm đã lưu trữ, không cập nhật được'));",
+   "replace": "",
+   "test": "node scripts/run-jest.mjs test/catalog/import.spec.ts -t \"PRD-TC-20261015-093100481\""
+  },
+  {
+   "id": "SB-07: staff được import sản phẩm",
+   "sb": [
+    "SB-07",
+    "SB-43"
+   ],
+   "tc": "PRD-TC-20261015-093100442",
+   "file": "src/modules/catalog/admin.controller.ts",
+   "find": "@HttpCode(200) @Roles('admin') @RateLimit(LIMITS.import)",
+   "replace": "@HttpCode(200) @Roles('staff', 'admin') @RateLimit(LIMITS.import)",
+   "test": "node scripts/run-jest.mjs test/catalog/import-limits.spec.ts -t \"PRD-TC-20261015-093100442\""
+  },
+  {
+   "id": "SB-19: xác nhận import không ghi audit",
+   "sb": [
+    "SB-19",
+    "SB-43"
+   ],
+   "tc": "PRD-TC-20261015-093100260",
+   "file": "src/modules/catalog/import.service.ts",
+   "find": "await this.audit.record(tx, {",
+   "replace": "void ({",
+   "test": "node scripts/run-jest.mjs test/catalog/import.spec.ts -t \"PRD-TC-20261015-093100260\""
+  },
+  {
+   "id": "SB-18: log import ghi nội dung ô của tệp",
+   "sb": [
+    "SB-18",
+    "SB-43",
+    "SB-12"
+   ],
+   "tc": "PRD-TC-20261015-093100637",
+   "file": "src/modules/catalog/import.service.ts",
+   "find": "this.log.info('import sản phẩm', { dry_run: dryRun, ...report.summary });",
+   "replace": "this.log.info('import sản phẩm', { dry_run: dryRun, ...report.summary, cells: JSON.stringify(table.rows) });",
+   "test": "node scripts/run-jest.mjs test/catalog/import.spec.ts -t \"PRD-TC-20261015-093100637\""
+  },
+  {
+   "id": "SB-11: nhóm hàng không ghép được thì gán danh mục gốc đầu tiên thay vì báo lỗi",
+   "sb": [
+    "SB-11",
+    "SB-43"
+   ],
+   "tc": "PRD-TC-20261015-093100286",
+   "file": "src/modules/catalog/import.service.ts",
+   "find": "else errors.push(err('category', 'category_not_found', COLS.category, `không tìm thấy \"${m.missing}\"`));",
+   "replace": "else categoryId = [...tree.roots.values()][0];",
+   "test": "node scripts/run-jest.mjs test/catalog/import.spec.ts -t \"PRD-TC-20261015-093100286\""
+  },
+  {
+   "id": "SB-31: lô ghi import 50 dòng thành 5000 dòng mỗi câu",
+   "sb": [
+    "SB-31",
+    "SB-43"
+   ],
+   "tc": "PRD-TC-20261015-093100598",
+   "file": "src/modules/catalog/import.service.ts",
+   "find": "const WRITE_CHUNK = 50;",
+   "replace": "const WRITE_CHUNK = 5000;",
+   "test": "node scripts/run-jest.mjs test/catalog/import.spec.ts -t \"PRD-TC-20261015-093100598\""
+  },
+  {
+   "id": "SB-14: bậc E của import 20 mỗi giờ thành 2000",
+   "sb": [
+    "SB-14",
+    "SB-43"
+   ],
+   "tc": "PRD-TC-20261015-093100468",
+   "file": "src/modules/catalog/http.ts",
+   "find": "import: { tier: 'E', limit: 20,",
+   "replace": "import: { tier: 'E', limit: 2000,",
+   "test": "node scripts/run-jest.mjs test/catalog/import-limits.spec.ts -t \"PRD-TC-20261015-093100468\""
+  },
+  {
+   "id": "SB-14: tải tệp mẫu 30 mỗi phút thành 3000",
+   "sb": [
+    "SB-14"
+   ],
+   "tc": "PRD-TC-20261015-093100702",
+   "file": "src/modules/catalog/http.ts",
+   "find": "importTemplate: { tier: 'D', limit: 30,",
+   "replace": "importTemplate: { tier: 'D', limit: 3000,",
+   "test": "node scripts/run-jest.mjs test/catalog/import-limits.spec.ts -t \"PRD-TC-20261015-093100702\""
   }
  ]
 }

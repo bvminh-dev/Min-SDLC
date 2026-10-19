@@ -8,7 +8,7 @@ import { ShippingApi, ShippingModule } from '../../src/modules/shipping';
 import { MethodService } from '../../src/modules/shipping/method.service';
 import { ShipmentService } from '../../src/modules/shipping/shipment.service';
 import { createAuthApp, q, type AuthApp } from './auth';
-import { ADDRESS, insertOrder, type Status as OrderStatus } from './order-fixture';
+import { ADDRESS, insertOrder, type SeedOrder, type Status as OrderStatus } from './order-fixture';
 import { call, who, type Who } from './prd';
 
 export type ShipStatus = 'pending' | 'shipped' | 'delivered' | 'failed' | 'returned' | 'cancelled';
@@ -42,6 +42,7 @@ export async function seedMethod(t: AuthApp, o: SeedMethod = {}): Promise<string
 }
 
 const ORDER_OF: Record<ShipStatus, OrderStatus> = { pending: 'paid', shipped: 'shipped', failed: 'shipped', delivered: 'delivered', returned: 'returned', cancelled: 'cancelled' };
+type SeedOrderHo = NonNullable<SeedOrder['ho']>;
 export interface SeedShipment {
   user?: string; order?: { id: string; code: string; user: string }; orderStatus?: OrderStatus; orderCode?: string; method?: string; status?: ShipStatus; tracking?: string | null; cod?: number; payment?: 'vnpay' | 'cod';
   createdAt?: Date; reason?: FailReason; note?: string | null; version?: number; handoff?: Date | null; noHistory?: boolean; address?: Record<string, string>;
@@ -49,6 +50,10 @@ export interface SeedShipment {
   bareOrder?: boolean;
   /** Vận đơn "có sẵn từ trước migration order_code": cột `order_code` để rỗng (để thử câu backfill). */
   legacyNoOrderCode?: boolean;
+  /** Đơn hộ (đợt bán hộ): người tạo, nguồn, bản chụp khách của `insertOrder`; `user` mặc định rỗng (khách không tài khoản). Cột `shipments.created_by` mặc định chép `ho.createdBy` (như lúc tạo vận đơn). */
+  ho?: SeedOrderHo;
+  /** Ghi đè cột `shipments.created_by` (bản chụp lệch với `orders.created_by`); `null` là rỗng. */
+  createdBy?: string | null;
 }
 export interface SeededShipment { id: string; order: { id: string; code: string; user: string }; method: string; tracking: string | null }
 let trackingCounter = 0;
@@ -60,11 +65,11 @@ export const trackingOf = (): string => `TRK${String(Date.now()).slice(-6)}${Str
  */
 export async function seedShipment(t: AuthApp, o: SeedShipment = {}): Promise<SeededShipment> {
   const status = o.status ?? 'pending';
-  const payment = o.payment ?? (status === 'pending' && o.orderStatus === 'confirmed' ? 'cod' : 'vnpay');
+  const payment = o.payment ?? (o.ho ? 'cod' : status === 'pending' && o.orderStatus === 'confirmed' ? 'cod' : 'vnpay');
   const order = o.order ?? await (async () => {
-    const user = o.user ?? (await who(t, 'customer', `c-${randomUUID().slice(0, 8)}@x.vn`)).id;
+    const user = o.user ?? (o.ho ? null : (await who(t, 'customer', `c-${randomUUID().slice(0, 8)}@x.vn`)).id);
     const os = o.orderStatus ?? ORDER_OF[status];
-    return insertOrder(t.prisma, t.clock.now(), { user, status: os, method: payment, code: o.orderCode, tracking: null, handoff: o.handoff, address: o.address, noHistory: o.bareOrder, payment: undefined, shipping: 30000, ...(os === 'confirmed' ? { payment: 'pending' as const } : {}) });
+    return insertOrder(t.prisma, t.clock.now(), { user, ho: o.ho, status: os, method: payment, code: o.orderCode, tracking: null, handoff: o.handoff, address: o.address, noHistory: o.bareOrder, payment: undefined, shipping: 30000, ...(os === 'confirmed' ? { payment: 'pending' as const } : {}) });
   })();
   const method = o.method ?? await seedMethod(t);
   const tracking = o.tracking !== undefined ? o.tracking : status === 'pending' || status === 'cancelled' ? null : trackingOf();
@@ -74,8 +79,8 @@ export async function seedShipment(t: AuthApp, o: SeedShipment = {}): Promise<Se
   const shippedAt = path.includes('shipped') ? at(1) : null;
   const deliveredAt = status === 'delivered' ? at(2) : null;
   const [r] = await t.prisma.$queryRaw<{ id: string }[]>`
-    INSERT INTO shipments (order_id, order_code, shipping_method_id, status, tracking_number, cod_amount, shipped_at, delivered_at, version, created_at, updated_at)
-    VALUES (${order.id}::uuid, ${o.legacyNoOrderCode ? null : order.code}, ${method}::uuid, ${status}::shipment_status, ${tracking}, ${o.cod ?? 0}, ${shippedAt}::timestamptz, ${deliveredAt}::timestamptz, ${o.version ?? (path.length)}, ${created}::timestamptz, ${at(path.length - 1)}::timestamptz) RETURNING id`;
+    INSERT INTO shipments (order_id, order_code, created_by, shipping_method_id, status, tracking_number, cod_amount, shipped_at, delivered_at, version, created_at, updated_at)
+    VALUES (${order.id}::uuid, ${o.legacyNoOrderCode ? null : order.code}, ${(o.createdBy !== undefined ? o.createdBy : (o.ho?.createdBy ?? null))}::uuid, ${method}::uuid, ${status}::shipment_status, ${tracking}, ${o.cod ?? 0}, ${shippedAt}::timestamptz, ${deliveredAt}::timestamptz, ${o.version ?? (path.length)}, ${created}::timestamptz, ${at(path.length - 1)}::timestamptz) RETURNING id`;
   if (!o.noHistory) {
     for (const [i, st] of path.entries()) {
       const failed = st === 'failed';

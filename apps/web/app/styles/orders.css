@@ -44,3 +44,5 @@ a.ord-tile:hover { border-color: var(--brand); background: var(--brand-soft); }
   .ord-table tr::after { content: ''; order: 3; flex-basis: 100%; height: 0; }
   .ord-table td.num { text-align: right; }
 }
+.ord-filter { display: inline-flex; align-items: center; gap: .4rem; font-size: .875rem; color: var(--muted); } .ord-filter select { max-width: 12rem; }
+.ord-note { white-space: pre-wrap; overflow-wrap: anywhere; } .ord-cost { display: block; text-align: right; font-weight: 400; }

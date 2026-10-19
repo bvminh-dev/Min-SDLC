@@ -24,7 +24,7 @@ describe('ORD giao diện đọc nội bộ', () => {
     expect(pay).toMatchObject({ order_id: o1.id, code: o1.code, user_id: a.id, status: 'pending', payment_method: 'vnpay', grand_total: 380000 });
     expect(pay?.payment_expires_at).toEqual(exp);
     const ship = [await t.ord.findForShipment(o2.id), await t.ord.findByCode(o2.code), await t.ord.findOwned(o2.code, a.id)];
-    for (const s of ship) { expect(keys(s)).toEqual(['code', 'grand_total', 'order_id', 'payment_method', 'shipping_method_id', 'status']); expect(s).toEqual(ship[0]); }
+    for (const s of ship) { expect(keys(s)).toEqual(['code', 'created_by', 'grand_total', 'order_id', 'payment_method', 'shipping_method_id', 'status']); expect(s).toEqual(ship[0]); } /* created_by: null với đơn khách tự đặt */
     expect(await t.ord.getRecipient(o2.id)).toEqual({ receiver: 'Nguyễn Văn A', phone: '0901234567', line1: '12 Lê Lợi', ward: 'Bến Nghé', city: 'TP.HCM' });
     const product = randomUUID(), other = await seedOrder(t, { user: a.id, status: 'shipped', items: [{ product }] });
     const [d1, d2] = [await seedOrder(t, { user: a.id, status: 'delivered', items: [{ product }, { price: 1 }], deliveredAt: day(6, 10) }), await seedOrder(t, { user: a.id, status: 'delivered', items: [{ product }], deliveredAt: day(6, 12) })];

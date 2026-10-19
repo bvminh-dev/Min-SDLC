@@ -47,8 +47,8 @@ export class ShippingController {
   @Post('quote') @Action('Báo phí vận chuyển theo phương thức, thành phố và tạm tính') @HttpCode(200) @Roles('customer') @RateLimit(LIMITS.quote) @Validate({ body: quoteBody })
   quote(@ValidBody() b: QuoteBody) { return this.methods.quote(b); }
 
-  @Get('shipments') @Action('Xem danh sách vận đơn (lọc theo trạng thái, mã đơn, mã vận đơn)') @Roles('staff', 'admin') @RateLimit(LIMITS.list) @Validate({ query: listQuery })
-  list(@ValidQuery() q: ListQuery) { return this.reads.list(q); }
+  @Get('shipments') @Action('Xem danh sách vận đơn (lọc theo trạng thái, mã đơn, mã vận đơn)') @Roles('staff', 'sale', 'admin') @RateLimit(LIMITS.list) @Validate({ query: listQuery })
+  list(@CurrentSession() s: SessionContext, @ValidQuery() q: ListQuery) { return this.reads.list(s, q); }
 
   @Get('orders/:code/shipment') @Action('Xem trạng thái và chi tiết vận đơn của một đơn') @Roles('customer', 'staff', 'admin') @RateLimit(LIMITS.lookup) @Validate({ params: codeParams })
   detail(@CurrentSession() s: SessionContext, @ValidParams() p: Code) { return this.reads.detail(s, p.code); }

@@ -104,3 +104,29 @@ Danh sách lúc chạy sdlc-test-design, nay có kết quả đồng bộ.
 - R-03 (đơn 0 đồng): ORD từ chối `grand_total <= 0` ở `createPending` và CHECK CSDL; lý do: theo nền, v1 không có đơn 0 đồng.
 - R-19 (OrderExpired): payload thêm `order_code`, `user_id`; lý do: NTF báo `in_app`, theo nền.
 - R-17 (`reservation_missing`): ORD hủy đơn `pending`/`paid` do hệ thống như hai mã kia; lý do: tiền đã được PAY hoàn `late_payment`, không để đơn kẹt `paid`.
+
+## Đợt bán hộ 2026-10-15 (spec/changes/ban-ho-sale-nguon-don-20261015.md)
+Chạy tự động, mọi câu đã có quyết định của người dùng ("chạy làm hết đi để done"), không còn `[OPEN]`.
+
+1. [RESOLVED] Đơn hộ của khách có tài khoản: gắn `user_id` chỉ khi sale chọn khách từ kết quả tra của USR (SAL truyền `user_id`), ORD không tự ghép theo email hay điện thoại; khách thấy đơn trong danh sách của mình nhưng không thấy nguồn, người tạo, ghi chú, giá vốn (ORD-REQ-20261006-092320716 BR1, ORD-REQ-20261006-092320768 BR10).
+2. [RESOLVED] Phương thức thanh toán đơn hộ: `cod`, `cash`, `bank_transfer`; vào `confirmed` ngay; ORD không tự đặt `payment_status` `succeeded`, ghi nhận tiền đã thu do PAY và SAL chốt (ORD-REQ-20261015-092748715 BR2, ORD-REQ-20261006-092320790 BR15).
+3. [RESOLVED] Tên người tạo: tra tên hiện tại bằng `AuthApi.getDisplayNames` (khớp SHP-API và DSH-API), không lưu bản chụp tên ở Order.
+4. [RESOLVED] Sale không hủy đơn ở ORD (403, ORD-REQ-20261006-092320834 không đổi); sale đọc đơn, lịch sử và danh sách của mình.
+5. [RESOLVED] Danh sách đơn của sale dùng `GET /api/v1/admin/orders` với phạm vi `created_by` = phiên; `GET /api/v1/sales/orders` của SAL là cửa riêng cùng quy tắc sở hữu (SAL tự quyết cách gọi).
+6. [RESOLVED] `GET /api/v1/order-sources` thêm role `staff` và tham số `include_inactive` (staff, admin): staff cần nguồn đã tắt để lọc đơn cũ; lead đã chấp nhận, SAL không cần sửa (SAL chỉ gọi với vai sale hoặc admin, mặc định nguồn đang bật).
+7. [RESOLVED] Audit đơn hộ: ORD là bên ghi audit duy nhất cho việc tạo đơn (`order.created_ho`, cùng giao dịch, ORD-REQ-20261015-092748715 BR9). Đề nghị cho SAL: SAL-DB, SAL-API, SAL-REQ bỏ phần ghi AuditLog `sales.create_order` (và TC nhắc nó), giữ audit các thao tác riêng của SAL nếu có (không phải việc tạo đơn).
+8. [RESOLVED] Số thứ tự mã đơn: bộ đếm cập nhật trong CÙNG giao dịch tạo đơn và dòng bộ đếm bị khóa tới khi giao dịch kết thúc, nên (a) giao dịch hoàn tác thì số của nó cũng hoàn tác, giao dịch kế tiếp lấy lại đúng số đó, không có lỗ; (b) giao dịch khác không thể xen vào giữa vì chờ ở khóa dòng; (c) dãy số của ngày liên tục 00001, 00002, ... không bị bỏ trống. Chỉ khi cách cấp đổi sang ngoài giao dịch thì mới có lỗ. Spec vẫn không đòi dãy liên tục (ORD-REQ-20261015-092748640 BR2). ADR-024 và SAL-DB còn ghi "số bị bỏ trống": việc sửa là của lead.
+
+## Nền cần sửa
+- spec/architecture.md; Bảng "Giao diện module": thêm hàng SAL -> ORD (`OrderApi.createHo(input, tx)`, `OrderApi.listSources(options?)`), DSH -> ORD (`OrderApi.getSourcesReport`, `OrderApi.getSalesReport`), SHP -> ORD (`OrderApi.getShipmentDisplay(order_ids)`; `findForShipment` trả thêm `created_by`) và ORD -> AUTH (`AuthApi.getDisplayNames`); cao; ORD
+- spec/architecture.md; ADR-012 thứ tự khóa: thêm dòng bộ đếm mã đơn (`order_code_counters`) ngay trước Order, chỉ đường tạo đơn (`createPending`, `createHo`) lấy khóa này; trung bình; ORD
+- spec/architecture.md; ADR-024 sửa câu "giao dịch hoàn tác thì số bị bỏ trống" cho khớp: bộ đếm cập nhật trong cùng giao dịch nên số hoàn tác theo, spec không đòi dãy liên tục; thấp; ORD
+- spec/architecture.md; ADR-013 danh sách job nền: thêm `ord.sweep-code-counters` (xóa dòng `order_code_counters` cũ hơn hai ngày, tối đa 500 dòng mỗi lượt); thấp; ORD
+- spec/domain/entities.md; `OrderStatusHistory.actor_role` thêm `sale` (dòng `pending` của đơn hộ do sale tạo); thấp; ORD
+- spec/domain/entities.md; thêm ghi chú: bộ đếm mã đơn `order_code_counters` là bảng kỹ thuật của Order (không phải entity nghiệp vụ); thấp; ORD
+- spec/domain/entities.md; Order thêm `handoff_locked_at` đã có ở ORD-DB: không đổi; thấp; ORD
+
+## Tài liệu đã có chủ nhưng không nằm trong sổ change-control (cần lead đưa vào sổ hoặc xử lý khi duyệt)
+- `spec/epics/ORD/ui/order-detail.md` và `order-admin-list.md` (đã duyệt, roles chưa có `sale`): phần mới nằm ở ba màn draft `order-list-source`, `order-detail-source`, `order-source-admin`; khi dựng gộp theo ghi chú trong màn.
+- `spec/epics/ORD/requirements/ORD-REQ-20261006-092320812.md` (lịch sử trạng thái, roles chưa có `sale`): quyền sale đọc lịch sử nằm ở ORD-REQ-20261015-092748640 BR6 và ORD-API.
+- `spec/epics/ORD/requirements/ORD-REQ-20261006-092320834.md` (hủy đơn): không đổi, sale 403 theo quy tắc từ chối mặc định.

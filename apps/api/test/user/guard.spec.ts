@@ -32,6 +32,11 @@ describe('USR kiểm quyền theo ma trận trên AppModule thật (USR-SEC T18,
     const tampered = MATRIX.replace(/^(\| Xem danh sách địa chỉ giao hàng của mình \|[^|]*\|[^|]*\|[^|]*\|)[^|]*\|/m, '$1 Y |');
     expect(tampered).not.toBe(MATRIX);
     expect(auditPermissions(app, tampered, opts).join('\n')).toContain('code cho [customer] nhưng ma trận (Xem danh sách địa chỉ giao hàng của mình) cho [customer, staff]');
+    // sale tự phục vụ GIỐNG HỆT staff ở hồ sơ, mật khẩu, ảnh (không có sổ địa chỉ); bỏ sale khỏi hàng đổi mật khẩu thì bị báo
+    for (const r of parseMatrix(MATRIX).filter((x) => /^USR-REQ-/.test(x.requirement) && x.staff === 'own')) expect(r.sale).toBe('own');
+    const noSale = MATRIX.replace(/^(\| Đổi mật khẩu \|[^|]*\|[^|]*\|[^|]*\|[^|]*\|)[^|]*\|/m, '$1 - |');
+    expect(noSale).not.toBe(MATRIX);
+    expect(auditPermissions(app, noSale, opts).join('\n')).toContain('code cho [admin, customer, sale, staff] nhưng ma trận (Đổi mật khẩu) cho [admin, customer, staff]');
     // hàng đổi tên: @Action không còn trong ma trận
     expect(auditPermissions(app, MATRIX.replace('| Đổi mật khẩu |', '| Đổi mật khẩu của tôi |'), opts).join('\n')).toContain('không có trong permissions-matrix.md');
     // ma trận rỗng: lỗi, không im lặng cho qua

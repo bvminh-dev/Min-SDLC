@@ -5,10 +5,12 @@ import type { ProductCreate, ProductPatch } from './policy';
 import { QueryService, type ProductStatus } from './query.service';
 import { UUID_RE, searchTextOf } from './text';
 
-interface Row { id: string; category_id: string; name: string; sku: string; description: string | null; price: bigint; status: ProductStatus; version: number; published_at: Date | null }
+interface Row { id: string; category_id: string; name: string; sku: string; description: string | null; price: bigint; cost_price: bigint | null; status: ProductStatus; version: number; published_at: Date | null }
 const SKU_KEY = /^Key \(sku\)=/;
 const actorOf = (s: SessionContext) => ({ actor_id: s.user_id, actor_role: s.role });
-const snapshot = (r: Pick<Row, 'name' | 'sku' | 'category_id' | 'description'> & { price: bigint | number }) => ({ name: r.name, sku: r.sku, category_id: r.category_id, price: Number(r.price), description: r.description });
+const num = (v: bigint | number | null): number | null => (v === null ? null : Number(v));
+// Bản chụp cho audit: có `cost_price` (audit chỉ admin đọc, SB-42; before/after giá vốn truy vết đổi giá vốn nhầm).
+const snapshot = (r: Pick<Row, 'name' | 'sku' | 'category_id' | 'description'> & { price: bigint | number; cost_price: bigint | number | null }) => ({ name: r.name, sku: r.sku, category_id: r.category_id, price: Number(r.price), cost_price: num(r.cost_price), description: r.description });
 const categoryMissing = () => new DomainError('validation-failed', { errors: [{ field: 'category_id', code: 'not_found' }] });
 
 /**
@@ -25,7 +27,7 @@ export class ProductService {
   /** Khóa dòng sản phẩm; không tồn tại hoặc id sai định dạng là 404 (BR8). */
   private async lock(tx: Tx, id: string): Promise<Row> {
     if (!UUID_RE.test(id)) throw new DomainError('not-found');
-    const [p] = await tx.$queryRaw<Row[]>`SELECT id, category_id, name, sku, description, price, status, version, published_at FROM products WHERE id = ${id}::uuid FOR UPDATE`;
+    const [p] = await tx.$queryRaw<Row[]>`SELECT id, category_id, name, sku, description, price, cost_price, status, version, published_at FROM products WHERE id = ${id}::uuid FOR UPDATE`;
     if (!p) throw new DomainError('not-found');
     return p;
   }
@@ -43,9 +45,9 @@ export class ProductService {
       id = await this.transactions.run(async (tx) => {
         await this.requireCategory(tx, b.category_id);
         const [row] = await tx.$queryRaw<Row[]>`
-          INSERT INTO products (category_id, name, sku, description, price, search_text, created_at, updated_at)
-          VALUES (${b.category_id}::uuid, ${b.name}, ${b.sku}, ${b.description || null}, ${b.price}, ${searchTextOf(b.name, b.sku)}, ${now}::timestamptz, ${now}::timestamptz)
-          RETURNING id, category_id, name, sku, description, price, status, version, published_at`;
+          INSERT INTO products (category_id, name, sku, description, price, cost_price, search_text, created_at, updated_at)
+          VALUES (${b.category_id}::uuid, ${b.name}, ${b.sku}, ${b.description || null}, ${b.price}, ${b.cost_price ?? null}, ${searchTextOf(b.name, b.sku)}, ${now}::timestamptz, ${now}::timestamptz)
+          RETURNING id, category_id, name, sku, description, price, cost_price, status, version, published_at`;
         await this.audit.record(tx, { ...actorOf(actor), action: 'catalog.product.create', target_type: 'product', target_id: row.id, after: { ...snapshot(row), status: 'draft' } });
         return row.id;
       });
@@ -54,7 +56,7 @@ export class ProductService {
       if (isForeignKey(e)) throw categoryMissing();
       throw e;
     }
-    return this.queries.adminDetail(id);
+    return this.queries.adminDetail(id, true); // chỉ admin gọi create và update (SB-42)
   }
 
   /** Sửa một phần kèm `version` đang giữ (khóa lạc quan, SB-30). Thứ tự: 404, archived, version, sku đã khóa (409), rồi ràng buộc dữ liệu. */
@@ -69,13 +71,13 @@ export class ProductService {
         if (b.category_id !== undefined && b.category_id !== cur.category_id) await this.requireCategory(tx, b.category_id);
         const next = {
           name: b.name ?? cur.name, sku: b.sku ?? cur.sku, category_id: b.category_id ?? cur.category_id,
-          price: b.price ?? Number(cur.price), description: b.description === undefined ? cur.description : b.description || null,
+          price: b.price ?? Number(cur.price), cost_price: b.cost_price === undefined ? num(cur.cost_price) : b.cost_price, description: b.description === undefined ? cur.description : b.description || null,
         };
         const before = snapshot(cur), after = snapshot({ ...next });
         const changed = (Object.keys(after) as (keyof typeof after)[]).filter((k) => after[k] !== before[k]);
         // `WHERE version = :đang-giữ AND status IN (...)` là lưới an toàn thứ hai sau khóa dòng
         const n = await tx.$executeRaw`
-          UPDATE products SET category_id = ${next.category_id}::uuid, name = ${next.name}, sku = ${next.sku}, description = ${next.description}, price = ${next.price},
+          UPDATE products SET category_id = ${next.category_id}::uuid, name = ${next.name}, sku = ${next.sku}, description = ${next.description}, price = ${next.price}, cost_price = ${next.cost_price},
             search_text = ${searchTextOf(next.name, next.sku)}, version = version + 1, updated_at = ${now}::timestamptz
           WHERE id = ${id}::uuid AND version = ${b.version} AND status IN ('draft', 'active')`;
         if (n === 0) throw new DomainError('product-version-conflict');
@@ -89,7 +91,7 @@ export class ProductService {
       if (isForeignKey(e)) throw categoryMissing();
       throw e;
     }
-    return this.queries.adminDetail(id);
+    return this.queries.adminDetail(id, true); // chỉ admin gọi create và update (SB-42)
   }
 
   /** draft thành active: đủ điều kiện (tên, sku, giá do CHECK của DB giữ; danh mục do khóa ngoại; có ít nhất 1 ảnh), ghi `published_at` và ProductActivated qua outbox cùng giao dịch (BR5). */

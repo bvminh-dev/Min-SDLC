@@ -418,4 +418,26 @@ describe('NTF thông báo theo loại event', () => {
     expect(JSON.stringify([notes[1], notes[2], (await mailsOf(t, u1.id)).map((m) => m.data)])).not.toContain('order_expired"');
     expect(notes[1].body + notes[2].body + JSON.stringify(await mailsOf(t, u1.id))).not.toMatch(/order_expired/);
   });
+
+  // ---- Đơn hộ (ADR-026) và mã đơn mới (ADR-024)
+  it('NTF-TC-20261015-092750240: event đơn hộ không có user_id bỏ qua êm (SKIP): không thông báo, không email, không gọi AUTH, không log error, SKIP của platform không ghi ProcessedEvent (như recipient-not-found); giao lại không xử lý; đơn hộ có user_id thì thông báo như thường, mã mới HDyymmdd-NNNNN giữ nguyên trong nội dung', async () => {
+    const spy = jest.spyOn(t.api, 'getUserContact');
+    const o9 = randomUUID(), code9 = 'HD261015-00003';
+    const e1 = await emit(t, 'OrderCreated', { order_id: o9, order_code: code9, user_id: null, source: 'facebook', created_by: randomUUID(), grand_total: 480000, payment_method: 'cod', payment_expires_at: null });
+    const e2 = await emit(t, 'OrderConfirmed', { order_id: o9, order_code: code9, user_id: null, confirmed_at: new Date().toISOString() });
+    expect([await count(t, 'notifications'), await count(t, 'email_deliveries')]).toEqual([0, 0]);
+    expect(spy).not.toHaveBeenCalled();
+    expect(t.logs.records.filter((r) => r.level === 'error' || r.level === 'warn')).toEqual([]);
+    expect([e1, e2]).toHaveLength(2); // SKIP ở `prepare`: không ProcessedEvent (platform), giao lại chỉ chạy lại `prepare` rẻ, không tác dụng phụ
+    expect(await count(t, 'processed_events', `consumer = 'NTF'`)).toBe(0);
+    await emit(t, 'OrderCreated', { order_id: o9, order_code: code9, user_id: null, grand_total: 480000, payment_method: 'cod' }, e1); // bus giao lại
+    expect([await count(t, 'notifications'), await count(t, 'email_deliveries')]).toEqual([0, 0]);
+    const o10 = randomUUID(), code10 = 'HD261015-00004';
+    await emit(t, 'OrderCreated', { order_id: o10, order_code: code10, user_id: u1.id, source: 'hotline', created_by: randomUUID(), grand_total: 150000, payment_method: 'cash', payment_expires_at: null });
+    expect(await notesOf(t, u1.id)).toMatchObject([{ type: 'order_created', body: `Đơn #${code10} đã được tạo. Tổng tiền 150.000 đ.`, link: `/orders/${code10}` }]);
+    expect(await mailsOf(t, u1.id)).toMatchObject([{ type: 'order_created', delivery_status: 'pending', data: { order_code: code10 } }]);
+    await sendAll();
+    expect(t.mail.msgs[0].text).toContain(`https://shop.example/orders/${code10}`);
+    expect(t.logs.records.filter((r) => r.level === 'error')).toEqual([]);
+  });
 });

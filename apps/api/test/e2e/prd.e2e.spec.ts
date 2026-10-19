@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import { kiot } from '../support/import';
 import type { Page, Route } from 'playwright-core';
 import { count, eventually, hasText, id, loginUi, productState, reset, s3Keys, see, seedCategory, seedProduct, seedUser, startE2e, textOf, withPage, type E2eEnv, API } from './support';
 
@@ -280,5 +281,118 @@ describe('E2E PRD (trình duyệt thật, API thật)', () => {
     await see(id(page, 'prd-admin-category-tree'));
     expect(await page.locator('main script, main img[src="x"]').count()).toBe(0);
     expect(dialogs).toEqual([]);
+  });
+  const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+  e2e('PRD-E2E-20261015-094000000: admin tải mẫu, xem trước import có dòng lỗi (chưa ghi gì), xác nhận rồi thấy sản phẩm nháp ở danh sách; tệp sai loại bị từ chối', async (page) => {
+    await seedUser({ email: 'admin@shop.vn', role: 'admin' });
+    const root = await seedCategory('Thời trang');
+    await seedCategory('Áo', root);
+    await loginUi(page, 'admin@shop.vn');
+    await page.goto('/admin/products/import');
+    await see(id(page, 'prd-admin-product-import-file'));
+    await expect(id(page, 'prd-admin-product-import-preview').isDisabled()).resolves.toBe(true);
+    await count(id(page, 'prd-admin-product-import-report'), 0);
+    await count(id(page, 'prd-admin-product-import-confirm'), 0);
+    // bước 2: tải mẫu
+    const [download] = await Promise.all([page.waitForEvent('download'), id(page, 'prd-admin-product-import-template').click()]);
+    expect(download.suggestedFilename()).toBe('mau-import-san-pham.xlsx');
+    await count(id(page, 'prd-admin-product-import-template-error'), 0);
+    // bước 3: chọn tệp (AT-100 hợp lệ, AT-101 nhóm hàng không có)
+    const file = kiot([['AT-100', 'Áo thun', 'Thời trang>>Áo', 150000, 90000, 'Cái', 12], ['AT-101', 'Xe đồ chơi', 'Đồ chơi>>Xe', 50000, null, 'Cái', 3]]);
+    await id(page, 'prd-admin-product-import-file').setInputFiles({ name: 'hang-moi.xlsx', mimeType: XLSX, buffer: file });
+    await hasText(id(page, 'prd-admin-product-import-file-name'), /hang-moi\.xlsx/);
+    await eventually(async () => expect(await id(page, 'prd-admin-product-import-preview').isEnabled()).toBe(true));
+    // bước 4: xem trước, chưa ghi gì
+    await id(page, 'prd-admin-product-import-preview').click();
+    await hasText(id(page, 'prd-admin-product-import-summary'), /Tạo mới 1.*Lỗi 1/);
+    await count(id(page, 'prd-admin-product-import-row'), 2);
+    await hasText(id(page, 'prd-admin-product-import-row-error'), /Đồ chơi/);
+    await hasText(id(page, 'prd-admin-product-import-ignored-columns'), /ĐVT/);
+    await hasText(id(page, 'prd-admin-product-import-ignored-columns'), /Tồn kho/);
+    const other = await page.context().newPage(); // tab khác: chưa ghi gì nên danh sách vẫn rỗng
+    await other.goto('/admin/products');
+    await see(id(other, 'prd-admin-product-list-empty'));
+    await other.close();
+    // bước 5: chỉ dòng lỗi, rồi xác nhận
+    await id(page, 'prd-admin-product-import-errors-only').check();
+    await count(id(page, 'prd-admin-product-import-row'), 1);
+    await id(page, 'prd-admin-product-import-confirm').click();
+    await hasText(id(page, 'prd-admin-product-import-result'), /Tạo mới 1/);
+    await hasText(id(page, 'prd-admin-product-import-result'), /Lỗi 1/);
+    // bước 6: danh sách sản phẩm
+    await page.goto('/admin/products');
+    await id(page, 'prd-admin-product-list-search').fill('AT-100');
+    await count(id(page, 'prd-admin-product-list-row'), 1);
+    await hasText(id(page, 'prd-admin-product-list-sku'), 'AT-100');
+    await hasText(id(page, 'prd-admin-product-list-status-badge'), 'Nháp');
+    await id(page, 'prd-admin-product-list-search').fill('AT-101');
+    await see(id(page, 'prd-admin-product-list-empty-filtered'));
+    // bước 7: tệp .xlsx thực chất là PDF
+    await page.goto('/admin/products/import');
+    await id(page, 'prd-admin-product-import-file').setInputFiles({ name: 'gia.xlsx', mimeType: XLSX, buffer: Buffer.from('%PDF-1.7\n1 0 obj\n<<>>\nendobj\n') });
+    await id(page, 'prd-admin-product-import-preview').click();
+    await hasText(id(page, 'prd-admin-product-import-file-error'), /Sai loại tệp/);
+    await count(id(page, 'prd-admin-product-import-report'), 0);
+  });
+
+  e2e('PRD-E2E-20261015-094100000: admin tạo sản phẩm có giá vốn (ô Giá bán và Giá vốn), giá vốn sai bị chặn, sửa giá vốn rồi xóa giá vốn; không bắt buộc để lưu', async (page) => {
+    await seedUser({ email: 'admin@shop.vn', role: 'admin' });
+    await seedCategory('Áo');
+    await loginUi(page, 'admin@shop.vn');
+    await page.goto('/admin/products');
+    await id(page, 'prd-admin-product-list-create').first().click();
+    await id(page, 'prd-admin-product-edit-name').fill('Áo thun cotton');
+    await id(page, 'prd-admin-product-edit-sku').fill('at-010');
+    await id(page, 'prd-admin-product-edit-category').selectOption({ label: 'Áo' });
+    await expect(page.getByLabel('Giá bán (đ) *').count()).resolves.toBe(1); // nhãn "Giá bán"
+    await id(page, 'prd-admin-product-edit-price').fill('150000');
+    await id(page, 'prd-admin-product-edit-cost-price').fill('90000');
+    await id(page, 'prd-admin-product-edit-save').click();
+    await hasText(id(page, 'prd-admin-product-edit-status-badge'), 'Nháp');
+    await eventually(async () => expect(await val(page, 'prd-admin-product-edit-cost-price')).toBe('90000'));
+    const productId = page.url().split('/').at(-1)!;
+    expect(await productState(productId)).toMatchObject({ price: 150000, cost_price: 90000 });
+    // bước 3: giá vốn âm bị chặn, giá vốn đã lưu giữ nguyên
+    await id(page, 'prd-admin-product-edit-cost-price').fill('-1');
+    await id(page, 'prd-admin-product-edit-save').click();
+    await hasText(id(page, 'prd-admin-product-edit-field-error'), /Giá vốn/);
+    await page.reload();
+    await eventually(async () => expect(await val(page, 'prd-admin-product-edit-cost-price')).toBe('90000'));
+    // bước 4: sửa giá vốn
+    await id(page, 'prd-admin-product-edit-cost-price').fill('95000');
+    await id(page, 'prd-admin-product-edit-save').click();
+    await eventually(async () => expect((await productState(productId))?.cost_price).toBe(95000));
+    await page.reload();
+    await eventually(async () => expect(await val(page, 'prd-admin-product-edit-cost-price')).toBe('95000'));
+    // bước 5: xóa trống giá vốn
+    await id(page, 'prd-admin-product-edit-cost-price').fill('');
+    await id(page, 'prd-admin-product-edit-save').click();
+    await eventually(async () => expect((await productState(productId))?.cost_price).toBeNull());
+    await page.reload();
+    await eventually(async () => expect(await val(page, 'prd-admin-product-edit-cost-price')).toBe(''));
+    await count(id(page, 'prd-admin-product-edit-field-error'), 0);
+  });
+
+  e2e('PRD-E2E-20261015-094200000: sale xem sản phẩm quản trị chỉ đọc, không có nút tạo hay nhập Excel, không có giá vốn ở bất kỳ đâu trong trang', async (page) => {
+    await seedUser({ email: 'sale@shop.vn', role: 'sale' });
+    const c = await seedCategory('Áo');
+    const p = await seedProduct({ name: 'Áo thun', sku: 'AT-001', category_id: c, price: 150000, cost_price: 90000, images: 1 });
+    await loginUi(page, 'sale@shop.vn');
+    await page.goto('/admin/products');
+    await see(id(page, 'prd-admin-product-list-row'));
+    expect((await textOf(id(page, 'prd-admin-product-list-price'))).replace(/\D/g, '')).toBe('150000');
+    await count(id(page, 'prd-admin-product-list-create'), 0);
+    await count(id(page, 'prd-admin-product-list-import'), 0);
+    expect(await page.content()).not.toContain('90000');
+    await id(page, 'prd-admin-product-list-row').first().click();
+    await eventually(async () => expect(page.url()).toContain(`/admin/products/${p}`));
+    await see(id(page, 'prd-admin-product-edit-view-fields'));
+    expect(await textOf(id(page, 'prd-admin-product-edit-readonly-note'))).toContain('Bạn chỉ có quyền xem');
+    for (const t of ['save', 'publish', 'archive', 'image-upload', 'cost-price']) await count(id(page, `prd-admin-product-edit-${t}`), 0);
+    expect(await page.content()).not.toContain('90000');
+    await page.goto('/admin/products/import'); // staff, sale không vào được màn import
+    await see(id(page, 'auth-access-denied-container'));
+    await count(id(page, 'prd-admin-product-import-file'), 0);
   });
 });

@@ -66,3 +66,19 @@ Chạy tự động nên không hỏi trực tiếp. Mọi mặc định dưới
 - Câu 17 (bậc quản trị đọc): bậc D, 30 mỗi phút mỗi người; lý do: nền đợt 3 (R-42) đã gán.
 - Câu 18 (sắp xếp theo điểm): chưa có ở v1; lý do: không có yêu cầu nghiệp vụ, thêm sau bằng chỉ mục và giá trị `sort` kèm sdlc-impact.
 - R-20 (ReviewUnpublished): PRD trừ điểm như ReviewHidden (`counted = false`), cộng lại khi nhận ReviewPublished; lý do: theo events.md đợt 3, tránh điểm lệch khi bản sửa bị từ chối.
+
+## Đợt bán hàng hộ 2026-10-15 (giá vốn, import sản phẩm; spec/changes/ban-ho-sale-nguon-don-20261015.md)
+Chạy tự động theo lời người dùng "chạy làm hết đi để done"; mọi mặc định dưới đây đã áp vào requirement, màn hình, test; đổi thì chạy `sdlc-impact`.
+- G1 (giá vốn bắt buộc hay tùy chọn): tùy chọn, `null` là chưa có; lý do: entities.md ghi tùy chọn, sản phẩm nháp và hàng import có thể chưa có giá vốn (PRD-REQ-20261006-095502550 BR9).
+- G2 (trần giá vốn): 0..1.000.000.000, cùng trần giá bán; lý do: chặn tràn bigint và nhập nhầm; giá vốn lớn hơn giá bán vẫn nhận (bán lỗ có chủ ý).
+- G3 (staff, sale với giá vốn): khóa `cost_price` vắng mặt (không phải `null`) trong phản hồi của staff, sale; lý do: `null` làm lộ sản phẩm nào đã có giá vốn (SB-42).
+- G4 (sale xem sản phẩm quản trị): có, chỉ đọc, không giá vốn, `roles` của PRD-REQ-20261006-095502655 thêm `sale`; lý do: roles.md; bậc giới hạn tần suất D như staff.
+- G5 (import, hai bước): một endpoint, `dry_run=true` không ghi và không audit, `dry_run=false` kiểm lại rồi ghi; không giữ trạng thái giữa hai lần (giao diện gửi lại đúng tệp); lý do: ADR-025, đơn giản hơn phiên xem trước.
+- G6 (công thức): từ chối dòng (`formula_rejected`) thay vì coi là chữ thuần; hệ quả: tên bắt đầu bằng `-` hay `+` bị từ chối; lý do: ADR-025 cho phép hai cách, từ chối rõ ràng hơn.
+- G7 (ô trống ở sản phẩm có sẵn): giữ nguyên; import không xóa được giá vốn (xóa bằng sửa sản phẩm); lý do: tệp KiotViet có ô trống thường xuyên, tránh mất dữ liệu hàng loạt.
+- G8 (ĐVT, Tồn kho): đọc, báo trong `ignored_columns`, không ghi; lý do: PRD không có đơn vị tính, tồn kho đi qua INV (ADR-025).
+- G9 (giới hạn tần suất import, bậc E): 20 yêu cầu mỗi giờ mỗi admin, cả hai chế độ chung bộ đếm; lý do: ADR-025 chỉ nói "bậc E" không có số; ghi số vào PRD-API khi sửa tài liệu.
+- G10 (trần giải nén xlsx): 50 MB hằng số (10 lần trần tệp), không thêm biến môi trường; lý do: ADR-025 chỉ nói "giới hạn kích thước giải nén"; biến `PRD_IMPORT_MAX_ROWS`, `PRD_IMPORT_MAX_BYTES` cần có trong bảng biến của architecture.md (ADR-007), nhờ sdlc-impact nếu chưa có.
+- G11 (audit import): một AuditLog mỗi lần xác nhận, kèm cặp giá bán, giá vốn cũ và mới theo sku cho dòng đổi giá; lý do: đổi giá hàng loạt sai phải truy vết được (ADR-025 hệ quả).
+- G12 (tệp mẫu): chỉ `.xlsx`, không dòng dữ liệu mẫu, có trang "Hướng dẫn"; lý do: tránh import nhầm mã mẫu.
+- G13 (đọc giá vốn lúc bán): ORD chụp `cost_snapshot` qua một giao diện nội bộ của PRD chỉ trả cho ORD (tên và chữ ký chốt ở PRD-API khi sửa thiết kế); không qua HTTP, không qua `getForCart`.

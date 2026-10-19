@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { routeIds } from '../../src/modules/platform';
 import { truncateAll } from '../support/db';
 import { call, createPrdApp, seedCategory, seedProduct, who, type PrdApp } from '../support/prd';
 
@@ -92,5 +93,22 @@ describe('PRD giao diện nội bộ CatalogApi', () => {
     expect((await call(t, 'post', `/admin/products/${id}/archive`, { cookie: admin.cookie })).status).toBe(200);
     expect(await t.catalog.countByStatus()).toEqual({ draft: 2, active: 4, archived: 2 });
     expect(Object.keys(await t.catalog.countByStatus()).sort()).toEqual(['active', 'archived', 'draft']);
+  });
+  it('PRD-TC-20261015-094300000: getForSale trả sản phẩm kèm giá vốn theo lô cho SAL; đúng 100 id được, 101 id bị RangeError, không có route HTTP trả hàm này', async () => {
+    const a = await seedProduct(t, { category: cat, name: 'Áo A', sku: 'A-001', price: 150000, costPrice: 90000 }), b = await seedProduct(t, { category: cat, name: 'Áo B', sku: 'B-001', price: 120000, costPrice: null });
+    const c = await seedProduct(t, { category: cat, name: 'Áo C', sku: 'C-001', price: 80000, costPrice: 50000, status: 'archived' });
+    const r = await t.catalog.getForSale([a, b, c, randomUUID(), 'abc', a]); // id lạ, sai định dạng và trùng bị bỏ, không lỗi
+    expect(r).toHaveLength(3);
+    for (const x of r) expect(Object.keys(x).sort()).toEqual(['cost_price', 'name', 'price', 'product_id', 'sellable', 'sku']);
+    const by = Object.fromEntries(r.map((x) => [x.product_id, x]));
+    expect([by[a].cost_price, by[b].cost_price, by[c].cost_price]).toEqual([90000, null, 50000]);
+    expect([by[a].sellable, by[b].sellable, by[c].sellable]).toEqual([true, true, false]); // sellable = active
+    expect(by[a]).toMatchObject({ name: 'Áo A', sku: 'A-001', price: 150000 });
+    await expect(t.catalog.getForSale(ids(100))).resolves.toEqual([]); // đúng 100 id
+    expect(await t.catalog.getForSale([a, ...ids(99)])).toHaveLength(1);
+    await expect(t.catalog.getForSale([a, ...ids(100)])).rejects.toThrow(RangeError); // 101 id: từ chối cả lời gọi, không trả một phần
+    expect(await t.catalog.getForSale([])).toEqual([]);
+    // chỉ ở trong tiến trình (SB-42): không có route HTTP nào của PRD mang giá vốn
+    expect(routeIds(t.app).filter((x) => /cost|for-sale/i.test(x))).toEqual([]);
   });
 });

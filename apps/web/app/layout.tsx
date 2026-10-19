@@ -16,6 +16,7 @@ import './styles/payship.css';
 import './styles/invpromo.css';
 import './styles/reviewdash.css';
 import './styles/home.css';
+import './styles/sales.css';
 
 export const metadata = { title: 'Ecom' };
 

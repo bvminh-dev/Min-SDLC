@@ -20,6 +20,8 @@ import { JobsService as InvJobs } from '../../src/modules/inventory/jobs.service
 import { VNPAY_GATEWAY, type QueryResult, type RefundInput, type RefundResult, type VnpayGateway } from '../../src/modules/payment/gateway';
 import { RefundService } from '../../src/modules/payment/refund.service';
 import { PaymentApi } from '../../src/modules/payment';
+import { OrderApi } from '../../src/modules/order';
+import { AuthApi } from '../../src/modules/auth';
 import { BlockCache } from '../../src/modules/dashboard/cache.service';
 import { DashboardService } from '../../src/modules/dashboard/dashboard.service';
 import { sign, verifySignature } from '../../src/modules/payment/vnpay';
@@ -103,6 +105,18 @@ async function main() {
     if (mode === 'ok') { pay.getRevenue = realRevenue; for (const r of held.splice(0)) r(new Error('released')); return; }
     pay.getRevenue = (() => new Promise((_res, rej) => { held.push(rej); })) as typeof pay.getRevenue;
   };
+  // DSH (báo cáo theo nguồn, theo sale): điều khiển ORD và AUTH (chỉ ở môi trường test): `hang` làm `getSourcesReport`, `getSalesReport` không bao giờ trả lời (quá hạn nguồn: 503 nguồn ORD), `names` làm
+  // `AuthApi.getDisplayNames` (ORD tra tên người tạo) ném lỗi CSDL, `gone` làm nó không tra được ai, `ok` nhả các lời gọi đang treo và trả về hàm thật.
+  const ord = app.get(OrderApi), auth = app.get(AuthApi);
+  const realOrd = { sources: ord.getSourcesReport.bind(ord), sales: ord.getSalesReport.bind(ord), names: auth.getDisplayNames.bind(auth) };
+  const heldOrd: ((e: Error) => void)[] = [];
+  const dshOrdFault = (mode: 'hang' | 'names' | 'gone' | 'ok'): void => {
+    ord.getSourcesReport = realOrd.sources; ord.getSalesReport = realOrd.sales; auth.getDisplayNames = realOrd.names;
+    for (const r of heldOrd.splice(0)) r(new Error('released'));
+    if (mode === 'hang') { const wait = (() => new Promise((_res, rej) => { heldOrd.push(rej); })) as never; ord.getSourcesReport = wait; ord.getSalesReport = wait; }
+    if (mode === 'names') auth.getDisplayNames = (() => Promise.reject(new Error('db down'))) as never;
+    if (mode === 'gone') auth.getDisplayNames = (async () => []) as never; // không tra được tên ai (tài khoản đã xóa)
+  };
   const params = { memory: config.get<number>('ARGON2_MEMORY_KIB'), passes: config.get<number>('ARGON2_TIME_COST'), parallelism: config.get<number>('ARGON2_PARALLELISM') };
   const body = (req: import('node:http').IncomingMessage) => new Promise<any>((res) => { let s = ''; req.on('data', (d) => { s += d; }); req.on('end', () => res(s ? JSON.parse(s) : {})); });
   createServer(async (req, res) => {
@@ -113,11 +127,14 @@ async function main() {
       if (url.pathname === '/reset') {
         await prisma.$executeRaw(Prisma.raw('TRUNCATE review_images, reviews, email_deliveries, notifications, checkout_sessions, cart_items, carts, refunds, payment_attempts, payment_webhook_logs, payments, shipment_status_history, shipments, shipping_methods, order_status_history, order_items, orders, coupon_redemptions, coupons, stock_movements, stock_reservations, stock_items, product_review_ratings, product_images, products, categories, addresses, outbox_events, processed_events, idempotency_keys, rate_limit_counters, sessions, password_reset_tokens, email_verification_tokens, users CASCADE'));
         await prisma.$executeRaw`DELETE FROM audit_logs`;
+        // ORD: danh mục nguồn đơn về dữ liệu mồi của migration (website, facebook, tiktok, hotline đều bật); trigger bảo vệ tắt tạm trong lúc dọn
+        for (const sql of ['ALTER TABLE order_sources DISABLE TRIGGER USER', "DELETE FROM order_sources WHERE code NOT IN ('website', 'facebook', 'tiktok', 'hotline')", "UPDATE order_sources SET is_active = true, position = 0, name = CASE code WHEN 'tiktok' THEN 'TikTok' ELSE initcap(code) END", 'ALTER TABLE order_sources ENABLE TRIGGER USER']) await prisma.$executeRaw(Prisma.raw(sql));
         await app.get(RefundService).idle();
         preModeration = true; mails.length = 0; ses.reset(); clock.offset = 0; gateway.refundMode = 'ok'; gateway.refundCalls = 0; await s3.reset();
-        dshFault('ok'); app.get(BlockCache).clear(); (app.get(DashboardService) as unknown as { marks: Map<string, number> }).marks.clear(); // DSH: bộ nhớ đệm, dấu audit và lỗi gài của lần trước
+        dshFault('ok'); dshOrdFault('ok'); app.get(BlockCache).clear(); (app.get(DashboardService) as unknown as { marks: Map<string, number> }).marks.clear(); // DSH: bộ nhớ đệm, dấu audit và lỗi gài của lần trước
         return send(200, { ok: true });
       }
+      if (url.pathname === '/dsh-ord-fault') { const b = await body(req); const mode = b.mode === 'hang' || b.mode === 'names' || b.mode === 'gone' ? b.mode : 'ok'; dshOrdFault(mode); return send(200, { mode }); }
       if (url.pathname === '/dsh-fault') { const b = await body(req); dshFault(b.mode === 'hang' ? 'hang' : 'ok'); return send(200, { mode: b.mode === 'hang' ? 'hang' : 'ok', held: held.length }); }
       if (url.pathname === '/advance') { clock.offset += Number((await body(req)).ms); return send(200, { offset: clock.offset }); }
       if (url.pathname === '/seed-user') {
@@ -167,8 +184,8 @@ async function main() {
         const sku = String(b.sku ?? `SP-${Math.random().toString(36).slice(2, 8)}`).toUpperCase();
         const published = status === 'draft' ? null : new Date(now.getTime() - Number(b.age_ms ?? 0));
         const rows = await prisma.$queryRaw<{ id: string }[]>`
-          INSERT INTO products (category_id, name, sku, description, price, status, published_at, rating_count, rating_sum, search_text, created_at, updated_at)
-          VALUES (${b.category_id}::uuid, ${b.name}, ${sku}, ${b.description ?? null}, ${b.price ?? 100000}, ${status}::product_status, ${published}::timestamptz, ${b.rating_count ?? 0}, ${b.rating_sum ?? 0},
+          INSERT INTO products (category_id, name, sku, description, price, cost_price, status, published_at, rating_count, rating_sum, search_text, created_at, updated_at)
+          VALUES (${b.category_id}::uuid, ${b.name}, ${sku}, ${b.description ?? null}, ${b.price ?? 100000}, ${b.cost_price ?? null}, ${status}::product_status, ${published}::timestamptz, ${b.rating_count ?? 0}, ${b.rating_sum ?? 0},
                   ${searchTextOf(String(b.name), sku)}, ${now}::timestamptz, ${now}::timestamptz) RETURNING id`;
         for (let k = 1; k <= Number(b.images ?? 0); k++) {
           const key = `products/${crypto.randomUUID()}.webp`;
@@ -178,7 +195,7 @@ async function main() {
         return send(200, { id: rows[0].id });
       }
       if (url.pathname === '/product') {
-        const [p] = await prisma.$queryRaw<unknown[]>`SELECT status, version, price::int AS price, name, sku, (SELECT count(*)::int FROM product_images i WHERE i.product_id = p.id) AS images FROM products p WHERE p.id = ${url.searchParams.get('id') ?? ''}::uuid`;
+        const [p] = await prisma.$queryRaw<unknown[]>`SELECT status, version, price::int AS price, cost_price::int AS cost_price, name, sku, (SELECT count(*)::int FROM product_images i WHERE i.product_id = p.id) AS images FROM products p WHERE p.id = ${url.searchParams.get('id') ?? ''}::uuid`;
         return p ? send(200, p) : send(404, {});
       }
       // INV: bản ghi kho, lịch sử và cửa sổ giới hạn tần suất dựng thẳng (fixture, không qua API)
@@ -220,14 +237,24 @@ async function main() {
       // ORD: đơn dựng thẳng (fixture, không qua CHK) theo email chủ đơn; `created_at` ISO, hạn và thời điểm khác tính từ `created_at` nếu không nêu
       if (url.pathname === '/seed-order') {
         const b = await body(req);
-        const [u] = await prisma.$queryRaw<{ id: string }[]>`SELECT id FROM users WHERE email = ${String(b.email).toLowerCase()}::citext`;
-        if (!u) return send(404, {});
+        const [u] = b.email ? await prisma.$queryRaw<{ id: string }[]>`SELECT id FROM users WHERE email = ${String(b.email).toLowerCase()}::citext` : [undefined];
+        if (b.email && !u) return send(404, {});
+        // đơn hộ (đợt bán hộ): `ho.created_by_email` là email người tạo (sale hay admin), `email` có thể vắng (khách không tài khoản)
+        const hb = b.ho as { created_by_email: string; role?: 'sale' | 'admin'; source: string; customer: { full_name: string; phone: string }; note?: string | null; item_notes?: (string | null)[]; costs?: (number | null)[] } | undefined;
+        const [by] = hb ? await prisma.$queryRaw<{ id: string }[]>`SELECT id FROM users WHERE email = ${hb.created_by_email.toLowerCase()}::citext` : [undefined];
+        if (hb && !by) return send(404, {});
         const d = (v: unknown) => (v === undefined || v === null ? v : new Date(String(v)));
         const o = await insertOrder(prisma, clock.now(), {
-          user: u.id, code: b.code, status: b.status, method: b.method, payment: b.payment, createdAt: d(b.created_at) as Date | undefined, items: b.items, discount: b.discount, shipping: b.shipping,
+          ho: hb && by ? { createdBy: by.id, role: hb.role, source: hb.source, customer: hb.customer, note: hb.note, itemNotes: hb.item_notes, costs: hb.costs } : undefined,
+          user: u?.id ?? null, code: b.code, status: b.status, method: b.method, payment: b.payment, createdAt: d(b.created_at) as Date | undefined, items: b.items, discount: b.discount, shipping: b.shipping,
           paidAt: d(b.paid_at) as Date | null | undefined, tracking: b.tracking, handoff: d(b.handoff) as Date | null | undefined, expiresAt: d(b.expires_at) as Date | null | undefined, deliveredAt: d(b.delivered_at) as Date | null | undefined, address: b.address, cancel: b.cancel,
         });
         return send(200, { id: o.id, code: o.code });
+      }
+      if (url.pathname === '/set-order-source') {
+        const b = await body(req);
+        await prisma.$executeRaw`UPDATE order_sources SET is_active = ${b.is_active === true} WHERE code = ${String(b.code)}`;
+        return send(200, { ok: true });
       }
       if (url.pathname === '/order') {
         const [r] = await prisma.$queryRaw<unknown[]>`SELECT id, status::text AS status, payment_status::text AS payment_status, tracking_number, (SELECT count(*)::int FROM order_status_history h WHERE h.order_id = o.id) AS history FROM orders o WHERE code = ${url.searchParams.get('code') ?? ''}`;

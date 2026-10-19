@@ -2,9 +2,9 @@
 epic: DSH
 status: draft
 kit_version: 3
-clean_run: pass
-test_command: NEXT_TELEMETRY_DISABLED=1 STORAGE_TEST_ENDPOINT=http://localhost:9210 pnpm test
-test_result: Tests:       1791 passed, 1791 total
+clean_run: chưa
+test_command: ECOM_TEST_DB=ecom_test_dsh pnpm test -- test/dashboard test/tooling/mutations-dsh.spec.ts (API); E2E_PORT_BASE=3600 pnpm test -- test/e2e/dsh.e2e.spec.ts -t DSH-TC-20261015 (bốn E2E mới, bản sao ở /tmp)
+test_result: Tests:       178 passed, 178 total (API); Tests:       15 skipped, 4 passed, 19 total (E2E, 15 skip là ca cũ lọc bằng -t)
 ---
 # Báo cáo triển khai: DSH
 
@@ -24,9 +24,14 @@ Thứ tự theo phụ thuộc: DB (không có), cấu hình và nền, sửa n�
 | 9 | Giao diện web: /admin/dashboard, /admin/reports/revenue, /admin/reports/orders, /admin/reports/products, biểu đồ SVG tự vẽ, liên kết Dashboard ở thanh đầu trang | ui/admin-dashboard, ui/analytics-revenue, ui/analytics-orders, ui/analytics-products | 4, 5 | done |
 | 10 | E2E trình duyệt thật (API thật, cổng điều khiển, luồng thật khách đặt hàng VNPay rồi admin xem dashboard) và điểm điều khiển `/dsh-fault` | DSH-E2E-20261006-110407878, DSH-E2E-20261006-110407909, DSH-E2E-20261006-110407938, DSH-E2E-20261006-110407966, DSH-E2E-20261006-110407995, DSH-E2E-20261006-110408024, DSH-E2E-20261006-110408057, DSH-E2E-20261006-110408086, DSH-E2E-20261006-110408116 | 8, 9 | done |
 | 11 | Bảng đột biến DSH (136 dòng, scripts/mutations-dsh.json) chạy bằng mutate.mjs trong bản sao ở /tmp và cổng kiểm của nó | DSH-SEC-20261006-105535103 | 6, 7, 8, 9, 10 | done |
+| 12 | Hai báo cáo tính lương (đợt bán hộ): `GET /admin/reports/sources`, `GET /admin/reports/sales` gọi `OrderApi.getSourcesReport` và `getSalesReport` qua cổng nguồn ORD (hạn 5 giây, 503 `ORD`), loại đơn `cancelled`, `expired`, `returned` ngay ở ORD, DSH sắp và cộng `totals`, dòng `website` riêng, nhãn "(tài khoản đã xóa)", bộ nhớ đệm 60 giây, hạn mức 30 mỗi phút dùng chung | DSH-REQ-20261015-092608812, DSH-REQ-20261015-092608849, DSH-API-20261006-105535010 | 2, 5, 6 | done |
+| 13 | Xuất CSV ở server (`format=csv`, `csv.ts`): BOM, CRLF, RFC 4180, chống công thức `=` `+` `-` `@` tab CR, `Cache-Control: private, no-store`, một dòng audit `dashboard.export` mỗi lần, từ cùng bản đệm với JSON | DSH-REQ-20261015-092608812, DSH-SEC-20261015-092608917 | 12 | done |
+| 14 | Test API của hai báo cáo (`report-sources.spec.ts`, `report-sales.spec.ts`, `report-ho-common.spec.ts`), đổi test cũ từ chín sang mười một endpoint (`common.spec.ts`, `guard.spec.ts`, `review.spec.ts`) và hạ tầng `support/dsh.ts` | DSH-SEC-20261015-092608917 | 12, 13 | done |
+| 15 | Giao diện: `/admin/reports/sources`, `/admin/reports/sales` theo khuôn analytics-revenue (khoảng ngày, hàng số, bảng, ghi chú, Xuất CSV bằng `useCsvExport`), liên kết từ thanh đầu trang và từ dashboard | ui/analytics-sources, ui/analytics-sales | 12, 13 | done |
+| 16 | E2E trình duyệt bốn TC giao diện của hai màn (dải 429, xuất CSV, 503, tài khoản đã xóa) và điểm điều khiển `/dsh-ord-fault` (ORD treo, AUTH lỗi, AUTH không tra được) ở máy chủ E2E | DSH-TC-20261015-093334777, DSH-TC-20261015-093334820, DSH-TC-20261015-093334858, DSH-TC-20261015-093334896 | 14, 15 | done |
 
 ## Kết quả test
-Mọi TC và E2E của epic một dòng (93 TC, 9 E2E). Ngoài các ID này còn: test hàm thuần (`range.spec.ts`, `web.spec.ts`), tải hỗn hợp (`load.spec.ts`), luồng thật (`flow.spec.ts`), bốn E2E phụ mang ID E2E gần nhất (rỗng và số âm, đang tải, 429, hết phiên) và test nền mang ID TC gần nhất (`apps/api/test/order/dsh.spec.ts`, `apps/api/test/auth/dsh.spec.ts`, `apps/api/test/user/dsh.spec.ts`). Nguồn của mọi test API là các lớp `*Api` thật trên PostgreSQL thật (không dùng nguồn giả; TC ghi "PAY giả" chỉ là cách mô tả); lỗi, chậm, treo gài bằng `jest.spyOn` trên chính các lớp đó. Đồng hồ giả cố định 2026-10-06T03:00:00Z (10:00 giờ Việt Nam) cho mọi nguồn thời gian của DSH (`fixed-clock:` ghi ở `test/support/dsh.ts`).
+Mọi TC và E2E của epic một dòng (136 TC, 9 E2E; 43 TC mới của đợt bán hộ nằm cuối bảng, bốn TC cuối là E2E trình duyệt của hai màn mới). Ngoài các ID này còn: test hàm thuần (`range.spec.ts`, `web.spec.ts`), tải hỗn hợp (`load.spec.ts`), luồng thật (`flow.spec.ts`), bốn E2E phụ mang ID E2E gần nhất (rỗng và số âm, đang tải, 429, hết phiên) và test nền mang ID TC gần nhất (`apps/api/test/order/dsh.spec.ts`, `apps/api/test/auth/dsh.spec.ts`, `apps/api/test/user/dsh.spec.ts`). Nguồn của mọi test API là các lớp `*Api` thật trên PostgreSQL thật (không dùng nguồn giả; TC ghi "PAY giả" chỉ là cách mô tả); lỗi, chậm, treo gài bằng `jest.spyOn` trên chính các lớp đó. Đồng hồ giả cố định 2026-10-06T03:00:00Z (10:00 giờ Việt Nam) cho mọi nguồn thời gian của DSH (`fixed-clock:` ghi ở `test/support/dsh.ts`).
 
 | ID | Loại | Test code | Kết quả | Ghi chú |
 |---|---|---|---|---|
@@ -130,11 +135,54 @@ Mọi TC và E2E của epic một dòng (93 TC, 9 E2E). Ngoài các ID này còn
 | DSH-TC-20261007-085337320 | TC | apps/api/test/dashboard/guard.spec.ts | pass | - |
 | DSH-TC-20261007-085337354 | TC | apps/api/test/dashboard/guard.spec.ts | pass | - |
 | DSH-TC-20261013-232147091 | TC | apps/api/test/dashboard/web.spec.ts | pass | test hàm thuần `appliedRange`; bốn trang dùng đúng hàm này do đột biến W1, W2 |
-| DSH-TC-20261013-232147375 | TC | apps/api/test/dashboard/review.spec.ts | pass | duyệt cả chín đường dẫn, hai lần (nguồn, đệm), kèm 400 và 503 |
+| DSH-TC-20261013-232147375 | TC | apps/api/test/dashboard/review.spec.ts | pass | duyệt cả mười một đường dẫn, hai lần (nguồn, đệm), kèm 400 và 503 |
 | DSH-TC-20261013-232147647 | TC | apps/api/test/e2e/dsh.e2e.spec.ts | pass | E2E trình duyệt thật, tên có thẻ HTML ở tồn thấp và báo cáo sản phẩm |
+| DSH-TC-20261015-093255510 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật |
+| DSH-TC-20261015-093255763 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật; dòng audit kiểm ở kho audit thật |
+| DSH-TC-20261015-093255879 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | vòng ba role, mỗi role JSON và CSV |
+| DSH-TC-20261015-093255993 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | - |
+| DSH-TC-20261015-093256196 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | - |
+| DSH-TC-20261015-093256308 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | hạn nguồn hạ xuống 300 ms qua `DASHBOARD_SOURCE_TIMEOUT_MS` (xem YẾU của các ca 503 cũ); mặc định 5000 kiểm ở `guard.spec.ts` |
+| DSH-TC-20261015-093256387 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật; đơn `cancelled` sau đó dựng bằng UPDATE trực tiếp |
+| DSH-TC-20261015-093256769 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật: đơn khách tự đặt không đi qua CHK |
+| DSH-TC-20261015-093256965 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật |
+| DSH-TC-20261015-093257392 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật; thêm đơn đúng 00:00 hai đầu (nửa mở) |
+| DSH-TC-20261015-093257900 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | kiểm thêm thứ tự theo mã khi cùng doanh thu 0 |
+| DSH-TC-20261015-093258155 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | - |
+| DSH-TC-20261015-093258342 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật |
+| DSH-TC-20261015-093258880 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | đồng hồ giả của test chạy qua `Clock` (fixed-clock) |
+| DSH-TC-20261015-093259275 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | - |
+| DSH-TC-20261015-093259461 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | - |
+| DSH-TC-20261015-093303064 | TC | apps/api/test/dashboard/report-sources.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật |
+| DSH-TC-20261015-093259634 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật |
+| DSH-TC-20261015-093259813 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật |
+| DSH-TC-20261015-093300101 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | sale có đơn và phiên thật |
+| DSH-TC-20261015-093300386 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | - |
+| DSH-TC-20261015-093300553 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | - |
+| DSH-TC-20261015-093300733 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | hạn nguồn 300 ms qua cấu hình; lỗi tra tên gài bằng `jest.spyOn` trên `AuthApi.getDisplayNames` (chính lớp ORD gọi) |
+| DSH-TC-20261015-093300869 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật |
+| DSH-TC-20261015-093301038 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật; đổi role và khóa tài khoản bằng UPDATE trực tiếp |
+| DSH-TC-20261015-093301220 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | YẾU: "không tra được" gài bằng `jest.spyOn` lọc kết quả `AuthApi.getDisplayNames`, không xóa hàng `users` (còn khóa ngoại từ đơn) |
+| DSH-TC-20261015-093301332 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | YẾU: đơn dựng bằng fixture `insertOrder` (đơn hộ có `created_by` và nguồn), không qua `OrderApi.createHo` hay CHK như mô tả của TC; số liệu vẫn đọc qua `OrderApi` thật |
+| DSH-TC-20261015-093301448 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | - |
+| DSH-TC-20261015-093301534 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | - |
+| DSH-TC-20261015-093301648 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | NUL và nửa cặp thay thế lẻ không lưu được vào PostgreSQL: kiểm ở mức hàm `csvText`, các tên còn lại đi qua AUTH và ORD thật |
+| DSH-TC-20261015-093301784 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | - |
+| DSH-TC-20261015-093302063 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | - |
+| DSH-TC-20261015-093302229 | TC | apps/api/test/dashboard/report-sales.spec.ts | pass | 50 người tạo dựng bằng `bulkUsers`; đếm lời gọi `getDisplayNames` bằng `jest.spyOn` |
+| DSH-TC-20261015-093302350 | TC | apps/api/test/dashboard/report-ho-common.spec.ts | pass | duyệt đủ 11 đường dẫn và hai CSV, hai lượt (nguồn, đệm) |
+| DSH-TC-20261015-093302456 | TC | apps/api/test/dashboard/report-ho-common.spec.ts | pass | phần trang `/admin/dashboard` hiện `access-denied` đã có ở DSH-E2E-20261006-110408116; ở đây kiểm đủ 11 đường dẫn và hai CSV cho ba role |
+| DSH-TC-20261015-093302576 | TC | apps/api/test/dashboard/report-ho-common.spec.ts | pass | - |
+| DSH-TC-20261015-093302708 | TC | apps/api/test/dashboard/report-ho-common.spec.ts | pass | - |
+| DSH-TC-20261015-093302793 | TC | apps/api/test/dashboard/report-ho-common.spec.ts | pass | ghi audit lỗi gài bằng trigger tạm trên `audit_logs` |
+| DSH-TC-20261015-093302921 | TC | apps/api/test/dashboard/report-ho-common.spec.ts | pass | - |
+| DSH-TC-20261015-093334777 | TC | apps/api/test/e2e/dsh.e2e.spec.ts | pass | E2E trình duyệt thật (Chromium), chạy trong BẢN SAO của repo ở `/tmp` với CSDL `ecom_e2e_dsh` và cổng 3600 (không đụng `ecom_e2e` và `.next` của agent khác); mã giống cây thật |
+| DSH-TC-20261015-093334820 | TC | apps/api/test/e2e/dsh.e2e.spec.ts | pass | như trên |
+| DSH-TC-20261015-093334858 | TC | apps/api/test/e2e/dsh.e2e.spec.ts | pass | như trên |
+| DSH-TC-20261015-093334896 | TC | apps/api/test/e2e/dsh.e2e.spec.ts | pass | như trên |
 
 ## Kiểm đột biến
-Bảng `apps/api/scripts/mutations-dsh.json` (136 đột biến, phủ SB-05, SB-07, SB-08, SB-11, SB-14, SB-19, SB-20, SB-23, SB-39 và phần nền sửa kèm ORD, AUTH, USR, hàm thuần của web) chạy bằng `node .claude/skills/sdlc-review/scripts/mutate.mjs apps/api/scripts/mutations-dsh.json --cwd apps/api` trong BẢN SAO của repo ở `/tmp` (mutate.mjs không khôi phục khi bị SIGKILL; cây thật không bị gài, `git diff apps/api/src` kiểm sau lượt chạy). Lượt đầu: 120 bắt, 16 lọt (4 ghi tương đương từ đầu). 12 lọt thật được xử lý bằng test thêm (bộ lọc test sai ở hai dòng, khóa đệm theo từng tham số, hạn mục đệm bằng số cứng 500, tồn thấp và đơn gần đây từ chối from, to, from mặc định trước 1970, khoảng nửa mở, audit không ghi khi 503) và chạy lại đúng các dòng đó: bắt hết, riêng hai dòng chuyển sang tương đương có lý do. Kết quả cuối: 130 bắt, 6 lọt tương đương. Cổng kiểm của chính bảng: `apps/api/test/tooling/mutations-dsh.spec.ts` (mang ID DSH-SEC-20261006-105535103). Cột Test đỏ là TC đại diện của test chạy trong lệnh của dòng đó.
+Bảng `apps/api/scripts/mutations-dsh.json` (194 đột biến: 136 của lượt đầu, 3 của web, 55 của hai báo cáo tính lương, phủ SB-05, SB-07, SB-08, SB-11, SB-14, SB-19, SB-20, SB-23, SB-39 và phần nền sửa kèm ORD, AUTH, USR, hàm thuần của web) chạy bằng `node .claude/skills/sdlc-review/scripts/mutate.mjs apps/api/scripts/mutations-dsh.json --cwd apps/api` trong BẢN SAO của repo ở `/tmp` (mutate.mjs không khôi phục khi bị SIGKILL; cây thật không bị gài, `git diff apps/api/src` kiểm sau lượt chạy). Lượt đầu: 120 bắt, 16 lọt (4 ghi tương đương từ đầu). 12 lọt thật được xử lý bằng test thêm (bộ lọc test sai ở hai dòng, khóa đệm theo từng tham số, hạn mục đệm bằng số cứng 500, tồn thấp và đơn gần đây từ chối from, to, from mặc định trước 1970, khoảng nửa mở, audit không ghi khi 503) và chạy lại đúng các dòng đó: bắt hết, riêng hai dòng chuyển sang tương đương có lý do. Kết quả cuối: 130 bắt, 6 lọt tương đương. Cổng kiểm của chính bảng: `apps/api/test/tooling/mutations-dsh.spec.ts` (mang ID DSH-SEC-20261006-105535103). Cột Test đỏ là TC đại diện của test chạy trong lệnh của dòng đó.
 
 | Chỗ phá | Test đỏ | Kết quả |
 |---|---|---|
@@ -274,6 +322,64 @@ Bảng `apps/api/scripts/mutations-dsh.json` (136 đột biến, phủ SB-05, SB
 | T11 web: 429 lần đầu (chưa có số) không coi là lỗi | DSH-TC-20261006-110330139 | bắt |
 | T5 web: nhãn mốc tháng thiếu bỏ ngày | DSH-TC-20261006-110331351 | bắt |
 | T5 web: dải 429 mặc định 30 giây thay vì 60 | DSH-TC-20261006-110332248 | bắt |
+| T14 SB-05, SB-07: báo cáo theo nguồn mở cho staff (thêm vào @Roles) | DSH-TC-20261015-093255879 | bắt |
+| T14 SB-05, SB-07: báo cáo theo sale mở cho sale (thêm vào @Roles) | DSH-TC-20261015-093300101 | bắt |
+| T14 SB-07: báo cáo theo sale mở cho customer (thêm vào @Roles) | DSH-TC-20261015-093302456 | bắt |
+| T19 SB-13: báo cáo theo nguồn bỏ Cache-Control no-store | DSH-TC-20261015-093302350 | bắt |
+| T19 SB-13: CSV không còn là attachment (tên tệp đổi sang inline) | DSH-TC-20261015-093255763 | bắt |
+| T19: Content-Type của tệp CSV thành text/plain | DSH-TC-20261015-093255763 | bắt |
+| T20 SB-11: yêu cầu có format vẫn trả JSON (bỏ nhánh CSV của controller) | DSH-TC-20261015-093255763 | bắt |
+| T16: tệp CSV mất BOM UTF-8 | DSH-TC-20261015-093255763 | bắt |
+| T16: CSV kết thúc dòng bằng LF thay CRLF | DSH-TC-20261015-093255763 | bắt |
+| T16: dòng Tổng của CSV theo nguồn lấy doanh thu 0 | DSH-TC-20261015-093255763 | bắt |
+| T16 SB-43: chống công thức của CSV bỏ ký tự đầu = | DSH-TC-20261015-093258155 | bắt |
+| T16 SB-43: chống công thức của CSV bỏ ký tự đầu + | DSH-TC-20261015-093258155 | bắt |
+| T16 SB-43: chống công thức của CSV bỏ ký tự đầu - | DSH-TC-20261015-093258155 | bắt |
+| T16 SB-43: chống công thức của CSV bỏ ký tự đầu @ | DSH-TC-20261015-093301648 | bắt |
+| T16 SB-43: chống công thức của CSV bỏ ký tự đầu tab | DSH-TC-20261015-093258155 | bắt |
+| T16 SB-43: chống công thức của CSV bỏ ký tự đầu CR | DSH-TC-20261015-093301648 | bắt |
+| T16 SB-43: không còn thêm dấu nháy đơn trước ô nguy hiểm | DSH-TC-20261015-093258155 | bắt |
+| T16: nháy kép trong ô không được nhân đôi (RFC 4180) | DSH-TC-20261015-093258155 | bắt |
+| T16: ô có xuống dòng không được bao nháy kép (chỉ bao khi có dấu phẩy hoặc nháy) | DSH-TC-20261015-093301648 | bắt |
+| T16: nửa cặp thay thế lẻ không được thay bằng U+FFFD | DSH-TC-20261015-093301648 | bắt |
+| T16: ký tự NUL không bị bỏ khỏi ô | DSH-TC-20261015-093301648 | bắt |
+| T16: dòng website của CSV theo sale điền mã người dùng | DSH-TC-20261015-093259813 | bắt |
+| T16: báo cáo theo nguồn sắp doanh thu tăng dần | DSH-TC-20261015-093255510 | bắt |
+| T16: báo cáo theo nguồn bỏ khóa phụ theo mã khi cùng doanh thu | DSH-TC-20261015-093257900 | bắt |
+| T16: excluded_orders của báo cáo theo nguồn luôn 0 | DSH-TC-20261015-093256387 | bắt |
+| T16: totals.revenue của báo cáo theo nguồn cộng số đơn | DSH-TC-20261015-093255510 | bắt |
+| T16: báo cáo theo sale gán đơn khách tự đặt cho một người (đảo nhánh created_by rỗng) | DSH-TC-20261015-093259634 | bắt |
+| T16: tài khoản không tra được tên thì dòng mang tên rỗng thay vì nhãn | DSH-TC-20261015-093301220 | bắt |
+| T16: totals.orders của báo cáo theo sale không cộng dòng website | DSH-TC-20261015-093259634 | bắt |
+| T16: totals.revenue của báo cáo theo sale không cộng dòng website | DSH-TC-20261015-093259634 | bắt |
+| T16: báo cáo theo sale bỏ khóa phụ theo tên khi cùng doanh thu | DSH-TC-20261015-093301534 (ca T16 cùng doanh thu, cùng tệp) | bắt |
+| T16: báo cáo theo sale sắp doanh thu tăng dần | DSH-TC-20261015-093259634 | bắt |
+| T16: nhãn dòng website đổi chữ | DSH-TC-20261015-093259634 | bắt |
+| T20 SB-11: format=xlsx được nhận (không còn từ chối giá trị lạ) | DSH-TC-20261015-093256196 | bắt |
+| T20 SB-11: báo cáo theo nguồn nhận tham số granularity | DSH-TC-20261015-093256196 | bắt |
+| T20 SB-11: báo cáo theo sale nhận tham số created_by | DSH-TC-20261015-093300553 | bắt |
+| T20: báo cáo theo nguồn không còn chặn khoảng 367 ngày (bỏ khỏi nhóm có khoảng ngày) | DSH-TC-20261015-093259275 | bắt |
+| T18: khóa đệm gồm cả format (CSV không dùng chung bản đệm với JSON) | DSH-TC-20261015-093258880 | bắt |
+| T17 SB-19: audit xuất CSV ghi nhầm hành động dashboard.view | DSH-TC-20261015-093255763 | bắt |
+| T17 SB-19: audit xuất CSV ghi số dòng 0 | DSH-TC-20261015-093255763 | bắt |
+| T17 SB-19: audit xuất CSV ghi nội dung số liệu (tổng doanh thu) | DSH-TC-20261015-093255763 | bắt |
+| T17 SB-19: ghi audit xuất lỗi thì chặn tải tệp | DSH-TC-20261015-093302793 | bắt |
+| T17 SB-19: audit xuất CSV gộp theo phút như dashboard.view (bỏ qua lần xuất thứ hai trong phút) | DSH-TC-20261015-093302708 | bắt |
+| T19: tên tệp CSV theo sale đổi | DSH-TC-20261015-093259813 | bắt |
+| T19: tên tệp CSV theo nguồn đổi | DSH-TC-20261015-093255763 | bắt |
+| T16 ORD: báo cáo theo nguồn không loại đơn returned khỏi số đơn tính | DSH-TC-20261015-093256387 | bắt |
+| T16 ORD: báo cáo theo nguồn không loại đơn expired khỏi doanh thu | DSH-TC-20261015-093256387 | bắt |
+| T16 ORD: báo cáo theo nguồn bỏ đơn cancelled khỏi excluded_orders | DSH-TC-20261015-093256387 | bắt |
+| T16 ORD: khoảng ngày của báo cáo theo nguồn thành đóng hai đầu (<= to) | DSH-TC-20261015-093257392 | bắt |
+| T16 ORD: khoảng ngày của báo cáo theo nguồn bỏ đầu mút from (> from) | DSH-TC-20261015-093257392 | bắt |
+| T16 ORD: nguồn đã tắt không đơn vẫn hiện (bỏ lọc is_active hoặc orders > 0) | DSH-TC-20261015-093256965 | bắt |
+| T16 ORD: nguồn đã tắt có đơn bị ẩn | DSH-TC-20261015-093256965 | bắt |
+| T16 ORD: báo cáo theo sale có dòng cho người chỉ có đơn bị loại | DSH-TC-20261015-093300869 | bắt |
+| T16 ORD: báo cáo theo sale không loại đơn cancelled khỏi doanh thu | DSH-TC-20261015-093300869 | bắt |
+| T16 ORD: tên người tạo tra từng người thay vì theo lô (N+1) | DSH-TC-20261015-093302229 | bắt |
+
+
+Đợt bán hộ (hai báo cáo `reports/sources`, `reports/sales`, xuất CSV): thêm 55 đột biến (T14 quyền, T16 số tính lương và chống công thức CSV, T17 audit export, T18 đệm, T19 header tải về, T20 tham số, và phần nền ORD `getSourcesReport`, `getSalesReport`) chạy bằng cùng lệnh trong bản sao `/tmp` với CSDL `ecom_test_dsh_mut`. Lượt đầu: 52 bắt, 1 lọt thật là dòng bỏ `nosniff` ở controller (app-setup của platform đã đặt `nosniff` cho mọi phản hồi, SB-13, nên dòng của DSH thừa: đã XÓA dòng và đột biến), 1 lọt vì bộ phân tích CSV của test chỉ tách dòng ở CRLF (thêm so chuỗi thô `"An\nBình"` vào DSH-TC-20261015-093301648), 1 lọt hẹp (tie-break theo tên của báo cáo theo sale chưa có ca riêng: thêm ca `T16: cùng doanh thu thì xếp theo tên` ở `report-sales.spec.ts`), và dòng NUL đổi `find` sau khi đổi regex thành `split` cho lint. Chạy lại ba dòng đó: bắt hết. Kết quả cuối: 55 bắt, 0 lọt. Cổng kiểm của bảng (`test/tooling/mutations-dsh.spec.ts`) vẫn xanh.
 
 ## Lệch spec
 1. [đã chọn] DSH không có bảng, không migration, không schema Prisma riêng (đúng DSH-DB, ghi rõ theo yêu cầu): không có file `dashboard.prisma`, không thư mục migration của DSH; kiểm ở `apps/api/test/dashboard/guard.spec.ts` (DSH-SEC-20261006-105535103 T8).
@@ -295,5 +401,18 @@ Bảng `apps/api/scripts/mutations-dsh.json` (136 đột biến, phủ SB-05, SB
 17. [đã chọn] Tải hỗn hợp (`test/dashboard/load.spec.ts`) so DSH với truy vấn độc lập dùng múi giờ `Asia/Ho_Chi_Minh` của PostgreSQL trên dữ liệu rải 14 tháng có mốc đúng ranh giới ngày; luồng thật (`test/dashboard/flow.spec.ts`: CHK đặt hàng, PAY nhận IPN ký đúng, hoàn tiền qua cổng giả) và E2E `DSH-E2E-20261006-110407878 (luồng thật)` (khách đặt đơn VNPay bằng giao diện, thanh toán qua cổng giả, admin thấy 180.000 đ).
 18. [đã chọn] Bằng chứng yếu (ghi `YẾU:` ở bảng kết quả) và cách nâng. Các ca 503 (DSH-TC-20261006-110330139, DSH-TC-20261006-110330370, DSH-TC-20261006-110330567, DSH-TC-20261006-110330762, DSH-TC-20261006-110330953, DSH-TC-20261006-110331131, DSH-TC-20261006-110331467, DSH-TC-20261006-110331700, DSH-TC-20261006-110331973, DSH-TC-20261006-110332216): hạn nguồn đặt 300 ms qua cấu hình và nguồn trả sau 1,5 giây (chờ 5 giây thật cho mỗi ca làm test chậm); mặc định 5000 kiểm ở `guard.spec.ts`. Đã xử lý ở đợt đồng bộ spec 2026-10-13 (`spec/changes/dsh-dong-bo-spec-20261013.md`, bài học L138): mười TC nay ghi tên biến `DASHBOARD_SOURCE_TIMEOUT_MS` thay cho số giây cứng và bỏ chữ "bản giả" nên không còn lệch và không còn ghi `YẾU:`. DSH-TC-20261006-120001005: hai instance là hai ứng dụng Nest trong một tiến trình; nâng bằng hai tiến trình riêng. DSH-TC-20261006-110332185: trang web `/admin/dashboard` của staff do DSH-E2E-20261006-110408116 kiểm, không do test API. DSH-E2E-20261006-110407878: dữ liệu mồi tính từ hôm nay (máy chủ E2E dùng giờ thật), và ngày mai "gõ tay" mô phỏng bằng bỏ thuộc tính `max` của ô ngày. DSH-E2E-20261006-110408086: hạn nguồn 500 ms của máy chủ E2E và PAY "không trả lời" gài bằng thay phương thức `getRevenue`.
 19. [chưa làm] Các biện pháp T10 (CORS theo danh sách origin) và T12 (phiên 30 phút) của DSH-SEC có `Kiểm bằng: config` và thuộc platform, AUTH: DSH không thêm test riêng; kiểm ở `test/platform/http.spec.ts` và test phiên của AUTH. Chưa có test a11y tự động cho biểu đồ và chưa có E2E ở điện thoại hẹp.
-20. [đã chọn] Staff: theo spec (roles.md, ma trận quyền, DSH-REQ-20261006-105126549 BR1) staff nhận 403 ở cả chín endpoint và thấy màn không có quyền ở trang; không có phần "cảnh báo" nào riêng cho staff (staff xem tồn thấp ở màn tồn kho của INV).
+20. [đã chọn] Staff: theo spec (roles.md, ma trận quyền, DSH-REQ-20261006-105126549 BR1) staff nhận 403 ở cả mười một endpoint (đợt bán hộ thêm hai báo cáo) và thấy màn không có quyền ở trang; không có phần "cảnh báo" nào riêng cho staff (staff xem tồn thấp ở màn tồn kho của INV).
 21. [đã chọn] Cách chạy `clean_run` (mã chưa commit nên chỉ gần giống CI, theo công thức PRJ mục 34): `git worktree add --detach` tại HEAD (c557cdb) rồi phủ tệp sửa và tệp mới chưa theo dõi của working tree (trừ `.claude/`), `env -i` chỉ có `PATH`, `HOME` rỗng riêng, `CI=true`, `TEST_DB_BASE`, `STORAGE_TEST_ENDPOINT`, `NEXT_TELEMETRY_DISABLED`, `PLAYWRIGHT_BROWSERS_PATH`; `pnpm install --frozen-lockfile --offline --store-dir <kho của máy>`; PostgreSQL và MinIO của Docker (`-p minsdlc-r`). Kết quả trong bản clone: install, scan:secrets, check:boundaries, lint, typecheck, test (199 suite, 1736 test, đều qua), build đều qua. Không chạy: workflow trên GitHub (chưa push), `check-migration-compat --base` (chỉ cho pull request); DSH không có migration.
+
+22. [đã chọn] Hai báo cáo tính lương (DSH-REQ-20261015-092608812, DSH-REQ-20261015-092608849): DSH gọi `OrderApi.getSourcesReport` và `getSalesReport` (chữ ký thật khớp DSH-API: `{ items, excluded_orders }`; ORD lọc `cancelled`, `expired`, `returned` ngay trong truy vấn và tra tên người tạo theo lô bằng `AuthApi.getDisplayNames`), rồi chỉ sắp và cộng `totals` trong `blocks.service.ts` (không gọi ORD lần hai). Thứ tự so sánh theo đơn vị mã UTF-16 (`<`), không theo locale, để cố định giữa máy và khớp tệp CSV. Khóa phụ: nguồn theo `revenue` giảm dần rồi `code`; người tạo theo `revenue` giảm dần, `name`, `user_id`. `reports/sources` và `reports/sales` nhận `format` (giá trị duy nhất `csv`, lặp hay giá trị lạ là `invalid_value`); endpoint khác nhận `format` vẫn là `unknown_parameter`. Khóa đệm không có `format` nên JSON và CSV dùng chung bản đệm. Mười một đường dẫn dùng chung hạn mức 30 mỗi phút (cùng guard).
+23. [đã chọn] Thêm ngoài spec: ô chữ của CSV bỏ ký tự NUL và đổi nửa cặp thay thế lẻ thành U+FFFD (`csvText` ở `csv.ts`) để tệp luôn là UTF-8 hợp lệ dù ORD có trả chuỗi lạ (PostgreSQL không lưu được hai loại này nên chỉ kiểm được ở mức hàm); test: `apps/api/test/dashboard/report-sales.spec.ts` (từ khóa `csvText`, `uFFFD`, ca DSH-TC-20261015-093301648). Cũng thêm: ORD trả thừa trường cá nhân thì danh sách trắng của DSH cắt bỏ (hai ca `T15` ở `report-sources.spec.ts`, `report-sales.spec.ts`, từ khóa `danh sách trắng`), và ca cùng doanh thu xếp theo tên rồi `user_id` (`T16: cùng doanh thu thì xếp theo tên` ở `report-sales.spec.ts`).
+24. [đã chọn] Bằng chứng yếu và cách nâng (DSH-TC-20261015-093255510, DSH-TC-20261015-093255763, DSH-TC-20261015-093256387, DSH-TC-20261015-093256769, DSH-TC-20261015-093256965, DSH-TC-20261015-093257392, DSH-TC-20261015-093258342, DSH-TC-20261015-093259634, DSH-TC-20261015-093259813, DSH-TC-20261015-093300869, DSH-TC-20261015-093301038, DSH-TC-20261015-093301220, DSH-TC-20261015-093301332, DSH-TC-20261015-093303064): TC mô tả đơn mồi tạo "bằng đường tạo đơn thật của ORD (khách đặt qua CHK, đơn hộ qua `OrderApi.createHo`)" rồi chỉnh SQL; test dựng đơn bằng fixture `insertOrder` (như mọi test DSH cũ, `test/support/order-fixture.ts`), số liệu vẫn đọc qua `OrderApi`, `AuthApi` thật trên PostgreSQL thật. DSH-TC-20261015-093301220 không xóa hàng `users` (còn khóa ngoại từ đơn) mà gài `AuthApi.getDisplayNames` không trả người đó. Cách nâng: dựng đơn bằng `createHo` (support/ho.ts) cho ca cần đúng đường tạo; chưa làm vì kết quả đọc của hai báo cáo không phụ thuộc đường tạo.
+25. [đã chọn] Giao diện: hai trang `/admin/reports/sources`, `/admin/reports/sales` theo khuôn `analytics-orders` (cùng `RangeBar`, `RateBanner`, `useBlock`), đúng testid của `ui/analytics-sources.md`, `ui/analytics-sales.md`. Xuất CSV (`useCsvExport` ở `lib/dashboard.ts`) tải bằng `fetch` có cookie phiên, dùng khoảng của PHẢN HỒI đang xem (`d.from`, `d.to`) chứ không phải giá trị đang gõ dở; tên tệp lấy từ `Content-Disposition` nếu đọc được (khác origin thì không đọc được header không được CORS phơi), không thì dựng cùng khuôn từ `from`, `to`. Bấm Áp dụng đúng khoảng đang xem thì tải lại (URL không đổi nên phải gọi `reload`), để dải 429 và banner 503 của TC hiện được. Dòng website là dòng cuối của `tbody`; tên người tạo chỉ là văn bản thuần (React thoát).
+26. [cần quyết] Liên kết vào hai màn: spec UI nói "menu Báo cáo" nhưng web không có menu đó; đã thêm hai liên kết ở thanh đầu trang cho admin ("Báo cáo nguồn", "Báo cáo sale") và hai nút ở đầu `/admin/dashboard` kèm testid `dsh-admin-dashboard-link-sources`, `dsh-admin-dashboard-link-sales` (testid mới, CHƯA có trong `ui/admin-dashboard.md` và `spec/testids.md`). Cần chạy `sdlc-impact` để ghi hai testid hoặc bỏ hai nút ở dashboard.
+27. [đã chọn] Sửa test nền của DSH kèm đợt này: `guard.spec.ts` (hai dòng ma trận DSH mới nên 12 dòng, 11 đường dẫn; regex "nới role staff" thêm cột `sale` của ma trận mới), `common.spec.ts` và `review.spec.ts` (tiêu đề chín thành mười một endpoint, `ALL_PATHS` có thêm hai báo cáo nên mọi vòng 403, 401, `Cache-Control`, `DB_POOL_MAX = 2` phủ luôn hai endpoint mới), `support/dsh.ts` (`REPORT.sources`, `REPORT.sales`, `resetSales`, `hoOrder`, `webOrder`, `parseCsv`, `exportRows`). Không sửa mã `src/modules/` của module khác. Sửa hạ tầng E2E: `test/e2e/server.ts`, `support.ts` thêm điểm điều khiển `/dsh-ord-fault` (ORD treo, AUTH lỗi, AUTH không tra được), nhả ở `/reset`.
+28. [đã chọn] Cách chạy E2E bốn TC giao diện mới: trong BẢN SAO của repo ở `/tmp` (đổi `ecom_e2e` thành `ecom_e2e_dsh` chỉ ở bản sao, `E2E_PORT_BASE=3600`, bản build `.next` riêng) vì máy chủ E2E dùng chung `ecom_e2e` và `.next` với agent khác đang chạy. Kết quả: 4 pass. Chưa chạy trên cây thật; lead chạy lại `pnpm test -- test/e2e/dsh.e2e.spec.ts` khi không có E2E khác đang chạy.
+29. [chưa làm] CI chưa chạy: `clean-run.mjs` dựng worktree tại HEAD và cài lại phụ thuộc, mất nhiều phút và đụng `prisma generate`, CSDL, cổng dùng chung với các agent đang code song song cùng đợt (SHP, SAL, PAY, NTF); `clean_run: chưa`, lead chạy một lần sau khi các epic xong. `lint` đã chạy riêng trên tệp của DSH (đạt); `pnpm --filter web typecheck` đạt; typecheck API chỉ còn lỗi ở test của SAL, AUTH (`test/sales`, `test/auth/sale.spec.ts`), không thuộc DSH.
+30. [cần quyết] Ghi chú hạ tầng cho lead: `apps/api/test/platform/db.spec.ts` cố định tên `ecom_test` nên có thể đỏ khi chạy với `ECOM_TEST_DB` riêng (không chạy riêng ở lượt này, không sửa); ma trận quyền chung đã có hai hàng DSH mới (guard.spec.ts đọc ra 12 hàng DSH và `auditPermissions` rỗng).
+31. [đã chọn] Test thêm sau review (REV-DSH-14): ca `DSH-SEC-20261015-092608917 T16` ở `apps/api/test/dashboard/report-sales.spec.ts` nay chạy báo cáo ba lần với `OrderApi.getSalesReport` trả thứ tự xuôi rồi ngược (mỗi lần một khoảng ngày khác để không trúng bộ nhớ đệm 60 giây): hai sale cùng tên cùng doanh thu phải ra cùng thứ tự theo `user_id`. Đột biến `cmp` đổi `>` thành `>=` ở `blocks.service.ts` (mất khóa phụ) nay làm ca này đỏ (chạy tay một lần rồi khôi phục tệp).
+32. [chưa làm] YẾU (REV-DSH-16): E2E bấm hai nút link "Báo cáo theo nguồn đơn", "Báo cáo theo sale" ở `/admin/dashboard` (testid `dsh-admin-dashboard-link-sources`, `dsh-admin-dashboard-link-sales`, kiểm URL và khoảng ngày `?from=&to=` được giữ) đã viết ở `apps/api/test/e2e/dsh.e2e.spec.ts` nhưng để `it.skip`: E2E dùng chung CSDL `ecom_e2e` và bản build `apps/web/.next` với các agent chạy song song nên không chạy riêng được ở lượt này. Việc cho lead: bỏ `.skip` rồi chạy riêng một lần với cổng trống (`-t "hai nút link"`). Mục 26 của report cũ nói testid chưa có là lỗi thời: hai testid đã có ở `spec/testids.md` và `ui/admin-dashboard.md`.
+

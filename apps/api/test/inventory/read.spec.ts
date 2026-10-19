@@ -166,4 +166,15 @@ describe('INV đọc danh sách, chi tiết, lịch sử', () => {
     }
     expect(await q(t, `SELECT quantity FROM stock_movements WHERE id = '${m.id}'`)).toEqual([{ quantity: 5 }]);
   });
+
+  it('INV-TC-20261015-094057637: sale 403 ở danh sách và chi tiết tồn kho (không on_hand, reserved, available trong thân); staff vẫn 200', async () => {
+    t.cat = await seedCategory(t, 'Áo');
+    const { product } = await seedStock(t, { on_hand: 50, reserved: 2 });
+    const sale = (await seedSession(t, (await seedUser(t, { email: `sale${Math.random()}@shop.vn`, role: 'sale' })).id)).cookie;
+    for (const path of ['/admin/inventory', `/admin/inventory/${product}`]) {
+      const r = await get(path, sale);
+      expect([path, r.status, JSON.stringify(r.body)]).toEqual([path, 403, expect.not.stringMatching(/on_hand|available|reserved/)]);
+      expect([path, (await get(path)).status]).toEqual([path, 200]);
+    }
+  });
 });

@@ -84,7 +84,7 @@ describe('E2E NTF (trình duyệt thật, API thật)', () => {
     await id(page, 'chk-checkout-place-order').click();
     await urlIs(page, /\/checkout\/complete\?/);
     const code = (await textOf(id(page, 'chk-checkout-complete-order-code'))).trim();
-    expect(code).toMatch(/^[A-Z0-9]{12}$/);
+    expect(code).toMatch(/^(HD[0-9]{6}-[0-9]{5}|[A-Z0-9]{12})$/);
     await relay(); // OrderCreated và OrderConfirmed tới NTF (consumer NTF của outbox)
     await page.reload();
     await badgeIs(page, '2'); // đơn COD: order_created rồi order_confirmed (hai thông báo, một email, BR5)

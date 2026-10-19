@@ -136,3 +136,7 @@
 .rd-mod-actions .btn { width: auto; flex: none; }
 @media (max-width: 639px) { .stack-table td.rd-zero { display: none; } }
 .panel fieldset.stack .field { margin: 0; }
+
+/* ---- báo cáo theo nguồn đơn và theo sale (DSH-REQ-20261015-092608812, DSH-REQ-20261015-092608849) ---- */
+.dsh-share { display: grid; grid-template-columns: minmax(4rem, 1fr) 3.5rem; gap: .5rem; align-items: center; min-width: 9rem; } .dsh-share .tabular { text-align: right; }
+.dsh-website-row > td { background: #f6f7f9; border-top: 2px solid var(--line); }

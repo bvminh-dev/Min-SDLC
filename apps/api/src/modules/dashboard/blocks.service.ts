@@ -4,13 +4,16 @@ import { InventoryApi } from '../inventory';
 import { OrderApi } from '../order';
 import { PaymentApi, type RevenueTotals } from '../payment';
 import { UserApi } from '../user';
-import { LOW_STOCK_LIMIT, ORDER_STATUSES, RECENT_LIMIT, type OrderStatus } from './config';
+import { DELETED_LABEL, LOW_STOCK_LIMIT, ORDER_STATUSES, RECENT_LIMIT, WEBSITE_LABEL, type OrderStatus } from './config';
 import { bucketList, bucketStart, civil, fmt, granularityOf, hourChunks, ictDayOf, isoZ, type DateRange, type Granularity } from './range';
 import { SourceGate } from './sources.service';
 
 type Body = Record<string, unknown>;
 const zeroStatuses = (): Record<OrderStatus, number> => Object.fromEntries(ORDER_STATUSES.map((s) => [s, 0])) as Record<OrderStatus, number>;
 const sum = (m: Record<string, number>): number => Object.values(m).reduce((a, b) => a + b, 0);
+/** So sánh theo đơn vị mã (không theo locale): thứ tự cố định giữa các máy, khớp tệp CSV. */
+const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+const sum2 = <K extends string>(rows: Record<K, number>[], k: K): number => rows.reduce((n, x) => n + x[k], 0);
 const money = (t: RevenueTotals) => ({ gross: t.gross, refunded: t.refunded, net: t.gross - t.refunded, payment_count: t.payment_count });
 const addMoney = (a: RevenueTotals, b: RevenueTotals): void => { a.gross += b.gross; a.refunded += b.refunded; a.payment_count += b.payment_count; a.net = a.gross - a.refunded; };
 const zeroMoney = (): RevenueTotals => ({ gross: 0, refunded: 0, net: 0, payment_count: 0 });
@@ -117,6 +120,32 @@ export class BlocksService {
       from: r.from, to: r.to, sort, limit, units_total: totals.units_total, distinct_products: totals.distinct_products,
       items: rows.slice(0, limit).map((x) => ({ product_id: x.product_id, name: names.get(x.product_id) ?? '', units_sold: x.quantity, items_amount: x.amount })),
     };
+  }
+
+  /**
+   * Báo cáo theo nguồn đơn (DSH-REQ-20261015-092608812): ORD lọc ba trạng thái bị loại ngay trong truy vấn và trả mọi nguồn cần hiện; DSH chỉ sắp (`revenue` giảm dần, `code` tăng dần) và tự cộng `totals`
+   * từ `items` (không gọi ORD lần hai, nên tổng dòng luôn bằng `totals`). `revenue` là giá trị đơn (`grand_total`), không phải tiền PAY (SB-23). Danh sách trắng trường: không trường cá nhân nào ra khỏi đây.
+   */
+  async reportSources(r: DateRange): Promise<Body> {
+    const rep = await this.gate.call('ORD', () => this.orders.getSourcesReport({ from: r.fromUtc, to: r.toUtc }));
+    const items = rep.items.map((i) => ({ source_id: i.source_id, code: i.code, name: i.name, is_active: i.is_active, orders: i.orders, revenue: i.revenue }))
+      .sort((a, b) => b.revenue - a.revenue || cmp(a.code, b.code));
+    return { from: r.from, to: r.to, items, totals: { orders: sum2(items, 'orders'), revenue: sum2(items, 'revenue'), excluded_orders: rep.excluded_orders } };
+  }
+
+  /**
+   * Báo cáo theo sale (DSH-REQ-20261015-092608849): ORD nhóm theo `created_by` và tra tên theo lô từ AUTH (lỗi tra tên thì ném nguyên, thành 503 `ORD`, không trả danh sách thiếu tên). Nhóm `created_by` rỗng
+   * (khách tự đặt) thành dòng `website` luôn có, đứng riêng ngoài `items`; tên không tra được thì nhãn "(tài khoản đã xóa)", dòng và tiền vẫn vào tổng. Không email, điện thoại, địa chỉ của ai.
+   */
+  async reportSales(r: DateRange): Promise<Body> {
+    const rep = await this.gate.call('ORD', () => this.orders.getSalesReport({ from: r.fromUtc, to: r.toUtc }));
+    const web = { name: WEBSITE_LABEL, orders: 0, revenue: 0 };
+    const items: { user_id: string; name: string; orders: number; revenue: number }[] = [];
+    for (const i of rep.items) {
+      if (i.created_by === null) { web.orders += i.orders; web.revenue += i.revenue; } else items.push({ user_id: i.created_by, name: i.name ?? DELETED_LABEL, orders: i.orders, revenue: i.revenue });
+    }
+    items.sort((a, b) => b.revenue - a.revenue || cmp(a.name, b.name) || cmp(a.user_id, b.user_id));
+    return { from: r.from, to: r.to, items, website: web, totals: { orders: sum2(items, 'orders') + web.orders, revenue: sum2(items, 'revenue') + web.revenue, excluded_orders: rep.excluded_orders } };
   }
 
   /** Mốc (theo giờ Việt Nam) của một giờ UTC `bucket_start` (ISO). */

@@ -25,6 +25,17 @@ export function zodItems(err: z.ZodError): ProblemErrorItem[] {
   return out;
 }
 
+// NUL và nửa cặp thay thế lẻ không lưu được vào PostgreSQL (UTF-8, 22021): từ chối ở biên mọi chuỗi (đã qua schema) của params, query, body của mọi module (SB-11) thay vì 500.
+export const RAW_STRINGS = 'platform:raw-strings';
+/** Miễn kiểm NUL cho route mà handler tự đáp theo hợp đồng của hệ thống ngoài (IPN của VNPay trả 200 kèm RspCode, không trả 400). */
+export const RawStrings = () => SetMetadata(RAW_STRINGS, true);
+const badString = (s: string): boolean => s.includes('\0') || /\p{Cs}/u.test(s); // chỉ NUL: tab, xuống dòng hợp lệ (ghi chú nhiều dòng)
+function badStringPath(v: unknown, path: string[] = []): string[] | null {
+  if (typeof v === 'string') return badString(v) ? path : null;
+  if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { const r = badStringPath(x, [...path, k]); if (r) return r; }
+  return null;
+}
+
 @Injectable()
 export class ValidationInterceptor implements NestInterceptor {
   constructor(private readonly reflector: Reflector) {}
@@ -34,10 +45,17 @@ export class ValidationInterceptor implements NestInterceptor {
     const schemas = this.reflector.getAllAndOverride<RouteSchemas | undefined>(VALIDATE, [ctx.getHandler(), ctx.getClass()]);
     if (!schemas) return next.handle();
     const req = ctx.switchToHttp().getRequest<Req>();
+    const system = !!this.reflector.getAllAndOverride(RAW_STRINGS, [ctx.getHandler(), ctx.getClass()]);
     const errors: ProblemErrorItem[] = [];
     const run = <T>(schema: z.ZodTypeAny | undefined, value: unknown, prefix: string): T | undefined => {
       const r = (schema ?? EMPTY).safeParse(value ?? {});
-      if (r.success) return r.data as T;
+      if (r.success) {
+        // Schema của module chạy TRƯỚC (mã lỗi riêng như `invalid_characters` được giữ); chuỗi NUL mà schema vẫn nhận thì bị chặn ở đây, trên giá trị đã qua schema.
+        const bad = system ? null : badStringPath(r.data);
+        if (!bad) return r.data as T;
+        errors.push({ field: bad.join('.') || prefix, code: 'invalid_format' });
+        return undefined;
+      }
       errors.push(...zodItems(r.error).map((e) => ({ ...e, field: e.field === '(root)' ? prefix : `${e.field}` })));
       return undefined;
     };

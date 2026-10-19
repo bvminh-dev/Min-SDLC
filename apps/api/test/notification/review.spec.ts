@@ -101,7 +101,7 @@ describe('NTF ca bẫy và producer thật', () => {
 
   it('NTF-TC-20261006-104222599 (JSON nửa cặp thay thế lẻ và NUL, L-JSON): id có NUL, tham số type có NUL hay up_to có nửa cặp lẻ cho 404 hay 400, không bao giờ 500; tên sản phẩm có NUL hay nửa cặp lẻ được làm sạch', async () => {
     const u = await mkUser(t);
-    expect((await call(t, 'post', '/notifications/%00/read', { cookie: u.cookie })).status).toBe(404);
+    expect([400, 404]).toContain((await call(t, 'post', '/notifications/%00/read', { cookie: u.cookie })).status); // NUL ở params: nền (ValidationInterceptor) trả 400 validation-failed, trước đây 404
     expect([400, 404]).toContain((await call(t, 'post', '/notifications/%ED%A0%BD/read', { cookie: u.cookie })).status); // đường dẫn UTF-8 sai: nền trả 400, không 500
     for (const qs of ['type=%00', 'status=%00', 'limit=%00', 'page=1%00']) expect([qs, (await call(t, 'get', `/notifications?${qs}`, { cookie: u.cookie })).status]).toEqual([qs, 400]);
     for (const raw of ['{"up_to":"\\ud800"}', '{"up_to":"\\u0000"}', '{"up_to":"2026-10-06T09:05:00Z\\ud83d"}']) expect([raw, (await call(t, 'post', '/notifications/read-all', { cookie: u.cookie, body: raw })).status]).toEqual([raw, 400]);
@@ -185,7 +185,7 @@ describe('NTF ca bẫy và producer thật', () => {
     const notes = await notesOf(t, buyer.id);
     expect(notes).toHaveLength(1);
     expect(notes[0]).toMatchObject({ type: 'order_created', link: `/orders/${order.code}`, body: `Đơn #${order.code} đã được tạo. Tổng tiền 380.000 đ.` });
-    expect(order.code).toMatch(/^[A-Z0-9]{12}$/); // mã đơn thật khớp khuôn của NTF
+    expect(order.code).toMatch(/^(HD\d{6}-\d{5}|[A-Z0-9]{12})$/); // mã đơn thật khớp khuôn của NTF (mã mới HDyymmdd-NNNNN hoặc mã cũ)
     expect(await count(t, 'processed_events', `consumer = 'NTF'`)).toBeGreaterThanOrEqual(4);
     expect(logsOf(t, 'error')).toEqual([]);
     expect(seedNote).toBeDefined();

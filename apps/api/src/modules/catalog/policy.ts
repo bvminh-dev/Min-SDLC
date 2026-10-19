@@ -28,6 +28,8 @@ const description = z.string(str).superRefine((v, ctx) => {
 
 const uuid = z.string(str).uuid({ message: 'invalid_format' });
 const price = z.number({ required_error: 'required', invalid_type_error: 'invalid_format' }).int({ message: 'invalid_format' }).min(1, { message: 'out_of_range' }).max(1_000_000_000, { message: 'out_of_range' });
+// Giá vốn (SB-42): số nguyên 0..1.000.000.000, tùy chọn; PATCH nhận thêm `null` để xóa. Chỉ admin gọi hai endpoint ghi nên schema này không bao giờ chạy với role khác.
+const costPrice = z.number({ invalid_type_error: 'invalid_format' }).int({ message: 'invalid_format' }).min(0, { message: 'out_of_range' }).max(1_000_000_000, { message: 'out_of_range' });
 
 /** Đối tượng đóng: khóa lạ (kể cả `status`, `rating_count`, `images`, `slug`) bị từ chối với `unknown_field` (SB-05, SB-11). */
 function closedObject<T extends z.ZodRawShape>(shape: T) {
@@ -43,13 +45,17 @@ const needsChange = <T extends Record<string, unknown>>(o: T, ctx: z.RefinementC
 
 export const categoryCreateBody = closedObject({ name: text(100), parent_id: z.union([uuid, z.null()]).optional() });
 export const categoryPatchBody = closedObject({ name: text(100).optional(), parent_id: z.union([uuid, z.null()]).optional() }).superRefine((o, ctx) => needsChange(o, ctx));
-export const productCreateBody = closedObject({ name: text(200), sku, category_id: uuid, price, description: description.optional() });
+export const productCreateBody = closedObject({ name: text(200), sku, category_id: uuid, price, cost_price: costPrice.optional(), description: description.optional() });
 export const productPatchBody = closedObject({
   version: z.number({ required_error: 'required', invalid_type_error: 'invalid_format' }).int({ message: 'invalid_format' }).min(1, { message: 'out_of_range' }),
-  name: text(200).optional(), sku: sku.optional(), category_id: uuid.optional(), price: price.optional(),
+  name: text(200).optional(), sku: sku.optional(), category_id: uuid.optional(), price: price.optional(), cost_price: z.union([costPrice, z.null()]).optional(),
   description: z.union([description, z.null()]).optional(),
 }).superRefine((o, ctx) => needsChange(o, ctx, ['version']));
 export const imageOrderBody = closedObject({ image_ids: z.array(uuid, str).min(1, { message: 'required' }).max(8, { message: 'too_long' }) });
+
+/** Import sản phẩm: `dry_run` bắt buộc, đúng `true` hoặc `false` (PRD-REQ-20261015-092431191 BR1); tham số lạ bị 400. */
+export const importQuery = z.object({ dry_run: z.enum(['true', 'false'], { errorMap: () => ({ message: 'invalid_format' }) }).transform((v) => v === 'true') }).strict();
+export type ImportQuery = z.infer<typeof importQuery>;
 
 export const noParams = z.object({}).strict();
 export const idParams = z.object({ id: z.string() }).strict();

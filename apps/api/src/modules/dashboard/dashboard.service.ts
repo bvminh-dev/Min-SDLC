@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { AppLogger, AuditService, Clock, PrismaService, currentCorrelationId, type SessionContext } from '../platform';
 import { BlocksService } from './blocks.service';
 import { BlockCache } from './cache.service';
-import { AUDIT_ACTION, AUDIT_MARKS_MAX, type Block } from './config';
+import { AUDIT_ACTION, AUDIT_MARKS_MAX, EXPORT_ACTION, type Block } from './config';
+import { salesCsv, sourcesCsv } from './csv';
 import { cacheKey, parseParams, type Params } from './policy';
 
 /**
@@ -19,10 +20,32 @@ export class DashboardService {
   ) { this.log = logger.for('dashboard'); }
 
   async view(session: SessionContext, block: Block, rawQuery: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const p = parseParams(block, rawQuery, this.clock.now());
-    const body = await this.cache.get(cacheKey(block, p), () => this.load(block, p));
+    const { p, body } = await this.read(block, rawQuery);
     await this.record(session, block, p);
     return body;
+  }
+
+  /** Tham số (400), rồi bộ nhớ đệm, rồi nguồn (503): dùng chung cho JSON và CSV. */
+  private async read(block: Block, rawQuery: Record<string, unknown>): Promise<{ p: Params; body: Record<string, unknown> }> {
+    const p = parseParams(block, rawQuery, this.clock.now());
+    return { p, body: await this.cache.get(cacheKey(block, p), () => this.load(block, p)) };
+  }
+
+  /**
+   * Xuất CSV của báo cáo theo nguồn hoặc theo sale (`format=csv`): cùng kiểm tham số, cùng bản đệm (khóa đệm không có `format`) và cùng thứ tự dòng với JSON, nên xuất lặp không thêm truy vấn.
+   * Mỗi lần THÀNH CÔNG ghi một dòng `dashboard.export` (không gộp theo phút, không chung dấu với `dashboard.view`, không nội dung số liệu); ghi lỗi không chặn tải, chỉ log `error` (SB-19, T17).
+   * Lỗi 400, 403, 429, 503 ném trước khi tới đây nên không có tệp và không có dòng audit.
+   */
+  async exportCsv(session: SessionContext, block: 'report-sources' | 'report-sales', rawQuery: Record<string, unknown>): Promise<{ filename: string; text: string }> {
+    const { p, body } = await this.read(block, rawQuery);
+    const r = p.range!;
+    const totals = body.totals as { orders: number; revenue: number };
+    const sources = block === 'report-sources';
+    const csv = sources
+      ? sourcesCsv(body.items as Parameters<typeof sourcesCsv>[0], totals)
+      : salesCsv(body.items as Parameters<typeof salesCsv>[0], body.website as Parameters<typeof salesCsv>[1], totals);
+    await this.write(session, EXPORT_ACTION, block, { report: sources ? 'sources' : 'sales', from: r.from, to: r.to, rows: csv.rows }); // chỉ loại báo cáo, khoảng ngày, số dòng: không số liệu, không tên (T17)
+    return { filename: `${sources ? 'bao-cao-nguon-don' : 'bao-cao-sale'}_${r.from}_${r.to}.csv`, text: csv.text };
   }
 
   private load(block: Block, p: Params): Promise<Record<string, unknown>> {
@@ -37,6 +60,8 @@ export class DashboardService {
       case 'report-revenue': return this.blocks.reportRevenue(r);
       case 'report-orders': return this.blocks.reportOrders(r);
       case 'report-products': return this.blocks.reportProducts(r, p.sort!, p.limit!);
+      case 'report-sources': return this.blocks.reportSources(r);
+      case 'report-sales': return this.blocks.reportSales(r);
     }
   }
 
@@ -46,13 +71,15 @@ export class DashboardService {
     if (this.marks.get(session.user_id) === minute) return;
     this.marks.set(session.user_id, minute); // đặt TRƯỚC khi ghi: các khối song song cùng phút thấy dấu ngay
     if (this.marks.size > AUDIT_MARKS_MAX) for (const [k, v] of this.marks) if (v < minute) this.marks.delete(k);
+    await this.write(session, AUDIT_ACTION, block, { block, from: p.range?.from ?? null, to: p.range?.to ?? null }); // chỉ khối và khoảng ngày, không nội dung số liệu (T6)
+  }
+
+  /** Một dòng audit của admin; ghi lỗi không chặn việc xem hay tải tệp: log `error` `audit-write-failed` kèm `trace_id`, không có số liệu (ADR-021, SB-19). */
+  private async write(session: SessionContext, action: string, block: Block, after: Record<string, unknown>): Promise<void> {
     try {
-      await this.audit.record(this.prisma, {
-        actor_id: session.user_id, actor_role: 'admin', action: AUDIT_ACTION, target_type: 'dashboard', target_id: block,
-        after: { block, from: p.range?.from ?? null, to: p.range?.to ?? null }, // chỉ khối và khoảng ngày, không nội dung số liệu (T6)
-      });
+      await this.audit.record(this.prisma, { actor_id: session.user_id, actor_role: 'admin', action, target_type: 'dashboard', target_id: block, after });
     } catch (err) {
-      this.log.error('audit-write-failed', { err, action: AUDIT_ACTION, trace_id: currentCorrelationId() ?? 'none' });
+      this.log.error('audit-write-failed', { err, action, trace_id: currentCorrelationId() ?? 'none' });
     }
   }
 }

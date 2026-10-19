@@ -21,7 +21,7 @@ describe('USR sửa nền cho DSH: UserApi.countCustomers', () => {
     expect(r).toEqual({ total: 2, locked: 1, new_in_range: 1 });
     expect(spy).toHaveBeenCalledTimes(1);
     expect(JSON.stringify(r)).not.toMatch(/@|email|name/);
-    expect(Object.getOwnPropertyNames(UserApi.prototype).filter((n) => n !== 'constructor')).toEqual(['countCustomers']);
+    expect(Object.getOwnPropertyNames(UserApi.prototype).filter((n) => n !== 'constructor')).toEqual(['countCustomers', 'lookupForSale', 'isCustomer']); // hai hàm sau cho SAL (đợt bán hộ, USR-REQ-20261006-101004117 BR9); không hàm nào khác trả dữ liệu cá nhân cho DSH
     expect(UserApi.prototype.countCustomers.length).toBe(1);
   });
 });

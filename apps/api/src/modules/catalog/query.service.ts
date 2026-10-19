@@ -25,6 +25,8 @@ function where(f: Filter): Prisma.Sql {
   return c.length ? Prisma.sql`WHERE ${Prisma.join(c, ' AND ')}` : Prisma.empty;
 }
 
+const costOf = (v: bigint | null): number | null => (v === null ? null : Number(v));
+
 const ORDER: Record<string, Prisma.Sql> = {
   newest: Prisma.sql`p.published_at DESC, p.id DESC`,
   price_asc: Prisma.sql`p.price ASC, p.id ASC`,
@@ -88,30 +90,30 @@ export class QueryService {
     return rows.map((r) => ({ id: r.id, url: this.storage.urlFor(r.storage_key), position: r.position }));
   }
 
-  /** Danh sách quản trị (staff, admin): mọi trạng thái, mới cập nhật trước (BR2). */
-  async adminList(q: AdminListQuery) {
+  /** Danh sách quản trị (staff, sale, admin): mọi trạng thái, mới cập nhật trước (BR2). `withCost` do server suy từ role của phiên (chỉ admin, SB-42), không bao giờ từ tham số. */
+  async adminList(q: AdminListQuery, withCost: boolean) {
     const w = where({ status: q.status as ProductStatus | undefined, categoryId: q.category_id, q: q.q });
     const { skip, take } = paginate(q);
     const [rows, total] = await Promise.all([
-      this.prisma.$queryRaw<{ id: string; name: string; sku: string; price: bigint; status: ProductStatus; category_id: string; category_name: string; image_key: string | null; updated_at: Date }[]>`
-        SELECT p.id, p.name, p.sku, p.price, p.status, c.id AS category_id, c.name AS category_name, ${FIRST_IMAGE} AS image_key, p.updated_at
+      this.prisma.$queryRaw<{ id: string; name: string; sku: string; price: bigint; cost_price: bigint | null; status: ProductStatus; category_id: string; category_name: string; image_key: string | null; updated_at: Date }[]>`
+        SELECT p.id, p.name, p.sku, p.price, p.cost_price, p.status, c.id AS category_id, c.name AS category_name, ${FIRST_IMAGE} AS image_key, p.updated_at
         FROM products p JOIN categories c ON c.id = p.category_id ${w} ORDER BY p.updated_at DESC, p.id DESC LIMIT ${take} OFFSET ${skip}`,
       this.prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM products p ${w}`,
     ]);
     return this.page(rows.map((r) => ({
-      id: r.id, name: r.name, sku: r.sku, price: Number(r.price), status: r.status, category: { id: r.category_id, name: r.category_name }, image_url: this.url(r.image_key), updated_at: r.updated_at,
+      id: r.id, name: r.name, sku: r.sku, price: Number(r.price), ...(withCost ? { cost_price: costOf(r.cost_price) } : {}), status: r.status, category: { id: r.category_id, name: r.category_name }, image_url: this.url(r.image_key), updated_at: r.updated_at,
     })), total.map((t) => t.n), q);
   }
 
-  /** Chi tiết quản trị (mọi trạng thái, có `version`); dùng cả cho phản hồi tạo và sửa. Không tồn tại hoặc id sai định dạng là 404 (BR5). */
-  async adminDetail(id: string) {
+  /** Chi tiết quản trị (mọi trạng thái, có `version`); dùng cả cho phản hồi tạo và sửa. Serializer theo role (SB-42): `withCost` true chỉ cho admin, khác thì KHÔNG có khóa `cost_price`. Không tồn tại hoặc id sai định dạng là 404 (BR5). */
+  async adminDetail(id: string, withCost: boolean) {
     if (!UUID_RE.test(id)) throw new DomainError('not-found');
-    const [p] = await this.prisma.$queryRaw<{ id: string; name: string; sku: string; price: bigint; description: string | null; status: ProductStatus; version: number; published_at: Date | null; rating_avg: number | null; rating_count: number; category_id: string; category_name: string; created_at: Date; updated_at: Date }[]>`
-      SELECT p.id, p.name, p.sku, p.price, p.description, p.status, p.version, p.published_at, ${AVG} AS rating_avg, p.rating_count, c.id AS category_id, c.name AS category_name, p.created_at, p.updated_at
+    const [p] = await this.prisma.$queryRaw<{ id: string; name: string; sku: string; price: bigint; cost_price: bigint | null; description: string | null; status: ProductStatus; version: number; published_at: Date | null; rating_avg: number | null; rating_count: number; category_id: string; category_name: string; created_at: Date; updated_at: Date }[]>`
+      SELECT p.id, p.name, p.sku, p.price, p.cost_price, p.description, p.status, p.version, p.published_at, ${AVG} AS rating_avg, p.rating_count, c.id AS category_id, c.name AS category_name, p.created_at, p.updated_at
       FROM products p JOIN categories c ON c.id = p.category_id WHERE p.id = ${id}::uuid`;
     if (!p) throw new DomainError('not-found');
     return {
-      id: p.id, name: p.name, sku: p.sku, category_id: p.category_id, category: { id: p.category_id, name: p.category_name }, price: Number(p.price), description: p.description,
+      id: p.id, name: p.name, sku: p.sku, category_id: p.category_id, category: { id: p.category_id, name: p.category_name }, price: Number(p.price), ...(withCost ? { cost_price: costOf(p.cost_price) } : {}), description: p.description,
       status: p.status, version: p.version, published_at: p.published_at, images: await this.images(p.id), rating_avg: p.rating_avg, rating_count: p.rating_count, created_at: p.created_at, updated_at: p.updated_at,
     };
   }

@@ -40,6 +40,10 @@ function Inner() {
   return (
     <main className="page">
       <div className="page-head"><h1>Dashboard</h1></div>
+      <nav className="rd-bar-tools" aria-label="Báo cáo tính lương">
+        <Link className="btn btn-sm" href={`/admin/reports/sources${reportQ}`} data-testid={`${P}-link-sources`}><span className="i i-chart" aria-hidden="true" /> Báo cáo theo nguồn đơn</Link>
+        <Link className="btn btn-sm" href={`/admin/reports/sales${reportQ}`} data-testid={`${P}-link-sales`}><span className="i i-users" aria-hidden="true" /> Báo cáo theo sale</Link>
+      </nav>
       <RateBanner testid={`${P}-rate-limit`} status={limited?.status} retryAfter={limited?.retryAfter} />
       <RangeBar p={P} applied={applied} invalid={invalid} asOf={asOf}
         onApply={(f, t) => go({ from: f || null, to: t || null })} onReset={() => go({ from: null, to: null })}>

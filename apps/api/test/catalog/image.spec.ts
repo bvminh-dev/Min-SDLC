@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import { truncateAll } from '../support/db';
 import { auditOf, call, count, createPrdApp, seedCategory, seedProduct, uploadImage, who, type PrdApp, type Who } from '../support/prd';
 import { q } from '../support/auth';
-import { S3Storage } from '../../src/modules/platform';
+import { JobRunner, S3Storage } from '../../src/modules/platform';
 import { jpegWithExif, padJpeg, php, png, pngClaiming, svgWithScript, webp } from '../support/images';
 
 const MB5 = 5_242_880;
@@ -199,6 +199,37 @@ describe('PRD ảnh sản phẩm: tải lên, sắp xếp, xóa, dọn ảnh m�
       expect(deletes()).toBe(500);
       expect(await t.images.sweepOrphans()).toBe(2);
       expect(t.fake.keys('products/')).toEqual(used);
+      expect(await count(t, 'product_images', `product_id = '${p}'`)).toBe(1);
+    });
+
+    it('PRD-TC-20261015-093900000: job có giới hạn lô 500 (501 ảnh mồ côi: lượt một xóa 500, lượt hai xóa nốt 1) và hạn thời gian (lượt ba quá hạn thì job dừng, báo lỗi, không xóa ảnh đang dùng); chạy lại không xóa thêm', async () => {
+      const p = await seedProduct(t, { category: cat, images: 1 }); // nguồn tham chiếu không rỗng
+      const used = t.fake.keys('products/');
+      for (const k of used) old(k, 5 * DAY);
+      const orphans = Array.from({ length: 501 }, () => `products/${crypto.randomUUID()}.jpg`);
+      for (const k of orphans) old(k);
+      const runner = t.app.get(JobRunner);
+      const def = (runner as unknown as { jobs: Map<string, { timeoutMs?: number }> }).jobs.get('prd.sweep-orphan-images')!;
+      expect(def.timeoutMs).toBe(300_000); // hạn thời gian 5 phút của job (PRD-DB mục 13)
+      expect(await runner.runOnce('prd.sweep-orphan-images')).toBe('ran');
+      expect(deletes()).toBe(500);
+      expect(t.fake.keys('products/')).toHaveLength(1 + used.length);
+      expect(await runner.runOnce('prd.sweep-orphan-images')).toBe('ran');
+      expect(deletes()).toBe(501);
+      expect(t.fake.keys('products/')).toEqual(used);
+      expect(await runner.runOnce('prd.sweep-orphan-images')).toBe('ran'); // chạy lại: không xóa thêm
+      expect(deletes()).toBe(501);
+      // lượt ba có ảnh mồ côi mới nhưng kho chậm hơn hạn thời gian (hạn đặt ngắn lại cho test): job bị hủy, báo lỗi, không xóa nhầm ảnh đang dùng
+      const more = Array.from({ length: 20 }, () => `products/${crypto.randomUUID()}.jpg`);
+      for (const k of more) old(k);
+      def.timeoutMs = 50;
+      const real = t.fake.requests.length;
+      let slowCalls = 0;
+      const slow = jest.spyOn((t.images as unknown as { storage: { delete: (k: string) => Promise<void> } }).storage, 'delete').mockImplementation(() => { slowCalls++; return new Promise((r) => setTimeout(r, 200)); });
+      try { expect(await runner.runOnce('prd.sweep-orphan-images')).toBe('failed'); } finally { slow.mockRestore(); def.timeoutMs = 300_000; }
+      expect(slowCalls).toBeLessThan(20); // bị hủy giữa chừng, không chạy hết lô
+      expect(t.fake.keys('products/')).toEqual(expect.arrayContaining(used));
+      expect(t.fake.requests.length).toBeGreaterThanOrEqual(real);
       expect(await count(t, 'product_images', `product_id = '${p}'`)).toBe(1);
     });
 
