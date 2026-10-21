@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Neko Core × Min-SDLC</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0B2447;--blue:#1A66F5;--sky:#6AA9FF;--pale:#E8F1FF;--line:#C7DAFB;--mute:#5B7299}
+  html,body{margin:0;height:100%;background:#fff;overflow:hidden}
+  body{font-family:'Be Vietnam Pro',system-ui,sans-serif;color:var(--ink)}
+  #stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:#fff}
+  #stage svg{position:absolute;inset:0}
+  #cap{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);width:max-content;max-width:1560px;text-align:center;
+    font-size:40px;font-weight:600;line-height:1.3;padding:14px 34px;border-radius:20px;color:var(--ink);
+    background:rgba(255,255,255,.94);box-shadow:0 10px 40px rgba(26,102,245,.16);border:2px solid var(--line);opacity:0}
+  #hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:34px;font-weight:700;color:var(--blue);
+    background:#fff;border:3px solid var(--line);border-radius:24px;padding:24px 44px;box-shadow:0 20px 60px rgba(26,102,245,.2)}
+  #clock{position:absolute;right:40px;top:26px;font:700 26px 'JetBrains Mono',monospace;color:var(--mute)}
+  body.rec #hint,body.rec #clock{display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF2FF"/></linearGradient>
+      <pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="2" fill="#CFE0FF"/></pattern>
+      <filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#1A66F5" flood-opacity=".15"/></filter>
+      <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="9"/></filter>
+    </defs>
+    <rect width="1920" height="1080" fill="url(#bg)"/>
+    <rect width="1920" height="1080" fill="url(#dots)" opacity=".55"/>
+    <g id="scenes"></g>
+    <g id="chrome"></g>
+  </svg>
+  <div id="cap"></div>
+  <div id="clock"></div>
+  <div id="hint">Nhấn Space để bắt đầu · ← → đổi cảnh · R quay lại đầu</div>
+</div>
+<script>
+'use strict';
+/* ---------- tiện ích ---------- */
+const NS='http://www.w3.org/2000/svg';
+const INK='#0B2447',BLUE='#1A66F5',SKY='#6AA9FF',PALE='#E8F1FF',LINE='#C7DAFB',MUTE='#5B7299',
+      CORAL='#F0506E',AMBER='#F5A524',MINT='#12A67F';
+const FONT="'Be Vietnam Pro',system-ui,sans-serif",MONO="'JetBrains Mono',ui-monospace,Menlo,monospace";
+const $=(tag,a,p)=>{const e=document.createElementNS(NS,tag);if(a)for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+const S=(e,a)=>{for(const k in a)e.setAttribute(k,a[k]);return e};
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const seg=(t,a,b)=>cl((t-a)/(b-a));
+const E=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const O=x=>1-Math.pow(1-x,3);
+const B=x=>{const c=1.70158,d=c+1;return 1+d*Math.pow(x-1,3)+c*Math.pow(x-1,2)}; // back-out (nảy nhẹ)
+const lerp=(a,b,t)=>a+(b-a)*t;
+const hsh=n=>{const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+const T=(p,x,y,str,o={})=>{const e=$('text',{x,y,'font-size':o.size||32,'font-weight':o.weight||600,fill:o.fill||INK,
+  'text-anchor':o.anchor||'start','font-family':o.mono?MONO:FONT},p);e.textContent=str;return e};
+const TL=(p,x,y,lines,o={},lh=1.25)=>{const g=$('g',{},p);lines.forEach((s,i)=>T(g,x,y+i*(o.size||32)*lh,s,o));return g};
+const vis=(e,o)=>e.setAttribute('opacity',o);
+const pth=(p,d,a={})=>$('path',Object.assign({d,pathLength:1,'stroke-dasharray':1,'stroke-dashoffset':1,fill:'none',stroke:BLUE,
+  'stroke-width':6,'stroke-linecap':'round','stroke-linejoin':'round'},a),p);
+const dr=(e,p)=>{S(e,{'stroke-dashoffset':1-p,opacity:p>0.001?1:0})};
+const chip=(p,x,y,w,h,label,o={})=>{const g=$('g',{},p);
+  $('rect',{x,y,width:w,height:h,rx:o.r??h/2,fill:o.fill||'#fff',stroke:o.stroke||LINE,'stroke-width':o.sw||3},g);
+  T(g,x+w/2,y+h/2+(o.size||26)*.35,label,{size:o.size||26,weight:o.weight||700,fill:o.color||INK,anchor:'middle',mono:o.mono});return g};
+const card=(p,x,y,w,h,o={})=>$('rect',{x,y,width:w,height:h,rx:o.r||28,fill:o.fill||'#fff',stroke:o.stroke||LINE,'stroke-width':o.sw||3,filter:o.noshadow?'':'url(#sh)'},p);
+function cube(p,cx,cy,w,h,cols){ // khối iso: (cx,cy) là đỉnh dưới
+  cols=cols||['#DDEBFF','#9EC4FF','#6AA2F5'];
+  const g=$('g',{},p),pt=a=>a.map(q=>q.join(',')).join(' ');
+  const Bm=[cx,cy],R=[cx+w,cy-w/2],L=[cx-w,cy-w/2],K=[cx,cy-w];
+  const up=q=>[q[0],q[1]-h];
+  $('polygon',{points:pt([L,Bm,up(Bm),up(L)]),fill:cols[1]},g);
+  $('polygon',{points:pt([R,Bm,up(Bm),up(R)]),fill:cols[2]},g);
+  $('polygon',{points:pt([up(L),up(Bm),up(R),up(K)]),fill:cols[0]},g);
+  return g}
+const gearPath=(r1,r2,n)=>{let d='';for(let i=0;i<n;i++){const a=i/n*Math.PI*2,b=Math.PI*2/n;
+  const p=[[r1,a],[r2,a+b*.12],[r2,a+b*.38],[r1,a+b*.5]];
+  p.forEach((q,j)=>{d+=(i+j?'L':'M')+(Math.cos(q[1])*q[0]).toFixed(1)+','+(Math.sin(q[1])*q[0]).toFixed(1)})}return d+'Z'};
+const fmt=n=>Math.round(n).toLocaleString('vi-VN');
+
+/* con mèo vẽ tay (đầu mèo = khung terminal: mắt ">" "<") */
+function cat(g,x,y,s){
+  const c=$('g',{transform:`translate(${x} ${y}) scale(${s})`},g);
+  const head=pth(c,'M-150,-10 C-150,-120 -90,-165 0,-165 C90,-165 150,-120 150,-10 C150,90 90,130 0,130 C-90,130 -150,90 -150,-10 Z',{fill:PALE,'fill-opacity':0,'stroke-width':8});
+  const earL=pth(c,'M-143,-62 L-128,-205 L-42,-158',{'stroke-width':8}),earR=pth(c,'M143,-62 L128,-205 L42,-158',{'stroke-width':8});
+  const inL=pth(c,'M-120,-104 L-113,-166 L-76,-146',{stroke:SKY,'stroke-width':6}),inR=pth(c,'M120,-104 L113,-166 L76,-146',{stroke:SKY,'stroke-width':6});
+  const eyes=$('g',{},c);
+  const eL=pth(eyes,'M-78,-30 L-40,-8 L-78,14',{stroke:INK,'stroke-width':9}),eR=pth(eyes,'M78,-30 L40,-8 L78,14',{stroke:INK,'stroke-width':9});
+  const nose=pth(c,'M-11,30 L11,30 L0,43 Z',{stroke:SKY,'stroke-width':6,fill:SKY,'fill-opacity':0});
+  const mouth=pth(c,'M-30,58 Q-15,76 0,54 Q15,76 30,58',{stroke:INK,'stroke-width':6});
+  const wh=[['M-112,30 L-196,14'],['M-112,52 L-202,54'],['M-110,74 L-190,94'],['M112,30 L196,14'],['M112,52 L202,54'],['M110,74 L190,94']].map(d=>pth(c,d[0],{stroke:SKY,'stroke-width':5}));
+  return lt=>{
+    dr(head,seg(lt,.2,1.9));S(head,{'fill-opacity':seg(lt,2.4,3.4)});
+    dr(earL,seg(lt,1.5,2.3));dr(earR,seg(lt,1.7,2.5));dr(inL,seg(lt,2.2,2.8));dr(inR,seg(lt,2.3,2.9));
+    dr(eL,seg(lt,2.7,3.3));dr(eR,seg(lt,2.8,3.4));dr(nose,seg(lt,3.2,3.6));S(nose,{'fill-opacity':seg(lt,3.4,3.9)});dr(mouth,seg(lt,3.4,4));
+    wh.forEach((w,i)=>dr(w,seg(lt,3.8+i*.12,4.6+i*.12)));
+    const bl=[7,11.5,14].reduce((m,b)=>Math.max(m,1-cl(Math.abs(lt-b)/.14)),0);
+    S(eyes,{transform:`translate(0 -8) scale(1 ${1-.9*bl}) translate(0 8)`});
+    // thở nhẹ
+    S(c,{transform:`translate(${x} ${y+Math.sin(lt*2)*4*seg(lt,4.5,6)}) scale(${s})`});
+  }}
+
+/* ---------- cảnh ---------- */
+const scenes=[];
+const add=(t0,d,build,cues)=>scenes.push({t0,d,build,cues:cues.map(c=>[t0+c[0],t0+c[1],c[2]])});
+
+/* 0 — Mở đầu (0–24) */
+add(0,24,g=>{
+  const hl=T(g,960,160,'AI viết code rất nhanh.',{size:78,weight:800,anchor:'middle'});
+  const win=$('g',{},g);
+  card(win,360,230,1200,580);
+  $('rect',{x:360,y:230,width:1200,height:66,rx:30,fill:PALE},win);$('rect',{x:360,y:262,width:1200,height:34,fill:PALE},win);
+  [CORAL,AMBER,MINT].forEach((c,i)=>$('circle',{cx:404+i*36,cy:263,r:10,fill:c},win));
+  T(win,960,272,'terminal',{size:22,mono:1,fill:MUTE,anchor:'middle'});
+  const cp=$('clipPath',{id:'c0'},win);$('rect',{x:380,y:312,width:1160,height:480},cp);
+  const rg=$('g',{'clip-path':'url(#c0)'},win);
+  const rows=[...Array(14)].map(()=>$('rect',{height:16,rx:8},rg));
+  const big=T(g,960,560,'Nhưng ai dám tin nó?',{size:112,weight:800,anchor:'middle'});
+  S(big,{stroke:'#fff','stroke-width':22,'paint-order':'stroke','stroke-linejoin':'round'});
+  const ul=pth(g,'M 330,600 Q 960,640 1590,596',{stroke:BLUE,'stroke-width':10});
+  const c1=chip(g,310,760,640,76,'Phần 1 · Chú mèo — Neko Core',{size:30,stroke:BLUE,color:BLUE});
+  const c2=chip(g,970,760,640,76,'Phần 2 · Đường ray — Min-SDLC',{size:30,fill:BLUE,stroke:BLUE,color:'#fff'});
+  return lt=>{
+    const hp=O(seg(lt,.2,1.2));S(hl,{opacity:hp*(1-seg(lt,12.6,13.6)),transform:`translate(0 ${(1-hp)*24})`});
+    const p=seg(lt,.5,12.4),sc=3800*(1-Math.pow(1-p,3)),base=Math.floor(sc/40),off=sc%40;
+    rows.forEach((r,j)=>{const k=base+j;S(r,{x:404+Math.floor(hsh(k*3.1)*4)*46,y:318+j*40-off,width:90+hsh(k)*520,
+      fill:hsh(k*7)>.8?BLUE:(hsh(k*5)>.5?'#BFD7FF':'#DCE9FF')})});
+    const q=E(seg(lt,12.8,15.2));
+    S(win,{opacity:1-.84*q,transform:`translate(960 520) scale(${1-.1*q}) translate(-960 -520)`});
+    const bp=B(seg(lt,13.6,14.6));S(big,{opacity:seg(lt,13.6,14.2),transform:`translate(960 560) scale(${.9+.1*bp}) translate(-960 -560)`});
+    dr(ul,seg(lt,15,16.6));
+    const a=B(seg(lt,19.4,20.2)),b=B(seg(lt,20.6,21.4));
+    S(c1,{opacity:seg(lt,19.4,19.9),transform:`translate(0 ${(1-a)*30})`});S(c2,{opacity:seg(lt,20.6,21.1),transform:`translate(0 ${(1-b)*30})`});
+  }},[[.5,7,'Hôm nay, một trợ lý AI có thể viết hàng nghìn dòng code chỉ trong vài phút.'],
+      [7.2,10,'Nhưng nhanh thì chưa đủ.'],
+      [10.2,19,'Khi nó tự sửa file, tự chạy lệnh ngay trên máy của bạn — ai bảo đảm nó làm đúng?'],
+      [19.2,24,'Chúng tôi xin kể bằng hai phần: một chú mèo, và một đường ray.']]);
+
+/* 1 — Neko Core xuất hiện (24–40) */
+add(24,16,g=>{
+  const up=cat(g,960,350,1.05);
+  const t1=T(g,960,640,'Neko Core',{size:130,weight:800,anchor:'middle',fill:INK});
+  const t2=T(g,960,716,'Một chú mèo trong terminal',{size:48,weight:600,anchor:'middle',fill:BLUE});
+  const cs=[['1 tệp thực thi duy nhất',470],['TypeScript · Bun · Ink',470],['Mô hình nào cũng cắm được',520]];
+  const gap=36,tot=cs.reduce((s,c)=>s+c[1],0)+gap*2;let x=960-tot/2;
+  const chips=cs.map(c=>{const e=chip(g,x,780,c[1],68,c[0],{size:27,stroke:LINE});x+=c[1]+gap;return e});
+  return lt=>{up(lt);
+    const a=O(seg(lt,4,5.2));S(t1,{opacity:a,transform:`translate(0 ${(1-a)*26})`});
+    const b=O(seg(lt,5.2,6.4));S(t2,{opacity:b,transform:`translate(0 ${(1-b)*20})`});
+    chips.forEach((c,i)=>{const p=B(seg(lt,8+i*.9,8.9+i*.9));S(c,{opacity:seg(lt,8+i*.9,8.5+i*.9),transform:`translate(0 ${(1-p)*30})`})});
+  }},[[.3,4,'Chú mèo ấy tên là Neko Core.'],
+      [4.2,11.5,'Một trợ lý lập trình chạy ngay trong terminal, do Meiiie và The Wiii Lab phát triển.'],
+      [11.7,16,'Gói gọn trong một tệp duy nhất — không cần cài thêm gì.']]);
+
+/* 2 — Vòng lặp tác tử (40–85) */
+add(40,45,g=>{
+  const cx=800,cy=520,rx=400,ry=170;
+  const head=T(g,960,120,'Vòng lặp của tác tử',{size:58,weight:800,anchor:'middle'});
+  const track=$('ellipse',{cx,cy,rx,ry,fill:'none',stroke:'#D5E4FF','stroke-width':22},g);
+  const flow=$('ellipse',{cx,cy,rx,ry,fill:'none',stroke:BLUE,'stroke-width':4,'stroke-dasharray':'3 26','stroke-linecap':'round'},g);
+  const pos=a=>[cx+rx*Math.cos(a*Math.PI/180),cy+ry*Math.sin(a*Math.PI/180)];
+  const st=[{a:-90,n:'Mô hình',s:'complete'},{a:30,n:'Công cụ',s:'tool calls'},{a:150,n:'Quan sát',s:'observe'}].map((o,i)=>{
+    const [x,y]=pos(o.a),gg=$('g',{},g);
+    $('ellipse',{cx:x,cy:y+8,rx:78,ry:30,fill:'#BBD3FA',opacity:.5},gg);
+    cube(gg,x,y,56,64);
+    const glow=$('circle',{cx:x,cy:y-96,r:56,fill:SKY,filter:'url(#glow)',opacity:0},gg);
+    const ic=$('g',{transform:`translate(${x} ${y-96})`},gg);
+    if(i===0){$('circle',{r:26,fill:BLUE},ic);$('circle',{r:9,fill:'#fff'},ic);[0,60,120,180,240,300].forEach(d=>$('line',{x1:0,y1:0,x2:Math.cos(d*Math.PI/180)*46,y2:Math.sin(d*Math.PI/180)*46,stroke:SKY,'stroke-width':4},ic))}
+    if(i===1){var gear=$('path',{d:gearPath(26,38,8),fill:BLUE},ic);$('circle',{r:10,fill:'#fff'},ic)}
+    if(i===2){$('path',{d:'M-46,0 Q0,-40 46,0 Q0,40 -46,0Z',fill:'#fff',stroke:BLUE,'stroke-width':6},ic);$('circle',{r:15,fill:BLUE},ic);var pupil=$('circle',{r:6,fill:'#fff'},ic)}
+    if(i===0){T(gg,x+100,y-110,o.n,{size:36,weight:800});T(gg,x+100,y-76,o.s,{size:22,mono:1,fill:MUTE})}
+    else{T(gg,x,y+92,o.n,{size:36,weight:800,anchor:'middle'});T(gg,x,y+126,o.s,{size:22,mono:1,fill:MUTE,anchor:'middle'})}
+    return {g:gg,glow,a:o.a,gear,pupil,ic}});
+  const tok=$('g',{},g);$('circle',{r:26,fill:BLUE,opacity:.25,filter:'url(#glow)'},tok);$('circle',{r:15,fill:BLUE,stroke:'#fff','stroke-width':4},tok);
+  const chipsT=['giải phóng ngữ cảnh','thoát vòng lặp kẹt','theo dõi nợ kiểm chứng'];
+  const chips=chipsT.map((s,i)=>chip(g,230+i*400,812,370,60,s,{size:25,stroke:LINE}));
+  // thẻ chế độ vòng kín
+  const cd=$('g',{},g);
+  card(cd,1400,220,440,520,{stroke:BLUE});
+  T(cd,1620,285,'Chế độ vòng kín',{size:36,weight:800,anchor:'middle',fill:BLUE});
+  const rowsC=[['Chốt tiêu chí “xong”','trước khi viết code'],['Triển khai','vòng lặp như bên trái'],['Kiểm định độc lập','chấm theo tiêu chí đã chốt']].map((r,i)=>{
+    const y=350+i*125,gg=$('g',{},cd);$('circle',{cx:1450,cy:y+20,r:24,fill:BLUE},gg);T(gg,1450,y+30,String(i+1),{size:28,weight:800,fill:'#fff',anchor:'middle'});
+    T(gg,1492,y+14,r[0],{size:29,weight:700});T(gg,1492,y+52,r[1],{size:24,weight:400,fill:MUTE});return gg});
+  const lock=$('g',{transform:'translate(1478 346)'},cd);$('rect',{x:-14,y:-4,width:28,height:22,rx:5,fill:AMBER},lock);$('path',{d:'M-8,-4 V-12 A8,8 0 0 1 8,-12 V-4',fill:'none',stroke:AMBER,'stroke-width':5},lock);
+  const stamp=$('g',{},cd);$('circle',{r:56,fill:'none',stroke:MINT,'stroke-width':8},stamp);$('circle',{r:46,fill:'none',stroke:MINT,'stroke-width':2},stamp);T(stamp,0,12,'ĐẠT',{size:38,weight:800,fill:MINT,anchor:'middle'});
+  return lt=>{
+    vis(head,O(seg(lt,0,.8)));
+    const tp=seg(lt,.6,3);S(track,{opacity:tp});S(flow,{opacity:tp,'stroke-dashoffset':-lt*30});
+    st.forEach((s,i)=>{const p=B(seg(lt,1+i*.7,2+i*.7));S(s.g,{opacity:seg(lt,1+i*.7,1.6+i*.7),transform:`translate(0 ${(1-p)*-40})`})});
+    const run=lt>=5,th=-90+360*(lt-5)/7,[tx,ty]=pos(th);
+    S(tok,{transform:`translate(${tx} ${ty})`,opacity:run?1:0});
+    st.forEach(s=>{let d=Math.abs(((th-s.a+540)%360)-180);d=180-d; // 0 khi trùng
+      const l=run?cl(1-d/45):0;S(s.glow,{opacity:l});
+      if(s.gear)S(s.gear,{transform:`rotate(${lt*70})`});
+      if(s.pupil)S(s.pupil,{transform:`translate(${Math.sin(lt*1.6)*8} ${Math.cos(lt*2.2)*3})`});
+      S(s.ic,{transform:s.ic.getAttribute('transform').replace(/ scale\([^)]*\)/,'')+` scale(${1+.14*l})`})});
+    chips.forEach((c,i)=>{const p=B(seg(lt,17+i*3.4,18+i*3.4));S(c,{opacity:seg(lt,17+i*3.4,17.6+i*3.4),transform:`translate(0 ${(1-p)*26})`})});
+    const cp=O(seg(lt,26,27.4));S(cd,{opacity:cp,transform:`translate(${(1-cp)*80} 0)`});
+    rowsC.forEach((r,i)=>vis(r,seg(lt,28+i*4.5,28.8+i*4.5)));
+    S(lock,{opacity:seg(lt,29.4,30)*(1-seg(lt,40,40.4))});
+    const sp=B(seg(lt,41,42));S(stamp,{opacity:seg(lt,41,41.4),transform:`translate(1690 640) rotate(-14) scale(${.4+.6*sp})`});
+  }},[[.3,6,'Bên trong, Neko chạy một vòng lặp rất giản dị.'],
+      [6.2,15,'Hỏi mô hình. Chạy công cụ. Quan sát kết quả. Rồi lặp lại.'],
+      [15.2,27,'Quanh vòng lặp là những cơ chế giữ nó khỏi lạc hướng: giải phóng ngữ cảnh, thoát vòng kẹt, theo dõi nợ kiểm chứng.'],
+      [27.2,36,'Ở chế độ vòng kín, tiêu chí “xong” được chốt từ trước khi viết code.'],
+      [36.2,44.5,'Rồi một bộ kiểm định độc lập chấm kết quả — không phải chính AI tự chấm.']]);
+
+/* 3 — Dây an toàn (85–130) */
+add(85,45,g=>{
+  const head=T(g,960,130,'Một ranh giới duy nhất',{size:58,weight:800,anchor:'middle'});
+  const LY=560,XG=960;
+  const belt=$('rect',{x:300,y:LY-32,width:1400,height:64,rx:32,fill:'#DCE9FF'},g);
+  const ticks=$('g',{},g);for(let i=0;i<40;i++)$('rect',{x:300+i*38,y:LY-5,width:18,height:10,rx:5,fill:'#fff'},ticks);
+  const bm=$('clipPath',{id:'c3'},g);$('rect',{x:300,y:LY-32,width:1400,height:64,rx:32},bm);ticks.setAttribute('clip-path','url(#c3)');
+  // nguồn: Neko
+  const src=$('g',{},g);card(src,90,LY-110,200,220);cat(src,190,LY-10,.32)(99);T(src,190,LY+88,'Tác tử',{size:26,weight:700,anchor:'middle',fill:MUTE});
+  // đích: máy của bạn
+  const dst=$('g',{},g);card(dst,1560,LY-130,300,260);
+  $('rect',{x:1610,y:LY-100,width:200,height:130,rx:12,fill:PALE,stroke:BLUE,'stroke-width':5},dst);$('rect',{x:1590,y:LY+36,width:240,height:16,rx:8,fill:BLUE},dst);
+  [0,1,2].forEach(i=>$('rect',{x:1628,y:LY-82+i*30,width:70+i*34,height:12,rx:6,fill:SKY},dst));T(dst,1710,LY+100,'Máy của bạn',{size:28,weight:700,anchor:'middle'});
+  // cổng
+  const gate=$('g',{},g);
+  $('rect',{x:XG-55,y:LY+74,width:110,height:26,rx:13,fill:'#BBD3FA'},gate);
+  const arm=$('g',{transform:`translate(${XG} ${LY+86})`},gate);
+  for(let i=0;i<8;i++)$('rect',{x:-11,y:-176+i*22,width:22,height:22,fill:i%2?'#fff':CORAL},arm);
+  $('rect',{x:-11,y:-176,width:22,height:176,rx:6,fill:'none',stroke:INK,'stroke-width':3},arm);
+  $('circle',{cx:XG,cy:LY+86,r:20,fill:INK},gate);
+  const gl=T(g,XG,LY-250,'cổng quyền hạn',{size:28,weight:800,anchor:'middle',fill:BLUE});
+  const gs=T(g,XG,LY-218,'sửa file · chạy lệnh · trình duyệt · Office',{size:20,anchor:'middle',fill:MUTE,mono:1});
+  // gói hàng
+  const spec=[{l:'đọc file',t:9,k:'pass',c:BLUE},{l:'sửa file trong dự án',t:13.5,k:'pass',c:BLUE},{l:'chạy test',t:18,k:'pass',c:BLUE},
+              {l:'rm -rf ./',t:22.5,k:'stop',c:AMBER},{l:'đọc ~/.ssh/id_rsa',t:31,k:'refuse',c:CORAL}];
+  const pk=spec.map(o=>{o.w=o.l.length*14+60;const gg=$('g',{},g);
+    $('rect',{x:-o.w/2,y:-28,width:o.w,height:56,rx:16,fill:'#fff',stroke:o.c,'stroke-width':4},gg);T(gg,0,8,o.l,{size:23,mono:1,weight:700,anchor:'middle',fill:o.c===BLUE?INK:o.c});
+    o.tag=T(gg,0,-44,o.k==='pass'?'QUA':o.k==='stop'?'CHẶN · XIN PHÉP':'TỪ CHỐI',{size:22,weight:800,anchor:'middle',fill:o.k==='pass'?MINT:o.c});
+    o.sh=[...Array(10)].map(()=>$('rect',{width:18,height:12,rx:3,fill:CORAL},g));o.g=gg;return o});
+  const fb=T(g,520,250,'phản hồi phục hồi được → AI tự điều chỉnh',{size:27,weight:700,fill:AMBER,anchor:'middle'});
+  const nr=T(g,XG,LY+160,'luôn từ chối — kể cả khi bật --yolo',{size:27,weight:700,fill:CORAL,anchor:'middle'});
+  // chế độ
+  const modes=['default','accept-edits','plan','auto'],mw=[210,290,150,150],mg=18;let mx=960-(mw.reduce((a,b)=>a+b)+mg*3)/2;
+  T(g,mx-24,858,'Shift+Tab',{size:22,mono:1,fill:MUTE,anchor:'end'});
+  const pills=modes.map((m,i)=>{const e=chip(g,mx,826,mw[i],54,m,{size:24,mono:1,stroke:LINE});mx+=mw[i]+mg;return e});
+  return lt=>{
+    vis(head,O(seg(lt,0,.8)));
+    const ip=seg(lt,.4,2);[belt,ticks,src,dst,gate,gl,gs].forEach(e=>vis(e,ip));
+    S(ticks,{transform:`translate(${(lt*70)%38} 0)`});
+    const act=lt<5.5?0:lt<7?1:lt<8.5?2:3;
+    pills.forEach((p,i)=>{const on=i===act;const [r,t]=p.children;S(r,{fill:on?BLUE:'#fff',stroke:on?BLUE:LINE});S(t,{fill:on?'#fff':INK});vis(p,seg(lt,3,4))});
+    let open=0;
+    spec.forEach(o=>{
+      const s=lt-o.t,xs=930-o.w/2;let x=260+175*s,y=LY,op=1,sc=1;
+      if(s<0){vis(o.g,0);o.sh.forEach(r=>vis(r,0));return}
+      if(o.k==='pass'){open=Math.max(open,cl(1-Math.abs(x-XG)/230));if(x>1540)op=1-seg(x,1540,1600)}
+      else{const hit=(xs-260)/175;
+        if(s<hit)x=260+175*s;else x=xs;
+        if(o.k==='stop'&&s>hit+1.7){const p=seg(s,hit+1.7,hit+7.2);x=lerp(xs,300,E(p));y=LY-170*Math.sin(Math.PI*p);op=1-seg(p,.88,1);
+          S(o.tag,{fill:AMBER});vis(fb,seg(p,.1,.25)*(1-seg(p,.8,.95)))}
+        if(o.k==='refuse'&&s>hit+.2){const q=seg(s,hit+.2,hit+1.6);op=0;
+          o.sh.forEach((r,i)=>{const a=i/10*Math.PI*2+hsh(i)*.6,d=130*O(q);S(r,{x:x-9+Math.cos(a)*d,y:LY-6+Math.sin(a)*d*.8+60*q*q,opacity:1-q,transform:`rotate(${q*260*(i%2?1:-1)} ${x} ${LY})`})});
+          vis(nr,seg(s,hit+.3,hit+.9)*(1-seg(s,hit+4.4,hit+5.2)))}
+      }
+      if(o.k!=='refuse'||s<=(xs-260)/175+.2)o.sh.forEach(r=>vis(r,0));
+      S(o.g,{transform:`translate(${x} ${y})`,opacity:op});
+      vis(o.tag,o.k==='pass'?seg(Math.abs(x-XG),400,160):seg(Math.abs(x-XG),500,200));
+    });
+    if(lt<22)vis(fb,0);if(lt<31)vis(nr,0);
+    S(arm,{transform:`translate(${XG} ${LY+86}) rotate(${92*E(open)})`});
+  }},[[.3,5,'Vấn đề kế tiếp: cho AI tự do đến đâu?'],
+      [5.2,13,'Neko trả lời bằng một ranh giới duy nhất — mọi hành động đều đi qua cùng một cổng.'],
+      [13.2,21.5,'Đọc file thì qua. Sửa file trong dự án thì qua. Chạy test cũng qua.'],
+      [22,33,'Lệnh nguy hiểm như rm -rf hay force-push thì bị chặn lại — AI nhận về một phản hồi để tự điều chỉnh, thay vì đứng hình.'],
+      [33.5,38.5,'Còn lệnh thảm họa, hay đụng vào khóa bí mật, thì luôn bị từ chối.'],
+      [39,45,'Tự do là mặc định — nhưng luôn có dây an toàn.']]);
+
+/* 4 — Phiên bền + nhúng được (130–170) */
+add(130,40,g=>{
+  const A=$('g',{},g),Bg=$('g',{},g);
+  T(A,960,140,'Phiên làm việc bền',{size:58,weight:800,anchor:'middle'});
+  const N=8,x0=250,dx=202,y0=420,nx=i=>x0+i*dx;
+  const rail=pth(A,`M${nx(0)},${y0} L${nx(N-1)},${y0}`,{stroke:'#D5E4FF','stroke-width':18});dr(rail,1);
+  const done=pth(A,`M${nx(0)},${y0} L${nx(N-1)},${y0}`,{stroke:BLUE,'stroke-width':8});
+  const nodes=[...Array(N)].map((_,i)=>{const gg=$('g',{},A);$('circle',{cx:nx(i),cy:y0,r:24,fill:'#fff',stroke:BLUE,'stroke-width':6},gg);
+    const f=$('g',{},gg);$('line',{x1:nx(i),y1:y0-26,x2:nx(i),y2:y0-84,stroke:INK,'stroke-width':4},f);$('polygon',{points:`${nx(i)},${y0-84} ${nx(i)+44},${y0-70} ${nx(i)},${y0-56}`,fill:MINT},f);
+    const m=$('rect',{x:nx(i)-14,y:y0+54,width:28,height:28,rx:6,fill:MINT},gg);return {gg,f,m}});
+  T(A,nx(0)-24,y0-190,'⚑  điểm khôi phục',{size:26,weight:700,fill:MINT});
+  T(A,nx(0)-24,y0-150,'■  thay đổi đã thực hiện',{size:26,weight:700,fill:MINT});
+  const run=$('g',{},A);$('circle',{r:22,fill:BLUE,opacity:.3,filter:'url(#glow)'},run);$('circle',{r:13,fill:BLUE,stroke:'#fff','stroke-width':4},run);
+  const bolt=$('g',{},A);$('polygon',{points:'20,-90 -22,10 4,10 -14,86 30,-28 2,-28',fill:CORAL},bolt);
+  const off=T(A,nx(4)+30,y0-110,'tắt máy giữa chừng',{size:30,weight:800,fill:CORAL});
+  const re=T(A,nx(4)+0,y0+260,'mở lại: đi tiếp từ điểm khôi phục',{size:32,weight:800,fill:BLUE,anchor:'start'});
+  const arc=pth(A,`M${nx(4)},${y0+110} C${nx(4)-200},${y0+330} ${nx(1)+100},${y0+330} ${nx(0)},${y0+110}`,{stroke:CORAL,'stroke-width':5,'stroke-dasharray':'0.03 0.02'});
+  const xx=$('g',{transform:`translate(${(nx(2)+nx(3))/2} ${y0+262})`},A);$('line',{x1:-22,y1:-22,x2:22,y2:22,stroke:CORAL,'stroke-width':9,'stroke-linecap':'round'},xx);$('line',{x1:22,y1:-22,x2:-22,y2:22,stroke:CORAL,'stroke-width':9,'stroke-linecap':'round'},xx);
+  const nr=T(A,(nx(1)+nx(4))/2+60,y0+330,'không chạy lại từ đầu',{size:30,weight:800,fill:CORAL,anchor:'middle'});
+  // phần B
+  T(Bg,960,140,'Một lõi — nhiều nơi đặt',{size:58,weight:800,anchor:'middle'});
+  const hub=$('g',{transform:'translate(960 520)'},Bg);$('circle',{r:112,fill:BLUE,filter:'url(#sh)'},hub);
+  T(hub,0,16,'>_',{size:68,mono:1,weight:700,fill:'#fff',anchor:'middle'});T(hub,0,150,'Neko Core',{size:34,weight:800,anchor:'middle'});
+  const L=['OpenAI','Google','Anthropic','Mô hình trên máy'],R=['Zed (ACP)','JetBrains (ACP)','Ứng dụng của bạn (SDK)'];
+  T(Bg,330,330,'nhà cung cấp mô hình',{size:24,mono:1,fill:MUTE,anchor:'middle'});T(Bg,1590,330,'nơi nhúng',{size:24,mono:1,fill:MUTE,anchor:'middle'});
+  const mk=(arr,xc,w,side)=>arr.map((s,i)=>{const y=380+i*92-(arr.length-4)*0,gg=$('g',{},Bg);
+    const x1=side<0?xc+w/2:xc-w/2,x2=960+side*112,ln=$('line',{x1,y1:y+30,x2,y2:520+(y+30-520)*.35,stroke:SKY,'stroke-width':4,'stroke-dasharray':'3 16','stroke-linecap':'round'},gg);
+    chip(gg,xc-w/2,y,w,60,s,{size:26,stroke:LINE});return {gg,ln}});
+  const Ls=mk(L,330,380,-1),Rs=mk(R,1590,420,1);
+  return lt=>{
+    const aOp=1-seg(lt,20,21.2),bOp=seg(lt,21.4,22.4);S(A,{opacity:aOp,display:aOp>0?'':'none'});S(Bg,{opacity:bOp,display:bOp>0?'':'none'});
+    if(aOp>0){
+      const pa=seg(lt,0,1);const bx=(i)=>nx(i);
+      let rx=nx(0),show=lt>1,p;
+      if(lt<8.4){p=seg(lt,1,8.4);rx=lerp(nx(0),nx(4)+60,E(p))}
+      else if(lt<13){show=false}else{p=seg(lt,13.4,19.5);rx=lerp(nx(4),nx(7),E(p))}
+      S(run,{transform:`translate(${rx} ${y0})`,opacity:show?1:0});
+      const maxX=lt<8.6?rx:(lt<13?nx(4)+60:rx);
+      const prog=cl((Math.max(maxX,nx(0))-nx(0))/(nx(N-1)-nx(0)));S(done,{'stroke-dashoffset':1-prog,opacity:prog>.001?1:0});
+      nodes.forEach((n,i)=>{const reached=i===0||nx(i)<=maxX+1;const ia=i<=4;
+        vis(n.f,reached?seg(maxX,nx(i)-5,nx(i)+30)*(1):0);vis(n.m,reached?1:0);
+        // mô phỏng nhịp "bật" khi runner qua
+      });
+      const bp=seg(lt,8.4,9.2);S(bolt,{transform:`translate(${nx(4)+150} ${y0-10}) scale(${.6+.4*B(bp)})`,opacity:lt<8.4?0:(1-seg(lt,11.4,12.2))});
+      vis(off,seg(lt,8.8,9.4)*(1-seg(lt,11.6,12.2)));
+      vis(re,seg(lt,12.6,13.4));
+      dr(arc,seg(lt,13.6,15.2));vis(xx,seg(lt,15,15.6));vis(nr,seg(lt,15.4,16.2));
+    }
+    Ls.forEach((o,i)=>{const p=B(seg(lt,22.4+i*.8,23.2+i*.8));S(o.gg,{opacity:seg(lt,22.4+i*.8,23+i*.8),transform:`translate(${-(1-p)*60} 0)`});S(o.ln,{'stroke-dashoffset':-lt*26})});
+    S(hub,{transform:`translate(960 520) scale(${1+.03*Math.sin(lt*3)})`});
+    Rs.forEach((o,i)=>{const p=B(seg(lt,31.8+i*.8,32.6+i*.8));S(o.gg,{opacity:seg(lt,31.8+i*.8,32.4+i*.8),transform:`translate(${(1-p)*60} 0)`});S(o.ln,{'stroke-dashoffset':lt*26})});
+  }},[[.3,6,'Làm việc dài thì phải chịu được gián đoạn.'],
+      [6.2,21,'Neko lưu điểm khôi phục sau từng bước. Tắt máy giữa chừng, mở lại, nó đi tiếp đúng chỗ cũ — mà không chạy lại những thay đổi đã làm.'],
+      [21.5,31,'Nó cũng không bị buộc vào một nhà cung cấp: OpenAI, Google, Anthropic hay mô hình chạy trên máy đều cắm được.'],
+      [31.2,40,'Và nhúng được vào Zed, JetBrains qua giao thức ACP, hoặc vào ứng dụng của bạn qua SDK.']]);
+
+/* 5 — Bước lùi: động cơ cần đường ray (170–200) */
+add(170,30,g=>{
+  const ttl=T(g,960,140,'',{size:58,weight:800,anchor:'middle'});
+  const C=36,R=13,sp=34,x0=960-(C-1)*sp/2,y0=250,orig=[3,2];
+  const dots=[];for(let r=0;r<R;r++)for(let c=0;c<C;c++){const i=r*C+c;
+    dots.push({e:$('circle',{cx:x0+c*sp,cy:y0+r*sp,r:9,fill:SKY},g),ta:4.4+10*Math.pow(i/(C*R),1.5),inf:15.8+Math.hypot(c-orig[0],r-orig[1])*.2})}
+  const hero=$('circle',{cx:960,cy:420,r:30,fill:BLUE},g);
+  const rip=[0,1,2].map(()=>$('circle',{cx:x0+orig[0]*sp,cy:y0+orig[1]*sp,r:10,fill:'none',stroke:CORAL,'stroke-width':4},g));
+  const rails=$('g',{},g);const ry=[790,836];
+  const rl=ry.map(y=>pth(rails,`M240,${y} L1680,${y}`,{stroke:BLUE,'stroke-width':10}));
+  const sl=[...Array(30)].map((_,i)=>$('line',{x1:260+i*48,y1:ry[0]-10,x2:260+i*48,y2:ry[1]+10,stroke:'#9EC4FF','stroke-width':8,'stroke-linecap':'round'},rails));
+  const eng=T(g,960,740,'Neko Core = động cơ',{size:52,weight:800,anchor:'middle',fill:BLUE});
+  const need=T(g,960,900,'Còn cần đường ray.',{size:52,weight:800,anchor:'middle'});
+  let lastT='';const setT=s=>{if(s!==lastT){ttl.textContent=s;lastT=s}};
+  return lt=>{
+    setT(lt<3.6?'Một hành động: đã có dây an toàn.':lt<15.4?'Một sản phẩm: hàng nghìn hành động.':lt<20?'Một yêu cầu bị hiểu sai ở đầu…':'…lan ra cả hệ thống.');
+    S(ttl,{fill:lt>=15.4?CORAL:INK,opacity:O(seg(lt,.2,1))});
+    // chấm đơn lúc đầu
+    const hp=B(seg(lt,.8,1.8)),hs=1-seg(lt,3.6,4.6);S(hero,{opacity:hs>0?hp*hs:0,transform:`translate(960 420) scale(${hp*(1+.25*Math.sin(lt*4))}) translate(-960 -420)`});
+    dots.forEach(d=>{const p=seg(lt,d.ta,d.ta+.3),bad=lt>d.inf;S(d.e,{opacity:p,r:9*B(p),fill:bad?CORAL:SKY})});
+    rip.forEach((r,i)=>{const q=seg(lt,15.8+i*.9,18.6+i*.9);S(r,{r:10+560*q,opacity:q>0?.7*(1-q):0})});
+    const fade=1-.7*seg(lt,22,24);dots.forEach(d=>d.e.setAttribute('opacity',(+d.e.getAttribute('opacity'))*fade));
+    rl.forEach((e,i)=>dr(e,seg(lt,24.2+i*.3,26.4+i*.3)));
+    sl.forEach((e,i)=>vis(e,seg(lt,25+i*.05,25.5+i*.05)));
+    vis(eng,O(seg(lt,24.2,25.4)));vis(need,O(seg(lt,27.6,28.8)));
+  }},[[.3,4,'Nhưng hãy lùi lại một bước.'],
+      [4.2,15,'Dây an toàn bảo vệ từng hành động. Còn một sản phẩm thương mại điện tử gồm hàng nghìn hành động.'],
+      [15.2,24,'Từng bước đều an toàn, mà cả hệ thống vẫn sai — nếu yêu cầu bị hiểu sai ngay từ đầu.'],
+      [24.2,30,'Neko Core là động cơ. Chúng tôi cần đường ray.']]);
+
+/* 6 — Nguyên tắc: skill vs hook (200–222) */
+add(200,22,g=>{
+  const h=T(g,960,130,'Min-SDLC: một nguyên tắc',{size:58,weight:800,anchor:'middle'});
+  const mkSide=(x,tag,big,col,items,icon)=>{const gg=$('g',{},g);card(gg,x,200,760,600,{stroke:col});
+    T(gg,x+50,270,tag,{size:26,mono:1,weight:700,fill:MUTE});T(gg,x+50,370,big,{size:big.length>6?84:100,weight:800,fill:col});
+    const ic=$('g',{transform:`translate(${x+620} ${300})`},gg);icon(ic,col);
+    const its=items.map((s,i)=>{const e=$('g',{},gg);$('circle',{cx:x+62,cy:470+i*92,r:12,fill:col},e);T(e,x+92,480+i*92,s,{size:38,weight:600});return e});
+    return {gg,its}};
+  const cloud=(ic,c)=>{$('path',{d:'M-60,20 C-90,20 -90,-25 -55,-25 C-50,-60 0,-65 10,-35 C40,-50 75,-25 55,5 C80,15 70,45 40,40 L-50,40 C-70,40 -75,25 -60,20 Z',fill:PALE,stroke:c,'stroke-width':6,'stroke-linejoin':'round'},ic);
+    [[-30,66,12],[-56,92,7]].forEach(q=>$('circle',{cx:q[0],cy:q[1],r:q[2],fill:PALE,stroke:c,'stroke-width':5},ic))};
+  const shield=(ic,c)=>{$('path',{d:'M0,-70 L60,-45 L60,10 C60,50 30,70 0,85 C-30,70 -60,50 -60,10 L-60,-45 Z',fill:c,'stroke-linejoin':'round'},ic);
+    $('polygon',{points:'8,-40 -22,8 -2,8 -10,42 24,-8 4,-8',fill:'#fff'},ic)};
+  const Lf=mkSide(130,'CẦN PHÁN ĐOÁN','Skill',BLUE,['viết yêu cầu, chọn kiến trúc','đặt tên, chia việc','cân nhắc đánh đổi'],cloud);
+  const Rt=mkSide(1030,'PHẢI ĐƯỢC BẢO ĐẢM','Hook · Script',INK,['chặn AI tự duyệt','kiểm hình thức, ranh giới module','chạy test, quét bí mật'],shield);
+  const mid=T(g,960,520,'→',{size:90,weight:800,fill:SKY,anchor:'middle'});
+  return lt=>{
+    vis(h,O(seg(lt,0,.8)));
+    const a=O(seg(lt,1,2.4)),b=O(seg(lt,10.6,12));
+    S(Lf.gg,{opacity:a,transform:`translate(${-(1-a)*160} 0)`});S(Rt.gg,{opacity:b,transform:`translate(${(1-b)*160} 0)`});
+    Lf.its.forEach((e,i)=>vis(e,seg(lt,4+i*1.6,4.8+i*1.6)));Rt.its.forEach((e,i)=>vis(e,seg(lt,13.4+i*1.6,14.2+i*1.6)));
+    vis(mid,0);
+  }},[[.3,10.5,'Đường ray ấy là Min-SDLC: bộ kit biến từng giai đoạn của vòng đời phần mềm thành skill, hook và script.'],
+      [10.8,22,'Nguyên tắc duy nhất: cần phán đoán thì giao cho skill; bắt buộc phải đúng thì giao cho hook và script — vì máy kiểm không mệt, không nể.']]);
+
+/* 7 — Đường ray 9 ga (222–290) */
+add(222,68,g=>{
+  const xs=[...Array(9)].map((_,i)=>150+i*202.5),RY=470,xg=k=>(xs[k]+xs[k+1])/2;
+  const names=[['Khảo sát'],['Nền tảng'],['Yêu cầu'],['Thiết kế','kỹ thuật'],['Giao diện'],['Thiết kế','test'],['Triển khai'],['Review'],['Bài học']];
+  const skills=['discover','foundation','research','tech-design','ui-ux','test-design','implement','review','retro'];
+  const docs=['roadmap.md','domain · ADR','requirement','DB · API · SEC','màn hình','TC · E2E','code · report','review.md','bài học'];
+  const title=T(g,960,110,'Chín ga, mỗi ga một cổng duyệt',{size:54,weight:800,anchor:'middle'});
+  const rail=[RY-14,RY+14].map(y=>pth(g,`M80,${y} L1840,${y}`,{stroke:'#9EC4FF','stroke-width':6}));
+  const slp=[...Array(44)].map((_,i)=>$('line',{x1:100+i*40,y1:RY-24,x2:100+i*40,y2:RY+24,stroke:'#D5E4FF','stroke-width':6,'stroke-linecap':'round'},g));
+  const stn=xs.map((x,i)=>{const gg=$('g',{},g);cube(gg,x,RY+50,34,22,['#fff',LINE,'#9EC4FF']);
+    T(gg,x,RY+102,'',{});TL(gg,x,RY+112,names[i],{size:26,weight:800,anchor:'middle'});
+    T(gg,x,RY+112+names[i].length*33+8,skills[i],{size:17,mono:1,fill:MUTE,anchor:'middle'});
+    const num=$('g',{},gg);$('circle',{cx:x,cy:RY-128,r:20,fill:BLUE},num);T(num,x,RY-120,String(i+1),{size:22,weight:800,fill:'#fff',anchor:'middle'});return gg});
+  const dc=docs.map((s,i)=>{const gg=$('g',{},g),x=xs[i]-82;
+    $('rect',{x,y:728,width:164,height:104,rx:14,fill:'#fff',stroke:LINE,'stroke-width':3,filter:'url(#sh)'},gg);
+    [0,1,2].forEach(j=>$('rect',{x:x+16,y:746+j*13,width:[110,80,96][j],height:6,rx:3,fill:'#D5E4FF'},gg));
+    T(gg,x+82,806,s,{size:17,mono:1,weight:700,anchor:'middle',fill:INK});
+    const ch=chip(gg,x+82-40,830,80,28,'nháp',{size:16,fill:'#FFF3DB',stroke:AMBER,color:'#A86B00',r:14,sw:2});return {gg,ch}});
+  const arms=[...Array(8)].map((_,k)=>{const gg=$('g',{},g),x=xg(k);
+    $('circle',{cx:x,cy:RY+40,r:14,fill:INK},gg);
+    const a=$('g',{transform:`translate(${x} ${RY+40})`},gg);for(let i=0;i<4;i++)$('rect',{x:-8,y:-92+i*23,width:16,height:23,fill:i%2?'#fff':CORAL},a);
+    $('rect',{x:-8,y:-92,width:16,height:92,rx:5,fill:'none',stroke:INK,'stroke-width':2.5},a);
+    const lk=$('g',{transform:`translate(${x} ${RY-62})`},gg);$('rect',{x:-11,y:-2,width:22,height:18,rx:4,fill:AMBER},lk);$('path',{d:'M-6,-2 V-9 A6,6 0 0 1 6,-9 V-2',fill:'none',stroke:AMBER,'stroke-width':4},lk);
+    const person=$('g',{transform:`translate(${x} ${RY-190})`},gg);$('circle',{cy:-18,r:15,fill:INK},person);$('path',{d:'M-24,22 Q-24,-4 0,-4 Q24,-4 24,22 Z',fill:INK},person);
+    const key=$('g',{},gg);$('circle',{r:9,fill:'none',stroke:AMBER,'stroke-width':4},key);$('line',{x1:9,y1:0,x2:28,y2:0,stroke:AMBER,'stroke-width':4},key);
+    return {gg,a,lk,person,key,x}});
+  const pLabel=T(g,xg(0),RY-228,'người duyệt',{size:24,weight:800,fill:INK,anchor:'middle'});
+  // tàu
+  const tr=$('g',{},g);
+  $('polygon',{points:'-34,-34 -22,-60 -6,-34',fill:BLUE},tr);$('polygon',{points:'34,-34 22,-60 6,-34',fill:BLUE},tr);
+  $('rect',{x:-48,y:-36,width:96,height:50,rx:16,fill:BLUE},tr);$('circle',{cx:-16,cy:-14,r:7,fill:'#fff'},tr);$('circle',{cx:16,cy:-14,r:7,fill:'#fff'},tr);
+  [-26,26].forEach(x=>$('circle',{cx:x,cy:18,r:9,fill:INK},tr));
+  // khách AI thử tự duyệt
+  const ai=$('g',{},g);$('rect',{x:-30,y:-26,width:60,height:50,rx:12,fill:'#fff',stroke:BLUE,'stroke-width':5},ai);
+  $('circle',{cx:-11,cy:-4,r:6,fill:BLUE},ai);$('circle',{cx:11,cy:-4,r:6,fill:BLUE},ai);$('line',{x1:0,y1:-26,x2:0,y2:-42,stroke:BLUE,'stroke-width':5},ai);$('circle',{cy:-46,r:6,fill:BLUE},ai);
+  const blk=$('g',{},g);
+  card(blk,xg(1)-250,RY-330,500,120,{stroke:CORAL,noshadow:0});
+  T(blk,xg(1),RY-282,'guard-approved',{size:32,mono:1,weight:700,fill:CORAL,anchor:'middle'});T(blk,xg(1),RY-242,'chặn AI tự đổi sang “đã duyệt”',{size:25,weight:700,fill:INK,anchor:'middle'});
+  // thẻ hook
+  const hk=[$('g',{},g),$('g',{},g)];
+  const hkc=chip(hk[0],-150,0,300,48,'check-spec-file ✓',{size:23,mono:1,fill:'#E4FAF3',stroke:MINT,color:MINT});
+  const stop=$('g',{},g);const buf=$('rect',{x:1818,y:RY-48,width:16,height:96,rx:6,fill:CORAL},stop);
+  const stT=chip(stop,1320,RY-168,500,104,'',{r:22,stroke:CORAL});
+  const stA=T(stop,1570,RY-122,'stop-check-spec',{size:30,mono:1,weight:700,fill:CORAL,anchor:'middle'});
+  const stB=T(stop,1570,RY-86,'spec còn lỗi → chưa cho kết thúc',{size:23,weight:700,anchor:'middle'});
+  // tác động
+  const edit=T(g,xs[2],RY-168,'spec đổi',{size:26,weight:800,fill:AMBER,anchor:'middle'});
+  const rcp=$('clipPath',{id:'c7'},g);$('rect',{x:60,y:300,width:1800,height:330},rcp);const rpg=$('g',{'clip-path':'url(#c7)'},g);
+  const rp=[0,1].map(()=>$('circle',{cx:xs[2],cy:RY,r:10,fill:'none',stroke:AMBER,'stroke-width':5},rpg));
+  const tags=['API','quyền','test','code','review'].map((s,i)=>chip(g,xs[3+i]-62,RY-214,124,40,s,{size:22,fill:'#FFF3DB',stroke:AMBER,color:'#A86B00',r:12,mono:1}));
+  const back=pth(g,`M${xs[7]},${RY-156} C${xs[7]-100},${RY-330} ${xs[2]+100},${RY-330} ${xs[2]},${RY-156}`,{stroke:AMBER,'stroke-width':6,'stroke-dasharray':'0.025 0.02'});
+  const backT=T(g,(xs[7]+xs[2])/2,RY-300,'sdlc-impact → quay về ga gốc, không vá chắp ở sau',{size:30,weight:800,fill:'#A86B00',anchor:'middle'});
+  // lịch mở cổng & tàu
+  const v=(xs[8]-xs[2])/12,tOpen=[23,32.5];for(let k=2;k<8;k++)tOpen.push(34+(xg(k)-xs[2])/v-1.1);
+  const keys=[[0,xs[0]],[16,xs[0]],[20,xg(0)-72],[24,xg(0)-72],[26,xs[1]],[28,xg(1)-72],[33.2,xg(1)-72],[35,xs[2]],[46,xs[8]],[62,xs[8]],[67,xs[2]]];
+  const kf=t=>{for(let i=0;i<keys.length-1;i++){const a=keys[i],b=keys[i+1];if(t<=b[0])return lerp(a[1],b[1],(i===3||i===1||i===5||i===7||i===9)?cl((t-a[0])/(b[0]-a[0])):E(cl((t-a[0])/(b[0]-a[0]))))}return keys[keys.length-1][1]};
+  const kfL=t=>{ // đoạn 35→46 chạy đều
+    return kf(t)};
+  const docVis=i=>16+i*0; // placeholder
+  return lt=>{
+    vis(title,O(seg(lt,0,.7)));
+    rail.forEach(r=>dr(r,seg(lt,.2,2)));slp.forEach((e,i)=>vis(e,seg(lt,.3+i*.03,.7+i*.03)));
+    // ga hiện lần lượt theo lời kể
+    const sT=i=>1.2+i*1.5;
+    stn.forEach((s,i)=>{const p=B(seg(lt,sT(i),sT(i)+.7));S(s,{opacity:seg(lt,sT(i),sT(i)+.4),transform:`translate(0 ${(1-p)*-30})`})});
+    const trx=kfL(lt);
+    S(tr,{transform:`translate(${trx} ${RY-26})`,opacity:seg(lt,15.2,16.2)});
+    // cổng
+    arms.forEach((a,k)=>{
+      const born=seg(lt,16+k*.35,16.8+k*.35),open=E(seg(lt,tOpen[k],tOpen[k]+.9));
+      S(a.gg,{opacity:born*(1-.6*open)});S(a.a,{transform:`translate(${a.x} ${RY+40}) rotate(${88*open})`});vis(a.lk,1-open);
+      // người giữ chìa
+      const pv=k<2?seg(lt,tOpen[k]-1.6,tOpen[k]-.8)*(1-seg(lt,tOpen[k]+.8,tOpen[k]+1.6)):seg(lt,tOpen[k]-.5,tOpen[k]-.2)*(1-seg(lt,tOpen[k]+.6,tOpen[k]+1));
+      vis(a.person,k===1&&lt<31?0:pv);
+      const kp=seg(lt,tOpen[k]-.8,tOpen[k]);S(a.key,{transform:`translate(${a.x} ${lerp(RY-150,RY-62,E(kp))})`,opacity:k<2?kp*(1-seg(lt,tOpen[k]+.8,tOpen[k]+1.2)):0});
+    });
+    vis(pLabel,seg(lt,19.6,20.4)*(1-seg(lt,24.6,25.2)));
+    // AI thử tự duyệt ở cổng 1
+    const ap=seg(lt,27,28.6),shake=lt>29&&lt<30.4?Math.sin(lt*60)*10:0,ar=seg(lt,30.4,31.4);
+    S(ai,{transform:`translate(${xg(1)+shake} ${lerp(RY-260,RY-110,E(ap))-60*E(ar)})`,opacity:seg(lt,27,27.6)*(1-seg(lt,31,31.6))});
+    const bp=seg(lt,29,29.5)*(1-seg(lt,33,34));S(blk,{opacity:bp,transform:`translate(0 ${(1-B(seg(lt,29,29.8)))*20})`});
+    // thẻ tài liệu
+    dc.forEach((d,i)=>{const arr=i===0?15.5:(trx>=xs[i]-4?1:0);
+      const when=i===0?16.5:(kfInv(xs[i]));const p=seg(lt,when,when+.7);S(d.gg,{opacity:p,transform:`translate(0 ${(1-B(p))*26})`});
+      const ok=i<8?lt>tOpen[i]+.6:lt>47.4;const [r,t]=d.ch.children;
+      S(r,{fill:ok?'#E3EDFF':'#FFF3DB',stroke:ok?BLUE:AMBER});T0(t,ok?'đã duyệt':'nháp',ok?BLUE:'#A86B00');
+      if(i===8&&!ok&&lt>46.5)T0(t,'chờ',  '#A86B00');
+    });
+    // hook kiểm hình thức
+    const hp=[36.2,39.5,42.8].reduce((m,b)=>Math.max(m,seg(lt,b,b+.3)*(1-seg(lt,b+1.8,b+2.2))),0);
+    S(hk[0],{opacity:hp,transform:`translate(${trx} ${RY-214-8*hp})`});
+    // buffer stop
+    const sp=seg(lt,44.2,45),clean=lt>47.6;
+    vis(stop,sp*(1-seg(lt,48,48.8)));S(buf,{fill:clean?MINT:CORAL});
+    const [sr,st]=stT.children;S(sr,{stroke:clean?MINT:CORAL});T0(stA,clean?'spec sạch ✓':'stop-check-spec',clean?MINT:CORAL);T0(stB,clean?'phiên được phép kết thúc':'spec còn lỗi → chưa cho kết thúc',INK);
+    // tác động
+    vis(edit,seg(lt,48.4,49)*(1-seg(lt,60,61)));
+    rp.forEach((r,i)=>{const q=seg(lt,49+i*1.4,53.4+i*1.4);S(r,{r:10+(xs[7]-xs[2]+80)*q,opacity:q>0?.6*(1-q):0})});
+    tags.forEach((t,i)=>{const p=seg(lt,50+i*1.8,50.8+i*1.8);S(t,{opacity:p*(1-seg(lt,60.5,61.5)),transform:`translate(0 ${(1-B(p))*18})`})});
+    stn.forEach((s,i)=>{if(i>=2&&i<=7){const w=i===2?seg(lt,48.4,49)*(1-seg(lt,60,61)):seg(lt,50+(i-3)*1.8,50.8+(i-3)*1.8)*(1-seg(lt,60.5,61.5));
+      S(s.firstChild.firstChild,{fill:w>.5?'#FFE9B8':'#fff'});}});
+    dr(back,seg(lt,61.4,64));vis(backT,seg(lt,62,63));
+  }
+  function T0(e,s,fill){if(e.textContent!==s)e.textContent=s;e.setAttribute('fill',fill)}
+  function kfInv(x){for(let i=0;i<keys.length-1;i++){const a=keys[i],b=keys[i+1];if((x-a[1])*(x-b[1])<=0&&a[1]!==b[1]){return lerp(a[0],b[0],(x-a[1])/(b[1]-a[1]))-.5}}return 99}
+  },[[.3,8.5,'Chín giai đoạn nối nhau như các ga tàu: khảo sát, nền tảng, yêu cầu,'],
+      [8.7,15.8,'thiết kế kỹ thuật, giao diện, thiết kế test, triển khai, review, rút bài học.'],
+      [16,23.5,'Giữa hai ga luôn có một cổng duyệt — và chìa khóa nằm trong tay con người.'],
+      [24,35,'AI chỉ được ghi bản nháp. Nếu nó thử tự đổi sang “đã duyệt”, hook chặn ngay.'],
+      [35.2,47.5,'Mỗi lần lưu file, hook kiểm hình thức. Spec còn lỗi thì phiên làm việc không được phép kết thúc.'],
+      [48,61,'Khi một spec đã duyệt phải đổi, bước phân tích tác động chỉ ra: đổi chỗ này thì yêu cầu, test, quyền nào bị kéo theo.'],
+      [61.5,68,'Spec sai thì quay về ga gốc để sửa — không vá chắp ở phía sau.']]);
+
+/* 8 — Sợi chỉ truy vết (290–312) */
+add(290,22,g=>{
+  const h=T(g,960,120,'Mỗi tài liệu có một mã định danh',{size:54,weight:800,anchor:'middle'});
+  const id='PAY-TC-20261006-104538540',size=64,cw=size*.6,xs0=960-id.length*cw/2;
+  const txt=$('text',{x:xs0,y:260,'font-size':size,'font-family':MONO,'font-weight':700,'xml:space':'preserve'},g);
+  const parts=[['PAY',BLUE],['-',MUTE],['TC','#2E8BFF'],['-',MUTE],['20261006',INK],['-',MUTE],['104538540',MUTE]];
+  parts.forEach(p=>{const t=$('tspan',{fill:p[1]},txt);t.textContent=p[0]});
+  const br=[[0,3,'epic',BLUE],[4,6,'loại',  '#2E8BFF'],[7,15,'ngày',INK],[16,25,'giờ, đến mili-giây',MUTE]].map(b=>{
+    const x1=xs0+b[0]*cw+4,x2=xs0+b[1]*cw-4,gg=$('g',{},g);pth(gg,`M${x1},292 L${x1},308 L${x2},308 L${x2},292`,{stroke:b[3],'stroke-width':4}).setAttribute('stroke-dashoffset',0);
+    T(gg,(x1+x2)/2,350,b[2],{size:28,weight:700,fill:b[3],anchor:'middle'});return gg});
+  const nodes=[['Yêu cầu','PAY-REQ-…'],['Thiết kế','PAY-API-20261006-103701335'],['Test','PAY-TC-20261006-104538540'],['Code','14 task, mỗi task ghi nguồn'],['Báo cáo','report.md · 97 TC · 9 E2E']];
+  const W=300,gap=60,x0=960-(5*W+4*gap)/2,NY=560;
+  const cy=NY+60,path=`M${x0+W/2},${cy} `+nodes.map((_,i)=>i?`L${x0+i*(W+gap)+W/2},${cy}`:'').join(' ');
+  const th=pth(g,path,{stroke:BLUE,'stroke-width':8});
+  const nd=nodes.map((n,i)=>{const gg=$('g',{},g),x=x0+i*(W+gap);card(gg,x,NY,W,120,{stroke:LINE});
+    T(gg,x+W/2,NY+44,n[0],{size:34,weight:800,anchor:'middle',fill:BLUE});T(gg,x+W/2,NY+86,n[1],{size:i===1||i===2?17:20,mono:1,fill:MUTE,anchor:'middle',weight:500});return gg});
+  const bead=$('circle',{r:13,fill:BLUE,stroke:'#fff','stroke-width':4},g);
+  const note=T(g,960,800,'Truy ngược từ code về yêu cầu — không cần đoán.',{size:40,weight:800,anchor:'middle',fill:BLUE});
+  const pts=nodes.map((_,i)=>x0+i*(W+gap)+W/2);
+  return lt=>{
+    vis(h,O(seg(lt,0,.7)));txt.setAttribute('opacity',O(seg(lt,1,2)));
+    br.forEach((b,i)=>vis(b,seg(lt,2.6+i*1.6,3.2+i*1.6)));
+    nd.forEach((n,i)=>{const p=B(seg(lt,9+i*.7,9.8+i*.7));S(n,{opacity:seg(lt,9+i*.7,9.5+i*.7),transform:`translate(0 ${(1-p)*30})`})});
+    dr(th,seg(lt,10,17));
+    const q=seg(lt,10,17);S(bead,{transform:`translate(${lerp(pts[0],pts[4],E(q))} ${cy})`,opacity:q>0&&q<1?1:0});
+    vis(note,seg(lt,17.6,18.8));
+  }},[[.3,11,'Mỗi tài liệu mang một mã định danh sinh theo thời gian, nên nhiều người làm song song cũng không đụng nhau.'],
+      [11.3,22,'Từ yêu cầu, đến thiết kế, đến test, đến code, đến báo cáo — một sợi chỉ xuyên suốt, truy ngược được từng bước.']]);
+
+/* 9 — Kit tự học (312–326) */
+add(312,14,g=>{
+  const h=T(g,960,120,'Sau mỗi epic, kit được chỉnh lại',{size:54,weight:800,anchor:'middle'});
+  const cx=960,cy=500,rx=520,ry=210;
+  const ring=$('ellipse',{cx,cy,rx,ry,fill:'none',stroke:'#D5E4FF','stroke-width':16},g);
+  const flow=$('ellipse',{cx,cy,rx,ry,fill:'none',stroke:BLUE,'stroke-width':4,'stroke-dasharray':'3 24','stroke-linecap':'round'},g);
+  const ns=[[0,-1,'Epic xong','retro rút bài học'],[1,0,'Người duyệt','bài học',],[0,1,'Sửa kit','kèm ca hồi quy'],[-1,0,'Epic kế tiếp','chạy tốt hơn']].map((n,i)=>{
+    const x=cx+n[0]*rx,y=cy+n[1]*ry,gg=$('g',{},g);card(gg,x-150,y-48,300,96,{stroke:i===1?AMBER:BLUE});T(gg,x,y-4,n[2],{size:32,weight:800,anchor:'middle',fill:i===1?'#A86B00':BLUE});T(gg,x,y+30,n[3],{size:22,anchor:'middle',fill:MUTE});return gg});
+  const num=T(g,cx,cy+34,'0',{size:150,weight:800,anchor:'middle',fill:BLUE});
+  const nl=T(g,cx,cy+84,'bản bài học đã quay vào kit',{size:28,weight:700,anchor:'middle',fill:MUTE});
+  const tk=$('circle',{r:14,fill:BLUE,stroke:'#fff','stroke-width':4},g);
+  return lt=>{
+    vis(h,O(seg(lt,0,.7)));vis(ring,seg(lt,.3,1.5));S(flow,{opacity:seg(lt,.3,1.5),'stroke-dashoffset':-lt*30});
+    ns.forEach((n,i)=>{const p=B(seg(lt,1+i*1.5,1.9+i*1.5));S(n,{opacity:seg(lt,1+i*1.5,1.6+i*1.5),transform:`translate(0 ${(1-p)*26})`})});
+    const a=(-90+360*(lt-2)/6)*Math.PI/180;S(tk,{transform:`translate(${cx+rx*Math.cos(a)} ${cy+ry*Math.sin(a)})`,opacity:lt>2?1:0});
+    T0n(num,Math.round(16*E(seg(lt,3,8))));vis(num,seg(lt,2.6,3.4));vis(nl,seg(lt,3,3.8));
+  }
+  function T0n(e,n){const s=String(n);if(e.textContent!==s)e.textContent=s}
+  },[[.3,9,'Sau mỗi epic, bài học được rút ra, người duyệt, rồi chính bộ kit được sửa — kèm một ca hồi quy.'],
+     [9.2,14,'Đường ray tự được chỉnh lại sau mỗi chặng.']]);
+
+/* 10 — Kết quả (326–348) */
+add(326,22,g=>{
+  const h=T(g,960,120,'Kết quả',{size:58,weight:800,anchor:'middle'});
+  const tiles=[[15,'epic thương mại điện tử',0],[1791,'test chạy xanh',1],[3,'hook canh cổng',0],[16,'bản bài học vào kit',0]];
+  const W=380,gap=40,x0=960-(4*W+3*gap)/2;
+  const tl=tiles.map((t,i)=>{const gg=$('g',{},g),x=x0+i*(W+gap);card(gg,x,230,W,270,{stroke:i===1?BLUE:LINE});
+    const n=T(gg,x+W/2,380,'0',{size:i===1?118:128,weight:800,anchor:'middle',fill:BLUE});T(gg,x+W/2,450,t[1],{size:26,weight:600,anchor:'middle',fill:INK});return {gg,n,v:t[0]}});
+  const src=T(g,960,550,'Nguồn: spec/epics/*/report.md · lần chạy toàn bộ gần nhất · PostgreSQL 16 thật',{size:22,mono:1,fill:MUTE,anchor:'middle'});
+  const hs=$('g',{},g);card(hs,140,620,1640,230,{stroke:AMBER});
+  chip(hs,190,670,110,50,'YẾU',{size:26,fill:'#FFF3DB',stroke:AMBER,color:'#A86B00',r:12});
+  T(hs,330,708,'Cổng thanh toán VNPay mới thử bằng giả lập,',{size:40,weight:800});T(hs,330,760,'chưa chạy với sandbox thật.',{size:40,weight:800});
+  T(hs,330,818,'Báo cáo ghi rõ điểm yếu thay vì giấu nó — đó cũng là một phần của kỷ luật.',{size:28,weight:600,fill:MUTE});
+  return lt=>{
+    vis(h,O(seg(lt,0,.7)));
+    tl.forEach((t,i)=>{const p=B(seg(lt,1+i*.6,1.8+i*.6));S(t.gg,{opacity:seg(lt,1+i*.6,1.5+i*.6),transform:`translate(0 ${(1-p)*30})`});
+      const v=Math.round(t.v*O(seg(lt,1.6+i*.6,4.6+i*.6)));const s=fmt(v);if(t.n.textContent!==s)t.n.textContent=s});
+    vis(src,seg(lt,5.5,6.5));
+    const p=B(seg(lt,16,17));S(hs,{opacity:seg(lt,16,16.6),transform:`translate(0 ${(1-p)*30})`});
+  }},[[.3,9,'Kết quả: mười lăm epic của hệ thống thương mại điện tử, đi trọn trên đường ray này.'],
+      [9.2,16,'Hơn một nghìn bảy trăm bài test chạy xanh trên PostgreSQL thật.'],
+      [16.2,22,'Và báo cáo trung thực: VNPay mới thử bằng giả lập — chúng tôi ghi rõ là mục yếu, không giấu.']]);
+
+/* 11 — Kết (348–360) */
+add(348,12,g=>{
+  const up=cat(g,960,250,.62);
+  const ry=[470,516];const rl=ry.map(y=>pth(g,`M300,${y} L1620,${y}`,{stroke:BLUE,'stroke-width':9}));
+  const sl=[...Array(28)].map((_,i)=>$('line',{x1:320+i*48,y1:ry[0]-9,x2:320+i*48,y2:ry[1]+9,stroke:'#9EC4FF','stroke-width':7,'stroke-linecap':'round'},g));
+  const l1=T(g,960,650,'Neko Core — đôi tay nhanh.',{size:64,weight:800,anchor:'middle'});
+  const l2=T(g,960,730,'Min-SDLC — một kỷ luật.',{size:64,weight:800,anchor:'middle',fill:BLUE});
+  const l3=T(g,960,850,'Nhanh mà vẫn đáng tin.',{size:92,weight:800,anchor:'middle',fill:INK});
+  return lt=>{up(lt*3.2);rl.forEach((e,i)=>dr(e,seg(lt,.2+i*.2,1.6+i*.2)));sl.forEach((e,i)=>vis(e,seg(lt,.6+i*.03,1+i*.03)));
+    [[l1,.4],[l2,3.2],[l3,6.2]].forEach(([e,t])=>{const p=O(seg(lt,t,t+.9));S(e,{opacity:p,transform:`translate(0 ${(1-p)*22})`})});
+  }},[[.3,5,'Neko Core cho AI đôi tay nhanh. Min-SDLC cho đôi tay ấy một kỷ luật.'],
+      [5.2,9.5,'Nhanh mà vẫn đáng tin — đó là điều chúng tôi muốn trao lại.'],
+      [9.8,12,'Xin cảm ơn hội đồng.']]);
+
+/* ---------- khung trình chiếu ---------- */
+const TOTAL=360;
+const SC=document.getElementById('scenes'),CH=document.getElementById('chrome');
+scenes.forEach(s=>{s.g=$('g',{},SC);s.u=s.build(s.g)});
+const bar=$('rect',{x:0,y:0,width:0,height:8,fill:BLUE},CH);
+T(CH,56,66,'Neko Core × Min-SDLC',{size:24,weight:800,fill:BLUE}).setAttribute('opacity',.85);
+const cues=scenes.flatMap(s=>s.cues);
+const cap=document.getElementById('cap'),clock=document.getElementById('clock');
+let lastCue=-1;
+function render(t){
+  for(const s of scenes){const lt=t-s.t0,on=lt>=-1e-3&&lt<=s.d+1e-3;
+    s.g.style.display=on?'':'none';
+    if(on){const fi=s.t0===0?1:seg(lt,0,.6),fo=s.t0+s.d>=TOTAL?1:1-seg(lt,s.d-.6,s.d);
+      s.g.setAttribute('opacity',Math.min(fi,fo));s.u(Math.max(0,lt))}}
+  let ci=-1,co=0;cues.forEach((c,i)=>{if(t>=c[0]&&t<=c[1]){ci=i;co=Math.min(seg(t,c[0],c[0]+.3),1-seg(t,c[1]-.25,c[1]))}});
+  if(ci!==lastCue){cap.textContent=ci>=0?cues[ci][2]:'';lastCue=ci}
+  cap.style.opacity=ci>=0?co:0;
+  S(bar,{width:1920*t/TOTAL});
+  const m=Math.floor(t/60),sec=Math.floor(t%60);clock.textContent=`${m}:${String(sec).padStart(2,'0')} / 6:00`;
+}
+function fit(){const k=Math.min(innerWidth/1920,innerHeight/1080),st=document.getElementById('stage');
+  st.style.transform=`scale(${k})`;st.style.left=(innerWidth-1920*k)/2+'px';st.style.top=(innerHeight-1080*k)/2+'px'}
+addEventListener('resize',fit);
+const q=new URLSearchParams(location.search),REC=q.has('rec');
+if(REC){document.body.classList.add('rec');document.getElementById('stage').style.transform='none';
+  document.getElementById('stage').style.left=document.getElementById('stage').style.top='0'}else fit();
+let t=+q.get('t')||0,playing=false,last=performance.now();
+window.seek=x=>{t=x;render(x)};
+window.ready=()=>document.fonts.ready.then(()=>true);
+function loop(now){if(playing&&!REC){t=Math.min(TOTAL,t+(now-last)/1000);if(t>=TOTAL)playing=false}last=now;if(!REC)render(t);requestAnimationFrame(loop)}
+const hint=document.getElementById('hint');
+function go(){playing=!playing;hint.style.display='none'}
+addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();go()}
+  if(e.key==='ArrowRight'){const n=scenes.find(s=>s.t0>t+.5);t=n?n.t0:TOTAL}
+  if(e.key==='ArrowLeft'){const p=[...scenes].reverse().find(s=>s.t0<t-1.5);t=p?p.t0:0}
+  if(e.key==='r'||e.key==='R'){t=0;playing=false}
+});
+addEventListener('click',go);
+if(REC)hint.style.display='none';
+render(t);requestAnimationFrame(loop);
+</script>
+</body>
+</html>
